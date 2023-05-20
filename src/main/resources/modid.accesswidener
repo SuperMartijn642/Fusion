@@ -1,0 +1,54 @@
+accessWidener v1 named
+
+# BlockModel
+accessible field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
+accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/google/gson/Gson;
+accessible field net/minecraft/client/renderer/block/model/BlockModel guiLight Lnet/minecraft/client/renderer/block/model/BlockModel$GuiLight;
+accessible field net/minecraft/client/renderer/block/model/BlockModel hasAmbientOcclusion Z
+accessible field net/minecraft/client/renderer/block/model/BlockModel LOGGER Lorg/slf4j/Logger;
+accessible field net/minecraft/client/renderer/block/model/BlockModel overrides Ljava/util/List;
+accessible field net/minecraft/client/renderer/block/model/BlockModel parent Lnet/minecraft/client/renderer/block/model/BlockModel;
+accessible field net/minecraft/client/renderer/block/model/BlockModel parentLocation Lnet/minecraft/resources/ResourceLocation;
+accessible field net/minecraft/client/renderer/block/model/BlockModel textureMap Ljava/util/Map;
+accessible field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
+accessible method net/minecraft/client/renderer/block/model/BlockModel bakeFace (Lnet/minecraft/client/renderer/block/model/BlockElement;Lnet/minecraft/client/renderer/block/model/BlockElementFace;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/core/Direction;Lnet/minecraft/client/resources/model/ModelState;Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/block/model/BakedQuad;
+accessible method net/minecraft/client/renderer/block/model/BlockModel findTextureEntry (Ljava/lang/String;)Lcom/mojang/datafixers/util/Either;
+# ItemTransform$Deserializer
+accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_ROTATION Lcom/mojang/math/Vector3f; # DEFAULT_ROTATION
+accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_TRANSLATION Lcom/mojang/math/Vector3f; # DEFAULT_TRANSLATION
+accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_SCALE Lcom/mojang/math/Vector3f; # DEFAULT_SCALE
+accessible class net/minecraft/client/renderer/block/model/ItemTransform$Deserializer
+# Minecraft
+accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
+# NativeImage
+accessible method com/mojang/blaze3d/platform/NativeImage <init> (Lcom/mojang/blaze3d/platform/NativeImage$Format;IIZJ)V
+# TextureAtlasSprite
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite animatedTexture Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture;
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite mainImage [Lcom/mojang/blaze3d/platform/NativeImage;
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
+accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite upload (II[Lcom/mojang/blaze3d/platform/NativeImage;)V
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite animatedTexture Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture;
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite mainImage [Lcom/mojang/blaze3d/platform/NativeImage;
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
+# TextureAtlasSprite$AnimatedTexture
+accessible class net/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture
+accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture <init> (Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Ljava/util/List;ILnet/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData;)V
+# TextureAtlasSprite$FrameInfo
+accessible class net/minecraft/client/renderer/texture/TextureAtlasSprite$FrameInfo
+accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite$FrameInfo <init> (II)V
+# TextureAtlasSprite$Info
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info width I
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info height I
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info width I
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info height I
+# TextureAtlasSprite$InterpolationData
+accessible class net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData
+accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData <init> (Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;I)V
+# VertexFormat
+accessible field com/mojang/blaze3d/vertex/VertexFormat offsets Lit/unimi/dsi/fastutil/ints/IntList;

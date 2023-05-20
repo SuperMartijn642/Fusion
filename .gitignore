@@ -1,0 +1,39 @@
+# gradle
+.gradle/
+build/
+out/
+classes/
+
+# eclipse
+bin/
+*.launch
+.settings
+.metadata
+
+# idea
+.idea/
+*.ipr
+*.iws
+*.iml
+
+# vscode
+.settings/
+.vscode/
+.classpath
+.project
+
+# macos
+*.DS_Store
+
+# forge
+forge*changelog.txt
+
+# other
+eclipse/
+run/
+libs/
+lib/
+logs/
+images/
+TextureGenerator/
+desktop.ini

@@ -4,7 +4,7 @@ import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
-import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.resources.ResourceLocation;
 
@@ -15,13 +15,13 @@ import java.util.function.Function;
  */
 public class ModelBakingContextImpl implements ModelBakingContext {
 
-    private final ModelBaker modelBaker;
+    private final ModelBakery modelBakery;
     private final Function<Material,TextureAtlasSprite> spriteGetter;
     private final ModelState modelState;
     private final ResourceLocation modelIdentifier;
 
-    public ModelBakingContextImpl(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, ResourceLocation modelIdentifier){
-        this.modelBaker = modelBaker;
+    public ModelBakingContextImpl(ModelBakery modelBakery, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, ResourceLocation modelIdentifier){
+        this.modelBakery = modelBakery;
         this.spriteGetter = spriteGetter;
         this.modelState = modelState;
         this.modelIdentifier = modelIdentifier;
@@ -29,8 +29,8 @@ public class ModelBakingContextImpl implements ModelBakingContext {
 
 
     @Override
-    public ModelBaker getModelBaker(){
-        return this.modelBaker;
+    public ModelBakery getModelBakery(){
+        return this.modelBakery;
     }
 
     @Override

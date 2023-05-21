@@ -5,19 +5,17 @@ import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.data.CachedOutput;
+import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DataProvider;
-import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
 
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Allows generating texture metadata files for Fusion's texture types.
@@ -30,22 +28,21 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
 
     private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> metadata = new HashMap<>();
     private final String modName;
-    private final PackOutput output;
+    private final DataGenerator generator;
 
     /**
      * @param modid modid of the mod which creates the generator
      */
-    public FusionTextureMetadataProvider(String modid, PackOutput output){
+    public FusionTextureMetadataProvider(String modid, DataGenerator generator){
         this.modName = ModList.get().getModContainerById(modid).map(ModContainer::getModInfo).map(IModInfo::getDisplayName).orElse(modid);
-        this.output = output;
+        this.generator = generator;
     }
 
     @Override
-    public final CompletableFuture<?> run(CachedOutput cache){
+    public final void run(CachedOutput cache) throws IOException{
         this.generate();
 
-        List<CompletableFuture<?>> tasks = new ArrayList<>();
-        Path output = this.output.getOutputFolder();
+        Path output = this.generator.getOutputFolder();
         for(Map.Entry<ResourceLocation,Pair<TextureType<Object>,Object>> entry : this.metadata.entrySet()){
             ResourceLocation location = entry.getKey();
             Pair<TextureType<Object>,Object> metadata = entry.getValue();
@@ -53,9 +50,8 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
             Path path = Path.of("assets", location.getNamespace(), "textures", location.getPath() + extension);
             JsonObject json = new JsonObject();
             json.add("fusion", FusionTextureTypeRegistry.serializeTextureData(metadata.left(), metadata.right()));
-            tasks.add(DataProvider.saveStable(cache, json, output.resolve(path)));
+            DataProvider.saveStable(cache, json, output.resolve(path));
         }
-        return CompletableFuture.allOf(tasks.toArray(CompletableFuture[]::new));
     }
 
     /**

@@ -1,8 +1,6 @@
 package com.supermartijn642.fusion.model;
 
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
-import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.ModelType;
+import com.supermartijn642.fusion.api.model.*;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
@@ -36,6 +34,11 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     @Override
     public Collection<ResourceLocation> getModelDependencies(){
         return this.modelType.getModelDependencies(this.modelData);
+    }
+
+    @Override
+    public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context){
+        return this.modelType.getTextureDependencies(context, this.modelData);
     }
 
     @Override

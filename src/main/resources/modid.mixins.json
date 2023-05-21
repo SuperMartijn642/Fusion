@@ -9,7 +9,7 @@
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "DatagenModLoaderMixin",
-    "SpriteLoaderMixin",
+    "TextureAtlasMixin",
     "TextureAtlasSpriteMixin"
   ],
   "server": [],

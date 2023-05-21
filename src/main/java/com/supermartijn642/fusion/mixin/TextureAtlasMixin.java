@@ -11,7 +11,6 @@ import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.minecraft.client.renderer.texture.Stitcher;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -23,8 +22,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -45,12 +46,9 @@ public class TextureAtlasMixin {
         ),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void gatherMetadata(ResourceLocation identifier, ResourceManager resourceManager, Queue<?> queue, CallbackInfo ci, ResourceLocation location, Optional<?> optional, Resource resource, PngInfo pngInfo, AnimationMetadataSection animationMetadataSection, com.mojang.datafixers.util.Pair<?,?> pair, TextureAtlasSprite.Info info){
+    private void gatherMetadata(ResourceLocation identifier, ResourceManager resourceManager, Queue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, Resource resource, PngInfo pngInfo){
         // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = null;
-        try{
-            metadata = resource.metadata().getSection(FusionMetadataSection.INSTANCE).orElse(null);
-        }catch(IOException ignored){ /* Metadata will always be cached already, so need to worry about exceptions */ }
+        Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionMetadataSection.INSTANCE);
         if(metadata != null){
             this.fusionTextureMetadata.put(info.name(), metadata);
             // Adjust the frame size

@@ -9,7 +9,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.model.ExtendedBlockModelDeserializer;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -51,7 +51,7 @@ public class VanillaModelType implements ModelType<BlockModel> {
 
     @Override
     public BlockModel deserialize(JsonObject json) throws JsonParseException{
-        return ExtendedBlockModelDeserializer.INSTANCE.fromJson(json, BlockModel.class);
+        return ModelLoaderRegistry.ExpandedBlockModelDeserializer.INSTANCE.fromJson(json, BlockModel.class);
     }
 
     @Override

@@ -11,7 +11,6 @@ import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureType;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -19,10 +18,10 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.IModelData;
+import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +52,8 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     }
 
     @Override
-    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource random, @NotNull ModelData modelData, @Nullable RenderType renderType){
-        SurroundingBlockData data = modelData.has(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY) ? modelData.get(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY) : null;
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull Random random, @NotNull IModelData modelData){
+        SurroundingBlockData data = modelData.hasProperty(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY) ? modelData.getData(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY) : null;
         int hashCode = data == null ? 0 : data.hashCode();
 
         // Compute the quads if they aren't in the cache yet
@@ -98,7 +97,6 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         int vertices = vertexData.length / vertexSize;
         int uvOffset = BLOCK_VERTEX_DATA_UV_OFFSET / 4;
 
-
         for(int i = 0; i < vertices; i++){
             int offset = i * vertexSize + uvOffset;
 
@@ -137,8 +135,8 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     }
 
     @Override
-    public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
-        return ModelData.builder().with(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY, this.getModelData(level, pos, state)).build();
+    public @NotNull IModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull IModelData modelData){
+        return new ModelDataMap.Builder().withInitial(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY, this.getModelData(level, pos, state)).build();
     }
 
     @Override

@@ -1,12 +1,14 @@
 package com.supermartijn642.fusion.api.provider;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DataProvider;
+import net.minecraft.data.HashCache;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
@@ -26,6 +28,8 @@ import java.util.Map;
  */
 public abstract class FusionTextureMetadataProvider implements DataProvider {
 
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
+
     private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> metadata = new HashMap<>();
     private final String modName;
     private final DataGenerator generator;
@@ -39,7 +43,7 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
     }
 
     @Override
-    public final void run(CachedOutput cache) throws IOException{
+    public final void run(HashCache cache) throws IOException{
         this.generate();
 
         Path output = this.generator.getOutputFolder();
@@ -50,7 +54,7 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
             Path path = Path.of("assets", location.getNamespace(), "textures", location.getPath() + extension);
             JsonObject json = new JsonObject();
             json.add("fusion", FusionTextureTypeRegistry.serializeTextureData(metadata.left(), metadata.right()));
-            DataProvider.saveStable(cache, json, output.resolve(path));
+            DataProvider.save(GSON, cache, json, output.resolve(path));
         }
     }
 

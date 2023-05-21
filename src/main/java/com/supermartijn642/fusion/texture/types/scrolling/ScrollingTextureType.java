@@ -2,15 +2,16 @@ package com.supermartijn642.fusion.texture.types.scrolling;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
 import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.client.renderer.texture.SpriteTicker;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
+import net.minecraft.client.resources.metadata.animation.FrameSize;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -155,51 +156,42 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         }
 
         // Finally create the new sprite
-        TextureAtlasSprite.Info info = new TextureAtlasSprite.Info(context.getTextureIdentifier(), context.getSpriteWidth(), context.getSpriteHeight(), AnimationMetadataSection.EMPTY);
-        return new ScrollingSprite(
-            context.getAtlas(),
-            info,
+        ScrollingSpriteContents contents = new ScrollingSpriteContents(context.createOriginalSprite().contents(), xPositions, yPositions, frameTimes);
+        return new TextureAtlasSprite(
+            context.getTextureIdentifier(),
+            contents,
             context.getAtlasWidth(),
             context.getAtlasHeight(),
             context.getSpritePositionX(),
-            context.getSpritePositionY(),
-            context.getTextureBuffers(),
-            xPositions,
-            yPositions,
-            frameTimes
+            context.getSpritePositionY()
         );
     }
 
-    private static class ScrollingSprite extends TextureAtlasSprite {
+    private static class ScrollingSpriteContents extends SpriteContents {
 
         private final int[] xPositions, yPositions;
         private final int[] frameTimes;
         private int frame, tickCounter;
 
-        protected ScrollingSprite(TextureAtlas atlas, Info info, int atlasWidth, int atlasHeight, int atlasX, int atlasY, NativeImage[] mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
-            super(atlas, info, 0, atlasWidth, atlasHeight, atlasX, atlasY, new NativeImage(NativeImage.Format.RGBA, 1, 1, true, 0));
-            this.mainImage = mainImage;
+        public ScrollingSpriteContents(SpriteContents original, int[] xPositions, int[] yPositions, int[] frameTimes){
+            super(original.name(), new FrameSize(original.width(), original.height()), original.originalImage, AnimationMetadataSection.EMPTY);
             this.xPositions = xPositions;
             this.yPositions = yPositions;
             this.frameTimes = frameTimes;
+            this.byMipLevel = original.byMipLevel;
             this.animatedTexture = new ScrollingAnimatedTexture();
         }
 
-        private void tick(){
+        private void tick(int x, int y){
             if(++this.tickCounter >= this.frameTimes[this.frame]){
                 this.frame = (this.frame + 1) % this.xPositions.length;
                 this.tickCounter = 0;
-                this.uploadFrame(this.frame);
+                this.uploadFrame(x, y, this.frame);
             }
         }
 
-        private void uploadFrame(int frame){
-            this.upload(this.xPositions[frame], this.yPositions[frame], this.mainImage);
-        }
-
-        @Override
-        public void uploadFirstFrame(){
-            this.uploadFrame(0);
+        private void uploadFrame(int x, int y, int frame){
+            this.upload(x, y, this.xPositions[frame], this.yPositions[frame], this.byMipLevel);
         }
 
         @Override
@@ -207,25 +199,34 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
             return IntStream.of(1);
         }
 
-        private class ScrollingAnimatedTexture extends TextureAtlasSprite.AnimatedTexture {
+        private class ScrollingAnimatedTexture extends SpriteContents.AnimatedTexture {
 
             public ScrollingAnimatedTexture(){
-                super(Collections.emptyList(), 1, null);
+                super(Collections.emptyList(), 1, false);
             }
 
             @Override
-            public void tick(){
-                ScrollingSprite.this.tick();
+            public SpriteTicker createTicker(){
+                return new SpriteTicker() {
+                    @Override
+                    public void tickAndUpload(int x, int y){
+                        ScrollingSpriteContents.this.tick(x, y);
+                    }
+
+                    @Override
+                    public void close(){
+                    }
+                };
             }
 
             @Override
-            public void uploadFirstFrame(){
-                ScrollingSprite.this.uploadFirstFrame();
+            public void uploadFirstFrame(int x, int y){
+                ScrollingSpriteContents.this.uploadFrame(x, y, 0);
             }
 
             @Override
             public IntStream getUniqueFrames(){
-                return ScrollingSprite.this.getUniqueFrames();
+                return ScrollingSpriteContents.this.getUniqueFrames();
             }
         }
     }

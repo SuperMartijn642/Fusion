@@ -2,17 +2,14 @@ package com.supermartijn642.fusion.model.types.vanilla;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.datafixers.util.Pair;
 import com.supermartijn642.fusion.api.model.*;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,18 +25,8 @@ public class VanillaModelType implements ModelType<BlockModel> {
     }
 
     @Override
-    public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, BlockModel data){
-        // Find the parent models
-        resolveParents(context, data);
-        // Get the textures
-        Set<Pair<String,String>> errors = new HashSet<>();
-        Collection<Material> materials = data.getMaterials(location -> context.getModel(location).getAsVanillaModel(), errors);
-        return materials.stream().map(SpriteIdentifier::of).collect(Collectors.toList());
-    }
-
-    @Override
     public BakedModel bake(ModelBakingContext context, BlockModel data){
-        return data.bake(context.getModelBakery(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation(), context.getModelIdentifier());
+        return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation(), context.getModelIdentifier());
     }
 
     @Nullable

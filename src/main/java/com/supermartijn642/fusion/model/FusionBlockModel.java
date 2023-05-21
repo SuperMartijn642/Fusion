@@ -1,7 +1,8 @@
 package com.supermartijn642.fusion.model;
 
-import com.mojang.datafixers.util.Pair;
-import com.supermartijn642.fusion.api.model.*;
+import com.supermartijn642.fusion.api.model.DefaultModelTypes;
+import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -10,12 +11,9 @@ import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -29,13 +27,12 @@ public class FusionBlockModel extends BlockModel {
         }
 
         @Override
-        public Collection<Material> getMaterials(Function<ResourceLocation,UnbakedModel> function, Set<Pair<String,String>> set){
-            return Collections.emptyList();
+        public void resolveParents(Function<ResourceLocation,UnbakedModel> function){
         }
 
         @Nullable
         @Override
-        public BakedModel bake(ModelBakery modelBakery, Function<Material,TextureAtlasSprite> function, ModelState modelState, ResourceLocation resourceLocation){
+        public BakedModel bake(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> function, ModelState modelState, ResourceLocation resourceLocation){
             return null;
         }
     };
@@ -51,9 +48,9 @@ public class FusionBlockModel extends BlockModel {
     }
 
     @Override
-    public BakedModel bake(ModelBakery bakery, BlockModel someOtherModel, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation, boolean gui3d){
+    public BakedModel bake(ModelBaker baker, BlockModel someOtherModel, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation, boolean gui3d){
         // Let the custom model handle the actual baking
-        ModelBakingContext context = new ModelBakingContextImpl(bakery, spriteGetter, modelTransform, modelLocation);
+        ModelBakingContext context = new ModelBakingContextImpl(baker, spriteGetter, modelTransform, modelLocation);
         return this.model.bake(context);
     }
 
@@ -69,32 +66,6 @@ public class FusionBlockModel extends BlockModel {
         if(this.dependencies == null)
             throw new RuntimeException("Model type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' returned null when requesting dependencies '" + this.name + "'!");
         return this.dependencies;
-    }
-
-    @Override
-    public Collection<Material> getMaterials(Function<ResourceLocation,UnbakedModel> modelGetter, Set<com.mojang.datafixers.util.Pair<String,String>> errors){
-        GatherTexturesContext context = identifier -> getModelInstance(modelGetter.apply(identifier));
-        Collection<Material> materials = null;
-        try{
-            Collection<SpriteIdentifier> pairs = this.model.getTextureDependencies(context);
-            if(pairs != null)
-                materials = pairs.stream().map(SpriteIdentifier::toMaterial).collect(Collectors.toSet());
-        }catch(Exception e){
-            throw new RuntimeException("Encountered an exception whilst requesting texture dependencies from model type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
-        }
-        if(materials == null)
-            throw new RuntimeException("Model type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' returned null when requesting texture dependencies for '" + this.name + "'!");
-
-        Collection<ResourceLocation> dependencies = this.getDependencies();
-        if(!dependencies.isEmpty()){
-            materials = new ArrayList<>(materials);
-            dependencies.forEach(location -> {
-                UnbakedModel model = modelGetter.apply(location);
-                if(model == null)
-                    BlockModel.LOGGER.warn("Could not find dependency model '{}' while loading model '{}'", location, this);
-            });
-        }
-        return materials;
     }
 
     public boolean hasVanillaModel(){

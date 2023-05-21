@@ -20,14 +20,6 @@ public interface ModelType<T> extends Serializer<T> {
     Collection<ResourceLocation> getModelDependencies(T data);
 
     /**
-     * Gets all the dependencies on sprites.
-     * @param context context for gathering texture dependencies
-     * @param data    custom model data
-     * @see GatherTexturesContext
-     */
-    Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, T data);
-
-    /**
      * Converts the model data into a baked model.
      * @param context context for baking the model
      * @param data    custom model data

@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.resources.ResourceLocation;
 
@@ -12,9 +12,9 @@ import net.minecraft.resources.ResourceLocation;
 public interface ModelBakingContext {
 
     /**
-     * @return the model bakery
+     * @return the model baker
      */
-    ModelBakery getModelBakery();
+    ModelBaker getModelBaker();
 
     /**
      * Gets the sprite for the given material.

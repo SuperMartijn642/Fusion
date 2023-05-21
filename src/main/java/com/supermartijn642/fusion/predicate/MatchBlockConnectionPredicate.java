@@ -7,7 +7,7 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -26,16 +26,16 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
-            if(!Registry.BLOCK.containsKey(identifier))
+            if(!BuiltInRegistries.BLOCK.containsKey(identifier))
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
-            Block block = Registry.BLOCK.get(identifier);
+            Block block = BuiltInRegistries.BLOCK.get(identifier);
             return new MatchBlockConnectionPredicate(block);
         }
 
         @Override
         public JsonObject serialize(MatchBlockConnectionPredicate value){
             JsonObject json = new JsonObject();
-            json.addProperty("block", Registry.BLOCK.getKey(value.block).toString());
+            json.addProperty("block", BuiltInRegistries.BLOCK.getKey(value.block).toString());
             return json;
         }
     };

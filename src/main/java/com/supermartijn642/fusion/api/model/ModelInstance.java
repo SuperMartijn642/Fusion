@@ -27,12 +27,6 @@ public interface ModelInstance<T> {
     Collection<ResourceLocation> getModelDependencies();
 
     /**
-     * Gets all the dependencies on sprites.
-     * @param context context for gathering texture dependencies
-     */
-    Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context);
-
-    /**
      * Converts the model data into a baked model.
      * @param context context for baking the model
      * @return a baked model

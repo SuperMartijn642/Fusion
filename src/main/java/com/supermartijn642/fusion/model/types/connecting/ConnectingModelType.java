@@ -4,7 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.*;
+import com.supermartijn642.fusion.api.model.DefaultModelTypes;
+import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Pair;
@@ -26,11 +28,6 @@ public class ConnectingModelType implements ModelType<Pair<BlockModel,List<Conne
     @Override
     public Collection<ResourceLocation> getModelDependencies(Pair<BlockModel,List<ConnectionPredicate>> data){
         return DefaultModelTypes.VANILLA.getModelDependencies(data.left());
-    }
-
-    @Override
-    public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, Pair<BlockModel,List<ConnectionPredicate>> data){
-        return DefaultModelTypes.VANILLA.getTextureDependencies(context, data.left());
     }
 
     @Override

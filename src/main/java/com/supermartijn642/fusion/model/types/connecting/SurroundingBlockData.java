@@ -1,7 +1,6 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
 import com.google.common.base.Objects;
-import com.mojang.math.Matrix4f;
 import com.mojang.math.Transformation;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
@@ -9,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Matrix4f;
 
 import java.util.EnumMap;
 import java.util.List;

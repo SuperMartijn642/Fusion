@@ -2,6 +2,8 @@ package com.supermartijn642.fusion.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
@@ -19,37 +21,33 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
     private final TextureAtlas atlas;
     private final int spriteX, spriteY, spriteWidth, spriteHeight;
     private final int mipmapLevels;
-    private boolean originalRequested = false;
     private boolean imagesRequested = false;
 
-    public SpriteCreationContextImpl(TextureAtlasSprite original){
+    @SuppressWarnings("resource")
+    public SpriteCreationContextImpl(SpriteLoader.Preparations preparations, ResourceLocation atlas, TextureAtlasSprite original){
         this.original = original;
-        this.textureWidth = original.mainImage[0].getWidth();
-        this.textureHeight = original.mainImage[0].getHeight();
-        this.identifier = original.getName();
-        this.images = original.mainImage;
-        this.atlasWidth = Math.round(original.getX() / original.getU0());
-        this.atlasHeight = Math.round(original.getY() / original.getV0());
-        this.atlas = original.atlas();
+        this.textureWidth = original.contents().originalImage.getWidth();
+        this.textureHeight = original.contents().originalImage.getHeight();
+        this.identifier = original.contents().name();
+        this.images = original.contents().byMipLevel;
+        this.atlasWidth = preparations.width();
+        this.atlasHeight = preparations.height();
+        this.atlas = (TextureAtlas)Minecraft.getInstance().getTextureManager().getTexture(atlas, null);
         this.spriteX = original.getX();
         this.spriteY = original.getY();
-        this.spriteWidth = original.getWidth();
-        this.spriteHeight = original.getHeight();
-        this.mipmapLevels = original.mainImage.length - 1;
+        this.spriteWidth = original.contents().width();
+        this.spriteHeight = original.contents().height();
+        this.mipmapLevels = preparations.mipLevel();
     }
 
     private void closeUnusedResources(){
-        if(!this.originalRequested){
-            if(!this.imagesRequested)
-                this.original.close();
-            else if(this.original.animatedTexture != null)
-                this.original.animatedTexture.close();
-        }
+        if(!this.imagesRequested)
+            this.original.contents().close();
     }
 
     @Override
     public TextureAtlasSprite createOriginalSprite(){
-        this.originalRequested = true;
+        this.imagesRequested = true;
         return this.original;
     }
 

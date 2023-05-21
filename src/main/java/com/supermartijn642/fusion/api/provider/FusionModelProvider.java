@@ -2,18 +2,20 @@ package com.supermartijn642.fusion.api.provider;
 
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.model.ModelInstance;
+import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.data.CachedOutput;
-import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DataProvider;
 import net.minecraft.resources.ResourceLocation;
 
-import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Allows generating model files for Fusion's model types.
@@ -26,28 +28,30 @@ public abstract class FusionModelProvider implements DataProvider {
 
     private final Map<ResourceLocation,ModelInstance<?>> models = new HashMap<>();
     private final String modName;
-    private final DataGenerator generator;
+    private final FabricDataOutput output;
 
     /**
      * @param modid modid of the mod which creates the generator
      */
-    public FusionModelProvider(String modid, DataGenerator generator){
+    public FusionModelProvider(String modid, FabricDataOutput output){
         this.modName = FabricLoader.getInstance().getModContainer(modid).map(ModContainer::getMetadata).map(ModMetadata::getName).orElse(modid);
-        this.generator = generator;
+        this.output = output;
     }
 
     @Override
-    public final void run(CachedOutput cache) throws IOException{
+    public final CompletableFuture<?> run(CachedOutput cache){
         this.generate();
 
-        Path output = this.generator.getOutputFolder();
+        List<CompletableFuture<?>> tasks = new ArrayList<>();
+        Path output = this.output.getOutputFolder();
         for(Map.Entry<ResourceLocation,ModelInstance<?>> entry : this.models.entrySet()){
             ResourceLocation location = entry.getKey();
             ModelInstance<?> model = entry.getValue();
             String extension = location.getPath().lastIndexOf(".") > location.getPath().lastIndexOf("/") ? "" : ".json";
             Path path = Path.of("assets", location.getNamespace(), "models", location.getPath() + extension);
-            DataProvider.saveStable(cache, FusionModelTypeRegistry.serializeModelData(model), output.resolve(path));
+            tasks.add(DataProvider.saveStable(cache, FusionModelTypeRegistry.serializeModelData(model), output.resolve(path)));
         }
+        return CompletableFuture.allOf(tasks.toArray(CompletableFuture[]::new));
     }
 
     /**

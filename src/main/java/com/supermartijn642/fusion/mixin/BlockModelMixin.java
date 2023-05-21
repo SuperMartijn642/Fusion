@@ -23,7 +23,7 @@ public class BlockModelMixin implements BlockModelExtension {
     private ModelInstance<?> fusionModel;
 
     @ModifyVariable(
-        method = "getMaterials(Ljava/util/function/Function;Ljava/util/Set;)Ljava/util/Collection;",
+        method = "resolveParents(Ljava/util/function/Function;)V",
         at = @At("HEAD"),
         ordinal = 0
     )

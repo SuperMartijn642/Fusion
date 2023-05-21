@@ -102,13 +102,15 @@ curseforge {
         // Point to 'changelog' setting to a the changelog file
         changelog = file("changelog.md")
         changelogType = "markdown"
-        relations {
-            // Required dependencies
-            if (!project.curseforge_required_dependency_ids.isEmpty())
-                project.curseforge_required_dependency_ids.split(" ").each it::requiredDependency
-            // Optional dependencies
-            if (!project.curseforge_optional_dependency_ids.isEmpty())
-                project.curseforge_optional_dependency_ids.split(" ").each it::optionalDependency
+        if (!project.curseforge_required_dependency_ids.isEmpty() || !project.curseforge_optional_dependency_ids.isEmpty()) {
+            relations {
+                // Required dependencies
+                if (!project.curseforge_required_dependency_ids.isEmpty())
+                    project.curseforge_required_dependency_ids.split(" ").each it::requiredDependency
+                // Optional dependencies
+                if (!project.curseforge_optional_dependency_ids.isEmpty())
+                    project.curseforge_optional_dependency_ids.split(" ").each it::optionalDependency
+            }
         }
 
         mainArtifact(remapJar) {
@@ -141,7 +143,7 @@ modrinth {
     uploadFile = remapJar // With Loom, this MUST be set to `remapJar` instead of `jar`!
     additionalFiles = [remapSourcesJar, javadoc]
     loaders = ["fabric"]
-    if (!project.modrinth_required_dependency_ids.isEmpty() && !project.modrinth_optional_dependency_ids.isEmpty()) {
+    if (!project.modrinth_required_dependency_ids.isEmpty() || !project.modrinth_optional_dependency_ids.isEmpty()) {
         dependencies {
             // Required dependencies
             if (!project.modrinth_required_dependency_ids.isEmpty())

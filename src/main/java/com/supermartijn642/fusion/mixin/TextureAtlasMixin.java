@@ -22,10 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -46,9 +44,12 @@ public class TextureAtlasMixin {
         ),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void gatherMetadata(ResourceLocation identifier, ResourceManager resourceManager, Queue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, Resource resource, PngInfo pngInfo){
+    private void gatherMetadata(ResourceLocation identifier, ResourceManager resourceManager, Queue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, Optional<?> optional, Resource resource, PngInfo pngInfo){
         // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionMetadataSection.INSTANCE);
+        Pair<TextureType<Object>,Object> metadata = null;
+        try{
+            metadata = resource.metadata().getSection(FusionMetadataSection.INSTANCE).orElse(null);
+        }catch(IOException ignored){ /* Metadata will always be cached already, so need to worry about exceptions */ }
         if(metadata != null){
             this.fusionTextureMetadata.put(info.name(), metadata);
             // Adjust the frame size

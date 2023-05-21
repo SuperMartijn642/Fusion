@@ -1,15 +1,13 @@
 package com.supermartijn642.fusion.api.provider;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
+import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DataProvider;
-import net.minecraft.data.HashCache;
 import net.minecraft.resources.ResourceLocation;
 
 import java.io.IOException;
@@ -26,8 +24,6 @@ import java.util.Map;
  */
 public abstract class FusionModelProvider implements DataProvider {
 
-    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
-
     private final Map<ResourceLocation,ModelInstance<?>> models = new HashMap<>();
     private final String modName;
     private final DataGenerator generator;
@@ -41,7 +37,7 @@ public abstract class FusionModelProvider implements DataProvider {
     }
 
     @Override
-    public final void run(HashCache cache) throws IOException{
+    public final void run(CachedOutput cache) throws IOException{
         this.generate();
 
         Path output = this.generator.getOutputFolder();
@@ -50,7 +46,7 @@ public abstract class FusionModelProvider implements DataProvider {
             ModelInstance<?> model = entry.getValue();
             String extension = location.getPath().lastIndexOf(".") > location.getPath().lastIndexOf("/") ? "" : ".json";
             Path path = Path.of("assets", location.getNamespace(), "models", location.getPath() + extension);
-            DataProvider.save(GSON, cache, FusionModelTypeRegistry.serializeModelData(model), output.resolve(path));
+            DataProvider.saveStable(cache, FusionModelTypeRegistry.serializeModelData(model), output.resolve(path));
         }
     }
 

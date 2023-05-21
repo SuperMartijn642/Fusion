@@ -2,13 +2,13 @@ package com.supermartijn642.fusion.api.provider;
 
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
+import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.forgespi.language.IModInfo;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -28,13 +28,13 @@ public abstract class FusionModelProvider implements DataProvider {
 
     private final Map<ResourceLocation,ModelInstance<?>> models = new HashMap<>();
     private final String modName;
-    private final FabricDataOutput output;
+    private final PackOutput output;
 
     /**
      * @param modid modid of the mod which creates the generator
      */
-    public FusionModelProvider(String modid, FabricDataOutput output){
-        this.modName = FabricLoader.getInstance().getModContainer(modid).map(ModContainer::getMetadata).map(ModMetadata::getName).orElse(modid);
+    public FusionModelProvider(String modid, PackOutput output){
+        this.modName = ModList.get().getModContainerById(modid).map(ModContainer::getModInfo).map(IModInfo::getDisplayName).orElse(modid);
         this.output = output;
     }
 

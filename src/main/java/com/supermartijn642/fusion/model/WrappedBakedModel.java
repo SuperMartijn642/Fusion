@@ -1,27 +1,25 @@
 package com.supermartijn642.fusion.model;
 
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.IDynamicBakedModel;
+import net.minecraftforge.client.model.data.ModelData;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class WrappedBakedModel implements BakedModel, FabricBakedModel {
+public class WrappedBakedModel implements BakedModel, IDynamicBakedModel {
 
     protected final BakedModel original;
 
@@ -30,23 +28,8 @@ public class WrappedBakedModel implements BakedModel, FabricBakedModel {
     }
 
     @Override
-    public boolean isVanillaAdapter(){
-        return ((FabricBakedModel)this.original).isVanillaAdapter();
-    }
-
-    @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
-        ((FabricBakedModel)this.original).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-    }
-
-    @Override
-    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
-        ((FabricBakedModel)this.original).emitItemQuads(stack, randomSupplier, context);
-    }
-
-    @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random){
-        return this.original.getQuads(state, direction, random);
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType){
+        return this.original.getQuads(state, side, rand, extraData, renderType);
     }
 
     @Override

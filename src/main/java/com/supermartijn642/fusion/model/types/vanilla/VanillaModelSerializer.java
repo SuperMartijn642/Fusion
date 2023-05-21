@@ -26,7 +26,7 @@ public class VanillaModelSerializer implements JsonSerializer<BlockModel> {
             src.textureMap.forEach((key, texture) -> textures.addProperty(key, texture.<String>map(m -> m.texture().toString(), s -> s)));
             json.add("textures", textures);
         }
-        if(src.parentLocation == null && !src.hasAmbientOcclusion)
+        if(src.hasAmbientOcclusion != null && !src.hasAmbientOcclusion)
             json.addProperty("ambientocclusion", false);
         if(src.guiLight != null)
             json.addProperty("gui_light", src.guiLight.name().toLowerCase(Locale.ROOT));

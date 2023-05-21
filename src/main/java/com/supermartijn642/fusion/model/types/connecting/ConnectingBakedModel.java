@@ -8,11 +8,10 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureType;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -21,13 +20,14 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.data.ModelData;
+import net.minecraftforge.client.model.data.ModelProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -36,13 +36,13 @@ import java.util.stream.Collectors;
 public class ConnectingBakedModel extends WrappedBakedModel {
 
     private static final int BLOCK_VERTEX_DATA_UV_OFFSET = findUVOffset(DefaultVertexFormat.BLOCK);
+    private static final ModelProperty<SurroundingBlockData> SURROUNDING_BLOCK_DATA_MODEL_PROPERTY = new ModelProperty<>();
 
     private final Transformation modelRotation;
     private final List<ConnectionPredicate> predicates;
     // [cullface][hashcode * 6]
     private final Map<Direction,Map<Integer,List<BakedQuad>>> quadCache = new HashMap<>();
     private final Map<Integer,List<BakedQuad>> directionlessQuadCache = new HashMap<>();
-    private final ThreadLocal<Pair<BlockAndTintGetter,BlockPos>> levelCapture = new ThreadLocal<>();
 
     public ConnectingBakedModel(BakedModel original, Transformation modelRotation, List<ConnectionPredicate> predicates){
         super(original);
@@ -53,20 +53,8 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     }
 
     @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
-        this.levelCapture.set(Pair.of(blockView, pos));
-        context.bakedModelConsumer().accept(this, state);
-        this.levelCapture.set(null);
-    }
-
-    @Override
-    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
-        context.bakedModelConsumer().accept(this);
-    }
-
-    @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random){
-        SurroundingBlockData data = this.levelCapture.get() == null ? null : this.getModelData(this.levelCapture.get().left(), this.levelCapture.get().right(), state);
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource random, @NotNull ModelData modelData, @Nullable RenderType renderType){
+        SurroundingBlockData data = modelData.has(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY) ? modelData.get(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY) : null;
         int hashCode = data == null ? 0 : data.hashCode();
 
         // Compute the quads if they aren't in the cache yet
@@ -149,8 +137,8 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     }
 
     @Override
-    public boolean isVanillaAdapter(){
-        return false;
+    public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
+        return ModelData.builder().with(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY, this.getModelData(level, pos, state)).build();
     }
 
     @Override

@@ -4,13 +4,13 @@ import com.google.gson.JsonObject;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.fabricmc.loader.api.FabricLoader;
-import net.fabricmc.loader.api.ModContainer;
-import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
+import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fml.ModContainer;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.forgespi.language.IModInfo;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -30,13 +30,13 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
 
     private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> metadata = new HashMap<>();
     private final String modName;
-    private final FabricDataOutput output;
+    private final PackOutput output;
 
     /**
      * @param modid modid of the mod which creates the generator
      */
-    public FusionTextureMetadataProvider(String modid, FabricDataOutput output){
-        this.modName = FabricLoader.getInstance().getModContainer(modid).map(ModContainer::getMetadata).map(ModMetadata::getName).orElse(modid);
+    public FusionTextureMetadataProvider(String modid, PackOutput output){
+        this.modName = ModList.get().getModContainerById(modid).map(ModContainer::getModInfo).map(IModInfo::getDisplayName).orElse(modid);
         this.output = output;
     }
 

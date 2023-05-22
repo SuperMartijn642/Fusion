@@ -2,11 +2,11 @@ package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
+import net.minecraft.client.renderer.model.IModelTransform;
+import net.minecraft.client.renderer.model.ModelBakery;
+import net.minecraft.client.renderer.model.RenderMaterial;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelState;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 import java.util.function.Function;
 
@@ -16,11 +16,11 @@ import java.util.function.Function;
 public class ModelBakingContextImpl implements ModelBakingContext {
 
     private final ModelBakery modelBakery;
-    private final Function<Material,TextureAtlasSprite> spriteGetter;
-    private final ModelState modelState;
+    private final Function<RenderMaterial,TextureAtlasSprite> spriteGetter;
+    private final IModelTransform modelState;
     private final ResourceLocation modelIdentifier;
 
-    public ModelBakingContextImpl(ModelBakery modelBakery, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, ResourceLocation modelIdentifier){
+    public ModelBakingContextImpl(ModelBakery modelBakery, Function<RenderMaterial,TextureAtlasSprite> spriteGetter, IModelTransform modelState, ResourceLocation modelIdentifier){
         this.modelBakery = modelBakery;
         this.spriteGetter = spriteGetter;
         this.modelState = modelState;
@@ -40,11 +40,11 @@ public class ModelBakingContextImpl implements ModelBakingContext {
 
     @Override
     public TextureAtlasSprite getTexture(ResourceLocation atlas, ResourceLocation texture){
-        return this.spriteGetter.apply(new Material(atlas, texture));
+        return this.spriteGetter.apply(new RenderMaterial(atlas, texture));
     }
 
     @Override
-    public ModelState getTransformation(){
+    public IModelTransform getTransformation(){
         return this.modelState;
     }
 

@@ -8,8 +8,8 @@ import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Serializer;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.Direction;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import java.util.List;
  */
 public class AndConnectionPredicate implements ConnectionPredicate {
 
-    public static final Serializer<AndConnectionPredicate> SERIALIZER = new Serializer<>() {
+    public static final Serializer<AndConnectionPredicate> SERIALIZER = new Serializer<AndConnectionPredicate>() {
         @Override
         public AndConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("predicates") || !json.get("predicates").isJsonArray())

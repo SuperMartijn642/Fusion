@@ -6,7 +6,7 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 import java.util.HashMap;
 import java.util.Map;

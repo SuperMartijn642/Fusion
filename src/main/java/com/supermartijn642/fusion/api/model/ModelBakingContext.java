@@ -1,10 +1,10 @@
 package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.util.TextureAtlases;
+import net.minecraft.client.renderer.model.IModelTransform;
+import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelState;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -42,7 +42,7 @@ public interface ModelBakingContext {
     /**
      * @return the transformations which should be applied to the model
      */
-    ModelState getTransformation();
+    IModelTransform getTransformation();
 
     /**
      * @return the identifier of the model.

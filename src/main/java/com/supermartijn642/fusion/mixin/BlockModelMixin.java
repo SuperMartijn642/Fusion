@@ -3,9 +3,9 @@ package com.supermartijn642.fusion.mixin;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.model.FusionBlockModel;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.client.renderer.model.IUnbakedModel;
+import net.minecraft.util.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,9 +27,9 @@ public class BlockModelMixin implements BlockModelExtension {
         at = @At("HEAD"),
         ordinal = 0
     )
-    private Function<ResourceLocation,UnbakedModel> adjustModelGetter(Function<ResourceLocation,UnbakedModel> modelGetter){
+    private Function<ResourceLocation,IUnbakedModel> adjustModelGetter(Function<ResourceLocation,IUnbakedModel> modelGetter){
         return location -> {
-            UnbakedModel model = modelGetter.apply(location);
+            IUnbakedModel model = modelGetter.apply(location);
             if(model instanceof FusionBlockModel)
                 return ((FusionBlockModel)model).hasVanillaModel() ? ((FusionBlockModel)model).getVanillaModel() : FusionBlockModel.DUMMY_MODEL;
             return model;

@@ -1,9 +1,5 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
-import com.mojang.math.Transformation;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
@@ -11,20 +7,25 @@ import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.client.renderer.vertex.VertexFormatElement;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.world.IBlockDisplayReader;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
 import org.antlr.v4.runtime.misc.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,16 +35,16 @@ import java.util.stream.Collectors;
  */
 public class ConnectingBakedModel extends WrappedBakedModel {
 
-    private static final int BLOCK_VERTEX_DATA_UV_OFFSET = findUVOffset(DefaultVertexFormat.BLOCK);
+    private static final int BLOCK_VERTEX_DATA_UV_OFFSET = findUVOffset(DefaultVertexFormats.BLOCK);
     private static final ModelProperty<SurroundingBlockData> SURROUNDING_BLOCK_DATA_MODEL_PROPERTY = new ModelProperty<>();
 
-    private final Transformation modelRotation;
+    private final TransformationMatrix modelRotation;
     private final List<ConnectionPredicate> predicates;
     // [cullface][hashcode * 6]
     private final Map<Direction,Map<Integer,List<BakedQuad>>> quadCache = new HashMap<>();
     private final Map<Integer,List<BakedQuad>> directionlessQuadCache = new HashMap<>();
 
-    public ConnectingBakedModel(BakedModel original, Transformation modelRotation, List<ConnectionPredicate> predicates){
+    public ConnectingBakedModel(IBakedModel original, TransformationMatrix modelRotation, List<ConnectionPredicate> predicates){
         super(original);
         this.modelRotation = modelRotation;
         this.predicates = predicates;
@@ -93,7 +94,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     }
 
     private static int[] adjustVertexDataUV(int[] vertexData, int newU, int newV, TextureAtlasSprite sprite){
-        int vertexSize = DefaultVertexFormat.BLOCK.getIntegerSize();
+        int vertexSize = DefaultVertexFormats.BLOCK.getIntegerSize();
         int vertices = vertexData.length / vertexSize;
         int uvOffset = BLOCK_VERTEX_DATA_UV_OFFSET / 4;
 
@@ -130,12 +131,12 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         return vertexFormat.offsets.getInt(index);
     }
 
-    public SurroundingBlockData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state){
+    public SurroundingBlockData getModelData(IBlockDisplayReader level, BlockPos pos, BlockState state){
         return SurroundingBlockData.create(level, pos, this.modelRotation, this.predicates);
     }
 
     @Override
-    public @NotNull IModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull IModelData modelData){
+    public @Nonnull IModelData getModelData(@Nonnull IBlockDisplayReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData modelData){
         return new ModelDataMap.Builder().withInitial(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY, this.getModelData(level, pos, state)).build();
     }
 
@@ -145,12 +146,12 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     }
 
     @Override
-    public ItemTransforms getTransforms(){
+    public ItemCameraTransforms getTransforms(){
         return super.getTransforms();
     }
 
     @Override
-    public ItemOverrides getOverrides(){
-        return ItemOverrides.EMPTY;
+    public ItemOverrideList getOverrides(){
+        return ItemOverrideList.EMPTY;
     }
 }

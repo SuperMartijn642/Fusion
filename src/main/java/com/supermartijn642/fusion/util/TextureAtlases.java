@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.util;
 
-import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 30/04/2022 by SuperMartijn642
@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 public class TextureAtlases {
 
     @SuppressWarnings("deprecation")
-    private static final ResourceLocation BLOCKS = TextureAtlas.LOCATION_BLOCKS;
+    private static final ResourceLocation BLOCKS = AtlasTexture.LOCATION_BLOCKS;
 
     public static ResourceLocation getBlocks(){
         return BLOCKS;

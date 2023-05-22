@@ -1,14 +1,14 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
 import com.google.common.base.Objects;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Transformation;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.vector.Matrix4f;
+import net.minecraft.util.math.vector.TransformationMatrix;
+import net.minecraft.world.IBlockDisplayReader;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -19,17 +19,17 @@ import java.util.Map;
  */
 public class SurroundingBlockData {
 
-    public static SurroundingBlockData create(BlockAndTintGetter level, BlockPos pos, Transformation rotation, List<ConnectionPredicate> predicates){
-        Transformation inverseRotation = rotation.inverse();
-        Matrix4f rotationMatrix = inverseRotation == null ? Transformation.identity().getMatrix() : rotation.getMatrix();
-        Matrix4f inverseRotationMatrix = inverseRotation == null ? Transformation.identity().getMatrix() : inverseRotation.getMatrix();
+    public static SurroundingBlockData create(IBlockDisplayReader level, BlockPos pos, TransformationMatrix rotation, List<ConnectionPredicate> predicates){
+        TransformationMatrix inverseRotation = rotation.inverse();
+        Matrix4f rotationMatrix = inverseRotation == null ? TransformationMatrix.identity().getMatrix() : rotation.getMatrix();
+        Matrix4f inverseRotationMatrix = inverseRotation == null ? TransformationMatrix.identity().getMatrix() : inverseRotation.getMatrix();
         Map<Direction,SideConnections> connections = new EnumMap<>(Direction.class);
         for(Direction side : Direction.values())
             connections.put(side, getConnections(side, rotationMatrix, inverseRotationMatrix, level, pos, predicates));
         return new SurroundingBlockData(connections);
     }
 
-    private static SideConnections getConnections(Direction side, Matrix4f rotation, Matrix4f inverseRotation, BlockAndTintGetter level, BlockPos pos, List<ConnectionPredicate> predicates){
+    private static SideConnections getConnections(Direction side, Matrix4f rotation, Matrix4f inverseRotation, IBlockDisplayReader level, BlockPos pos, List<ConnectionPredicate> predicates){
         Direction originalSide = Direction.rotate(inverseRotation, side);
         Direction left;
         Direction right;
@@ -63,7 +63,7 @@ public class SurroundingBlockData {
         return new SideConnections(side, connectTop, connectTopRight, connectRight, connectBottomRight, connectBottom, connectBottomLeft, connectLeft, connectTopLeft);
     }
 
-    private static boolean shouldConnect(BlockAndTintGetter level, Direction side, Direction originalSide, BlockState self, BlockPos neighborPos, ConnectionDirection direction, List<ConnectionPredicate> predicates){
+    private static boolean shouldConnect(IBlockDisplayReader level, Direction side, Direction originalSide, BlockState self, BlockPos neighborPos, ConnectionDirection direction, List<ConnectionPredicate> predicates){
         BlockState otherState = level.getBlockState(neighborPos);
         BlockState stateInFront = level.getBlockState(neighborPos.relative(side));
         return predicates.stream().anyMatch(predicate -> predicate.shouldConnect(originalSide, self, otherState, stateInFront, direction));

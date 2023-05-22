@@ -1,9 +1,9 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.*;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -47,7 +47,7 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public BakedModel bake(ModelBakingContext context){
+    public IBakedModel bake(ModelBakingContext context){
         return this.modelType.bake(context, this.modelData);
     }
 }

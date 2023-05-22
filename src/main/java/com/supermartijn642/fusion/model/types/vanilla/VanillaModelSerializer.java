@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.model.types.vanilla;
 
 import com.google.gson.*;
-import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.model.BlockModel;
 
 import java.lang.reflect.Type;
 import java.util.Locale;

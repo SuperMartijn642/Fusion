@@ -1,10 +1,10 @@
 package com.supermartijn642.fusion.texture;
 
-import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
-import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -16,10 +16,9 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
     private final ResourceLocation identifier;
     private final NativeImage[] images;
     private final int atlasWidth, atlasHeight;
-    private final TextureAtlas atlas;
+    private final AtlasTexture atlas;
     private final int spriteX, spriteY, spriteWidth, spriteHeight;
     private final int mipmapLevels;
-    private boolean originalRequested = false;
     private boolean imagesRequested = false;
 
     public SpriteCreationContextImpl(TextureAtlasSprite original){
@@ -28,28 +27,24 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
         this.textureHeight = original.mainImage[0].getHeight();
         this.identifier = original.getName();
         this.images = original.mainImage;
-        this.atlasWidth = Math.round(original.getX() / original.getU0());
-        this.atlasHeight = Math.round(original.getY() / original.getV0());
+        this.atlasWidth = Math.round(original.x / original.getU0());
+        this.atlasHeight = Math.round(original.y / original.getV0());
         this.atlas = original.atlas();
-        this.spriteX = original.getX();
-        this.spriteY = original.getY();
+        this.spriteX = original.x;
+        this.spriteY = original.y;
         this.spriteWidth = original.getWidth();
         this.spriteHeight = original.getHeight();
         this.mipmapLevels = original.mainImage.length - 1;
     }
 
     private void closeUnusedResources(){
-        if(!this.originalRequested){
-            if(!this.imagesRequested)
-                this.original.close();
-            else if(this.original.animatedTexture != null)
-                this.original.animatedTexture.close();
-        }
+        if(!this.imagesRequested)
+            this.original.close();
     }
 
     @Override
     public TextureAtlasSprite createOriginalSprite(){
-        this.originalRequested = true;
+        this.imagesRequested = true;
         return this.original;
     }
 
@@ -85,7 +80,7 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
     }
 
     @Override
-    public TextureAtlas getAtlas(){
+    public AtlasTexture getAtlas(){
         return this.atlas;
     }
 

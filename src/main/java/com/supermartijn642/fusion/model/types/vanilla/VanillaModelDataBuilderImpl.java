@@ -4,10 +4,10 @@ import com.mojang.datafixers.util.Either;
 import com.supermartijn642.fusion.api.model.data.VanillaModelDataBuilder;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.util.TextureAtlases;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.RenderMaterial;
+import net.minecraft.util.ResourceLocation;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,10 +56,10 @@ public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<Vani
 
     @Override
     public BlockModel build(){
-        Map<String,Either<Material,String>> textures = this.textures.entrySet().stream()
+        Map<String,Either<RenderMaterial,String>> textures = this.textures.entrySet().stream()
             .map(entry -> Pair.of(entry.getKey(), entry.getValue()))
-            .map(pair -> pair.<Either<Material,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new Material(TextureAtlases.getBlocks(), new ResourceLocation(s)))))
+            .map(pair -> pair.<Either<RenderMaterial,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new RenderMaterial(TextureAtlases.getBlocks(), new ResourceLocation(s)))))
             .collect(Collectors.toMap(Pair::left, Pair::right));
-        return new BlockModel(this.parent, Collections.emptyList(), textures, false, null, ItemTransforms.NO_TRANSFORMS, Collections.emptyList());
+        return new BlockModel(this.parent, Collections.emptyList(), textures, false, null, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
     }
 }

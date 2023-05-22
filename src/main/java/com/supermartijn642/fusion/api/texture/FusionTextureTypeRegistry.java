@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.api.texture;
 
 import com.google.gson.JsonObject;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 26/04/2023 by SuperMartijn642

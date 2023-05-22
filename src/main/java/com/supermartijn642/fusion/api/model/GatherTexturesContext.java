@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.api.model;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 29/04/2023 by SuperMartijn642

@@ -1,9 +1,9 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
-import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
+import net.minecraft.client.resources.data.AnimationMetadataSection;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
@@ -19,13 +19,12 @@ public class ConnectingTextureSprite extends TextureAtlasSprite {
             0,
             1,
             1,
-            original.getX(),
-            original.getY(),
-            new NativeImage(NativeImage.Format.RGBA, 1, 1, true, 0)
+            original.x,
+            original.y,
+            new NativeImage(NativeImage.PixelFormat.RGBA, 1, 1, true, 0)
         );
         this.layout = layout;
         this.mainImage = original.mainImage;
-        this.animatedTexture = original.animatedTexture;
         this.u0 = original.u0;
         this.u1 = original.u1;
         this.v0 = original.v0;

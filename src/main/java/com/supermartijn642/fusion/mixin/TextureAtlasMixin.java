@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.mojang.blaze3d.platform.PngInfo;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
@@ -8,12 +7,13 @@ import com.supermartijn642.fusion.texture.FusionMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
 import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
+import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.texture.PngSizeInfo;
 import net.minecraft.client.renderer.texture.Stitcher;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.resources.IResource;
+import net.minecraft.resources.IResourceManager;
+import net.minecraft.util.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,28 +25,28 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
-@Mixin(value = TextureAtlas.class, priority = 900)
+@Mixin(value = AtlasTexture.class, priority = 900)
 public class TextureAtlasMixin {
 
     @Unique
     private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> fusionTextureMetadata = new HashMap<>();
 
     @Inject(
-        method = "lambda$getBasicSpriteInfos$2(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/server/packs/resources/ResourceManager;Ljava/util/Queue;)V",
+        method = "lambda$getBasicSpriteInfos$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;<init>(Lnet/minecraft/resources/ResourceLocation;IILnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;)V",
+            target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;<init>(Lnet/minecraft/util/ResourceLocation;IILnet/minecraft/client/resources/data/AnimationMetadataSection;)V",
             shift = At.Shift.BY,
             by = 2
         ),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void gatherMetadata(ResourceLocation identifier, ResourceManager resourceManager, Queue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, Resource resource, PngInfo pngInfo){
+    private void gatherMetadata(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, IResource resource, Object object, PngSizeInfo pngInfo){
         // Get the fusion metadata
         Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionMetadataSection.INSTANCE);
         if(metadata != null){
@@ -67,11 +67,11 @@ public class TextureAtlasMixin {
     }
 
     @Inject(
-        method = "getLoadedSprites(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/client/renderer/texture/Stitcher;I)Ljava/util/List;",
+        method = "getLoadedSprites(Lnet/minecraft/resources/IResourceManager;Lnet/minecraft/client/renderer/texture/Stitcher;I)Ljava/util/List;",
         at = @At("RETURN"),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void getLoadedSprites(ResourceManager resourceManager, Stitcher stitcher, int i, CallbackInfoReturnable<List<TextureAtlasSprite>> ci){
+    private void getLoadedSprites(IResourceManager resourceManager, Stitcher stitcher, int i, CallbackInfoReturnable<List<TextureAtlasSprite>> ci){
         // Replace sprites
         List<TextureAtlasSprite> textures = ci.getReturnValue();
         if(textures != null){

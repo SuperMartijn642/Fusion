@@ -5,15 +5,16 @@ import com.google.gson.GsonBuilder;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.DataProvider;
-import net.minecraft.data.HashCache;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.data.DirectoryCache;
+import net.minecraft.data.IDataProvider;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +25,7 @@ import java.util.Map;
  * <p>
  * Created 01/05/2023 by SuperMartijn642
  */
-public abstract class FusionModelProvider implements DataProvider {
+public abstract class FusionModelProvider implements IDataProvider {
 
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
 
@@ -41,7 +42,7 @@ public abstract class FusionModelProvider implements DataProvider {
     }
 
     @Override
-    public final void run(HashCache cache) throws IOException{
+    public final void run(DirectoryCache cache) throws IOException{
         this.generate();
 
         Path output = this.generator.getOutputFolder();
@@ -49,8 +50,8 @@ public abstract class FusionModelProvider implements DataProvider {
             ResourceLocation location = entry.getKey();
             ModelInstance<?> model = entry.getValue();
             String extension = location.getPath().lastIndexOf(".") > location.getPath().lastIndexOf("/") ? "" : ".json";
-            Path path = Path.of("assets", location.getNamespace(), "models", location.getPath() + extension);
-            DataProvider.save(GSON, cache, FusionModelTypeRegistry.serializeModelData(model), output.resolve(path));
+            Path path = Paths.get("assets", location.getNamespace(), "models", location.getPath() + extension);
+            IDataProvider.save(GSON, cache, FusionModelTypeRegistry.serializeModelData(model), output.resolve(path));
         }
     }
 

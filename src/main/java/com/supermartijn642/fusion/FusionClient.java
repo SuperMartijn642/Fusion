@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.predicate.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 26/04/2023 by SuperMartijn642

@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.api.model.data;
 
 import com.supermartijn642.fusion.model.types.vanilla.VanillaModelDataBuilderImpl;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 01/05/2023 by SuperMartijn642

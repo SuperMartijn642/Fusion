@@ -3,11 +3,9 @@ package com.supermartijn642.fusion.model;
 import com.mojang.datafixers.util.Pair;
 import com.supermartijn642.fusion.api.model.*;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -22,20 +20,20 @@ import java.util.stream.Collectors;
  */
 public class FusionBlockModel extends BlockModel {
 
-    public static final UnbakedModel DUMMY_MODEL = new UnbakedModel() {
+    public static final IUnbakedModel DUMMY_MODEL = new IUnbakedModel() {
         @Override
         public Collection<ResourceLocation> getDependencies(){
             return Collections.emptyList();
         }
 
         @Override
-        public Collection<Material> getMaterials(Function<ResourceLocation,UnbakedModel> function, Set<Pair<String,String>> set){
+        public Collection<RenderMaterial> getMaterials(Function<ResourceLocation,IUnbakedModel> function, Set<Pair<String,String>> set){
             return Collections.emptyList();
         }
 
         @Nullable
         @Override
-        public BakedModel bake(ModelBakery modelBakery, Function<Material,TextureAtlasSprite> function, ModelState modelState, ResourceLocation resourceLocation){
+        public IBakedModel bake(ModelBakery modelBakery, Function<RenderMaterial,TextureAtlasSprite> function, IModelTransform modelState, ResourceLocation resourceLocation){
             return null;
         }
     };
@@ -45,13 +43,13 @@ public class FusionBlockModel extends BlockModel {
     private Collection<ResourceLocation> dependencies;
 
     public FusionBlockModel(ModelInstance<?> model){
-        super(null, Collections.emptyList(), Collections.emptyMap(), false, null, ItemTransforms.NO_TRANSFORMS, Collections.emptyList());
+        super(null, Collections.emptyList(), Collections.emptyMap(), false, null, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
         this.model = model;
         this.vanillaModel = model.getAsVanillaModel();
     }
 
     @Override
-    public BakedModel bake(ModelBakery bakery, BlockModel someOtherModel, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, ResourceLocation modelLocation, boolean gui3d){
+    public IBakedModel bake(ModelBakery bakery, BlockModel someOtherModel, Function<RenderMaterial,TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation, boolean gui3d){
         // Let the custom model handle the actual baking
         ModelBakingContext context = new ModelBakingContextImpl(bakery, spriteGetter, modelTransform, modelLocation);
         return this.model.bake(context);
@@ -72,9 +70,9 @@ public class FusionBlockModel extends BlockModel {
     }
 
     @Override
-    public Collection<Material> getMaterials(Function<ResourceLocation,UnbakedModel> modelGetter, Set<com.mojang.datafixers.util.Pair<String,String>> errors){
+    public Collection<RenderMaterial> getMaterials(Function<ResourceLocation,IUnbakedModel> modelGetter, Set<com.mojang.datafixers.util.Pair<String,String>> errors){
         GatherTexturesContext context = identifier -> getModelInstance(modelGetter.apply(identifier));
-        Collection<Material> materials = null;
+        Collection<RenderMaterial> materials = null;
         try{
             Collection<SpriteIdentifier> pairs = this.model.getTextureDependencies(context);
             if(pairs != null)
@@ -89,7 +87,7 @@ public class FusionBlockModel extends BlockModel {
         if(!dependencies.isEmpty()){
             materials = new ArrayList<>(materials);
             dependencies.forEach(location -> {
-                UnbakedModel model = modelGetter.apply(location);
+                IUnbakedModel model = modelGetter.apply(location);
                 if(model == null)
                     BlockModel.LOGGER.warn("Could not find dependency model '{}' while loading model '{}'", location, this);
             });
@@ -105,7 +103,7 @@ public class FusionBlockModel extends BlockModel {
         return this.vanillaModel;
     }
 
-    public static ModelInstance<?> getModelInstance(UnbakedModel model){
+    public static ModelInstance<?> getModelInstance(IUnbakedModel model){
         if(model instanceof FusionBlockModel)
             return ((FusionBlockModel)model).model;
         if(model instanceof BlockModel){

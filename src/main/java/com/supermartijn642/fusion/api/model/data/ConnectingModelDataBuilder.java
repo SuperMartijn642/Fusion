@@ -4,7 +4,7 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.predicate.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelDataBuilderImpl;
-import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.model.BlockModel;
 
 import java.util.List;
 

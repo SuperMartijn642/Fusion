@@ -1,12 +1,12 @@
 package com.supermartijn642.fusion.model;
 
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Direction;
 import net.minecraftforge.client.model.data.IDynamicBakedModel;
 import net.minecraftforge.client.model.data.IModelData;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -18,11 +18,11 @@ import java.util.Random;
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class WrappedBakedModel implements BakedModel, IDynamicBakedModel {
+public class WrappedBakedModel implements IBakedModel, IDynamicBakedModel {
 
-    protected final BakedModel original;
+    protected final IBakedModel original;
 
-    public WrappedBakedModel(BakedModel original){
+    public WrappedBakedModel(IBakedModel original){
         this.original = original;
     }
 
@@ -57,12 +57,12 @@ public class WrappedBakedModel implements BakedModel, IDynamicBakedModel {
     }
 
     @Override
-    public ItemTransforms getTransforms(){
+    public ItemCameraTransforms getTransforms(){
         return this.original.getTransforms();
     }
 
     @Override
-    public ItemOverrides getOverrides(){
+    public ItemOverrideList getOverrides(){
         return this.original.getOverrides();
     }
 }

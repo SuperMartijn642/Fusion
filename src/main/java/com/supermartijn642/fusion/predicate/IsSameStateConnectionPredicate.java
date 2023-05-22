@@ -5,8 +5,8 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.Direction;
 
 import javax.annotation.Nullable;
 
@@ -15,7 +15,7 @@ import javax.annotation.Nullable;
  */
 public class IsSameStateConnectionPredicate implements ConnectionPredicate {
 
-    public static final Serializer<IsSameStateConnectionPredicate> SERIALIZER = new Serializer<>() {
+    public static final Serializer<IsSameStateConnectionPredicate> SERIALIZER = new Serializer<IsSameStateConnectionPredicate>() {
         @Override
         public IsSameStateConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
             return new IsSameStateConnectionPredicate();

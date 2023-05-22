@@ -7,8 +7,8 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelType;
 import com.supermartijn642.fusion.model.types.vanilla.VanillaModelType;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.client.renderer.model.IUnbakedModel;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class DefaultModelTypes {
     /**
      * Model type used for any unknown models added by other mods.
      */
-    public static final ModelType<UnbakedModel> UNKNOWN = new UnknownModelType();
+    public static final ModelType<IUnbakedModel> UNKNOWN = new UnknownModelType();
     /**
      * Model type which allows for connecting textures.
      * @see DefaultTextureTypes#CONNECTING

@@ -2,20 +2,18 @@ package com.supermartijn642.fusion.texture.types.scrolling;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
 import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
+import net.minecraft.client.resources.data.AnimationMetadataSection;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Locale;
-import java.util.stream.IntStream;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
@@ -176,16 +174,16 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         private final int[] frameTimes;
         private int frame, tickCounter;
 
-        protected ScrollingSprite(TextureAtlas atlas, Info info, int atlasWidth, int atlasHeight, int atlasX, int atlasY, NativeImage[] mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
-            super(atlas, info, 0, atlasWidth, atlasHeight, atlasX, atlasY, new NativeImage(NativeImage.Format.RGBA, 1, 1, true, 0));
+        protected ScrollingSprite(AtlasTexture atlas, Info info, int atlasWidth, int atlasHeight, int atlasX, int atlasY, NativeImage[] mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
+            super(atlas, info, 0, atlasWidth, atlasHeight, atlasX, atlasY, new NativeImage(NativeImage.PixelFormat.RGBA, 1, 1, true, 0));
             this.mainImage = mainImage;
             this.xPositions = xPositions;
             this.yPositions = yPositions;
             this.frameTimes = frameTimes;
-            this.animatedTexture = new ScrollingAnimatedTexture();
         }
 
-        private void tick(){
+        @Override
+        public void cycleFrames(){
             if(++this.tickCounter >= this.frameTimes[this.frame]){
                 this.frame = (this.frame + 1) % this.xPositions.length;
                 this.tickCounter = 0;
@@ -203,30 +201,23 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         }
 
         @Override
-        public IntStream getUniqueFrames(){
-            return IntStream.of(1);
+        public int getFrameCount(){
+            return this.frameTimes.length;
         }
 
-        private class ScrollingAnimatedTexture extends TextureAtlasSprite.AnimatedTexture {
+        @Override
+        public boolean isAnimation(){
+            return true;
+        }
 
-            public ScrollingAnimatedTexture(){
-                super(Collections.emptyList(), 1, null);
-            }
+        @Override
+        public boolean isTransparent(int frameIndex, int x, int y){
+            return (this.getPixelRGBA(frameIndex, x, y) >> 24 & 255) == 0;
+        }
 
-            @Override
-            public void tick(){
-                ScrollingSprite.this.tick();
-            }
-
-            @Override
-            public void uploadFirstFrame(){
-                ScrollingSprite.this.uploadFirstFrame();
-            }
-
-            @Override
-            public IntStream getUniqueFrames(){
-                return ScrollingSprite.this.getUniqueFrames();
-            }
+        @Override
+        public int getPixelRGBA(int frameIndex, int x, int y){
+            return this.mainImage[0].getPixelRGBA(x + this.xPositions[frameIndex] * this.getWidth(), y + this.yPositions[frameIndex] * this.getHeight());
         }
     }
 }

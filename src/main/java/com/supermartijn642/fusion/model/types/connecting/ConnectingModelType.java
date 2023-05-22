@@ -9,9 +9,9 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.predicate.IsSameStateConnectionPredicate;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public class ConnectingModelType implements ModelType<Pair<BlockModel,List<Conne
     }
 
     @Override
-    public BakedModel bake(ModelBakingContext context, Pair<BlockModel,List<ConnectionPredicate>> data){
+    public IBakedModel bake(ModelBakingContext context, Pair<BlockModel,List<ConnectionPredicate>> data){
         return new ConnectingBakedModel(DefaultModelTypes.VANILLA.bake(context, data.left()), context.getTransformation().getRotation(), data.right());
     }
 

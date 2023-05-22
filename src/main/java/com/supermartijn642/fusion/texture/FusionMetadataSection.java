@@ -3,12 +3,12 @@ package com.supermartijn642.fusion.texture;
 import com.google.gson.JsonObject;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import net.minecraft.resources.data.IMetadataSectionSerializer;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
-public class FusionMetadataSection implements MetadataSectionSerializer<Pair<TextureType<Object>,Object>> {
+public class FusionMetadataSection implements IMetadataSectionSerializer<Pair<TextureType<Object>,Object>> {
 
     public static final FusionMetadataSection INSTANCE = new FusionMetadataSection();
 

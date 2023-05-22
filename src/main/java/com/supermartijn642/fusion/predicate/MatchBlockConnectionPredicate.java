@@ -6,11 +6,11 @@ import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.Direction;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.Registry;
 
 import javax.annotation.Nullable;
 
@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
  */
 public class MatchBlockConnectionPredicate implements ConnectionPredicate {
 
-    public static final Serializer<MatchBlockConnectionPredicate> SERIALIZER = new Serializer<>() {
+    public static final Serializer<MatchBlockConnectionPredicate> SERIALIZER = new Serializer<MatchBlockConnectionPredicate>() {
         @Override
         public MatchBlockConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())

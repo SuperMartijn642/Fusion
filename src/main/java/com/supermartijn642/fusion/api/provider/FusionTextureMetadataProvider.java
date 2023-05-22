@@ -7,15 +7,16 @@ import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.DataProvider;
-import net.minecraft.data.HashCache;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.data.DirectoryCache;
+import net.minecraft.data.IDataProvider;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +27,7 @@ import java.util.Map;
  * <p>
  * Created 02/05/2023 by SuperMartijn642
  */
-public abstract class FusionTextureMetadataProvider implements DataProvider {
+public abstract class FusionTextureMetadataProvider implements IDataProvider {
 
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
 
@@ -43,7 +44,7 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
     }
 
     @Override
-    public final void run(HashCache cache) throws IOException{
+    public final void run(DirectoryCache cache) throws IOException{
         this.generate();
 
         Path output = this.generator.getOutputFolder();
@@ -51,10 +52,10 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
             ResourceLocation location = entry.getKey();
             Pair<TextureType<Object>,Object> metadata = entry.getValue();
             String extension = location.getPath().endsWith(".mcmeta") ? "" : location.getPath().lastIndexOf('.') > location.getPath().lastIndexOf('/') ? ".mcmeta" : ".png.mcmeta";
-            Path path = Path.of("assets", location.getNamespace(), "textures", location.getPath() + extension);
+            Path path = Paths.get("assets", location.getNamespace(), "textures", location.getPath() + extension);
             JsonObject json = new JsonObject();
             json.add("fusion", FusionTextureTypeRegistry.serializeTextureData(metadata.left(), metadata.right()));
-            DataProvider.save(GSON, cache, json, output.resolve(path));
+            IDataProvider.save(GSON, cache, json, output.resolve(path));
         }
     }
 

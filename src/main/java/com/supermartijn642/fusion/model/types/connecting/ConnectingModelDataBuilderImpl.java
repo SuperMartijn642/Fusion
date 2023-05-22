@@ -4,8 +4,8 @@ import com.supermartijn642.fusion.api.model.data.ConnectingModelDataBuilder;
 import com.supermartijn642.fusion.api.model.data.VanillaModelDataBuilder;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.util.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.List;

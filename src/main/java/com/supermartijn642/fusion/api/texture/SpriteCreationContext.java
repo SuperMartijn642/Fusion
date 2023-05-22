@@ -1,9 +1,9 @@
 package com.supermartijn642.fusion.api.texture;
 
-import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -50,7 +50,7 @@ public interface SpriteCreationContext {
     /**
      * Gets the atlas which the sprite is stitched to.
      */
-    TextureAtlas getAtlas();
+    AtlasTexture getAtlas();
 
     /**
      * Gets the x-position of the sprite on the atlas.

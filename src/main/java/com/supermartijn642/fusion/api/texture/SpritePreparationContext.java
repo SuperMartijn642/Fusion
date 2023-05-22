@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.api.texture;
 
 import com.supermartijn642.fusion.api.util.Pair;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 28/04/2023 by SuperMartijn642

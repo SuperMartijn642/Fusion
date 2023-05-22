@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.api.predicate;
 
 import com.supermartijn642.fusion.predicate.*;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.block.Block;
 
 import java.util.Arrays;
 

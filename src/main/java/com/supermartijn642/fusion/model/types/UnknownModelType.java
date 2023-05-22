@@ -9,7 +9,7 @@ import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.client.renderer.model.RenderMaterial;
+import net.minecraft.client.renderer.model.Material;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.Collection;
@@ -41,7 +41,7 @@ public class UnknownModelType implements ModelType<IUnbakedModel> {
     public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, IUnbakedModel data){
         // Get the textures
         Set<Pair<String,String>> errors = new HashSet<>();
-        Collection<RenderMaterial> materials = data.getMaterials(location -> context.getModel(location).getAsVanillaModel(), errors);
+        Collection<Material> materials = data.getMaterials(location -> context.getModel(location).getAsVanillaModel(), errors);
         return materials.stream().map(SpriteIdentifier::of).collect(Collectors.toList());
     }
 

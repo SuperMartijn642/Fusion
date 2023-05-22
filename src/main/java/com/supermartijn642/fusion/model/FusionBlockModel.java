@@ -27,13 +27,13 @@ public class FusionBlockModel extends BlockModel {
         }
 
         @Override
-        public Collection<RenderMaterial> getMaterials(Function<ResourceLocation,IUnbakedModel> function, Set<Pair<String,String>> set){
+        public Collection<Material> getMaterials(Function<ResourceLocation,IUnbakedModel> function, Set<Pair<String,String>> set){
             return Collections.emptyList();
         }
 
         @Nullable
         @Override
-        public IBakedModel bake(ModelBakery modelBakery, Function<RenderMaterial,TextureAtlasSprite> function, IModelTransform modelState, ResourceLocation resourceLocation){
+        public IBakedModel bake(ModelBakery modelBakery, Function<Material,TextureAtlasSprite> function, IModelTransform modelState, ResourceLocation resourceLocation){
             return null;
         }
     };
@@ -49,7 +49,7 @@ public class FusionBlockModel extends BlockModel {
     }
 
     @Override
-    public IBakedModel bake(ModelBakery bakery, BlockModel someOtherModel, Function<RenderMaterial,TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation, boolean gui3d){
+    public IBakedModel bake(ModelBakery bakery, BlockModel someOtherModel, Function<Material,TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation, boolean gui3d){
         // Let the custom model handle the actual baking
         ModelBakingContext context = new ModelBakingContextImpl(bakery, spriteGetter, modelTransform, modelLocation);
         return this.model.bake(context);
@@ -70,9 +70,9 @@ public class FusionBlockModel extends BlockModel {
     }
 
     @Override
-    public Collection<RenderMaterial> getMaterials(Function<ResourceLocation,IUnbakedModel> modelGetter, Set<com.mojang.datafixers.util.Pair<String,String>> errors){
+    public Collection<Material> getMaterials(Function<ResourceLocation,IUnbakedModel> modelGetter, Set<com.mojang.datafixers.util.Pair<String,String>> errors){
         GatherTexturesContext context = identifier -> getModelInstance(modelGetter.apply(identifier));
-        Collection<RenderMaterial> materials = null;
+        Collection<Material> materials = null;
         try{
             Collection<SpriteIdentifier> pairs = this.model.getTextureDependencies(context);
             if(pairs != null)

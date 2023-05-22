@@ -6,8 +6,8 @@ import com.mojang.datafixers.util.Pair;
 import com.supermartijn642.fusion.api.model.*;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.Material;
 import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.model.RenderMaterial;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 
@@ -34,7 +34,7 @@ public class VanillaModelType implements ModelType<BlockModel> {
         resolveParents(context, data);
         // Get the textures
         Set<Pair<String,String>> errors = new HashSet<>();
-        Collection<RenderMaterial> materials = data.getMaterials(location -> context.getModel(location).getAsVanillaModel(), errors);
+        Collection<Material> materials = data.getMaterials(location -> context.getModel(location).getAsVanillaModel(), errors);
         return materials.stream().map(SpriteIdentifier::of).collect(Collectors.toList());
     }
 

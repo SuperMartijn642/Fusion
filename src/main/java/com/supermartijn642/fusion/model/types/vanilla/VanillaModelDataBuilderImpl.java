@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.RenderMaterial;
+import net.minecraft.client.renderer.model.Material;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.Collections;
@@ -56,9 +56,9 @@ public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<Vani
 
     @Override
     public BlockModel build(){
-        Map<String,Either<RenderMaterial,String>> textures = this.textures.entrySet().stream()
+        Map<String,Either<Material,String>> textures = this.textures.entrySet().stream()
             .map(entry -> Pair.of(entry.getKey(), entry.getValue()))
-            .map(pair -> pair.<Either<RenderMaterial,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new RenderMaterial(TextureAtlases.getBlocks(), new ResourceLocation(s)))))
+            .map(pair -> pair.<Either<Material,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new Material(TextureAtlases.getBlocks(), new ResourceLocation(s)))))
             .collect(Collectors.toMap(Pair::left, Pair::right));
         return new BlockModel(this.parent, Collections.emptyList(), textures, false, null, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
     }

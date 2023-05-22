@@ -14,10 +14,12 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
@@ -35,9 +37,24 @@ public class TextureAtlasMixin {
 
     @Unique
     private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> fusionTextureMetadata = new HashMap<>();
+    @Unique
+    private final ThreadLocal<PngSizeInfo> pngSizeInfo = new ThreadLocal<>();
+
+    @Redirect(
+        method = "lambda$makeSprites$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
+        at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/renderer/texture/PngSizeInfo;width:I",
+            opcode = Opcodes.GETFIELD
+        )
+    )
+    private int storePngSizeInfo(PngSizeInfo info){
+        this.pngSizeInfo.set(info);
+        return info.width;
+    }
 
     @Inject(
-        method = "lambda$getBasicSpriteInfos$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
+        method = "lambda$makeSprites$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;<init>(Lnet/minecraft/util/ResourceLocation;IILnet/minecraft/client/resources/data/AnimationMetadataSection;)V",
@@ -46,7 +63,7 @@ public class TextureAtlasMixin {
         ),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void gatherMetadata(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, IResource resource, Object object, PngSizeInfo pngInfo){
+    private void gatherMetadata(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, IResource resource){
         // Get the fusion metadata
         Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionMetadataSection.INSTANCE);
         if(metadata != null){
@@ -54,7 +71,7 @@ public class TextureAtlasMixin {
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(info.width(), info.height(), pngInfo.width, pngInfo.height, identifier), metadata.right());
+                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(info.width(), info.height(), this.pngSizeInfo.get().width, this.pngSizeInfo.get().height, identifier), metadata.right());
             }catch(Exception e){
                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!", e);
             }

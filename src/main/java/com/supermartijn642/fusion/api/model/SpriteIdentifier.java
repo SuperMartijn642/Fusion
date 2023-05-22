@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.model.SpriteIdentifierImpl;
 import com.supermartijn642.fusion.util.TextureAtlases;
-import net.minecraft.client.renderer.model.RenderMaterial;
+import net.minecraft.client.renderer.model.Material;
 import net.minecraft.client.renderer.texture.MissingTextureSprite;
 import net.minecraft.util.ResourceLocation;
 
@@ -15,7 +15,7 @@ public interface SpriteIdentifier {
         return new SpriteIdentifierImpl(atlas, texture);
     }
 
-    static SpriteIdentifier of(RenderMaterial material){
+    static SpriteIdentifier of(Material material){
         return new SpriteIdentifierImpl(material);
     }
 
@@ -30,7 +30,7 @@ public interface SpriteIdentifier {
 
     ResourceLocation getTexture();
 
-    default RenderMaterial toMaterial(){
-        return new RenderMaterial(this.getAtlas(), this.getTexture());
+    default Material toMaterial(){
+        return new Material(this.getAtlas(), this.getTexture());
     }
 }

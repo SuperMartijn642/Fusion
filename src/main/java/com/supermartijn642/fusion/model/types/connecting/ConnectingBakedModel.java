@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.model.WrappedBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureType;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.TransformationMatrix;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
@@ -18,8 +19,7 @@ import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.TransformationMatrix;
-import net.minecraft.world.IBlockDisplayReader;
+import net.minecraft.world.ILightReader;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
@@ -90,7 +90,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         adjustVertexDataUV(vertexData, uv[0], uv[1], sprite);
 
         // Create a new quad
-        return new BakedQuad(vertexData, quad.getTintIndex(), quad.getDirection(), quad.getSprite(), quad.isShade());
+        return new BakedQuad(vertexData, quad.getTintIndex(), quad.getDirection(), quad.getSprite(), quad.shouldApplyDiffuseLighting());
     }
 
     private static int[] adjustVertexDataUV(int[] vertexData, int newU, int newV, TextureAtlasSprite sprite){
@@ -131,12 +131,12 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         return vertexFormat.offsets.getInt(index);
     }
 
-    public SurroundingBlockData getModelData(IBlockDisplayReader level, BlockPos pos, BlockState state){
+    public SurroundingBlockData getModelData(ILightReader level, BlockPos pos, BlockState state){
         return SurroundingBlockData.create(level, pos, this.modelRotation, this.predicates);
     }
 
     @Override
-    public @Nonnull IModelData getModelData(@Nonnull IBlockDisplayReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData modelData){
+    public @Nonnull IModelData getModelData(@Nonnull ILightReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData modelData){
         return new ModelDataMap.Builder().withInitial(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY, this.getModelData(level, pos, state)).build();
     }
 

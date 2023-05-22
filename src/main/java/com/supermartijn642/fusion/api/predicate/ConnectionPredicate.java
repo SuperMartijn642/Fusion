@@ -3,7 +3,8 @@ package com.supermartijn642.fusion.api.predicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.Nullable;
+
+import javax.annotation.Nullable;
 
 /**
  * A predicate used to determine whether a model should connect to with another block.

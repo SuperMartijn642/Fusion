@@ -4,11 +4,10 @@ import com.google.common.base.Objects;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.Matrix4f;
-import net.minecraft.client.renderer.TransformationMatrix;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ILightReader;
+import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraftforge.common.model.TRSRTransformation;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -19,18 +18,16 @@ import java.util.Map;
  */
 public class SurroundingBlockData {
 
-    public static SurroundingBlockData create(ILightReader level, BlockPos pos, TransformationMatrix rotation, List<ConnectionPredicate> predicates){
-        TransformationMatrix inverseRotation = rotation.inverse();
-        Matrix4f rotationMatrix = inverseRotation == null ? TransformationMatrix.identity().getMatrix() : rotation.getMatrix();
-        Matrix4f inverseRotationMatrix = inverseRotation == null ? TransformationMatrix.identity().getMatrix() : inverseRotation.getMatrix();
+    public static SurroundingBlockData create(IEnviromentBlockReader level, BlockPos pos, TRSRTransformation rotation, List<ConnectionPredicate> predicates){
+        TRSRTransformation inverseRotation = rotation.inverse();
         Map<Direction,SideConnections> connections = new EnumMap<>(Direction.class);
         for(Direction side : Direction.values())
-            connections.put(side, getConnections(side, rotationMatrix, inverseRotationMatrix, level, pos, predicates));
+            connections.put(side, getConnections(side, rotation, inverseRotation, level, pos, predicates));
         return new SurroundingBlockData(connections);
     }
 
-    private static SideConnections getConnections(Direction side, Matrix4f rotation, Matrix4f inverseRotation, ILightReader level, BlockPos pos, List<ConnectionPredicate> predicates){
-        Direction originalSide = Direction.rotate(inverseRotation, side);
+    private static SideConnections getConnections(Direction side, TRSRTransformation rotation, TRSRTransformation inverseRotation, IEnviromentBlockReader level, BlockPos pos, List<ConnectionPredicate> predicates){
+        Direction originalSide = inverseRotation.rotateTransform(side);
         Direction left;
         Direction right;
         Direction up;
@@ -46,10 +43,10 @@ public class SurroundingBlockData {
             up = Direction.UP;
             down = Direction.DOWN;
         }
-        left = Direction.rotate(rotation, left);
-        right = Direction.rotate(rotation, right);
-        up = Direction.rotate(rotation, up);
-        down = Direction.rotate(rotation, down);
+        left = rotation.rotateTransform(left);
+        right = rotation.rotateTransform(right);
+        up = rotation.rotateTransform(up);
+        down = rotation.rotateTransform(down);
 
         BlockState self = level.getBlockState(pos);
         boolean connectTop = shouldConnect(level, side, originalSide, self, pos.relative(up), ConnectionDirection.TOP, predicates);
@@ -63,7 +60,7 @@ public class SurroundingBlockData {
         return new SideConnections(side, connectTop, connectTopRight, connectRight, connectBottomRight, connectBottom, connectBottomLeft, connectLeft, connectTopLeft);
     }
 
-    private static boolean shouldConnect(ILightReader level, Direction side, Direction originalSide, BlockState self, BlockPos neighborPos, ConnectionDirection direction, List<ConnectionPredicate> predicates){
+    private static boolean shouldConnect(IEnviromentBlockReader level, Direction side, Direction originalSide, BlockState self, BlockPos neighborPos, ConnectionDirection direction, List<ConnectionPredicate> predicates){
         BlockState otherState = level.getBlockState(neighborPos);
         BlockState stateInFront = level.getBlockState(neighborPos.relative(side));
         return predicates.stream().anyMatch(predicate -> predicate.shouldConnect(originalSide, self, otherState, stateInFront, direction));

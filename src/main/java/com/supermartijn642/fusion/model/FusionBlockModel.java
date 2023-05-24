@@ -1,10 +1,11 @@
 package com.supermartijn642.fusion.model;
 
-import com.mojang.datafixers.util.Pair;
 import com.supermartijn642.fusion.api.model.*;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import net.minecraft.client.renderer.model.*;
+import net.minecraft.client.renderer.texture.ISprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
@@ -27,31 +28,34 @@ public class FusionBlockModel extends BlockModel {
         }
 
         @Override
-        public Collection<Material> getMaterials(Function<ResourceLocation,IUnbakedModel> function, Set<Pair<String,String>> set){
+        public Collection<ResourceLocation> getTextures(Function<ResourceLocation,IUnbakedModel> function, Set<String> set){
             return Collections.emptyList();
         }
 
         @Nullable
         @Override
-        public IBakedModel bake(ModelBakery modelBakery, Function<Material,TextureAtlasSprite> function, IModelTransform modelState, ResourceLocation resourceLocation){
+        public IBakedModel bake(ModelBakery modelBakery, Function<ResourceLocation,TextureAtlasSprite> function, ISprite modelState, VertexFormat format){
             return null;
         }
     };
+    public static IUnbakedModel getDummyModel(){
+        return DUMMY_MODEL;
+    }
 
     private final ModelInstance<?> model;
     private final BlockModel vanillaModel;
     private Collection<ResourceLocation> dependencies;
 
     public FusionBlockModel(ModelInstance<?> model){
-        super(null, Collections.emptyList(), Collections.emptyMap(), false, null, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
+        super(null, Collections.emptyList(), Collections.emptyMap(), false, false, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
         this.model = model;
         this.vanillaModel = model.getAsVanillaModel();
     }
 
     @Override
-    public IBakedModel bake(ModelBakery bakery, BlockModel someOtherModel, Function<Material,TextureAtlasSprite> spriteGetter, IModelTransform modelTransform, ResourceLocation modelLocation, boolean gui3d){
+    public IBakedModel bakeVanilla(ModelBakery bakery, BlockModel someOtherModel, Function<ResourceLocation,TextureAtlasSprite> spriteGetter, ISprite modelTransform, VertexFormat format){
         // Let the custom model handle the actual baking
-        ModelBakingContext context = new ModelBakingContextImpl(bakery, spriteGetter, modelTransform, modelLocation);
+        ModelBakingContext context = new ModelBakingContextImpl(bakery, spriteGetter, modelTransform, new ResourceLocation(this.name));
         return this.model.bake(context);
     }
 
@@ -70,13 +74,13 @@ public class FusionBlockModel extends BlockModel {
     }
 
     @Override
-    public Collection<Material> getMaterials(Function<ResourceLocation,IUnbakedModel> modelGetter, Set<com.mojang.datafixers.util.Pair<String,String>> errors){
+    public Collection<ResourceLocation> getTextures(Function<ResourceLocation,IUnbakedModel> modelGetter, Set<String> errors){
         GatherTexturesContext context = identifier -> getModelInstance(modelGetter.apply(identifier));
-        Collection<Material> materials = null;
+        Collection<ResourceLocation> materials = null;
         try{
             Collection<SpriteIdentifier> pairs = this.model.getTextureDependencies(context);
             if(pairs != null)
-                materials = pairs.stream().map(SpriteIdentifier::toMaterial).collect(Collectors.toSet());
+                materials = pairs.stream().map(SpriteIdentifier::getTexture).collect(Collectors.toSet());
         }catch(Exception e){
             throw new RuntimeException("Encountered an exception whilst requesting texture dependencies from model type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
         }

@@ -2,9 +2,8 @@ package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
-import net.minecraft.client.renderer.model.IModelTransform;
-import net.minecraft.client.renderer.model.Material;
 import net.minecraft.client.renderer.model.ModelBakery;
+import net.minecraft.client.renderer.texture.ISprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 
@@ -16,11 +15,11 @@ import java.util.function.Function;
 public class ModelBakingContextImpl implements ModelBakingContext {
 
     private final ModelBakery modelBakery;
-    private final Function<Material,TextureAtlasSprite> spriteGetter;
-    private final IModelTransform modelState;
+    private final Function<ResourceLocation,TextureAtlasSprite> spriteGetter;
+    private final ISprite modelState;
     private final ResourceLocation modelIdentifier;
 
-    public ModelBakingContextImpl(ModelBakery modelBakery, Function<Material,TextureAtlasSprite> spriteGetter, IModelTransform modelState, ResourceLocation modelIdentifier){
+    public ModelBakingContextImpl(ModelBakery modelBakery, Function<ResourceLocation,TextureAtlasSprite> spriteGetter, ISprite modelState, ResourceLocation modelIdentifier){
         this.modelBakery = modelBakery;
         this.spriteGetter = spriteGetter;
         this.modelState = modelState;
@@ -35,16 +34,16 @@ public class ModelBakingContextImpl implements ModelBakingContext {
 
     @Override
     public TextureAtlasSprite getTexture(SpriteIdentifier identifier){
-        return this.spriteGetter.apply(identifier.toMaterial());
+        return this.spriteGetter.apply(identifier.getTexture());
     }
 
     @Override
     public TextureAtlasSprite getTexture(ResourceLocation atlas, ResourceLocation texture){
-        return this.spriteGetter.apply(new Material(atlas, texture));
+        return this.spriteGetter.apply(texture);
     }
 
     @Override
-    public IModelTransform getTransformation(){
+    public ISprite getTransformation(){
         return this.modelState;
     }
 

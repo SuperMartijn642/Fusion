@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
-import com.supermartijn642.fusion.model.FusionBlockModel;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.IUnbakedModel;
 import net.minecraft.util.ResourceLocation;
@@ -23,17 +23,12 @@ public class BlockModelMixin implements BlockModelExtension {
     private ModelInstance<?> fusionModel;
 
     @ModifyVariable(
-        method = "getMaterials(Ljava/util/function/Function;Ljava/util/Set;)Ljava/util/Collection;",
+        method = "getTextures(Ljava/util/function/Function;Ljava/util/Set;)Ljava/util/Collection;",
         at = @At("HEAD"),
         ordinal = 0
     )
     private Function<ResourceLocation,IUnbakedModel> adjustModelGetter(Function<ResourceLocation,IUnbakedModel> modelGetter){
-        return location -> {
-            IUnbakedModel model = modelGetter.apply(location);
-            if(model instanceof FusionBlockModel)
-                return ((FusionBlockModel)model).hasVanillaModel() ? ((FusionBlockModel)model).getVanillaModel() : FusionBlockModel.DUMMY_MODEL;
-            return model;
-        };
+        return FusionClient.getProperModel(modelGetter);
     }
 
     @Override

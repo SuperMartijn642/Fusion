@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class DatagenModLoaderMixin {
 
     @Inject(
-        method = "runDataGenerator(Ljava/util/Set;Ljava/nio/file/Path;Ljava/util/Collection;Ljava/util/Collection;ZZZZZZ)V",
+        method = "runDataGenerator(Ljava/util/Set;Ljava/nio/file/Path;Ljava/util/Collection;Ljava/util/Collection;ZZZZZ)V",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraftforge/fml/event/lifecycle/GatherDataEvent$DataGeneratorConfig;runAll()V",

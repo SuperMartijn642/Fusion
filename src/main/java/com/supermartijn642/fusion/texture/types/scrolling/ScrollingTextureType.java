@@ -7,10 +7,9 @@ import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.data.AnimationMetadataSection;
+import net.minecraft.util.ResourceLocation;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -153,10 +152,10 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         }
 
         // Finally create the new sprite
-        TextureAtlasSprite.Info info = new TextureAtlasSprite.Info(context.getTextureIdentifier(), context.getSpriteWidth(), context.getSpriteHeight(), AnimationMetadataSection.EMPTY);
         return new ScrollingSprite(
-            context.getAtlas(),
-            info,
+            context.getTextureIdentifier(),
+            context.getSpriteWidth(),
+            context.getSpriteHeight(),
             context.getAtlasWidth(),
             context.getAtlasHeight(),
             context.getSpritePositionX(),
@@ -174,9 +173,15 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         private final int[] frameTimes;
         private int frame, tickCounter;
 
-        protected ScrollingSprite(AtlasTexture atlas, Info info, int atlasWidth, int atlasHeight, int atlasX, int atlasY, NativeImage[] mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
-            super(atlas, info, 0, atlasWidth, atlasHeight, atlasX, atlasY, new NativeImage(NativeImage.PixelFormat.RGBA, 1, 1, true, 0));
+        protected ScrollingSprite(ResourceLocation identifier, int width, int height, int atlasWidth, int atlasHeight, int atlasX, int atlasY, NativeImage[] mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
+            super(identifier, width, height);
             this.mainImage = mainImage;
+            this.x = atlasX;
+            this.y = atlasY;
+            this.u0 = (float)atlasX / atlasWidth;
+            this.u1 = (float)(atlasX + width) / atlasWidth;
+            this.v0 = (float)atlasY / atlasWidth;
+            this.v1 = (float)(atlasY + height) / atlasWidth;
             this.xPositions = xPositions;
             this.yPositions = yPositions;
             this.frameTimes = frameTimes;

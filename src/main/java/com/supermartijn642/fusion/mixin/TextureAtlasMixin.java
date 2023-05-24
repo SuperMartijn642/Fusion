@@ -14,12 +14,10 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
@@ -40,55 +38,42 @@ public class TextureAtlasMixin {
     @Unique
     private final ThreadLocal<PngSizeInfo> pngSizeInfo = new ThreadLocal<>();
 
-    @Redirect(
-        method = "lambda$makeSprites$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
-        at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/client/renderer/texture/PngSizeInfo;width:I",
-            opcode = Opcodes.GETFIELD
-        )
-    )
-    private int storePngSizeInfo(PngSizeInfo info){
-        this.pngSizeInfo.set(info);
-        return info.width;
-    }
-
     @Inject(
-        method = "lambda$makeSprites$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
+        method = "lambda$func_215256_a$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;<init>(Lnet/minecraft/util/ResourceLocation;IILnet/minecraft/client/resources/data/AnimationMetadataSection;)V",
+            target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;<init>(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/client/renderer/texture/PngSizeInfo;Lnet/minecraft/client/resources/data/AnimationMetadataSection;)V",
             shift = At.Shift.BY,
             by = 2
         ),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void gatherMetadata(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, IResource resource){
+    private void gatherMetadata(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite sprite, IResource resource, Object object, PngSizeInfo pngSizeInfo){
         // Get the fusion metadata
         Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionMetadataSection.INSTANCE);
         if(metadata != null){
-            this.fusionTextureMetadata.put(info.name(), metadata);
+            this.fusionTextureMetadata.put(sprite.getName(), metadata);
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(info.width(), info.height(), this.pngSizeInfo.get().width, this.pngSizeInfo.get().height, identifier), metadata.right());
+                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(sprite.getWidth(), sprite.getHeight(), pngSizeInfo.width, pngSizeInfo.height, identifier), metadata.right());
             }catch(Exception e){
                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!", e);
             }
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!");
             // Replace the current size
-            info.width = newSize.left();
-            info.height = newSize.right();
+            sprite.width = newSize.left();
+            sprite.height = newSize.right();
         }
     }
 
     @Inject(
-        method = "getLoadedSprites(Lnet/minecraft/resources/IResourceManager;Lnet/minecraft/client/renderer/texture/Stitcher;I)Ljava/util/List;",
+        method = "getLoadedSprites(Lnet/minecraft/resources/IResourceManager;Lnet/minecraft/client/renderer/texture/Stitcher;)Ljava/util/List;",
         at = @At("RETURN"),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void getLoadedSprites(IResourceManager resourceManager, Stitcher stitcher, int i, CallbackInfoReturnable<List<TextureAtlasSprite>> ci){
+    private void getLoadedSprites(IResourceManager resourceManager, Stitcher stitcher, CallbackInfoReturnable<List<TextureAtlasSprite>> ci){
         // Replace sprites
         List<TextureAtlasSprite> textures = ci.getReturnValue();
         if(textures != null){
@@ -98,7 +83,8 @@ public class TextureAtlasMixin {
                 if(textureData != null){
                     // Create the sprite
                     TextureAtlasSprite newTexture;
-                    try(SpriteCreationContextImpl context = new SpriteCreationContextImpl(texture)){
+                    //noinspection DataFlowIssue
+                    try(SpriteCreationContextImpl context = new SpriteCreationContextImpl(texture, (AtlasTexture)(Object)this)){
                         newTexture = textureData.left().createSprite(context, textureData.right());
                     }catch(Exception e){
                         throw new RuntimeException("Encountered an exception whilst initialising texture '" + texture.getName() + "' for texture type '" + TextureTypeRegistryImpl.getIdentifier(textureData.left()) + "'!", e);

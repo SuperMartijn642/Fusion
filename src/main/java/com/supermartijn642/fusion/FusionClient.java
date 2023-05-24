@@ -5,8 +5,12 @@ import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
+import com.supermartijn642.fusion.model.FusionBlockModel;
 import com.supermartijn642.fusion.predicate.*;
+import net.minecraft.client.renderer.model.IUnbakedModel;
 import net.minecraft.util.ResourceLocation;
+
+import java.util.function.Function;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -34,5 +38,14 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> TextureTypeRegistryImpl.finalizeRegistration()); TODO
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModelTypeRegistryImpl.finalizeRegistration());
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
+    }
+
+    public static Function<ResourceLocation,IUnbakedModel> getProperModel(Function<ResourceLocation,IUnbakedModel> modelGetter){
+        return location -> {
+            IUnbakedModel model = modelGetter.apply(location);
+            if(model instanceof FusionBlockModel)
+                return ((FusionBlockModel)model).hasVanillaModel() ? ((FusionBlockModel)model).getVanillaModel() : FusionBlockModel.getDummyModel();
+            return model;
+        };
     }
 }

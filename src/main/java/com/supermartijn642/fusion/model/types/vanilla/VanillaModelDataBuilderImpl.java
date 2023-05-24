@@ -1,18 +1,13 @@
 package com.supermartijn642.fusion.model.types.vanilla;
 
-import com.mojang.datafixers.util.Either;
 import com.supermartijn642.fusion.api.model.data.VanillaModelDataBuilder;
-import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.Material;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Created 01/05/2023 by SuperMartijn642
@@ -56,10 +51,6 @@ public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<Vani
 
     @Override
     public BlockModel build(){
-        Map<String,Either<Material,String>> textures = this.textures.entrySet().stream()
-            .map(entry -> Pair.of(entry.getKey(), entry.getValue()))
-            .map(pair -> pair.<Either<Material,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new Material(TextureAtlases.getBlocks(), new ResourceLocation(s)))))
-            .collect(Collectors.toMap(Pair::left, Pair::right));
-        return new BlockModel(this.parent, Collections.emptyList(), textures, false, null, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
+        return new BlockModel(this.parent, Collections.emptyList(), this.textures, false, false, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
     }
 }

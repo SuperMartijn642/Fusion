@@ -17,6 +17,6 @@ public class Fusion {
         // Accept any version from the server
         ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.DISPLAYTEST, () -> Pair.of(() -> "", (a, b) -> true));
         // Initialize Fusion stuff if this is on the client
-        DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> FusionClient::init);
+        DistExecutor.runWhenOn(Dist.CLIENT, () -> FusionClient::init);
     }
 }

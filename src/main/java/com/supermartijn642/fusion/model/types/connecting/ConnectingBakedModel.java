@@ -8,7 +8,6 @@ import com.supermartijn642.fusion.model.WrappedBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureType;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.TransformationMatrix;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
@@ -19,10 +18,11 @@ import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.ILightReader;
+import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
+import net.minecraftforge.common.model.TRSRTransformation;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import javax.annotation.Nonnull;
@@ -38,13 +38,13 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     private static final int BLOCK_VERTEX_DATA_UV_OFFSET = findUVOffset(DefaultVertexFormats.BLOCK);
     private static final ModelProperty<SurroundingBlockData> SURROUNDING_BLOCK_DATA_MODEL_PROPERTY = new ModelProperty<>();
 
-    private final TransformationMatrix modelRotation;
+    private final TRSRTransformation modelRotation;
     private final List<ConnectionPredicate> predicates;
     // [cullface][hashcode * 6]
     private final Map<Direction,Map<Integer,List<BakedQuad>>> quadCache = new HashMap<>();
     private final Map<Integer,List<BakedQuad>> directionlessQuadCache = new HashMap<>();
 
-    public ConnectingBakedModel(IBakedModel original, TransformationMatrix modelRotation, List<ConnectionPredicate> predicates){
+    public ConnectingBakedModel(IBakedModel original, TRSRTransformation modelRotation, List<ConnectionPredicate> predicates){
         super(original);
         this.modelRotation = modelRotation;
         this.predicates = predicates;
@@ -90,7 +90,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         adjustVertexDataUV(vertexData, uv[0], uv[1], sprite);
 
         // Create a new quad
-        return new BakedQuad(vertexData, quad.getTintIndex(), quad.getDirection(), quad.getSprite(), quad.shouldApplyDiffuseLighting());
+        return new BakedQuad(vertexData, quad.getTintIndex(), quad.getDirection(), quad.getSprite(), quad.shouldApplyDiffuseLighting(), quad.getFormat());
     }
 
     private static int[] adjustVertexDataUV(int[] vertexData, int newU, int newV, TextureAtlasSprite sprite){
@@ -128,15 +128,15 @@ public class ConnectingBakedModel extends WrappedBakedModel {
             throw new RuntimeException("Expected UV attribute to have data type FLOAT");
         if(element.getByteSize() < 4)
             throw new RuntimeException("Expected UV attribute to have at least 4 dimensions");
-        return vertexFormat.offsets.getInt(index);
+        return vertexFormat.offsets.get(index);
     }
 
-    public SurroundingBlockData getModelData(ILightReader level, BlockPos pos, BlockState state){
+    public SurroundingBlockData getModelData(IEnviromentBlockReader level, BlockPos pos, BlockState state){
         return SurroundingBlockData.create(level, pos, this.modelRotation, this.predicates);
     }
 
     @Override
-    public @Nonnull IModelData getModelData(@Nonnull ILightReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData modelData){
+    public @Nonnull IModelData getModelData(@Nonnull IEnviromentBlockReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData modelData){
         return new ModelDataMap.Builder().withInitial(SURROUNDING_BLOCK_DATA_MODEL_PROPERTY, this.getModelData(level, pos, state)).build();
     }
 

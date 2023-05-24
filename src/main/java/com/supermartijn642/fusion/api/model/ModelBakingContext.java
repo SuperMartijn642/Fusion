@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.util.TextureAtlases;
-import net.minecraft.client.renderer.model.IModelTransform;
 import net.minecraft.client.renderer.model.ModelBakery;
+import net.minecraft.client.renderer.texture.ISprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 
@@ -42,7 +42,7 @@ public interface ModelBakingContext {
     /**
      * @return the transformations which should be applied to the model
      */
-    IModelTransform getTransformation();
+    ISprite getTransformation();
 
     /**
      * @return the identifier of the model.

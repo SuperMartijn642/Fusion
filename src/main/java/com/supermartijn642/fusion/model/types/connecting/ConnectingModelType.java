@@ -12,11 +12,13 @@ import com.supermartijn642.fusion.predicate.IsSameStateConnectionPredicate;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.model.TRSRTransformation;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -41,7 +43,7 @@ public class ConnectingModelType implements ModelType<Pair<BlockModel,List<Conne
 
     @Override
     public IBakedModel bake(ModelBakingContext context, Pair<BlockModel,List<ConnectionPredicate>> data){
-        return new ConnectingBakedModel(DefaultModelTypes.VANILLA.bake(context, data.left()), context.getTransformation().getRotation(), data.right());
+        return new ConnectingBakedModel(DefaultModelTypes.VANILLA.bake(context, data.left()), context.getTransformation().getState().apply(Optional.empty()).orElse(TRSRTransformation.identity()), data.right());
     }
 
     @Override

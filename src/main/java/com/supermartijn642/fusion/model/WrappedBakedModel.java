@@ -11,6 +11,7 @@ import net.minecraftforge.client.model.data.IDynamicBakedModel;
 import net.minecraftforge.client.model.data.IModelData;
 import org.antlr.v4.runtime.misc.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Random;
@@ -42,8 +43,13 @@ public class WrappedBakedModel implements IBakedModel, IDynamicBakedModel {
     }
 
     @Override
-    public boolean usesBlockLight(){
-        return this.original.usesBlockLight();
+    public boolean isAmbientOcclusion(BlockState state){
+        return this.original.isAmbientOcclusion(state);
+    }
+
+    @Override
+    public TextureAtlasSprite getParticleTexture(@Nonnull IModelData data){
+        return this.original.getParticleTexture(data);
     }
 
     @Override

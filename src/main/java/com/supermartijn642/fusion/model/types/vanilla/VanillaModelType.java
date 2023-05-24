@@ -2,14 +2,14 @@ package com.supermartijn642.fusion.model.types.vanilla;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.datafixers.util.Pair;
 import com.supermartijn642.fusion.api.model.*;
+import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.Material;
 import net.minecraft.client.renderer.model.ModelBakery;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.model.ModelLoaderRegistry;
+import net.minecraftforge.client.model.ModelLoaderRegistry2;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -33,14 +33,14 @@ public class VanillaModelType implements ModelType<BlockModel> {
         // Find the parent models
         resolveParents(context, data);
         // Get the textures
-        Set<Pair<String,String>> errors = new HashSet<>();
-        Collection<Material> materials = data.getMaterials(location -> context.getModel(location).getAsVanillaModel(), errors);
-        return materials.stream().map(SpriteIdentifier::of).collect(Collectors.toList());
+        Set<String> errors = new HashSet<>();
+        Collection<ResourceLocation> materials = data.getTextures(location -> context.getModel(location).getAsVanillaModel(), errors);
+        return materials.stream().map(i -> SpriteIdentifier.of(TextureAtlases.getBlocks(), i)).collect(Collectors.toList());
     }
 
     @Override
     public IBakedModel bake(ModelBakingContext context, BlockModel data){
-        return data.bake(context.getModelBakery(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation(), context.getModelIdentifier());
+        return data.bake(context.getModelBakery(), material -> context.getTexture(SpriteIdentifier.of(TextureAtlases.getBlocks(), material)), context.getTransformation(), DefaultVertexFormats.BLOCK);
     }
 
     @Nullable
@@ -51,7 +51,7 @@ public class VanillaModelType implements ModelType<BlockModel> {
 
     @Override
     public BlockModel deserialize(JsonObject json) throws JsonParseException{
-        return ModelLoaderRegistry.ExpandedBlockModelDeserializer.INSTANCE.fromJson(json, BlockModel.class);
+        return ModelLoaderRegistry2.ExpandedBlockModelDeserializer.INSTANCE.fromJson(json, BlockModel.class);
     }
 
     @Override

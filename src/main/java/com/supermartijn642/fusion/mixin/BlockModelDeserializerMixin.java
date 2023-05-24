@@ -10,7 +10,7 @@ import com.supermartijn642.fusion.predicate.PredicateRegistryImpl;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.client.model.ModelLoaderRegistry;
+import net.minecraftforge.client.model.ModelLoaderRegistry2;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,14 +22,14 @@ import java.lang.reflect.Type;
 /**
  * Created 31/03/2023 by SuperMartijn642
  */
-@Mixin(value = ModelLoaderRegistry.ExpandedBlockModelDeserializer.class, priority = 900)
+@Mixin(value = ModelLoaderRegistry2.ExpandedBlockModelDeserializer.class, priority = 900)
 public class BlockModelDeserializerMixin {
 
     @Unique
     private static boolean shouldIgnore = false;
 
     @Inject(
-        method = "deserialize(Lcom/google/gson/JsonElement;Ljava/lang/reflect/Type;Lcom/google/gson/JsonDeserializationContext;)Lnet/minecraft/client/renderer/block/model/BlockModel;",
+        method = "deserialize(Lcom/google/gson/JsonElement;Ljava/lang/reflect/Type;Lcom/google/gson/JsonDeserializationContext;)Lnet/minecraft/client/renderer/model/BlockModel;",
         at = @At("HEAD"),
         cancellable = true
     )

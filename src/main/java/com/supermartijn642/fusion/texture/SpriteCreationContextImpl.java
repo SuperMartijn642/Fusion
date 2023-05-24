@@ -21,7 +21,7 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
     private final int mipmapLevels;
     private boolean imagesRequested = false;
 
-    public SpriteCreationContextImpl(TextureAtlasSprite original){
+    public SpriteCreationContextImpl(TextureAtlasSprite original, AtlasTexture atlas){
         this.original = original;
         this.textureWidth = original.mainImage[0].getWidth();
         this.textureHeight = original.mainImage[0].getHeight();
@@ -29,7 +29,7 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
         this.images = original.mainImage;
         this.atlasWidth = Math.round(original.x / original.getU0());
         this.atlasHeight = Math.round(original.y / original.getV0());
-        this.atlas = original.atlas();
+        this.atlas = atlas;
         this.spriteX = original.x;
         this.spriteY = original.y;
         this.spriteWidth = original.getWidth();
@@ -39,7 +39,7 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
 
     private void closeUnusedResources(){
         if(!this.imagesRequested)
-            this.original.close();
+            this.original.wipeFrameData();
     }
 
     @Override

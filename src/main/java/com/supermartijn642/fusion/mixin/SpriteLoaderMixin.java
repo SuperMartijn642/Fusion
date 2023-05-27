@@ -20,7 +20,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
@@ -38,10 +37,6 @@ public class SpriteLoaderMixin {
 
     @Unique
     private static final Map<ResourceLocation,Pair<TextureType<Object>,Object>> fusionTextureMetadata = new ConcurrentHashMap<>(); // TODO find a place to clear this
-    @Unique
-    private final static ThreadLocal<Boolean> modifyFrameSize = ThreadLocal.withInitial(() -> false);
-    @Unique
-    private final static ThreadLocal<Integer> frameWidth = new ThreadLocal<>(), frameHeight = new ThreadLocal<>();
 
     @Inject(
         method = "loadSprite",
@@ -50,6 +45,7 @@ public class SpriteLoaderMixin {
             target = "Lnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;calculateFrameSize(II)Lnet/minecraft/client/resources/metadata/animation/FrameSize;",
             shift = At.Shift.BEFORE
         ),
+        cancellable = true,
         locals = LocalCapture.CAPTURE_FAILHARD
     )
     private static void gatherMetadata(ResourceLocation identifier, Resource resource, CallbackInfoReturnable<SpriteContents> ci, AnimationMetadataSection animationMetadataSection, NativeImage image){
@@ -71,23 +67,10 @@ public class SpriteLoaderMixin {
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
             // Replace the current size
-            modifyFrameSize.set(true);
-            frameWidth.set(newSize.left());
-            frameHeight.set(newSize.right());
+            FrameSize newFrameSize = new FrameSize(newSize.left(), newSize.right());
+            //noinspection deprecation
+            ci.setReturnValue(new SpriteContents(identifier, newFrameSize, image, animationMetadataSection));
         }
-    }
-
-    @ModifyVariable(
-        method = "loadSprite",
-        at = @At("STORE"),
-        ordinal = 0
-    )
-    private static FrameSize adjustFrameSize(FrameSize original){
-        if(modifyFrameSize.get()){
-            modifyFrameSize.set(false);
-            return new FrameSize(frameWidth.get(), frameHeight.get());
-        }
-        return original;
     }
 
     @Inject(

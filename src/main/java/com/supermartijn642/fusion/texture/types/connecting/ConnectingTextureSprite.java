@@ -29,6 +29,8 @@ public class ConnectingTextureSprite extends TextureAtlasSprite {
         this.u1 = original.u1;
         this.v0 = original.v0;
         this.v1 = original.v1;
+        this.framesX = original.framesX;
+        this.framesY = original.framesY;
     }
 
     public ConnectingTextureLayout getLayout(){

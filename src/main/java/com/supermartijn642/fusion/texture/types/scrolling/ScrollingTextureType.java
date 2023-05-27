@@ -134,23 +134,24 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         int endY = data.getEndPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getEndPosition() == ScrollingTextureData.Position.TOP_RIGHT ? 0 : context.getTextureHeight() - data.getFrameHeight();
 
         // Calculate all the frames
-        int frameCount = Math.max(Math.abs(endX - startX), Math.abs(endY - startY)) + 1;
-        int[] xPositions = new int[reverse ? (frameCount - 1) * 2 : frameCount];
-        int[] yPositions = new int[reverse ? (frameCount - 1) * 2 : frameCount];
-        int[] frameTimes = new int[reverse ? (frameCount - 1) * 2 : frameCount];
-        for(int index = 0; index < frameCount; index++){
-            float percentage = frameCount > 1 ? (float)index / (frameCount - 1) : 0.5f;
+        int stepCount = Math.max(Math.abs(endX - startX), Math.abs(endY - startY)) + 1;
+        int frameCount = reverse ? Math.max((stepCount - 1) * 2, 1) : stepCount;
+        int[] xPositions = new int[frameCount];
+        int[] yPositions = new int[frameCount];
+        int[] frameTimes = new int[frameCount];
+        for(int index = 0; index < stepCount; index++){
+            float percentage = stepCount > 1 ? (float)index / (stepCount - 1) : 0.5f;
             xPositions[index] = Math.round(startX + (endX - startX) * percentage);
             yPositions[index] = Math.round(startY + (endY - startY) * percentage);
             frameTimes[index] = data.getFrameTime();
         }
-        frameTimes[frameCount - 1] += data.getLoopPause();
+        frameTimes[stepCount - 1] += data.getLoopPause();
         if(reverse){
-            for(int index = 1; index < frameCount - 1; index++){
-                float percentage = 1 - (float)index / (frameCount - 1);
-                xPositions[index + frameCount - 1] = Math.round(startX + (endX - startX) * percentage);
-                yPositions[index + frameCount - 1] = Math.round(startY + (endY - startY) * percentage);
-                frameTimes[index + frameCount - 1] = data.getFrameTime();
+            for(int index = 1; index < stepCount - 1; index++){
+                float percentage = 1 - (float)index / (stepCount - 1);
+                xPositions[index + stepCount - 1] = Math.round(startX + (endX - startX) * percentage);
+                yPositions[index + stepCount - 1] = Math.round(startY + (endY - startY) * percentage);
+                frameTimes[index + stepCount - 1] = data.getFrameTime();
             }
             frameTimes[0] += data.getLoopPause();
         }

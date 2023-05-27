@@ -181,8 +181,8 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
             this.y = atlasY;
             this.u0 = (float)atlasX / atlasWidth;
             this.u1 = (float)(atlasX + width) / atlasWidth;
-            this.v0 = (float)atlasY / atlasWidth;
-            this.v1 = (float)(atlasY + height) / atlasWidth;
+            this.v0 = (float)atlasY / atlasHeight;
+            this.v1 = (float)(atlasY + height) / atlasHeight;
             this.xPositions = xPositions;
             this.yPositions = yPositions;
             this.frameTimes = frameTimes;

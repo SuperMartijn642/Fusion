@@ -2,10 +2,9 @@ package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.texture.ISprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.model.IModelState;
 
 import java.util.function.Function;
 
@@ -14,22 +13,14 @@ import java.util.function.Function;
  */
 public class ModelBakingContextImpl implements ModelBakingContext {
 
-    private final ModelBakery modelBakery;
     private final Function<ResourceLocation,TextureAtlasSprite> spriteGetter;
-    private final ISprite modelState;
+    private final IModelState modelState;
     private final ResourceLocation modelIdentifier;
 
-    public ModelBakingContextImpl(ModelBakery modelBakery, Function<ResourceLocation,TextureAtlasSprite> spriteGetter, ISprite modelState, ResourceLocation modelIdentifier){
-        this.modelBakery = modelBakery;
+    public ModelBakingContextImpl(Function<ResourceLocation,TextureAtlasSprite> spriteGetter, IModelState modelState, ResourceLocation modelIdentifier){
         this.spriteGetter = spriteGetter;
         this.modelState = modelState;
         this.modelIdentifier = modelIdentifier;
-    }
-
-
-    @Override
-    public ModelBakery getModelBakery(){
-        return this.modelBakery;
     }
 
     @Override
@@ -43,7 +34,7 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     }
 
     @Override
-    public ISprite getTransformation(){
+    public IModelState getTransformation(){
         return this.modelState;
     }
 

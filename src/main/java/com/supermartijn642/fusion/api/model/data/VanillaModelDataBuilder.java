@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.api.model.data;
 
 import com.supermartijn642.fusion.model.types.vanilla.VanillaModelDataBuilderImpl;
-import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraft.util.ResourceLocation;
 
 /**
@@ -9,7 +9,7 @@ import net.minecraft.util.ResourceLocation;
  */
 public interface VanillaModelDataBuilder<T extends VanillaModelDataBuilder<T,S>, S> {
 
-    static VanillaModelDataBuilder<?,BlockModel> builder(){
+    static VanillaModelDataBuilder<?,ModelBlock> builder(){
         return new VanillaModelDataBuilderImpl();
     }
 

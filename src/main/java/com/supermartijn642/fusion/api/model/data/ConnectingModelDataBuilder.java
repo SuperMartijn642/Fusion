@@ -4,14 +4,14 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.predicate.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelDataBuilderImpl;
-import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ModelBlock;
 
 import java.util.List;
 
 /**
  * Created 01/05/2023 by SuperMartijn642
  */
-public interface ConnectingModelDataBuilder extends VanillaModelDataBuilder<ConnectingModelDataBuilder,Pair<BlockModel,List<ConnectionPredicate>>> {
+public interface ConnectingModelDataBuilder extends VanillaModelDataBuilder<ConnectingModelDataBuilder,Pair<ModelBlock,List<ConnectionPredicate>>> {
 
     static ConnectingModelDataBuilder builder(){
         return new ConnectingModelDataBuilderImpl();

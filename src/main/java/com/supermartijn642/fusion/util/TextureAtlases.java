@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.util;
 
-import net.minecraft.client.renderer.texture.AtlasTexture;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.ResourceLocation;
 
 /**
@@ -8,8 +8,7 @@ import net.minecraft.util.ResourceLocation;
  */
 public class TextureAtlases {
 
-    @SuppressWarnings("deprecation")
-    private static final ResourceLocation BLOCKS = AtlasTexture.LOCATION_BLOCKS;
+    private static final ResourceLocation BLOCKS = TextureMap.LOCATION_BLOCKS_TEXTURE;
 
     public static ResourceLocation getBlocks(){
         return BLOCKS;

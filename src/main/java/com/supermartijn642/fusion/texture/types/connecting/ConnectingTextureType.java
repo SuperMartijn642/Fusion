@@ -43,9 +43,6 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureLayou
     @Override
     public TextureAtlasSprite createSprite(SpriteCreationContext context, ConnectingTextureLayout data){
         TextureAtlasSprite sprite = context.createOriginalSprite();
-        int scale = getScaleFactor(data);
-        sprite.u1 = sprite.u0 + (sprite.u1 - sprite.u0) / scale;
-        sprite.v1 = sprite.v0 + (sprite.v1 - sprite.v0) / scale;
         return new ConnectingTextureSprite(sprite, data);
     }
 

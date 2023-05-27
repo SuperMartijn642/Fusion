@@ -7,10 +7,10 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.Direction;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.registry.Registry;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import javax.annotation.Nullable;
 
@@ -27,16 +27,16 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
-            if(!Registry.BLOCK.containsKey(identifier))
+            if(!ForgeRegistries.BLOCKS.containsKey(identifier))
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
-            Block block = Registry.BLOCK.get(identifier);
+            Block block = ForgeRegistries.BLOCKS.getValue(identifier);
             return new MatchBlockConnectionPredicate(block);
         }
 
         @Override
         public JsonObject serialize(MatchBlockConnectionPredicate value){
             JsonObject json = new JsonObject();
-            json.addProperty("block", Registry.BLOCK.getKey(value.block).toString());
+            json.addProperty("block", ForgeRegistries.BLOCKS.getKey(value.block).toString());
             return json;
         }
     };
@@ -48,7 +48,7 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
     }
 
     @Override
-    public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
+    public boolean shouldConnect(EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction){
         return otherState.getBlock() == this.block;
     }
 

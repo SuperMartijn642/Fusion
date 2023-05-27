@@ -1,27 +1,51 @@
 package com.supermartijn642.fusion.texture;
 
-import com.google.gson.JsonObject;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.minecraft.resources.data.IMetadataSectionSerializer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.SimpleReloadableResourceManager;
+import net.minecraft.client.resources.data.IMetadataSection;
+import net.minecraft.client.resources.data.IMetadataSectionSerializer;
+
+import java.lang.reflect.Type;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
-public class FusionMetadataSection implements IMetadataSectionSerializer<Pair<TextureType<Object>,Object>> {
+public class FusionMetadataSection implements IMetadataSectionSerializer<FusionMetadataSection.Data> {
 
     public static final FusionMetadataSection INSTANCE = new FusionMetadataSection();
+    private static boolean registered = false;
+
+    public static synchronized void registerMetadata(){
+        if(!registered){
+            ((SimpleReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).rmMetadataSerializer.registerMetadataSectionType(FusionMetadataSection.INSTANCE, FusionMetadataSection.Data.class);
+            registered = true;
+        }
+    }
 
     @Override
-    public String getMetadataSectionName(){
+    public String getSectionName(){
         return "fusion";
     }
 
     @Override
-    public Pair<TextureType<Object>,Object> fromJson(JsonObject json){
+    public Data deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException{
         // Finalize the registry
         TextureTypeRegistryImpl.finalizeRegistration();
         // Get the texture type
-        return TextureTypeRegistryImpl.deserializeTextureData(json);
+        return new Data(TextureTypeRegistryImpl.deserializeTextureData(json.getAsJsonObject()));
+    }
+
+    public static class Data implements IMetadataSection {
+
+        public final Pair<TextureType<Object>,Object> pair;
+
+        public Data(Pair<TextureType<Object>,Object> pair){
+            this.pair = pair;
+        }
     }
 }

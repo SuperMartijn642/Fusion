@@ -1,35 +1,22 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.client.renderer.block.model.ModelBlock;
+import net.minecraftforge.client.model.IModel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
-
-import java.util.function.Function;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
  */
-@Mixin(value = BlockModel.class, priority = 900)
+@Mixin(value = ModelBlock.class, priority = 900)
 public class BlockModelMixin implements BlockModelExtension {
 
     @Unique
     private ModelInstance<?> fusionModel;
-
-    @ModifyVariable(
-        method = "getTextures(Ljava/util/function/Function;Ljava/util/Set;)Ljava/util/Collection;",
-        at = @At("HEAD"),
-        ordinal = 0
-    )
-    private Function<ResourceLocation,IUnbakedModel> adjustModelGetter(Function<ResourceLocation,IUnbakedModel> modelGetter){
-        return FusionClient.getProperModel(modelGetter);
-    }
+    @Unique
+    private IModel wrapper;
 
     @Override
     public ModelInstance<?> getFusionModel(){
@@ -39,5 +26,15 @@ public class BlockModelMixin implements BlockModelExtension {
     @Override
     public void setFusionModel(ModelInstance<?> fusionModel){
         this.fusionModel = fusionModel;
+    }
+
+    @Override
+    public IModel getWrapper(){
+        return this.wrapper;
+    }
+
+    @Override
+    public void setWrapper(IModel model){
+        this.wrapper = model;
     }
 }

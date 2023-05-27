@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.model.types.vanilla;
 
 import com.supermartijn642.fusion.api.model.data.VanillaModelDataBuilder;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.Collections;
@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Created 01/05/2023 by SuperMartijn642
  */
-public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<VanillaModelDataBuilderImpl,BlockModel> {
+public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<VanillaModelDataBuilderImpl,ModelBlock> {
 
     private final Map<String,String> textures = new HashMap<>();
     private ResourceLocation parent;
@@ -50,7 +50,7 @@ public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<Vani
     }
 
     @Override
-    public BlockModel build(){
-        return new BlockModel(this.parent, Collections.emptyList(), this.textures, false, false, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
+    public ModelBlock build(){
+        return new ModelBlock(this.parent, Collections.emptyList(), this.textures, false, false, ItemCameraTransforms.DEFAULT, Collections.emptyList());
     }
 }

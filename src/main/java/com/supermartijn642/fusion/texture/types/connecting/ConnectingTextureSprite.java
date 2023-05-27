@@ -11,23 +11,27 @@ public class ConnectingTextureSprite extends TextureAtlasSprite {
     private final ConnectingTextureLayout layout;
 
     protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureLayout layout){
-        super(
-            original.getName(),
-            original.width,
-            original.height
-        );
+        super(original.getIconName());
         this.layout = layout;
-        this.mainImage = original.mainImage;
-        this.metadata = original.metadata;
-        this.x = original.x;
-        this.y = original.y;
-        this.u0 = original.u0;
-        this.u1 = original.u1;
-        this.v0 = original.v0;
-        this.v1 = original.v1;
+        this.copyFrom(original);
+        this.framesTextureData = original.framesTextureData;
+        this.animationMetadata = original.animationMetadata;
+        this.resizeUV();
     }
 
     public ConnectingTextureLayout getLayout(){
         return this.layout;
+    }
+
+    @Override
+    public void initSprite(int inX, int inY, int originInX, int originInY, boolean rotatedIn){
+        super.initSprite(inX, inY, originInX, originInY, rotatedIn);
+        this.resizeUV();
+    }
+
+    private void resizeUV(){
+        int scale = ConnectingTextureType.getScaleFactor(this.layout);
+        this.maxU = this.minU + (this.maxU - this.minU) / scale;
+        this.maxV = this.minV + (this.maxV - this.minV) / scale;
     }
 }

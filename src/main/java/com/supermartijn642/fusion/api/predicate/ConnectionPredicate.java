@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.api.predicate;
 
 import com.supermartijn642.fusion.api.util.Serializer;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.Direction;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
 
 import javax.annotation.Nullable;
 
@@ -22,7 +22,7 @@ public interface ConnectionPredicate {
      * @param direction    direction to check
      * @return {@code true} if the texture should connect in the given direction
      */
-    boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction);
+    boolean shouldConnect(EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction);
 
     /**
      * @return the serializer for this predicate

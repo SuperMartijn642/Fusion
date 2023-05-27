@@ -8,8 +8,8 @@ import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Serializer;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.Direction;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public class OrConnectionPredicate implements ConnectionPredicate {
     }
 
     @Override
-    public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
+    public boolean shouldConnect(EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction){
         return this.predicates.stream().anyMatch(predicate -> predicate.shouldConnect(side, ownState, otherState, blockInFront, direction));
     }
 

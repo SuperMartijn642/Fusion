@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.*;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
@@ -42,7 +42,7 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public @Nullable BlockModel getAsVanillaModel(){
+    public @Nullable ModelBlock getAsVanillaModel(){
         return this.modelType.getAsVanillaModel(this.modelData);
     }
 

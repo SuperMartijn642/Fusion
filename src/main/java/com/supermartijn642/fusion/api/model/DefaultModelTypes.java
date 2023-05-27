@@ -7,8 +7,8 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelType;
 import com.supermartijn642.fusion.model.types.vanilla.VanillaModelType;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.IUnbakedModel;
+import net.minecraft.client.renderer.block.model.ModelBlock;
+import net.minecraftforge.client.model.IModel;
 
 import java.util.List;
 
@@ -20,17 +20,17 @@ import java.util.List;
 public class DefaultModelTypes {
 
     /**
-     * Model type used for vanilla {@link BlockModel} instances.
+     * Model type used for vanilla {@link ModelBlock} instances.
      */
-    public static final ModelType<BlockModel> VANILLA = new VanillaModelType();
+    public static final ModelType<ModelBlock> VANILLA = new VanillaModelType();
     /**
      * Model type used for any unknown models added by other mods.
      */
-    public static final ModelType<IUnbakedModel> UNKNOWN = new UnknownModelType();
+    public static final ModelType<IModel> UNKNOWN = new UnknownModelType();
     /**
      * Model type which allows for connecting textures.
      * @see DefaultTextureTypes#CONNECTING
      * @see ConnectingModelDataBuilder
      */
-    public static final ModelType<Pair<BlockModel,List<ConnectionPredicate>>> CONNECTING = new ConnectingModelType();
+    public static final ModelType<Pair<ModelBlock,List<ConnectionPredicate>>> CONNECTING = new ConnectingModelType();
 }

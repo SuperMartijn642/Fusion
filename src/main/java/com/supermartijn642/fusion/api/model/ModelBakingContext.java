@@ -1,20 +1,14 @@
 package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.util.TextureAtlases;
-import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.texture.ISprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.model.IModelState;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
 public interface ModelBakingContext {
-
-    /**
-     * @return the model bakery
-     */
-    ModelBakery getModelBakery();
 
     /**
      * Gets the sprite for the given material.
@@ -42,7 +36,7 @@ public interface ModelBakingContext {
     /**
      * @return the transformations which should be applied to the model
      */
-    ISprite getTransformation();
+    IModelState getTransformation();
 
     /**
      * @return the identifier of the model.

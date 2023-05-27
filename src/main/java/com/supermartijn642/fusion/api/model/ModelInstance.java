@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.model.ModelInstanceImpl;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
@@ -41,9 +41,9 @@ public interface ModelInstance<T> {
     IBakedModel bake(ModelBakingContext context);
 
     /**
-     * Represents the model as a vanilla {@link BlockModel} instance. May be used gather info from other models, such as with the vanilla 'parent' property.
-     * @return a representation of the model as a vanilla {@link BlockModel} instance, or {@code null} if such a representation is not available
+     * Represents the model as a vanilla {@link ModelBlock} instance. May be used gather info from other models, such as with the vanilla 'parent' property.
+     * @return a representation of the model as a vanilla {@link ModelBlock} instance, or {@code null} if such a representation is not available
      */
     @Nullable
-    BlockModel getAsVanillaModel();
+    ModelBlock getAsVanillaModel();
 }

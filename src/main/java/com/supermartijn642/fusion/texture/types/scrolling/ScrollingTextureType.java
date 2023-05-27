@@ -7,11 +7,13 @@ import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.util.ResourceLocation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -160,6 +162,8 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
             context.getAtlasHeight(),
             context.getSpritePositionX(),
             context.getSpritePositionY(),
+            context.getTextureWidth(),
+            context.getTextureHeight(),
             context.getTextureBuffers(),
             xPositions,
             yPositions,
@@ -173,22 +177,52 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         private final int[] frameTimes;
         private int frame, tickCounter;
 
-        protected ScrollingSprite(ResourceLocation identifier, int width, int height, int atlasWidth, int atlasHeight, int atlasX, int atlasY, NativeImage[] mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
-            super(identifier, width, height);
-            this.mainImage = mainImage;
-            this.x = atlasX;
-            this.y = atlasY;
-            this.u0 = (float)atlasX / atlasWidth;
-            this.u1 = (float)(atlasX + width) / atlasWidth;
-            this.v0 = (float)atlasY / atlasWidth;
-            this.v1 = (float)(atlasY + height) / atlasWidth;
+        protected ScrollingSprite(ResourceLocation identifier, int width, int height, int atlasWidth, int atlasHeight, int atlasX, int atlasY, int imageWidth, int imageHeight, List<int[][]> mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
+            super(identifier.toString());
+            this.width = width;
+            this.height = height;
+            this.originX = atlasX;
+            this.originY = atlasY;
+            this.minU = (float)atlasX / atlasWidth;
+            this.maxU = (float)(atlasX + width) / atlasWidth;
+            this.minV = (float)atlasY / atlasHeight;
+            this.maxV = (float)(atlasY + height) / atlasHeight;
             this.xPositions = xPositions;
             this.yPositions = yPositions;
             this.frameTimes = frameTimes;
+            this.framesTextureData = mainImage;
+            this.splitAnimationFrames(imageWidth, imageHeight);
         }
 
         @Override
-        public void cycleFrames(){
+        public void initSprite(int inX, int inY, int originInX, int originInY, boolean rotatedIn){
+            super.initSprite(inX, inY, originInX, originInY, rotatedIn);
+        }
+
+        private void splitAnimationFrames(int imageWidth, int imageHeight){
+            // Generate the frames
+            int[] image = this.framesTextureData.get(0)[0];
+            int mipmaps = this.framesTextureData.get(0).length - 1;
+            List<int[][]> frames = new ArrayList<>();
+            for(int frame = 0; frame < this.xPositions.length; frame++){
+                int[] frameData = new int[this.width * this.height];
+                for(int row = 0; row < this.height; row++){
+                    int position = (this.yPositions[frame] + row) * imageWidth + this.xPositions[frame];
+                    System.arraycopy(image, position, frameData, row * this.width, this.width);
+                }
+                int[][] frameMipmaps = new int[mipmaps + 1][];
+                frameMipmaps[0] = frameData;
+                frames.add(frameMipmaps);
+            }
+
+            // Generate mipmaps
+            this.framesTextureData = frames;
+            if(mipmaps > 0)
+                this.generateMipmaps(mipmaps);
+        }
+
+        @Override
+        public void updateAnimation(){
             if(++this.tickCounter >= this.frameTimes[this.frame]){
                 this.frame = (this.frame + 1) % this.xPositions.length;
                 this.tickCounter = 0;
@@ -197,32 +231,12 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         }
 
         private void uploadFrame(int frame){
-            this.upload(this.xPositions[frame], this.yPositions[frame], this.mainImage);
+            TextureUtil.uploadTextureMipmap(this.framesTextureData.get(frame), this.width, this.height, this.originX, this.originY, false, false);
         }
 
         @Override
-        public void uploadFirstFrame(){
-            this.uploadFrame(0);
-        }
-
-        @Override
-        public int getFrameCount(){
-            return this.frameTimes.length;
-        }
-
-        @Override
-        public boolean isAnimation(){
+        public boolean hasAnimationMetadata(){
             return true;
-        }
-
-        @Override
-        public boolean isTransparent(int frameIndex, int x, int y){
-            return (this.getPixelRGBA(frameIndex, x, y) >> 24 & 255) == 0;
-        }
-
-        @Override
-        public int getPixelRGBA(int frameIndex, int x, int y){
-            return this.mainImage[0].getPixelRGBA(x + this.xPositions[frameIndex] * this.getWidth(), y + this.yPositions[frameIndex] * this.getHeight());
         }
     }
 }

@@ -1,9 +1,10 @@
 package com.supermartijn642.fusion.api.texture;
 
-import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.ResourceLocation;
+
+import java.util.List;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -35,7 +36,7 @@ public interface SpriteCreationContext {
      * Gets the texture data. Each element in the array corresponds to one mipmap level.
      * Note that if this is called, responsibility for closing the returned images lies with the caller.
      */
-    NativeImage[] getTextureBuffers();
+    List<int[][]> getTextureBuffers();
 
     /**
      * Gets the width of the atlas.
@@ -50,7 +51,7 @@ public interface SpriteCreationContext {
     /**
      * Gets the atlas which the sprite is stitched to.
      */
-    AtlasTexture getAtlas();
+    TextureMap getAtlas();
 
     /**
      * Gets the x-position of the sprite on the atlas.

@@ -1,0 +1,16 @@
+[
+{
+  "modid": "${mod_id}",
+  "name": "${mod_name}",
+  "description": "${mod_description}",
+  "version": "${mod_version}",
+  "mcversion": "${minecraft_version}",
+  "url": "${mod_page}",
+  "updateUrl": "",
+  "authorList": ["SuperMartijn642"],
+  "credits": "",
+  "logoFile": "${mod_id}.png",
+  "screenshots": [],
+  "dependencies": []
+}
+]

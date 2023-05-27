@@ -1,10 +1,13 @@
 package com.supermartijn642.fusion.texture;
 
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
-import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.client.renderer.texture.NativeImage;
+import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.ResourceLocation;
+
+import java.util.List;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -14,32 +17,33 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
     private final TextureAtlasSprite original;
     private final int textureWidth, textureHeight;
     private final ResourceLocation identifier;
-    private final NativeImage[] images;
+    private final List<int[][]> images;
     private final int atlasWidth, atlasHeight;
-    private final AtlasTexture atlas;
+    private final TextureMap atlas;
     private final int spriteX, spriteY, spriteWidth, spriteHeight;
     private final int mipmapLevels;
     private boolean imagesRequested = false;
 
-    public SpriteCreationContextImpl(TextureAtlasSprite original, AtlasTexture atlas){
+    public SpriteCreationContextImpl(TextureAtlasSprite original, TextureMap atlas){
         this.original = original;
-        this.textureWidth = original.mainImage[0].getWidth();
-        this.textureHeight = original.mainImage[0].getHeight();
-        this.identifier = original.getName();
-        this.images = original.mainImage;
-        this.atlasWidth = Math.round(original.x / original.getU0());
-        this.atlasHeight = Math.round(original.y / original.getV0());
+        Pair<Integer,Integer> textureSize = ((TextureAtlasSpriteExtension)original).getTextureSize();
+        this.textureWidth = textureSize.left();
+        this.textureHeight = textureSize.right();
+        this.identifier = new ResourceLocation(original.getIconName());
+        this.images = original.framesTextureData;
+        this.atlasWidth = Math.round(original.originX / original.minU);
+        this.atlasHeight = Math.round(original.originY / original.minV);
         this.atlas = atlas;
-        this.spriteX = original.x;
-        this.spriteY = original.y;
-        this.spriteWidth = original.getWidth();
-        this.spriteHeight = original.getHeight();
-        this.mipmapLevels = original.mainImage.length - 1;
+        this.spriteX = original.originX;
+        this.spriteY = original.originY;
+        this.spriteWidth = original.width;
+        this.spriteHeight = original.height;
+        this.mipmapLevels = original.framesTextureData.size() - 1;
     }
 
     private void closeUnusedResources(){
         if(!this.imagesRequested)
-            this.original.wipeFrameData();
+            this.original.clearFramesTextureData();
     }
 
     @Override
@@ -64,7 +68,7 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
     }
 
     @Override
-    public NativeImage[] getTextureBuffers(){
+    public List<int[][]> getTextureBuffers(){
         this.imagesRequested = true;
         return this.images;
     }
@@ -80,7 +84,7 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
     }
 
     @Override
-    public AtlasTexture getAtlas(){
+    public TextureMap getAtlas(){
         return this.atlas;
     }
 

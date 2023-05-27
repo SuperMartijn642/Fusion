@@ -1,25 +1,20 @@
 package com.supermartijn642.fusion.model;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ItemOverrideList;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Direction;
-import net.minecraftforge.client.model.data.IDynamicBakedModel;
-import net.minecraftforge.client.model.data.IModelData;
-import org.antlr.v4.runtime.misc.NotNull;
+import net.minecraft.util.EnumFacing;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Random;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class WrappedBakedModel implements IBakedModel, IDynamicBakedModel {
+public class WrappedBakedModel implements IBakedModel {
 
     protected final IBakedModel original;
 
@@ -28,13 +23,13 @@ public class WrappedBakedModel implements IBakedModel, IDynamicBakedModel {
     }
 
     @Override
-    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull Random rand, @NotNull IModelData extraData){
-        return this.original.getQuads(state, side, rand, extraData);
+    public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand){
+        return this.original.getQuads(state, side, rand);
     }
 
     @Override
-    public boolean useAmbientOcclusion(){
-        return this.original.useAmbientOcclusion();
+    public boolean isAmbientOcclusion(){
+        return this.original.isAmbientOcclusion();
     }
 
     @Override
@@ -43,28 +38,23 @@ public class WrappedBakedModel implements IBakedModel, IDynamicBakedModel {
     }
 
     @Override
-    public boolean isAmbientOcclusion(BlockState state){
+    public boolean isAmbientOcclusion(IBlockState state){
         return this.original.isAmbientOcclusion(state);
     }
 
     @Override
-    public TextureAtlasSprite getParticleTexture(@Nonnull IModelData data){
-        return this.original.getParticleTexture(data);
+    public boolean isBuiltInRenderer(){
+        return this.original.isBuiltInRenderer();
     }
 
     @Override
-    public boolean isCustomRenderer(){
-        return this.original.isCustomRenderer();
+    public TextureAtlasSprite getParticleTexture(){
+        return this.original.getParticleTexture();
     }
 
     @Override
-    public TextureAtlasSprite getParticleIcon(){
-        return this.original.getParticleIcon();
-    }
-
-    @Override
-    public ItemCameraTransforms getTransforms(){
-        return this.original.getTransforms();
+    public ItemCameraTransforms getItemCameraTransforms(){
+        return this.original.getItemCameraTransforms();
     }
 
     @Override

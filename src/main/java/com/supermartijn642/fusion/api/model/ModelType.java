@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.api.util.Serializer;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
@@ -37,13 +37,13 @@ public interface ModelType<T> extends Serializer<T> {
     IBakedModel bake(ModelBakingContext context, T data);
 
     /**
-     * Represents the model as a vanilla {@link BlockModel} instance. May be used gather info from other models, such as with the vanilla 'parent' property.
-     * If the model cannot be represented as a {@link BlockModel} instance, this method should return {@code null}.
+     * Represents the model as a vanilla {@link ModelBlock} instance. May be used gather info from other models, such as with the vanilla 'parent' property.
+     * If the model cannot be represented as a {@link ModelBlock} instance, this method should return {@code null}.
      * @param data custom model data
-     * @return a representation of the model as a vanilla {@link BlockModel} instance, or {@code null} if such a representation is not available
+     * @return a representation of the model as a vanilla {@link ModelBlock} instance, or {@code null} if such a representation is not available
      */
     @Nullable
-    default BlockModel getAsVanillaModel(T data){
+    default ModelBlock getAsVanillaModel(T data){
         return null;
     }
 }

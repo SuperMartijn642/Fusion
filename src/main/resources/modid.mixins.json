@@ -8,9 +8,12 @@
   "client": [
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
-    "DatagenModLoaderMixin",
+    "BlockModelRendererMixin",
+    "ForgeBlockModelRendererMixin",
     "TextureAtlasMixin",
-    "TextureAtlasSpriteMixin"
+    "TextureAtlasSpriteMixin",
+    "VanillaLoaderMixin",
+    "VanillaModelWrapperMixin"
   ],
   "server": [],
   "injectors": {

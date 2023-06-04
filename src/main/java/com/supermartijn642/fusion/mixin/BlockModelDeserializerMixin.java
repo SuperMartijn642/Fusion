@@ -29,7 +29,7 @@ public class BlockModelDeserializerMixin {
     private static boolean shouldIgnore = false;
 
     @Inject(
-        method = "deserialize(Lcom/google/gson/JsonElement;Ljava/lang/reflect/Type;Lcom/google/gson/JsonDeserializationContext;)Lnet/minecraft/client/renderer/block/model/BlockModel;",
+        method = "deserialize",
         at = @At("HEAD"),
         cancellable = true
     )

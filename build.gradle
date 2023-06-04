@@ -24,6 +24,9 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(project.java_target)
 
 println("Java: " + System.getProperty("java.version") + " JVM: " + System.getProperty("java.vm.version") + "(" + System.getProperty("java.vendor") + ") Arch: " + System.getProperty("os.arch"))
 
+// Keep parameter names when compiling
+compileJava.options.compilerArgs.add '-parameters'
+
 repositories {
     flatDir {
         dirs "libs"
@@ -31,11 +34,16 @@ repositories {
     maven {
         url "https://www.cursemaven.com"
     }
+    maven {
+        url = "https://repo.spongepowered.org/maven"
+    }
 }
 
 dependencies {
     // Forge
     minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+    // SpongePowered Mixin
+    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
 
     // Just Enough Items
     runtimeOnly fg.deobf("curse.maven:jei-238222:${project.just_enough_items_file}")

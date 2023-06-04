@@ -41,7 +41,10 @@ public class TextureAtlasMixin {
     private final ThreadLocal<PngSizeInfo> pngSizeInfo = new ThreadLocal<>();
 
     @Redirect(
-        method = "lambda$makeSprites$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
+        method = {
+            "lambda$makeSprites$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
+            "lambda$getBasicSpriteInfos$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V"
+        },
         at = @At(
             value = "FIELD",
             target = "Lnet/minecraft/client/renderer/texture/PngSizeInfo;width:I",
@@ -54,7 +57,10 @@ public class TextureAtlasMixin {
     }
 
     @Inject(
-        method = "lambda$makeSprites$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
+        method = {
+            "lambda$makeSprites$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
+            "lambda$getBasicSpriteInfos$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V"
+        },
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;<init>(Lnet/minecraft/util/ResourceLocation;IILnet/minecraft/client/resources/data/AnimationMetadataSection;)V",

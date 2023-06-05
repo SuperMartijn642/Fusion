@@ -37,7 +37,10 @@ public class TextureAtlasMixin {
     private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> fusionTextureMetadata = new HashMap<>();
 
     @Inject(
-        method = "lambda$getBasicSpriteInfos$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
+        method = {
+            "lambda$getBasicSpriteInfos$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
+            "lambda$func_215256_a$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V"
+        },
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;<init>(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/client/renderer/texture/PngSizeInfo;Lnet/minecraft/client/resources/data/AnimationMetadataSection;)V",

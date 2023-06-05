@@ -4,11 +4,12 @@
   "package": "${mod_package}.${mixin_package}",
   "compatibilityLevel": "${mixin_compatibility_level}",
   "refmap": "${mod_id}.mixins.refmap.json",
-  "mixins": [],
+  "mixins": [
+    "DatagenModLoaderMixin"
+  ],
   "client": [
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
-    "DatagenModLoaderMixin",
     "TextureAtlasMixin",
     "TextureAtlasSpriteMixin"
   ],

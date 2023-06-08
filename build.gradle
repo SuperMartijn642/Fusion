@@ -24,6 +24,9 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(project.java_target)
 
 println("Java: " + System.getProperty("java.version") + " JVM: " + System.getProperty("java.vm.version") + "(" + System.getProperty("java.vendor") + ") Arch: " + System.getProperty("os.arch"))
 
+// Keep parameter names when compiling
+compileJava.options.compilerArgs.add '-parameters'
+
 repositories {
     flatDir {
         dirs "libs"
@@ -39,6 +42,8 @@ repositories {
 dependencies {
     // Forge
     minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+    // SpongePowered Mixin
+    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
 
     // Core library
     implementation fg.deobf("curse.maven:supermartijn642s-core-lib-454372:${project.core_library_file}")
@@ -47,8 +52,7 @@ dependencies {
 //    runtimeOnly fg.deobf("curse.maven:jei-238222:${project.just_enough_items_file}")
 
     // SpongePowered Mixin
-    annotationProcessor "org.spongepowered:mixin:0.8.4-SNAPSHOT:processor"
-    implementation("org.spongepowered:mixin:0.8.4-SNAPSHOT") {
+    implementation("org.spongepowered:mixin:0.8.3-SNAPSHOT") {
         exclude module: "guava"
         exclude module: "commons-io"
         exclude module: "gson"
@@ -73,6 +77,7 @@ processResources {
 
     rename "^modid.mixins.json\$", "${project.mod_id}.mixins.json"
     rename "^icon.png\$", "${project.mod_id}.png"
+    rename "^accesstransformer.cfg\$", "${project.mod_id}-accesstransformer.cfg"
 }
 
 minecraft {
@@ -161,7 +166,7 @@ jar {
     }
 }
 
-jar.finalizedBy('reobfJar')
+//jar.finalizedBy('reobfJar')
 
 mixin {
     // MixinGradle Settings
@@ -185,6 +190,7 @@ task prepareDataResources(type: Sync) {
 
     rename "^modid.mixins.json\$", "${project.mod_id}.mixins.json"
     rename "^icon.png\$", "${project.mod_id}.png"
+    rename "^accesstransformer.cfg\$", "${project.mod_id}-accesstransformer.cfg"
 }
 
 // Run prepareDataResources before prepareRunData

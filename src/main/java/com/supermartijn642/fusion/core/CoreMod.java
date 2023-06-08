@@ -39,6 +39,6 @@ public class CoreMod implements IFMLLoadingPlugin {
 
     @Override
     public String getAccessTransformerClass(){
-        return null;
+        return "com/supermartijn642/fusion/core/FusionAccessTransformer";
     }
 }

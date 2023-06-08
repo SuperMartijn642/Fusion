@@ -36,6 +36,8 @@ public class BlockModelDeserializerMixin {
         if(shouldIgnore)
             return;
 
+        ModelTypeRegistryImpl.finalizeRegistration();
+        PredicateRegistryImpl.finalizeRegistration();
         JsonElement loaderJson = json.getAsJsonObject().get("loader");
         if(loaderJson != null && loaderJson.isJsonPrimitive() && loaderJson.getAsJsonPrimitive().isString() && IdentifierUtil.isValidIdentifier(loaderJson.getAsString())){
             ResourceLocation loader = new ResourceLocation(loaderJson.getAsString());

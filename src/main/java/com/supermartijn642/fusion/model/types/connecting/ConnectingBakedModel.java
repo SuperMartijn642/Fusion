@@ -70,6 +70,8 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     }
 
     private List<BakedQuad> remapQuads(List<BakedQuad> originalQuads, SurroundingBlockData surroundingBlocks){
+        if(surroundingBlocks == null)
+            return originalQuads;
         return originalQuads.stream().map(quad -> this.remapQuad(quad, surroundingBlocks)).filter(Objects::nonNull).collect(Collectors.toList());
     }
 

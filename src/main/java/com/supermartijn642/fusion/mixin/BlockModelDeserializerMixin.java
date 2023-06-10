@@ -26,7 +26,7 @@ import java.lang.reflect.Type;
 public class BlockModelDeserializerMixin {
 
     @Unique
-    private static boolean shouldIgnore = false;
+    private static final ThreadLocal<Boolean> SHOULD_IGNORE = ThreadLocal.withInitial(() -> false);
 
     @Inject(
         method = "deserialize",
@@ -34,7 +34,7 @@ public class BlockModelDeserializerMixin {
         cancellable = true
     )
     private void deserialize(JsonElement json, Type type, JsonDeserializationContext context, CallbackInfoReturnable<BlockModel> ci) throws JsonParseException{
-        if(shouldIgnore)
+        if(SHOULD_IGNORE.get())
             return;
 
         JsonElement loaderJson = json.getAsJsonObject().get("loader");
@@ -47,9 +47,9 @@ public class BlockModelDeserializerMixin {
                 PredicateRegistryImpl.finalizeRegistration();
 
                 // Load the model data
-                shouldIgnore = true;
+                SHOULD_IGNORE.set(true);
                 ModelInstance<?> model = ModelTypeRegistryImpl.deserializeModelData(json.getAsJsonObject());
-                shouldIgnore = false;
+                SHOULD_IGNORE.set(false);
 
                 // Create a dummy block model
                 FusionBlockModel newModel = new FusionBlockModel(model);

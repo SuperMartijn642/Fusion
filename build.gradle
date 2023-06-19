@@ -91,6 +91,7 @@ java {
     // if it is present.
     // If you remove this line, sources will not be generated.
     withSourcesJar()
+    withJavadocJar()
 }
 
 // CurseGradle settings for uploading to CurseForge
@@ -120,6 +121,12 @@ curseforge {
         mainArtifact(remapJar) {
             displayName = "${project.mod_name} ${project.mod_version} for Fabric ${project.minecraft_suffix.substring(2)}"
         }
+        addArtifact(javadocJar) {
+            it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)} Javadoc"
+        }
+        addArtifact(sourcesJar) {
+            it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)} Sources"
+        }
     }
     options {
         // Don't add project Java version
@@ -145,7 +152,7 @@ modrinth {
     // Convert the changelog file to text
     changelog = file("changelog.md").text
     uploadFile = remapJar // With Loom, this MUST be set to `remapJar` instead of `jar`!
-    additionalFiles = [remapSourcesJar, javadoc]
+    additionalFiles = [sourcesJar] // TODO add back javadocJar, once Modrinth actually accepts them
     loaders = ["fabric"]
     if (!project.modrinth_required_dependency_ids.isEmpty() || !project.modrinth_optional_dependency_ids.isEmpty()) {
         dependencies {

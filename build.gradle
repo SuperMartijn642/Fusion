@@ -175,10 +175,10 @@ curseforge {
             it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)}"
         }
         addArtifact(javadocJar) {
-            it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)}"
+            it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)} Javadoc"
         }
         addArtifact(sourcesJar) {
-            it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)}"
+            it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)} Sources"
         }
     }
     options {

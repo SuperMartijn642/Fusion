@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
+import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 
@@ -21,7 +21,7 @@ public class ConnectingTextureSprite extends TextureAtlasSprite {
             1,
             original.x,
             original.y,
-            new NativeImage(NativeImage.PixelFormat.RGBA, 1, 1, true, 0)
+            FusionClient.getDummyImage()
         );
         this.layout = layout;
         this.mainImage = original.mainImage;

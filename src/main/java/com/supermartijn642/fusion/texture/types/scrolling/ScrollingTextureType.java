@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.texture.types.scrolling;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
 import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
@@ -176,7 +177,7 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         private int frame, tickCounter;
 
         protected ScrollingSprite(AtlasTexture atlas, Info info, int atlasWidth, int atlasHeight, int atlasX, int atlasY, NativeImage[] mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
-            super(atlas, info, 0, atlasWidth, atlasHeight, atlasX, atlasY, new NativeImage(NativeImage.PixelFormat.RGBA, 1, 1, true, 0));
+            super(atlas, info, 0, atlasWidth, atlasHeight, atlasX, atlasY, FusionClient.getDummyImage());
             this.mainImage = mainImage;
             this.xPositions = xPositions;
             this.yPositions = yPositions;

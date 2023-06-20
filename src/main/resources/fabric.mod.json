@@ -13,7 +13,7 @@
   },
   "license": "${mod_license}",
   "icon": "${mod_id}.png",
-  "environment": "client",
+  "environment": "*",
   "entrypoints": {
     "main": [
       "${mod_package}.${mod_main_class}"

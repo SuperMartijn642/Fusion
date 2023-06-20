@@ -6,12 +6,23 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.predicate.*;
+import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
 public class FusionClient {
+
+    private static NativeImage dummyImage;
+
+    public static NativeImage getDummyImage(){
+        if(dummyImage == null){
+            dummyImage = new NativeImage(NativeImage.PixelFormat.RGBA, 1, 1, false);
+            dummyImage.setPixelRGBA(0, 0, 0xFFFFFFFF);
+        }
+        return dummyImage;
+    }
 
     public static void init(){
         // Register default texture types

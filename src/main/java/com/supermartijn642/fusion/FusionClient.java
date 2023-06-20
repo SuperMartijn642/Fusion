@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
@@ -16,6 +17,16 @@ import net.minecraft.resources.ResourceLocation;
  * Created 26/04/2023 by SuperMartijn642
  */
 public class FusionClient implements ClientModInitializer {
+
+    private static NativeImage dummyImage;
+
+    public static NativeImage getDummyImage(){
+        if(dummyImage == null){
+            dummyImage = new NativeImage(NativeImage.Format.RGBA, 1, 1, false);
+            dummyImage.setPixelRGBA(0, 0, 0xFFFFFFFF);
+        }
+        return dummyImage;
+    }
 
     @Override
     public void onInitializeClient(){

@@ -1,3 +1,7 @@
+### Fusion 1.0.1
+- Fixed textures not loading correctly when ModernFix is installed
+- Fixed `SpriteCreationContext` sometimes returning the wrong atlas size
+
 ### Fusion 1.0.0a
 - Fixed crash with Iris
 

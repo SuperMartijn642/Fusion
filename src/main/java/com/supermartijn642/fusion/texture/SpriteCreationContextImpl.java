@@ -28,8 +28,8 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
         this.textureHeight = original.mainImage[0].getHeight();
         this.identifier = original.getName();
         this.images = original.mainImage;
-        this.atlasWidth = Math.round(original.getX() / original.getU0());
-        this.atlasHeight = Math.round(original.getY() / original.getV0());
+        this.atlasWidth = Math.round((original.getX() + original.getWidth()) / original.getU1());
+        this.atlasHeight = Math.round((original.getY() + original.getHeight()) / original.getV1());
         this.atlas = original.atlas();
         this.spriteX = original.getX();
         this.spriteY = original.getY();

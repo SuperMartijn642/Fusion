@@ -1,3 +1,7 @@
+### Fusion 1.0.1
+- Fixed textures not loading correctly when ModernFix is installed
+- Fixed `SpriteCreationContext` sometimes returning the wrong atlas size
+
 ### Fusion 1.0.0b
 - Fusion is no longer marked as client-side only
 - Fixed versioning

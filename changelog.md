@@ -1,3 +1,6 @@
+### Fusion 1.0.1
+- Fixed `SpriteCreationContext` sometimes returning the wrong atlas size
+
 ### Fusion 1.0.0a
 - Fusion is no longer marked as client-side only
 - Fixed versioning

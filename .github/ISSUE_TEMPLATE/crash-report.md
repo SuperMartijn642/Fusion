@@ -2,14 +2,16 @@
 name: Crash report
 about: Report for a crash
 title: "[Crash] ..."
-labels: crash
+labels: ''
 assignees: ''
 
 ---
 
 **Version Info**
 - Minecraft, ...
-- Rechiseled, ...
+- Fusion, ...
+
+**Are you using OptiFine:** Yes or no
 
 **Steps to Reproduce**
 ...

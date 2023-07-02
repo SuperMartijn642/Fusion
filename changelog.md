@@ -1,3 +1,6 @@
+### Fusion 1.0.2
+- Fixed simple connected texture sprite coordinates for the left,up,down connection
+
 ### Fusion 1.0.1
 - Fixed textures not loading correctly when ModernFix is installed
 - Fixed `SpriteCreationContext` sometimes returning the wrong atlas size

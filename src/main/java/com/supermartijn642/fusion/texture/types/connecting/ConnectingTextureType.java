@@ -220,7 +220,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureLayou
                     else if(!right)
                         uv = new int[]{1, 3};
                     else if(!bottom)
-                        uv = new int[]{3, 0};
+                        uv = new int[]{0, 3};
                     else // four directions
                         uv = new int[]{1, 0};
                 }

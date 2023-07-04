@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.model.types.vanilla;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.block.model.BlockModel;
@@ -25,6 +26,11 @@ public class VanillaModelType implements ModelType<BlockModel> {
 
     @Override
     public BakedModel bake(ModelBakingContext context, BlockModel data){
+        if(data.parentLocation != null && data.parent == null){
+            ModelInstance<?> model = context.getModel(data.parentLocation);
+            if(model != null)
+                data.parent = model.getAsVanillaModel();
+        }
         return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation(), context.getModelIdentifier());
     }
 

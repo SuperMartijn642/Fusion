@@ -48,6 +48,11 @@ public class VanillaModelType implements ModelType<ModelBlock> {
 
     @Override
     public IBakedModel bake(ModelBakingContext context, ModelBlock data){
+        if(data.parentLocation != null && data.parent == null){
+            ModelInstance<?> model = context.getModel(data.parentLocation);
+            if(model != null)
+                data.parent = model.getAsVanillaModel();
+        }
         return getAsForgeModel(data).bake(context.getTransformation(), DefaultVertexFormats.BLOCK, material -> context.getTexture(SpriteIdentifier.of(TextureAtlases.getBlocks(), material)));
     }
 

@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
@@ -13,11 +14,11 @@ import java.util.function.Function;
  */
 public class ModelBakingContextImpl implements ModelBakingContext {
 
-    private final Function<ResourceLocation,TextureAtlasSprite> spriteGetter;
+    private final Function<ResourceLocation, TextureAtlasSprite> spriteGetter;
     private final IModelState modelState;
     private final ResourceLocation modelIdentifier;
 
-    public ModelBakingContextImpl(Function<ResourceLocation,TextureAtlasSprite> spriteGetter, IModelState modelState, ResourceLocation modelIdentifier){
+    public ModelBakingContextImpl(Function<ResourceLocation, TextureAtlasSprite> spriteGetter, IModelState modelState, ResourceLocation modelIdentifier){
         this.spriteGetter = spriteGetter;
         this.modelState = modelState;
         this.modelIdentifier = modelIdentifier;
@@ -41,5 +42,10 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     @Override
     public ResourceLocation getModelIdentifier(){
         return this.modelIdentifier;
+    }
+
+    @Override
+    public ModelInstance<?> getModel(ResourceLocation identifier){
+        return FusionBlockModel.getModelInstance(identifier);
     }
 }

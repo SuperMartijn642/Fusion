@@ -26,6 +26,11 @@ public class VanillaModelType implements ModelType<BlockModel> {
 
     @Override
     public BakedModel bake(ModelBakingContext context, BlockModel data){
+        if(data.parentLocation != null && data.parent == null){
+            ModelInstance<?> model = context.getModel(data.parentLocation);
+            if(model != null)
+                data.parent = model.getAsVanillaModel();
+        }
         return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation(), context.getModelIdentifier());
     }
 

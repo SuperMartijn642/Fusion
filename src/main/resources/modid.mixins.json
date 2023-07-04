@@ -9,6 +9,7 @@
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "DatagenModLoaderMixin",
+    "MultiPartBakedModelMixin",
     "SpriteLoaderMixin",
     "TextureAtlasSpriteMixin"
   ],

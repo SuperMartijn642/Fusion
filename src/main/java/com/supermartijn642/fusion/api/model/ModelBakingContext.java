@@ -5,6 +5,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -48,4 +49,12 @@ public interface ModelBakingContext {
      * @return the identifier of the model.
      */
     ResourceLocation getModelIdentifier();
+
+    /**
+     * Gets the model corresponding to the given identifier.
+     * Only models which were returned from {@link ModelType#getModelDependencies(Object)} may be requested.
+     * @param identifier identifier for the model
+     */
+    @Nullable
+    ModelInstance<?> getModel(ResourceLocation identifier);
 }

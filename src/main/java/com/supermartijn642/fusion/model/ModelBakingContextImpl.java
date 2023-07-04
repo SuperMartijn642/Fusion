@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.model.IModelTransform;
 import net.minecraft.client.renderer.model.Material;
@@ -51,5 +52,10 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     @Override
     public ResourceLocation getModelIdentifier(){
         return this.modelIdentifier;
+    }
+
+    @Override
+    public ModelInstance<?> getModel(ResourceLocation identifier){
+        return FusionBlockModel.getModelInstance(this.modelBakery.getModel(identifier));
     }
 }

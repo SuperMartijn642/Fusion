@@ -1,3 +1,8 @@
+### Fusion 1.0.3
+- Added `ModelBakingContext#getModel`
+- Fixed parents for connecting models not always being resolved
+- Added bypass to load child model data for multipart models
+
 ### Fusion 1.0.2
 - Fixed simple connected texture sprite coordinates for the left,up,down connection
 

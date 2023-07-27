@@ -1,5 +1,6 @@
 ### Fusion 1.0.4
 - Fixed concurrency issue where some texture are sometimes not loaded correctly
+- Added separate mixins for when ModernFix is installed
 
 ### Fusion 1.0.3
 - Added `ModelBakingContext#getModel`

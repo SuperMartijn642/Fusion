@@ -52,7 +52,9 @@ public class TextureAtlasMixin {
             metadata = resource.metadata().getSection(FusionMetadataSection.INSTANCE).orElse(null);
         }catch(IOException ignored){ /* Metadata will always be cached already, so need to worry about exceptions */ }
         if(metadata != null){
-            this.fusionTextureMetadata.put(info.name(), metadata);
+            synchronized(this.fusionTextureMetadata){
+                this.fusionTextureMetadata.put(info.name(), metadata);
+            }
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{

@@ -67,7 +67,9 @@ public class TextureAtlasMixin {
         Pair<TextureType<Object>,Object> metadata = data == null ? null : data.pair;
         if(metadata != null){
             ResourceLocation identifier = new ResourceLocation(sprite.getIconName());
-            this.fusionTextureMetadata.put(identifier, metadata);
+            synchronized(this.fusionTextureMetadata){
+                this.fusionTextureMetadata.put(identifier, metadata);
+            }
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{

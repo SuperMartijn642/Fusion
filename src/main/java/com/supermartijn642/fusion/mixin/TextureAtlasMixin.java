@@ -53,7 +53,9 @@ public class TextureAtlasMixin {
         // Get the fusion metadata
         Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionMetadataSection.INSTANCE);
         if(metadata != null){
-            this.fusionTextureMetadata.put(sprite.getName(), metadata);
+            synchronized(this.fusionTextureMetadata){
+                this.fusionTextureMetadata.put(sprite.getName(), metadata);
+            }
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{

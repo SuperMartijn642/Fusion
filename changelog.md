@@ -1,3 +1,6 @@
+### Fusion 1.0.5
+- Fixed `VanillaModelDataBuilder` setting ambient occlusion to false by default
+
 ### Fusion 1.0.4
 - Fixed concurrency issue where some texture are sometimes not loaded correctly
 - Added separate mixins for when ModernFix is installed

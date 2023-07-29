@@ -51,6 +51,6 @@ public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<Vani
 
     @Override
     public BlockModel build(){
-        return new BlockModel(this.parent, Collections.emptyList(), this.textures, false, false, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
+        return new BlockModel(this.parent, Collections.emptyList(), this.textures, true, false, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
     }
 }

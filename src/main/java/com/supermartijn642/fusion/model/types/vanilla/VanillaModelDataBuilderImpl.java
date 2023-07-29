@@ -60,6 +60,6 @@ public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<Vani
             .map(entry -> Pair.of(entry.getKey(), entry.getValue()))
             .map(pair -> pair.<Either<RenderMaterial,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new RenderMaterial(TextureAtlases.getBlocks(), new ResourceLocation(s)))))
             .collect(Collectors.toMap(Pair::left, Pair::right));
-        return new BlockModel(this.parent, Collections.emptyList(), textures, false, null, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
+        return new BlockModel(this.parent, Collections.emptyList(), textures, true, null, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
     }
 }

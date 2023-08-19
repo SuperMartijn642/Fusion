@@ -1,3 +1,6 @@
+### Fusion 1.0.5a
+- Added separate mixins for when VintageFix is installed
+
 ### Fusion 1.0.5
 - Fixed `VanillaModelDataBuilder` setting ambient occlusion to false by default
 

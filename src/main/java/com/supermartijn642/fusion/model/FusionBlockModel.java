@@ -68,6 +68,13 @@ public class FusionBlockModel extends BlockModel {
         return this.dependencies;
     }
 
+    @Override
+    public void resolveParents(Function<ResourceLocation,UnbakedModel> function){
+        BlockModel vanillaModel = this.model.getAsVanillaModel();
+        if(vanillaModel != null)
+            vanillaModel.resolveParents(function);
+    }
+
     public boolean hasVanillaModel(){
         return this.vanillaModel != null;
     }

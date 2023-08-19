@@ -48,6 +48,11 @@ dependencies {
     // Core library
     implementation fg.deobf("curse.maven:supermartijn642s-core-lib-454372:${project.core_library_file}")
 
+    // VintageFix
+    compileOnly fg.deobf("curse.maven:vintagefix-871198:4708132")
+    // MixinBooter
+//    runtimeOnly "curse.maven:mixin-booter-419286:4459218"
+
     // Just Enough Items
 //    runtimeOnly fg.deobf("curse.maven:jei-238222:${project.just_enough_items_file}")
 
@@ -96,7 +101,7 @@ minecraft {
             workingDirectory project.file("run")
 
             property "forge.logging.markers", "REGISTRIES"
-            property "fml.coreMods.load", resolved_core_plugin + "," + core_lib_core_mod
+            property "fml.coreMods.load", resolved_core_plugin + "," + core_lib_core_mod + ",org.embeddedt.vintagefix.core.VintageFixCore,zone.rong.mixinbooter.MixinBooterPlugin"
 
             args "--mixin", resolved_core_config
 

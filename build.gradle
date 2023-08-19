@@ -20,6 +20,17 @@ repositories {
     maven {
         url "https://www.cursemaven.com"
     }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 dependencies {
@@ -33,6 +44,8 @@ dependencies {
     // Fabric API
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
+    // Sodium
+    modRuntimeOnly "maven.modrinth:sodium:${project.sodium_version}"
     // Just Enough Items
     modRuntimeOnly "curse.maven:jei-238222:${project.just_enough_items_file}"
 }

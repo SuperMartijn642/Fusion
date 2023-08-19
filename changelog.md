@@ -1,3 +1,6 @@
+### Fusion 1.0.5a
+- Make sure parent models get resolved properly when combined with mods like DashLoader
+
 ### Fusion 1.0.5
 - Fixed `VanillaModelDataBuilder` setting ambient occlusion to false by default
 

@@ -49,7 +49,7 @@ dependencies {
     implementation fg.deobf("curse.maven:supermartijn642s-core-lib-454372:${project.core_library_file}")
 
     // VintageFix
-    compileOnly fg.deobf("curse.maven:vintagefix-871198:4708132")
+    compileOnly fg.deobf("curse.maven:vintagefix-871198:4714078")
     // MixinBooter
 //    runtimeOnly "curse.maven:mixin-booter-419286:4459218"
 

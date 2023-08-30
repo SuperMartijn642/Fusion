@@ -1,3 +1,6 @@
+### Fusion 1.0.5b
+- Fixed crash with VintageFix 0.3+
+
 ### Fusion 1.0.5a
 - Added separate mixins for when VintageFix is installed
 

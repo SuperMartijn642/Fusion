@@ -8,6 +8,7 @@
   "client": [
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "SpriteContentsMixin",
     "SpriteLoaderMixin",
     "TextureAtlasSpriteMixin",
     "FabricDataGenHelperMixin"

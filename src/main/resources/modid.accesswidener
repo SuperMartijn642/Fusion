@@ -30,6 +30,8 @@ mutable field net/minecraft/client/renderer/texture/SpriteContents animatedTextu
 # SpriteContents$AnimatedTexture
 accessible method net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Ljava/util/List;IZ)V
 accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
+# SpriteLoader
+mutable field net/minecraft/client/renderer/texture/SpriteLoader DEFAULT_METADATA_SECTIONS Ljava/util/Set;
 # TextureAtlasSprite
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F

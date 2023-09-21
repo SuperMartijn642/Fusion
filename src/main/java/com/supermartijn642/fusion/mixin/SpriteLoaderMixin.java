@@ -1,32 +1,22 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.extensions.SpriteContentsExtension;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
-import com.supermartijn642.fusion.texture.FusionMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
-import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
-import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
-import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 /**
@@ -34,44 +24,6 @@ import java.util.concurrent.Executor;
  */
 @Mixin(value = SpriteLoader.class, priority = 900)
 public class SpriteLoaderMixin {
-
-    @Unique
-    private static final Map<ResourceLocation,Pair<TextureType<Object>,Object>> fusionTextureMetadata = new ConcurrentHashMap<>(); // TODO find a place to clear this
-
-    @Inject(
-        method = "loadSprite",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;calculateFrameSize(II)Lnet/minecraft/client/resources/metadata/animation/FrameSize;",
-            shift = At.Shift.BEFORE
-        ),
-        cancellable = true,
-        locals = LocalCapture.CAPTURE_FAILHARD
-    )
-    private static void gatherMetadata(ResourceLocation identifier, Resource resource, CallbackInfoReturnable<SpriteContents> ci, AnimationMetadataSection animationMetadataSection, NativeImage image){
-        // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = null;
-        try{
-            metadata = resource.metadata().getSection(FusionMetadataSection.INSTANCE).orElse(null);
-        }catch(IOException ignored){ /* Metadata will always be cached already, so need to worry about exceptions */ }
-        if(metadata != null){
-            fusionTextureMetadata.put(identifier, metadata);
-            // Adjust the frame size
-            FrameSize originalSize = animationMetadataSection.calculateFrameSize(image.getWidth(), image.getHeight());
-            Pair<Integer,Integer> newSize;
-            try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier), metadata.right());
-            }catch(Exception e){
-                throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!", e);
-            }
-            if(newSize == null)
-                throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
-            // Replace the current size
-            FrameSize newFrameSize = new FrameSize(newSize.left(), newSize.right());
-            //noinspection deprecation
-            ci.setReturnValue(new SpriteContents(identifier, newFrameSize, image, animationMetadataSection));
-        }
-    }
 
     @Inject(
         method = "loadAndStitch",
@@ -81,11 +33,11 @@ public class SpriteLoaderMixin {
         ci.getReturnValue().thenApply(preparations -> {
             // Replace sprites
             Map<ResourceLocation,TextureAtlasSprite> textures = preparations.regions();
-            for(Map.Entry<ResourceLocation,Pair<TextureType<Object>,Object>> entry : fusionTextureMetadata.entrySet()){
+            for(Map.Entry<ResourceLocation,TextureAtlasSprite> entry : textures.entrySet()){
                 ResourceLocation identifier = entry.getKey();
-                TextureAtlasSprite texture = textures.get(identifier);
-                Pair<TextureType<Object>,Object> textureData = entry.getValue();
-                if(texture != null){
+                TextureAtlasSprite texture = entry.getValue();
+                Pair<TextureType<Object>,Object> textureData = ((SpriteContentsExtension)texture.contents()).fusionTextureMetadata();
+                if(textureData != null){
                     // Create the sprite
                     TextureAtlasSprite newTexture;
                     try(SpriteCreationContextImpl context = new SpriteCreationContextImpl(preparations, atlas, texture)){
@@ -98,6 +50,7 @@ public class SpriteLoaderMixin {
                     ((TextureAtlasSpriteExtension)newTexture).setFusionTextureType(textureData.left());
                     // Replace the current texture
                     textures.put(identifier, newTexture);
+                    ((SpriteContentsExtension)texture.contents()).clearFusionTextureMetadata();
                 }
             }
             return preparations;

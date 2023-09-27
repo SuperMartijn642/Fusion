@@ -165,6 +165,7 @@ curseforge {
         releaseType = project.curseforge_release_type
         project.curseforge_game_versions.split(" ").each it::addGameVersion
         addGameVersion("Forge")
+        addGameVersion("NeoForge")
         // Point to 'changelog' setting to a the changelog file
         changelog = file("changelog.md")
         changelogType = "markdown"
@@ -214,7 +215,7 @@ modrinth {
     changelog = file("changelog.md").text
     uploadFile = jar // With Loom, this MUST be set to `remapJar` instead of `jar`!
     additionalFiles = [javadocJar, sourcesJar]
-    loaders = ["forge"]
+    loaders = ["forge", "neoforge"]
     if (!project.modrinth_required_dependency_ids.isEmpty() || !project.modrinth_optional_dependency_ids.isEmpty()) {
         dependencies {
             // Required dependencies

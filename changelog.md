@@ -1,3 +1,6 @@
+### Fusion 1.0.6
+- Fixed concurrency issue when rendering connecting models
+
 ### Fusion 1.0.5b
 - Fixed crash with VintageFix 0.3+
 

@@ -1,3 +1,6 @@
+### Fusion 1.0.6
+- Fixed concurrency issue when rendering connecting models
+
 ### Fusion 1.0.5a
 - Make sure parent models get resolved properly when combined with mods like DashLoader
 

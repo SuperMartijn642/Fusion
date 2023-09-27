@@ -1,3 +1,5 @@
+import java.util.regex.Pattern
+
 plugins {
     id "fabric-loom" version "1.2-SNAPSHOT"
     id "com.matthewprenger.cursegradle" version "1.4.0"
@@ -62,11 +64,13 @@ sourceSets.main.resources { srcDir "src/generated/resources" }
 processResources {
     inputs.property "version", project.version
 
+    // Replace the mod version
+    Map<String, ?> copyProperties = project.properties.clone() as Map<String, ?>
+    var matcher = Pattern.compile("[^.0-9]").matcher(copyProperties.mod_version as String)
+    if (matcher.find())
+        copyProperties.mod_version = copyProperties.mod_version.substring(0, matcher.start()) + "+" + copyProperties.mod_version.substring(matcher.start())
+
     filesMatching(["fabric.mod.json", "modid.mixins.json", "pack.mcmeta"]) {
-        Map<String, ?> copyProperties = project.properties.clone() as Map<String, ?>
-        String modVersion = project.properties.mod_version
-        if (Character.isAlphabetic(modVersion.charAt(modVersion.length() - 1) as int))
-            copyProperties.mod_version = modVersion.substring(0, modVersion.length() - 1) + "+" + modVersion.chars[-1]
         expand copyProperties
     }
 
@@ -123,6 +127,7 @@ curseforge {
         releaseType = project.curseforge_release_type
         project.curseforge_game_versions.split(" ").each it::addGameVersion
         addGameVersion("Fabric")
+        addGameVersion("Quilt")
         // Point to 'changelog' setting to a the changelog file
         changelog = file("changelog.md")
         changelogType = "markdown"
@@ -172,7 +177,7 @@ modrinth {
     changelog = file("changelog.md").text
     uploadFile = remapJar // With Loom, this MUST be set to `remapJar` instead of `jar`!
     additionalFiles = [sourcesJar] // TODO add back javadocJar, once Modrinth actually accepts them
-    loaders = ["fabric"]
+    loaders = ["fabric", "quilt"]
     if (!project.modrinth_required_dependency_ids.isEmpty() || !project.modrinth_optional_dependency_ids.isEmpty()) {
         dependencies {
             // Required dependencies

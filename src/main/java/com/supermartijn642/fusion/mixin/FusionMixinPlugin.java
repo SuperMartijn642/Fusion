@@ -15,6 +15,7 @@ import java.util.Set;
 public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isModernFixLoaded;
+    private boolean isOptiFineLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
@@ -23,6 +24,13 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             this.isModernFixLoaded = true;
         }catch(Exception ignored){
             this.isModernFixLoaded = false;
+        }
+        try{
+            MixinService.getService().getBytecodeProvider().getClassNode("optifine.Installer");
+            this.isOptiFineLoaded = true;
+            System.out.println("OptiFine found.");
+        }catch(Exception ignored){
+            this.isOptiFineLoaded = false;
         }
     }
 
@@ -33,7 +41,7 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName){
-        return !(this.isModernFixLoaded && mixinClassName.endsWith(".TextureAtlasMixin"));
+        return !(this.isModernFixLoaded || this.isOptiFineLoaded && mixinClassName.endsWith(".TextureAtlasMixin"));
     }
 
     @Override
@@ -42,7 +50,7 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins(){
-        return this.isModernFixLoaded ?
+        return this.isModernFixLoaded || this.isOptiFineLoaded ?
             Collections.singletonList("modernfix.TextureAtlasMixinModernFix")
             : null;
     }

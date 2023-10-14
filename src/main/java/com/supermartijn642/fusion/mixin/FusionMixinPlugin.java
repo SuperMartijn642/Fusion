@@ -28,7 +28,6 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
         try{
             MixinService.getService().getBytecodeProvider().getClassNode("optifine.Installer");
             this.isOptiFineLoaded = true;
-            System.out.println("OptiFine found.");
         }catch(Exception ignored){
             this.isOptiFineLoaded = false;
         }

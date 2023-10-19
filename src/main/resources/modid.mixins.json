@@ -8,10 +8,14 @@
   "client": [
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "FabricDataGenHelperMixin",
+    "FilePackResourcesMixin",
+    "ModNioResourcePackMixin",
+    "PackMixin",
+    "PathPackResourcesMixin",
     "SpriteContentsMixin",
     "SpriteLoaderMixin",
-    "TextureAtlasSpriteMixin",
-    "FabricDataGenHelperMixin"
+    "TextureAtlasSpriteMixin"
   ],
   "server": [],
   "injectors": {

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.SpriteContentsExtension;
-import com.supermartijn642.fusion.texture.FusionMetadataSection;
+import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.minecraft.client.renderer.texture.SpriteContents;
@@ -46,7 +46,7 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
     )
     private FrameSize initMetadata(FrameSize originalSize, ResourceLocation identifier, FrameSize ignore, NativeImage image, ResourceMetadata resourceMetadata){
         // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionMetadataSection.INSTANCE).orElse(null);
+        Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
         if(metadata != null){
             this.fusionTextureMetadata = metadata;
             // Adjust the frame size

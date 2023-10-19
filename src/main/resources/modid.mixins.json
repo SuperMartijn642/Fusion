@@ -10,6 +10,12 @@
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "DatagenModLoaderMixin",
+    "FilePackResourcesMixin",
+    "FolderPackResourcesMixin",
+    "LegacyResourcePackWrapperMixin",
+    "LegacyResourcePackWrapperV4Mixin",
+    "ModFileResourcePackMixin",
+    "PackMixin",
     "TextureAtlasMixin",
     "TextureAtlasSpriteMixin"
   ],

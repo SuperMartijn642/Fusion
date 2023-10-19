@@ -9,6 +9,11 @@
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "DatagenModLoaderMixin",
+    "FilePackResourcesMixin",
+    "ForgePathPackResourcesMixin",
+    "PackMixin",
+    "PathPackResourcesMixin",
+    "ResourcePackLoaderMixin",
     "MultiPartBakedModelMixin",
     "SpriteLoaderMixin",
     "TextureAtlasSpriteMixin"

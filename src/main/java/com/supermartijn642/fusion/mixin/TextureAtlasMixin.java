@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.mixin;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
-import com.supermartijn642.fusion.texture.FusionMetadataSection;
+import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
 import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
@@ -71,7 +71,7 @@ public class TextureAtlasMixin {
     )
     private void gatherMetadata(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, IResource resource){
         // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionMetadataSection.INSTANCE);
+        Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionTextureMetadataSection.INSTANCE);
         if(metadata != null){
             synchronized(this.fusionTextureMetadata){
                 this.fusionTextureMetadata.put(info.name(), metadata);

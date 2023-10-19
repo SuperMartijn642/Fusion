@@ -15,14 +15,14 @@ import java.lang.reflect.Type;
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
-public class FusionMetadataSection implements IMetadataSectionSerializer<FusionMetadataSection.Data> {
+public class FusionTextureMetadataSection implements IMetadataSectionSerializer<FusionTextureMetadataSection.Data> {
 
-    public static final FusionMetadataSection INSTANCE = new FusionMetadataSection();
+    public static final FusionTextureMetadataSection INSTANCE = new FusionTextureMetadataSection();
     private static boolean registered = false;
 
     public static synchronized void registerMetadata(){
         if(!registered){
-            ((SimpleReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).rmMetadataSerializer.registerMetadataSectionType(FusionMetadataSection.INSTANCE, FusionMetadataSection.Data.class);
+            ((SimpleReloadableResourceManager)Minecraft.getMinecraft().getResourceManager()).rmMetadataSerializer.registerMetadataSectionType(FusionTextureMetadataSection.INSTANCE, FusionTextureMetadataSection.Data.class);
             registered = true;
         }
     }

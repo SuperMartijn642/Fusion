@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.mixin;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
-import com.supermartijn642.fusion.texture.FusionMetadataSection;
+import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
 import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
@@ -62,8 +62,8 @@ public class TextureAtlasMixin {
     )
     private void gatherMetadata(TextureAtlasSprite sprite, PngSizeInfo pngSizeInfo, boolean hasAnimation) throws IOException{
         // Get the fusion metadata
-        FusionMetadataSection.registerMetadata();
-        FusionMetadataSection.Data data = this.textureResource.get().getMetadata(FusionMetadataSection.INSTANCE.getSectionName());
+        FusionTextureMetadataSection.registerMetadata();
+        FusionTextureMetadataSection.Data data = this.textureResource.get().getMetadata(FusionTextureMetadataSection.INSTANCE.getSectionName());
         Pair<TextureType<Object>,Object> metadata = data == null ? null : data.pair;
         if(metadata != null){
             ResourceLocation identifier = new ResourceLocation(sprite.getIconName());

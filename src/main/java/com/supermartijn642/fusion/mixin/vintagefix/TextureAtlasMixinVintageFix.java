@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
-import com.supermartijn642.fusion.texture.FusionMetadataSection;
+import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
 import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
@@ -62,7 +62,7 @@ public class TextureAtlasMixinVintageFix {
         locals = LocalCapture.CAPTURE_FAILHARD
     )
     private void loadFusionSprites(IResourceManager resourceManager, CallbackInfo ci, int j, Stitcher stitcher){
-        FusionMetadataSection.registerMetadata();
+        FusionTextureMetadataSection.registerMetadata();
         List<CompletableFuture<?>> tasks = Lists.newArrayList();
         for(Map.Entry<String,TextureAtlasSprite> entry : this.mapRegisteredSprites.entrySet()){
             tasks.add(CompletableFuture.runAsync(() -> {
@@ -72,7 +72,7 @@ public class TextureAtlasMixinVintageFix {
                 try(IResource resource = resourceManager.getResource(location)){
                     if(resource != null){
                         // Get the fusion metadata
-                        FusionMetadataSection.Data data = resource.getMetadata(FusionMetadataSection.INSTANCE.getSectionName());
+                        FusionTextureMetadataSection.Data data = resource.getMetadata(FusionTextureMetadataSection.INSTANCE.getSectionName());
                         Pair<TextureType<Object>,Object> metadata = data == null ? null : data.pair;
                         if(metadata != null){
                             ResourceLocation identifier = new ResourceLocation(sprite.getIconName());
@@ -120,7 +120,9 @@ public class TextureAtlasMixinVintageFix {
                         }
                     }
                 }catch(FileNotFoundException ignore){
-                }catch(IOException e){throw new RuntimeException(e);}
+                }catch(IOException e){
+                    throw new RuntimeException(e);
+                }
             }, VintageFix.WORKER_POOL));
         }
         CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();

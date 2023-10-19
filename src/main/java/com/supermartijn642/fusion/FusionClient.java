@@ -7,11 +7,15 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.predicate.*;
 import net.minecraft.util.ResourceLocation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
 public class FusionClient {
+
+    public static final Logger LOGGER = LogManager.getLogger("fusion");
 
     public static void init(){
         // Register default texture types

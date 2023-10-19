@@ -8,11 +8,15 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.predicate.*;
 import net.minecraft.resources.ResourceLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
 public class FusionClient {
+
+    public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
 
     private static NativeImage dummyImage;
 

@@ -10,6 +10,11 @@
   "client": [
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "FilePackResourcesMixin",
+    "FolderPackResourcesMixin",
+    "LegacyResourcePackWrapperMixin",
+    "ModFileResourcePackMixin",
+    "PackMixin",
     "TextureAtlasMixin",
     "TextureAtlasSpriteMixin"
   ],

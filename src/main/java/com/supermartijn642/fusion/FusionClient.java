@@ -9,6 +9,8 @@ import com.supermartijn642.fusion.model.FusionBlockModel;
 import com.supermartijn642.fusion.predicate.*;
 import net.minecraft.client.renderer.model.IUnbakedModel;
 import net.minecraft.util.ResourceLocation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.function.Function;
 
@@ -16,6 +18,8 @@ import java.util.function.Function;
  * Created 26/04/2023 by SuperMartijn642
  */
 public class FusionClient {
+
+    public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
 
     public static void init(){
         // Register default texture types

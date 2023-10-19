@@ -8,9 +8,9 @@ import net.minecraft.resources.data.IMetadataSectionSerializer;
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
-public class FusionMetadataSection implements IMetadataSectionSerializer<Pair<TextureType<Object>,Object>> {
+public class FusionTextureMetadataSection implements IMetadataSectionSerializer<Pair<TextureType<Object>,Object>> {
 
-    public static final FusionMetadataSection INSTANCE = new FusionMetadataSection();
+    public static final FusionTextureMetadataSection INSTANCE = new FusionTextureMetadataSection();
 
     @Override
     public String getMetadataSectionName(){

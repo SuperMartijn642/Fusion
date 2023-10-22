@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
-import com.supermartijn642.fusion.texture.FusionMetadataSection;
+import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
 import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
@@ -58,7 +58,7 @@ public class TextureAtlasMixinModernFix {
                     // Get the fusion metadata
                     Pair<TextureType<Object>,Object> metadata;
                     try{
-                        metadata = resource.metadata().getSection(FusionMetadataSection.INSTANCE).orElse(null);
+                        metadata = resource.metadata().getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
                     }catch(IOException e){
                         throw new RuntimeException("Encountered an exception whilst reading metadata for '" + location + "'!", e);
                     }

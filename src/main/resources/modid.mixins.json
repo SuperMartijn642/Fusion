@@ -9,9 +9,15 @@
   "client": [
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "FabricDataGenHelperMixin",
+    "FilePackResourcesMixin",
+    "FolderPackResourcesMixin",
+    "LegacyPackResourcesAdapterMixin",
+    "ModNioResourcePackMixin",
+    "PackMixin",
+    "PackResourcesAdapterV4Mixin",
     "TextureAtlasMixin",
-    "TextureAtlasSpriteMixin",
-    "FabricDataGenHelperMixin"
+    "TextureAtlasSpriteMixin"
   ],
   "server": [],
   "injectors": {

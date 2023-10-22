@@ -4,7 +4,7 @@ import com.mojang.blaze3d.platform.PngInfo;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
-import com.supermartijn642.fusion.texture.FusionMetadataSection;
+import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
 import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
@@ -48,7 +48,7 @@ public class TextureAtlasMixin {
         // Get the fusion metadata
         Pair<TextureType<Object>,Object> metadata = null;
         try{
-            metadata = resource.metadata().getSection(FusionMetadataSection.INSTANCE).orElse(null);
+            metadata = resource.metadata().getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
         }catch(IOException ignored){ /* Metadata will always be cached already, so need to worry about exceptions */ }
         if(metadata != null){
             synchronized(this.fusionTextureMetadata){

@@ -4,9 +4,11 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.math.Transformation;
+import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
@@ -20,8 +22,10 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.NotNull;
@@ -41,15 +45,14 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     private final Transformation modelRotation;
     private final List<ConnectionPredicate> predicates;
     // [cullface][hashcode * 6]
-    private final Map<Direction,Map<Integer,List<BakedQuad>>> quadCache = new HashMap<>();
-    private final Map<Integer,List<BakedQuad>> directionlessQuadCache = new HashMap<>();
+    private final Map<RenderKey,List<BakedQuad>> quadCache = new HashMap<>();
+    private final RenderKey mutableKey = new RenderKey(0, null, null);
+    private List<RenderType> customRenderTypes;
 
     public ConnectingBakedModel(BakedModel original, Transformation modelRotation, List<ConnectionPredicate> predicates){
         super(original);
         this.modelRotation = modelRotation;
         this.predicates = predicates;
-        for(Direction direction : Direction.values())
-            this.quadCache.put(direction, new HashMap<>());
     }
 
     @Override
@@ -58,22 +61,22 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         int hashCode = data == null ? 0 : data.hashCode();
 
         // Get the correct cache and quads
-        Map<Integer,List<BakedQuad>> cache = side == null ? this.directionlessQuadCache : this.quadCache.get(side);
+        this.mutableKey.update(hashCode, side, renderType);
         List<BakedQuad> quads;
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized(cache){
-            quads = cache.get(hashCode);
+        synchronized(this.quadCache){
+            quads = this.quadCache.get(this.mutableKey);
         }
 
         // Compute the quads if they don't exist yet
         if(quads == null){
-            quads = this.remapQuads(this.original.getQuads(state, side, random, modelData, renderType), data);
-            //noinspection SynchronizationOnLocalVariableOrMethodParameter
-            synchronized(cache){
-                if(!cache.containsKey(hashCode))
-                    cache.put(hashCode, quads);
-                else
-                    quads = cache.get(hashCode);
+            boolean isOriginalRenderType = state == null || super.getRenderTypes(state, random, modelData).contains(renderType);
+            quads = this.remapQuads(this.original.getQuads(state, side, random, modelData, renderType), data, renderType, isOriginalRenderType);
+            synchronized(this.quadCache){
+                if(!this.quadCache.containsKey(this.mutableKey)){
+                    RenderKey key = new RenderKey(hashCode, side, renderType);
+                    this.quadCache.put(key, quads);
+                }else
+                    quads = this.quadCache.get(this.mutableKey);
             }
         }
 
@@ -84,16 +87,21 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         return quads;
     }
 
-    private List<BakedQuad> remapQuads(List<BakedQuad> originalQuads, SurroundingBlockData surroundingBlocks){
+    private List<BakedQuad> remapQuads(List<BakedQuad> originalQuads, SurroundingBlockData surroundingBlocks, RenderType renderType, boolean originalRenderType){
         if(surroundingBlocks == null)
             return originalQuads;
-        return originalQuads.stream().map(quad -> this.remapQuad(quad, surroundingBlocks)).filter(Objects::nonNull).collect(Collectors.toList());
+        return originalQuads.stream().map(quad -> this.remapQuad(quad, surroundingBlocks, renderType, originalRenderType)).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    protected BakedQuad remapQuad(BakedQuad quad, SurroundingBlockData surroundingBlocks){
+    protected BakedQuad remapQuad(BakedQuad quad, SurroundingBlockData surroundingBlocks, RenderType renderType, boolean originalRenderType){
         TextureAtlasSprite sprite = quad.getSprite();
         if(SpriteHelper.getTextureType(sprite) != DefaultTextureTypes.CONNECTING)
-            return quad;
+            return originalRenderType ? quad : null;
+
+        ConnectingTextureData.RenderType spriteRenderType = ((ConnectingTextureSprite)sprite).getRenderType();
+        if(spriteRenderType == null ? !originalRenderType : FusionClient.getRenderTypeMaterial(spriteRenderType) != renderType)
+            return null;
+
         ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).getLayout();
 
         int[] vertexData = quad.getVertices();
@@ -158,6 +166,38 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     }
 
     @Override
+    public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
+        if(this.customRenderTypes == null)
+            this.calculateCustomRenderTypes();
+        return ChunkRenderTypeSet.union(ChunkRenderTypeSet.of(this.customRenderTypes), super.getRenderTypes(state, rand, data));
+    }
+
+    @Override
+    public List<RenderType> getRenderTypes(ItemStack stack, boolean fabulous){
+        if(this.customRenderTypes == null)
+            this.calculateCustomRenderTypes();
+        List<RenderType> originalRenderTypes = super.getRenderTypes(stack, fabulous);
+        List<RenderType> renderTypes = new ArrayList<>(this.customRenderTypes.size() + originalRenderTypes.size());
+        renderTypes.addAll(originalRenderTypes);
+        renderTypes.addAll(this.customRenderTypes);
+        return renderTypes;
+    }
+
+    private void calculateCustomRenderTypes(){
+        Set<RenderType> renderTypes = new HashSet<>();
+        for(Direction cullFace : new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST, null}){
+            this.original.getQuads(null, cullFace, RandomSource.create(42)).stream()
+                .map(BakedQuad::getSprite)
+                .filter(sprite -> SpriteHelper.getTextureType(sprite) == DefaultTextureTypes.CONNECTING)
+                .map(sprite -> ((ConnectingTextureSprite)sprite).getRenderType())
+                .filter(Objects::nonNull)
+                .map(FusionClient::getRenderTypeMaterial)
+                .forEach(renderTypes::add);
+        }
+        this.customRenderTypes = Arrays.asList(renderTypes.toArray(RenderType[]::new));
+    }
+
+    @Override
     public boolean isCustomRenderer(){
         return super.isCustomRenderer();
     }
@@ -170,5 +210,43 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     @Override
     public ItemOverrides getOverrides(){
         return ItemOverrides.EMPTY;
+    }
+
+    private static class RenderKey {
+        private int surroundingBlockData;
+        private Direction face;
+        private RenderType renderType;
+
+        private RenderKey(int surroundingBlockData, Direction face, RenderType renderType){
+            this.surroundingBlockData = surroundingBlockData;
+            this.face = face;
+            this.renderType = renderType;
+        }
+
+        void update(int surroundingBlockData, Direction face, RenderType renderType){
+            this.surroundingBlockData = surroundingBlockData;
+            this.face = face;
+            this.renderType = renderType;
+        }
+
+        @Override
+        public boolean equals(Object o){
+            if(this == o) return true;
+            if(o == null || this.getClass() != o.getClass()) return false;
+
+            RenderKey renderKey = (RenderKey)o;
+
+            if(this.surroundingBlockData != renderKey.surroundingBlockData) return false;
+            if(this.face != renderKey.face) return false;
+            return Objects.equals(this.renderType, renderKey.renderType);
+        }
+
+        @Override
+        public int hashCode(){
+            int result = this.surroundingBlockData;
+            result = 31 * result + (this.face != null ? this.face.hashCode() : 0);
+            result = 31 * result + (this.renderType != null ? this.renderType.hashCode() : 0);
+            return result;
+        }
     }
 }

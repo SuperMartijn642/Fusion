@@ -4,15 +4,20 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.math.Transformation;
+import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureType;
+import com.supermartijn642.fusion.util.TextureAtlases;
+import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -55,7 +60,20 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     @Override
     public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
         this.levelCapture.set(Pair.of(blockView, pos));
+        context.pushTransform(quad -> {
+            TextureAtlasSprite sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad, 0);
+            if(SpriteHelper.getTextureType(sprite) != DefaultTextureTypes.CONNECTING)
+                return true;
+
+            // Mark the render type for the quad
+            ConnectingTextureData.RenderType renderType = ((ConnectingTextureSprite)sprite).getRenderType();
+            if(renderType != null)
+                quad.material(FusionClient.getRenderTypeMaterial(renderType));
+
+            return true;
+        });
         context.bakedModelConsumer().accept(this, state);
+        context.popTransform();
         this.levelCapture.set(null);
     }
 

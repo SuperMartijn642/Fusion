@@ -6,8 +6,10 @@ import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
+import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.predicate.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
@@ -49,5 +51,24 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> TextureTypeRegistryImpl.finalizeRegistration()); TODO
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModelTypeRegistryImpl.finalizeRegistration());
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
+    }
+
+    public static RenderType getRenderTypeMaterial(ConnectingTextureData.RenderType renderType){
+        RenderType material;
+        //noinspection EnhancedSwitchMigration
+        switch(renderType){
+            case OPAQUE:
+                material = RenderType.solid();
+                break;
+            case CUTOUT:
+                material = RenderType.cutout();
+                break;
+            case TRANSLUCENT:
+                material = RenderType.translucent();
+                break;
+            default:
+                throw new AssertionError();
+        }
+        return material;
     }
 }

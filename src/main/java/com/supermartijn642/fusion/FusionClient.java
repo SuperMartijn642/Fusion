@@ -5,9 +5,11 @@ import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
+import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.model.FusionBlockModel;
 import com.supermartijn642.fusion.predicate.*;
 import net.minecraft.client.renderer.model.IUnbakedModel;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,5 +53,23 @@ public class FusionClient {
                 return ((FusionBlockModel)model).hasVanillaModel() ? ((FusionBlockModel)model).getVanillaModel() : FusionBlockModel.getDummyModel();
             return model;
         };
+    }
+
+    public static BlockRenderLayer getRenderTypeMaterial(ConnectingTextureData.RenderType renderType){
+        BlockRenderLayer material;
+        switch(renderType){
+            case OPAQUE:
+                material = BlockRenderLayer.SOLID;
+                break;
+            case CUTOUT:
+                material = BlockRenderLayer.CUTOUT;
+                break;
+            case TRANSLUCENT:
+                material = BlockRenderLayer.TRANSLUCENT;
+                break;
+            default:
+                throw new AssertionError();
+        }
+        return material;
     }
 }

@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
@@ -13,40 +14,55 @@ import java.util.Locale;
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
-public class ConnectingTextureType implements TextureType<ConnectingTextureLayout> {
+public class ConnectingTextureType implements TextureType<ConnectingTextureData> {
 
     @Override
-    public ConnectingTextureLayout deserialize(JsonObject json) throws JsonParseException{
-        ConnectingTextureLayout layout = ConnectingTextureLayout.FULL;
+    public ConnectingTextureData deserialize(JsonObject json) throws JsonParseException{
+        ConnectingTextureData.Builder builder = ConnectingTextureData.builder();
         if(json.has("layout")){
             if(!json.get("layout").isJsonPrimitive() || !json.getAsJsonPrimitive("layout").isString())
                 throw new JsonParseException("Property 'layout' must be a string!");
             String layoutString = json.get("layout").getAsString();
+            ConnectingTextureLayout layout;
             try{
                 layout = ConnectingTextureLayout.valueOf(layoutString.toUpperCase(Locale.ROOT));
             }catch(IllegalArgumentException e){
                 throw new JsonParseException("Property 'layout' must be one of " + Arrays.toString(ConnectingTextureLayout.values()).toLowerCase(Locale.ROOT) + ", not '" + layoutString + "'!");
             }
+            builder.layout(layout);
         }
-        return layout;
+        if(json.has("render_type")){
+            if(!json.get("render_type").isJsonPrimitive() || !json.getAsJsonPrimitive("render_type").isString())
+                throw new JsonParseException("Property 'render_type' must be a string!");
+            String renderTypeString = json.get("render_type").getAsString();
+            ConnectingTextureData.RenderType renderType;
+            try{
+                renderType = ConnectingTextureData.RenderType.valueOf(renderTypeString.toUpperCase(Locale.ROOT));
+            }catch(IllegalArgumentException e){
+                throw new JsonParseException("Property 'render_type' must be one of " + Arrays.toString(ConnectingTextureData.RenderType.values()).toLowerCase(Locale.ROOT) + ", not '" + renderTypeString + "'!");
+            }
+            builder.renderType(renderType);
+        }
+        return builder.build();
     }
 
     @Override
-    public JsonObject serialize(ConnectingTextureLayout value){
-        if(value == ConnectingTextureLayout.FULL)
-            return null;
+    public JsonObject serialize(ConnectingTextureData data){
         JsonObject json = new JsonObject();
-        json.addProperty("layout", value.name().toLowerCase(Locale.ROOT));
-        return json;
+        if(data.getLayout() != ConnectingTextureLayout.FULL)
+            json.addProperty("layout", data.getLayout().name().toLowerCase(Locale.ROOT));
+        if(data.getRenderType() != null)
+            json.addProperty("render_type", data.getRenderType().name().toLowerCase(Locale.ROOT));
+        return json.size() == 0 ? null : json;
     }
 
     @Override
-    public TextureAtlasSprite createSprite(SpriteCreationContext context, ConnectingTextureLayout data){
+    public TextureAtlasSprite createSprite(SpriteCreationContext context, ConnectingTextureData data){
         TextureAtlasSprite sprite = context.createOriginalSprite();
-        int scale = getScaleFactor(data);
+        int scale = getScaleFactor(data.getLayout());
         sprite.u1 = sprite.u0 + (sprite.u1 - sprite.u0) / scale;
         sprite.v1 = sprite.v0 + (sprite.v1 - sprite.v0) / scale;
-        return new ConnectingTextureSprite(sprite, data);
+        return new ConnectingTextureSprite(sprite, data.getLayout(), data.getRenderType());
     }
 
     public static int getScaleFactor(ConnectingTextureLayout layout){

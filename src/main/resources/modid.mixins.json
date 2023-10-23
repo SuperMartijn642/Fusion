@@ -10,13 +10,15 @@
   "client": [
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "BlockStateMixin",
     "FilePackResourcesMixin",
     "FolderPackResourcesMixin",
     "LegacyResourcePackWrapperMixin",
     "ModFileResourcePackMixin",
     "PackMixin",
     "TextureAtlasMixin",
-    "TextureAtlasSpriteMixin"
+    "TextureAtlasSpriteMixin",
+    "WeightedBakedModelMixin"
   ],
   "server": [],
   "injectors": {

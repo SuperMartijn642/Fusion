@@ -12,12 +12,14 @@
     "BlockModelMixin",
     "FilePackResourcesMixin",
     "FolderPackResourcesMixin",
+    "ItemBlockRenderTypesMixin",
     "LegacyResourcePackWrapperMixin",
     "LegacyResourcePackWrapperV4Mixin",
     "ModFileResourcePackMixin",
     "PackMixin",
     "TextureAtlasMixin",
-    "TextureAtlasSpriteMixin"
+    "TextureAtlasSpriteMixin",
+    "WeightedBakedModelMixin"
   ],
   "server": [],
   "injectors": {

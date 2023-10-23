@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
+import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
@@ -9,8 +10,9 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 public class ConnectingTextureSprite extends TextureAtlasSprite {
 
     private final ConnectingTextureLayout layout;
+    private final ConnectingTextureData.RenderType renderType;
 
-    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureLayout layout){
+    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureLayout layout, ConnectingTextureData.RenderType renderType){
         super(
             original.atlasLocation(),
             original.contents(),
@@ -20,6 +22,7 @@ public class ConnectingTextureSprite extends TextureAtlasSprite {
             original.getY()
         );
         this.layout = layout;
+        this.renderType = renderType;
         this.u0 = original.u0;
         this.u1 = original.u1;
         this.v0 = original.v0;
@@ -28,5 +31,9 @@ public class ConnectingTextureSprite extends TextureAtlasSprite {
 
     public ConnectingTextureLayout getLayout(){
         return this.layout;
+    }
+
+    public ConnectingTextureData.RenderType getRenderType(){
+        return this.renderType;
     }
 }

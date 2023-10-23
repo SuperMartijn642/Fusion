@@ -16,7 +16,8 @@
     "ResourcePackLoaderMixin",
     "MultiPartBakedModelMixin",
     "SpriteLoaderMixin",
-    "TextureAtlasSpriteMixin"
+    "TextureAtlasSpriteMixin",
+    "WeightedBakedModelMixin"
   ],
   "server": [],
   "injectors": {

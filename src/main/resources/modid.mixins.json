@@ -19,7 +19,8 @@
     "PackResourcesAdapterV4Mixin",
     "ResourcePackLoaderMixin",
     "TextureAtlasMixin",
-    "TextureAtlasSpriteMixin"
+    "TextureAtlasSpriteMixin",
+    "WeightedBakedModelMixin"
   ],
   "server": [],
   "injectors": {

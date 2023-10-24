@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
@@ -42,13 +43,13 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     private static final int BLOCK_VERTEX_DATA_UV_OFFSET = findUVOffset(DefaultVertexFormat.BLOCK);
 
     private final Transformation modelRotation;
-    private final List<ConnectionPredicate> predicates;
+    private final Map<ResourceLocation,ConnectionPredicate> predicates;
     // [cullface][hashcode * 6]
     private final Map<Direction,Map<Integer,List<BakedQuad>>> quadCache = new HashMap<>();
     private final Map<Integer,List<BakedQuad>> directionlessQuadCache = new HashMap<>();
     private final ThreadLocal<Pair<BlockAndTintGetter,BlockPos>> levelCapture = new ThreadLocal<>();
 
-    public ConnectingBakedModel(BakedModel original, Transformation modelRotation, List<ConnectionPredicate> predicates){
+    public ConnectingBakedModel(BakedModel original, Transformation modelRotation, Map<ResourceLocation,ConnectionPredicate> predicates){
         super(original);
         this.modelRotation = modelRotation;
         this.predicates = predicates;
@@ -130,7 +131,10 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         vertexData = Arrays.copyOf(vertexData, vertexData.length);
 
         // Adjust the uv
-        SurroundingBlockData.SideConnections connections = surroundingBlocks.getConnections(quad.getDirection());
+        ResourceLocation spriteIdentifier = sprite.getName();
+        if(spriteIdentifier == null || !this.predicates.containsKey(spriteIdentifier))
+            spriteIdentifier = ConnectingModelType.DEFAULT_CONNECTION_KEY;
+        SurroundingBlockData.SideConnections connections = surroundingBlocks.getConnections(spriteIdentifier, quad.getDirection());
         int[] uv = ConnectingTextureType.getStatePosition(layout, connections.top, connections.topRight, connections.right, connections.bottomRight, connections.bottom, connections.bottomLeft, connections.left, connections.topLeft);
         adjustVertexDataUV(vertexData, uv[0], uv[1], sprite);
 
@@ -142,7 +146,6 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         int vertexSize = DefaultVertexFormat.BLOCK.getIntegerSize();
         int vertices = vertexData.length / vertexSize;
         int uvOffset = BLOCK_VERTEX_DATA_UV_OFFSET / 4;
-
 
 
         for(int i = 0; i < vertices; i++){

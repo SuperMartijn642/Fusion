@@ -1,16 +1,13 @@
 package com.supermartijn642.fusion.api.model;
 
+import com.supermartijn642.fusion.api.model.data.ConnectingModelData;
 import com.supermartijn642.fusion.api.model.data.ConnectingModelDataBuilder;
-import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelType;
 import com.supermartijn642.fusion.model.types.vanilla.VanillaModelType;
 import net.minecraft.client.renderer.block.model.ModelBlock;
 import net.minecraftforge.client.model.IModel;
-
-import java.util.List;
 
 /**
  * Contains references to the default model types provided by Fusion.
@@ -32,5 +29,5 @@ public class DefaultModelTypes {
      * @see DefaultTextureTypes#CONNECTING
      * @see ConnectingModelDataBuilder
      */
-    public static final ModelType<Pair<ModelBlock,List<ConnectionPredicate>>> CONNECTING = new ConnectingModelType();
+    public static final ModelType<ConnectingModelData> CONNECTING = new ConnectingModelType();
 }

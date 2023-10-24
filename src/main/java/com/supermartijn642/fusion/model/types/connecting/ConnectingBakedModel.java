@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.util.Direction;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.TransformationMatrix;
 import net.minecraft.world.IBlockDisplayReader;
@@ -44,13 +45,13 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     public static final ThreadLocal<Boolean> ignoreModelRenderTypeCheck = ThreadLocal.withInitial(() -> false);
 
     private final TransformationMatrix modelRotation;
-    private final List<ConnectionPredicate> predicates;
+    private final Map<ResourceLocation,ConnectionPredicate> predicates;
     // [cullface][hashcode * 6]
     private final Map<RenderKey,List<BakedQuad>> quadCache = new HashMap<>();
     private final RenderKey mutableKey = new RenderKey(0, null, null);
     private List<RenderType> customRenderTypes;
 
-    public ConnectingBakedModel(IBakedModel original, TransformationMatrix modelRotation, List<ConnectionPredicate> predicates){
+    public ConnectingBakedModel(IBakedModel original, TransformationMatrix modelRotation, Map<ResourceLocation,ConnectionPredicate> predicates){
         super(original);
         this.modelRotation = modelRotation;
         this.predicates = predicates;
@@ -115,7 +116,10 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         vertexData = Arrays.copyOf(vertexData, vertexData.length);
 
         // Adjust the uv
-        SurroundingBlockData.SideConnections connections = surroundingBlocks.getConnections(quad.getDirection());
+        ResourceLocation spriteIdentifier = sprite.getName();
+        if(spriteIdentifier == null || !this.predicates.containsKey(spriteIdentifier))
+            spriteIdentifier = ConnectingModelType.DEFAULT_CONNECTION_KEY;
+        SurroundingBlockData.SideConnections connections = surroundingBlocks.getConnections(spriteIdentifier, quad.getDirection());
         int[] uv = ConnectingTextureType.getStatePosition(layout, connections.top, connections.topRight, connections.right, connections.bottomRight, connections.bottom, connections.bottomLeft, connections.left, connections.topLeft);
         adjustVertexDataUV(vertexData, uv[0], uv[1], sprite);
 

@@ -1,16 +1,18 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.Direction;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraftforge.common.model.TRSRTransformation;
 
+import java.util.Collections;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,15 +20,27 @@ import java.util.Map;
  */
 public class SurroundingBlockData {
 
-    public static SurroundingBlockData create(IEnviromentBlockReader level, BlockPos pos, TRSRTransformation rotation, List<ConnectionPredicate> predicates){
+    public static SurroundingBlockData create(IEnviromentBlockReader level, BlockPos pos, TRSRTransformation rotation, Map<ResourceLocation,ConnectionPredicate> predicates){
         TRSRTransformation inverseRotation = rotation.inverse();
-        Map<Direction,SideConnections> connections = new EnumMap<>(Direction.class);
-        for(Direction side : Direction.values())
-            connections.put(side, getConnections(side, rotation, inverseRotation, level, pos, predicates));
-        return new SurroundingBlockData(connections);
+        // Collect all surrounding blocks
+        BlockState[][][] states = new BlockState[3][3][3];
+        BlockPos.MutableBlockPos statePos = new BlockPos.MutableBlockPos();
+        for(int i = 0; i < 27; i++){
+            statePos.set(pos.getX() + i % 3 - 1, pos.getY() + i / 3 % 3 - 1, pos.getZ() + i / 9 % 3 - 1);
+            states[i % 3][i / 3 % 3][i / 9 % 3] = level.getBlockState(statePos);
+        }
+        // Test all the predicates
+        ImmutableMap.Builder<ResourceLocation,Map<Direction,SideConnections>> connectionsBuilder = ImmutableMap.builder();
+        for(ResourceLocation sprite : predicates.keySet()){
+            Map<Direction,SideConnections> spriteConnections = new EnumMap<>(Direction.class);
+            for(Direction side : Direction.values())
+                spriteConnections.put(side, getConnections(side, rotation, inverseRotation, states, predicates.get(sprite)));
+            connectionsBuilder.put(sprite, spriteConnections);
+        }
+        return new SurroundingBlockData(connectionsBuilder.build());
     }
 
-    private static SideConnections getConnections(Direction side, TRSRTransformation rotation, TRSRTransformation inverseRotation, IEnviromentBlockReader level, BlockPos pos, List<ConnectionPredicate> predicates){
+    private static SideConnections getConnections(Direction side, TRSRTransformation rotation, TRSRTransformation inverseRotation, BlockState[][][] states, ConnectionPredicate predicate){
         Direction originalSide = inverseRotation.rotateTransform(side);
         Direction left;
         Direction right;
@@ -48,35 +62,35 @@ public class SurroundingBlockData {
         up = rotation.rotateTransform(up);
         down = rotation.rotateTransform(down);
 
-        BlockState self = level.getBlockState(pos);
-        boolean connectTop = shouldConnect(level, side, originalSide, self, pos.relative(up), ConnectionDirection.TOP, predicates);
-        boolean connectTopRight = shouldConnect(level, side, originalSide, self, pos.relative(up).relative(right), ConnectionDirection.TOP_RIGHT, predicates);
-        boolean connectRight = shouldConnect(level, side, originalSide, self, pos.relative(right), ConnectionDirection.RIGHT, predicates);
-        boolean connectBottomRight = shouldConnect(level, side, originalSide, self, pos.relative(down).relative(right), ConnectionDirection.BOTTOM_RIGHT, predicates);
-        boolean connectBottom = shouldConnect(level, side, originalSide, self, pos.relative(down), ConnectionDirection.BOTTOM, predicates);
-        boolean connectBottomLeft = shouldConnect(level, side, originalSide, self, pos.relative(down).relative(left), ConnectionDirection.BOTTOM_LEFT, predicates);
-        boolean connectLeft = shouldConnect(level, side, originalSide, self, pos.relative(left), ConnectionDirection.LEFT, predicates);
-        boolean connectTopLeft = shouldConnect(level, side, originalSide, self, pos.relative(up).relative(left), ConnectionDirection.TOP_LEFT, predicates);
+        BlockState self = states[1][1][1];
+        boolean connectTop = shouldConnect(states, side, originalSide, self, up.getStepX(), up.getStepY(), up.getStepZ(), ConnectionDirection.TOP, predicate);
+        boolean connectTopRight = shouldConnect(states, side, originalSide, self, up.getStepX() + right.getStepX(), up.getStepY() + right.getStepY(), up.getStepZ() + right.getStepZ(), ConnectionDirection.TOP_RIGHT, predicate);
+        boolean connectRight = shouldConnect(states, side, originalSide, self, right.getStepX(), right.getStepY(), right.getStepZ(), ConnectionDirection.RIGHT, predicate);
+        boolean connectBottomRight = shouldConnect(states, side, originalSide, self, down.getStepX() + right.getStepX(), down.getStepY() + right.getStepY(), down.getStepZ() + right.getStepZ(), ConnectionDirection.BOTTOM_RIGHT, predicate);
+        boolean connectBottom = shouldConnect(states, side, originalSide, self, down.getStepX(), down.getStepY(), down.getStepZ(), ConnectionDirection.BOTTOM, predicate);
+        boolean connectBottomLeft = shouldConnect(states, side, originalSide, self, down.getStepX() + left.getStepX(), down.getStepY() + left.getStepY(), down.getStepZ() + left.getStepZ(), ConnectionDirection.BOTTOM_LEFT, predicate);
+        boolean connectLeft = shouldConnect(states, side, originalSide, self, left.getStepX(), left.getStepY(), left.getStepZ(), ConnectionDirection.LEFT, predicate);
+        boolean connectTopLeft = shouldConnect(states, side, originalSide, self, up.getStepX() + left.getStepX(), up.getStepY() + left.getStepY(), up.getStepZ() + left.getStepZ(), ConnectionDirection.TOP_LEFT, predicate);
         return new SideConnections(side, connectTop, connectTopRight, connectRight, connectBottomRight, connectBottom, connectBottomLeft, connectLeft, connectTopLeft);
     }
 
-    private static boolean shouldConnect(IEnviromentBlockReader level, Direction side, Direction originalSide, BlockState self, BlockPos neighborPos, ConnectionDirection direction, List<ConnectionPredicate> predicates){
-        BlockState otherState = level.getBlockState(neighborPos);
-        BlockState stateInFront = level.getBlockState(neighborPos.relative(side));
-        return predicates.stream().anyMatch(predicate -> predicate.shouldConnect(originalSide, self, otherState, stateInFront, direction));
+    private static boolean shouldConnect(BlockState[][][] states, Direction side, Direction originalSide, BlockState self, int neighborX, int neighborY, int neighborZ, ConnectionDirection direction, ConnectionPredicate predicate){
+        BlockState otherState = states[neighborX + 1][neighborY + 1][neighborZ + 1];
+        BlockState stateInFront = states[neighborX + 1 + side.getStepX()][neighborY + 1 + side.getStepY()][neighborZ + 1 + side.getStepZ()];
+        return predicate.shouldConnect(originalSide, self, otherState, stateInFront, direction);
     }
 
-    private final Map<Direction,SideConnections> connections;
+    private final Map<ResourceLocation,Map<Direction,SideConnections>> connections;
     private final int hashCode;
 
-    public SurroundingBlockData(Map<Direction,SideConnections> connections){
+    private SurroundingBlockData(Map<ResourceLocation,Map<Direction,SideConnections>> connections){
         this.connections = connections;
         // Calculate the hashcode once and store it
         this.hashCode = this.connections.hashCode();
     }
 
-    public SideConnections getConnections(Direction side){
-        return this.connections.get(side);
+    public SideConnections getConnections(ResourceLocation sprite, Direction side){
+        return this.connections.getOrDefault(sprite, Collections.emptyMap()).get(side);
     }
 
     @Override
@@ -100,6 +114,7 @@ public class SurroundingBlockData {
         public final boolean bottomLeft;
         public final boolean left;
         public final boolean topLeft;
+        public final int hash;
 
         public SideConnections(Direction side, boolean top, boolean topRight, boolean right, boolean bottomRight, boolean bottom, boolean bottomLeft, boolean left, boolean topLeft){
             this.side = side;
@@ -111,6 +126,7 @@ public class SurroundingBlockData {
             this.bottomLeft = bottomLeft;
             this.left = left;
             this.topLeft = topLeft;
+            this.hash = Objects.hashCode(this.top, this.topRight, this.right, this.bottomRight, this.bottom, this.bottomLeft, this.left, this.topLeft);
         }
 
         @Override
@@ -123,7 +139,7 @@ public class SurroundingBlockData {
 
         @Override
         public int hashCode(){
-            return Objects.hashCode(this.side, this.left, this.right, this.top, this.topLeft, this.topRight, this.bottom, this.bottomLeft, this.bottomRight);
+            return this.hash;
         }
     }
 }

@@ -8,8 +8,8 @@ import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
+import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureLayoutHelper;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
-import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -116,7 +116,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         if(!this.predicates.containsKey(spriteIdentifier))
             spriteIdentifier = ConnectingModelType.DEFAULT_CONNECTION_KEY;
         SurroundingBlockData.SideConnections connections = surroundingBlocks.getConnections(spriteIdentifier, quad.getFace());
-        int[] uv = ConnectingTextureType.getStatePosition(layout, connections.top, connections.topRight, connections.right, connections.bottomRight, connections.bottom, connections.bottomLeft, connections.left, connections.topLeft);
+        int[] uv = ConnectingTextureLayoutHelper.getStatePosition(layout, connections);
         adjustVertexDataUV(vertexData, uv[0], uv[1], sprite);
 
         // Create a new quad

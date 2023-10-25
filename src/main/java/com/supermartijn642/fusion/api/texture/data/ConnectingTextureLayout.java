@@ -10,7 +10,19 @@ public enum ConnectingTextureLayout {
      */
     FULL,
     /**
+     * Allows for connections with horizontal neighbors.
+     */
+    HORIZONTAL,
+    /**
      * Allows for connections only with direct neighbors.
      */
-    SIMPLE
+    SIMPLE,
+    /**
+     * Allows for connections with vertical neighbors.
+     */
+    VERTICAL,
+    /**
+     * Allows for reduced connections with direct neighbors.
+     */
+    COMPACT
 }

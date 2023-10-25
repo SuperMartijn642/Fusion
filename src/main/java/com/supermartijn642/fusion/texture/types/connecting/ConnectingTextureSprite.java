@@ -37,8 +37,7 @@ public class ConnectingTextureSprite extends TextureAtlasSprite {
     }
 
     private void resizeUV(){
-        int scale = ConnectingTextureType.getScaleFactor(this.layout);
-        this.maxU = this.minU + (this.maxU - this.minU) / scale;
-        this.maxV = this.minV + (this.maxV - this.minV) / scale;
+        this.maxU = this.minU + (this.maxU - this.minU) / ConnectingTextureLayoutHelper.getWidth(this.layout);
+        this.maxV = this.minV + (this.maxV - this.minV) / ConnectingTextureLayoutHelper.getHeight(this.layout);
     }
 }

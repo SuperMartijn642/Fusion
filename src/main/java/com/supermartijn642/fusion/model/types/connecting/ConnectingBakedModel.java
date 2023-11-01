@@ -62,9 +62,9 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         int hashCode = data == null ? 0 : data.hashCode();
 
         // Get the correct cache and quads
-        this.mutableKey.update(hashCode, side, renderType);
         List<BakedQuad> quads;
         synchronized(this.quadCache){
+            this.mutableKey.update(hashCode, side, renderType);
             quads = this.quadCache.get(this.mutableKey);
         }
 
@@ -73,6 +73,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
             boolean isOriginalRenderType = state == null || super.getRenderTypes(state, random, modelData).contains(renderType);
             quads = this.remapQuads(this.original.getQuads(state, side, random, modelData, renderType), data, renderType, isOriginalRenderType);
             synchronized(this.quadCache){
+                this.mutableKey.update(hashCode, side, renderType);
                 if(!this.quadCache.containsKey(this.mutableKey)){
                     RenderKey key = new RenderKey(hashCode, side, renderType);
                     this.quadCache.put(key, quads);

@@ -62,9 +62,9 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         BlockRenderLayer renderType = MinecraftForgeClient.getRenderLayer();
 
         // Get the correct cache and quads
-        this.mutableKey.update(hashCode, side, renderType);
         List<BakedQuad> quads;
         synchronized(this.quadCache){
+            this.mutableKey.update(hashCode, side, renderType);
             quads = this.quadCache.get(this.mutableKey);
         }
 
@@ -75,6 +75,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
             ignoreModelRenderTypeCheck.set(false);
             quads = this.remapQuads(this.original.getQuads(state, side, random), data, renderType, isOriginalRenderType);
             synchronized(this.quadCache){
+                this.mutableKey.update(hashCode, side, renderType);
                 if(!this.quadCache.containsKey(this.mutableKey)){
                     RenderKey key = new RenderKey(hashCode, side, renderType);
                     this.quadCache.put(key, quads);

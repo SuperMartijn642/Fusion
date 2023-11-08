@@ -25,6 +25,10 @@ public class ConnectingTextureLayoutHelper {
         return LAYOUT_TO_PROPERTIES[layout.ordinal()].tilePicker.apply(connections);
     }
 
+    public static boolean shouldBeRotated(ConnectingTextureLayout layout){
+        return getHeight(layout) > getWidth(layout);
+    }
+
     private enum LayoutProperties {
 
         FULL(8, 8, connections -> {

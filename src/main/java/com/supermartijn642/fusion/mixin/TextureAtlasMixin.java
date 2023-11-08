@@ -81,6 +81,7 @@ public class TextureAtlasMixin {
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
             // Replace the current size
             ((TextureAtlasSpriteExtension)sprite).setTextureSize(pngSizeInfo.pngWidth, pngSizeInfo.pngHeight);
+            ((TextureAtlasSpriteExtension)sprite).setFusionTextureType(metadata.left());
             pngSizeInfo.pngWidth = newSize.left();
             pngSizeInfo.pngHeight = newSize.right();
         }

@@ -3,9 +3,11 @@ package com.supermartijn642.fusion.texture.types.connecting;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
+import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 import java.util.Arrays;
@@ -54,6 +56,13 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
         if(data.getRenderType() != null)
             json.addProperty("render_type", data.getRenderType().name().toLowerCase(Locale.ROOT));
         return json.size() == 0 ? null : json;
+    }
+
+    @Override
+    public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, ConnectingTextureData data){
+        if(ConnectingTextureLayoutHelper.shouldBeRotated(data.getLayout()))
+            return Pair.of(context.getOriginalFrameHeight(), context.getOriginalFrameWith());
+        return context.getOriginalFrameSize();
     }
 
     @Override

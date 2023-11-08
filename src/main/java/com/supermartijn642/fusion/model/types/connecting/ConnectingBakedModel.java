@@ -118,6 +118,11 @@ public class ConnectingBakedModel extends WrappedBakedModel {
             spriteIdentifier = ConnectingModelType.DEFAULT_CONNECTION_KEY;
         SurroundingBlockData.SideConnections connections = surroundingBlocks.getConnections(spriteIdentifier, quad.getFace());
         int[] uv = ConnectingTextureLayoutHelper.getStatePosition(layout, connections);
+        if(ConnectingTextureLayoutHelper.shouldBeRotated(layout)){
+            int u = uv[0];
+            uv[0] = uv[1];
+            uv[1] = u;
+        }
         adjustVertexDataUV(vertexData, uv[0], uv[1], sprite);
 
         // Create a new quad

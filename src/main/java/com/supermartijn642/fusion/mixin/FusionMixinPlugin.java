@@ -40,7 +40,7 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName){
-        return !(this.isModernFixLoaded || this.isOptiFineLoaded && mixinClassName.endsWith(".TextureAtlasMixin"));
+        return !((this.isModernFixLoaded || this.isOptiFineLoaded) && mixinClassName.endsWith(".TextureAtlasMixin"));
     }
 
     @Override

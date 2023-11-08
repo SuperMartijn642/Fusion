@@ -26,8 +26,7 @@ public class ForgeBlockModelRendererMixin {
         remap = false
     )
     private static void renderHead(VertexLighterFlat lighter, IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        if(model instanceof ConnectingBakedModel)
-            ((ConnectingBakedModel)model).levelCapture.set(Pair.of(level, pos));
+        ConnectingBakedModel.levelCapture.set(Pair.of(level, pos));
     }
 
     @Inject(
@@ -36,7 +35,6 @@ public class ForgeBlockModelRendererMixin {
         remap = false
     )
     private static void renderTail(VertexLighterFlat lighter, IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        if(model instanceof ConnectingBakedModel)
-            ((ConnectingBakedModel)model).levelCapture.set(null);
+        ConnectingBakedModel.levelCapture.set(null);
     }
 }

@@ -38,6 +38,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
 
     private static final int BLOCK_VERTEX_DATA_UV_OFFSET = findUVOffset(DefaultVertexFormats.BLOCK);
     public static final ThreadLocal<Boolean> ignoreModelRenderTypeCheck = ThreadLocal.withInitial(() -> false);
+    public static final ThreadLocal<Pair<IBlockAccess,BlockPos>> levelCapture = new ThreadLocal<>();
 
     private final TRSRTransformation modelRotation;
     private final Map<ResourceLocation,ConnectionPredicate> predicates;
@@ -45,7 +46,6 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     private final Map<RenderKey,List<BakedQuad>> quadCache = new HashMap<>();
     private final RenderKey mutableKey = new RenderKey(0, null, null);
     private List<BlockRenderLayer> customRenderTypes;
-    public final ThreadLocal<Pair<IBlockAccess,BlockPos>> levelCapture = new ThreadLocal<>();
 
     public ConnectingBakedModel(IBakedModel original, TRSRTransformation modelRotation, Map<ResourceLocation,ConnectionPredicate> predicates){
         super(original);
@@ -55,7 +55,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
 
     @Override
     public @Nonnull List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long random){
-        SurroundingBlockData data = this.levelCapture.get() == null ? null : this.getModelData(this.levelCapture.get().left(), this.levelCapture.get().right(), state);
+        SurroundingBlockData data = levelCapture.get() == null ? null : this.getModelData(levelCapture.get().left(), levelCapture.get().right(), state);
         int hashCode = data == null ? 0 : data.hashCode();
 
         // Find the current render type

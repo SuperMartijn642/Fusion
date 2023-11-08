@@ -24,8 +24,7 @@ public class BlockModelRendererMixin {
         at = @At("HEAD")
     )
     private void renderModelSmoothHead(IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        if(model instanceof ConnectingBakedModel)
-            ((ConnectingBakedModel)model).levelCapture.set(Pair.of(level, pos));
+        ConnectingBakedModel.levelCapture.set(Pair.of(level, pos));
     }
 
     @Inject(
@@ -33,8 +32,7 @@ public class BlockModelRendererMixin {
         at = @At("RETURN")
     )
     private void renderModelSmoothTail(IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        if(model instanceof ConnectingBakedModel)
-            ((ConnectingBakedModel)model).levelCapture.set(null);
+        ConnectingBakedModel.levelCapture.set(null);
     }
 
     @Inject(
@@ -42,8 +40,7 @@ public class BlockModelRendererMixin {
         at = @At("HEAD")
     )
     private void renderModelFlatHead(IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        if(model instanceof ConnectingBakedModel)
-            ((ConnectingBakedModel)model).levelCapture.set(Pair.of(level, pos));
+        ConnectingBakedModel.levelCapture.set(Pair.of(level, pos));
     }
 
     @Inject(
@@ -51,7 +48,6 @@ public class BlockModelRendererMixin {
         at = @At("RETURN")
     )
     private void renderModelFlatTail(IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        if(model instanceof ConnectingBakedModel)
-            ((ConnectingBakedModel)model).levelCapture.set(null);
+        ConnectingBakedModel.levelCapture.set(null);
     }
 }

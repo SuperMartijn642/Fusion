@@ -32,11 +32,11 @@ import java.util.stream.Stream;
 /**
  * Created 19/10/2023 by SuperMartijn642
  */
-@Mixin(value = ModFileResourcePack.class, remap = false)
+@Mixin(value = ModFileResourcePack.class)
 public class ModFileResourcePackMixin implements PackResourcesExtension {
 
     @Final
-    @Shadow
+    @Shadow(remap = false)
     private ModFile modFile;
     @Unique
     private String overridesFolderName;

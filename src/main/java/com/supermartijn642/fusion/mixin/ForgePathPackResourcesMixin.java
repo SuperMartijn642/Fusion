@@ -31,15 +31,15 @@ import java.util.stream.Stream;
 /**
  * Created 19/10/2023 by SuperMartijn642
  */
-@Mixin(value = PathPackResources.class, remap = false)
+@Mixin(value = PathPackResources.class)
 public class ForgePathPackResourcesMixin implements PackResourcesExtension {
 
     @Final
-    @Shadow
+    @Shadow(remap = false)
     private static Logger LOGGER;
 
     @Final
-    @Shadow
+    @Shadow(remap = false)
     private Path source;
     @Unique
     private String overridesFolderName;
@@ -49,12 +49,12 @@ public class ForgePathPackResourcesMixin implements PackResourcesExtension {
         this.overridesFolderName = folder;
     }
 
-    @Shadow
+    @Shadow(remap = false)
     private static String[] getPathFromLocation(PackType type, ResourceLocation location){
         throw new AssertionError();
     }
 
-    @Shadow
+    @Shadow(remap = false)
     private Path resolve(String... paths){
         throw new AssertionError();
     }

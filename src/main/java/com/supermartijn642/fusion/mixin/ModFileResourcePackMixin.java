@@ -19,7 +19,7 @@ import java.nio.file.Path;
  * Created 22/10/2023 by SuperMartijn642
  */
 @SuppressWarnings("removal")
-@Mixin(value = ModFileResourcePack.class, remap = false)
+@Mixin(value = ModFileResourcePack.class)
 public class ModFileResourcePackMixin {
 
     @Inject(

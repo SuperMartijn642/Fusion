@@ -28,16 +28,16 @@ import java.util.stream.Stream;
 /**
  * Created 19/10/2023 by SuperMartijn642
  */
-@Mixin(value = PathPackResources.class, remap = false)
+@Mixin(value = PathPackResources.class)
 public class ForgePathPackResourcesMixin implements PackResourcesExtension {
 
     @Final
-    @Shadow
+    @Shadow(remap = false)
     private Path source;
     @Unique
     private String overridesFolderName;
     @Final
-    @Shadow
+    @Shadow(remap = false)
     private ResourceCacheManager cacheManager;
 
     @Override
@@ -45,7 +45,7 @@ public class ForgePathPackResourcesMixin implements PackResourcesExtension {
         this.overridesFolderName = folder;
     }
 
-    @Shadow
+    @Shadow(remap = false)
     private Path resolve(String... paths){
         throw new AssertionError();
     }
@@ -80,7 +80,8 @@ public class ForgePathPackResourcesMixin implements PackResourcesExtension {
     @Inject(
         method = "getNamespacesFromDisk",
         at = @At("RETURN"),
-        cancellable = true
+        cancellable = true,
+        remap = false
     )
     private void getNamespacesFromDisk(PackType type, CallbackInfoReturnable<Set<String>> ci){
         if(this.overridesFolderName == null)

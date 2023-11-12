@@ -1,3 +1,7 @@
+### Fusion 1.1.0a
+- Fixed crash when rendering the breaking overlay for connecting models
+- Fixed concurrency issue when checking connections for connecting models
+
 ### Fusion 1.1.0
 - Added an option for resource packs to have optional Fusion integration
 - Added the option for connecting textures to override their render type

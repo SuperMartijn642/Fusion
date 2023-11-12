@@ -1,3 +1,8 @@
+### Fusion 1.1.0a
+- Added ModMenu library badge
+- Fixed concurrency issue when checking connections for connecting models
+- Fixed crash with Indium
+
 ### Fusion 1.1.0
 - Added an option for resource packs to have optional Fusion integration
 - Added the option for connecting textures to override their render type

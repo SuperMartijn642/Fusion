@@ -22,6 +22,13 @@
       "${mod_package}.${mod_client_class}"
     ]
   },
+  "custom": {
+    "modmenu": {
+      "badges": [
+        "library"
+      ]
+    }
+  },
   "mixins": [
     "${mod_id}.mixins.json"
   ],

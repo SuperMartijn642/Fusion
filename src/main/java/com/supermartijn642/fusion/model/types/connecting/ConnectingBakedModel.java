@@ -70,7 +70,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
 
         // Compute the quads if they don't exist yet
         if(quads == null){
-            boolean isOriginalRenderType = state == null || super.getRenderTypes(state, random, modelData).contains(renderType);
+            boolean isOriginalRenderType = state == null || renderType == null || super.getRenderTypes(state, random, modelData).contains(renderType);
             quads = this.remapQuads(this.original.getQuads(state, side, random, modelData, renderType), data, renderType, isOriginalRenderType);
             synchronized(this.quadCache){
                 this.mutableKey.update(hashCode, side, renderType);

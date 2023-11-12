@@ -15,12 +15,9 @@ import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.EncodingFormat;
-import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -47,7 +44,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     private final Transformation modelRotation;
     private final Map<ResourceLocation,ConnectionPredicate> predicates;
     // [cullface][hashcode * 6]
-    private final IntObjectMap<List<QuadView>> quadCache = new IntObjectHashMap<>();
+    private final IntObjectMap<List<ModelQuadData>> quadCache = new IntObjectHashMap<>();
 
     public ConnectingBakedModel(BakedModel original, Transformation modelRotation, Map<ResourceLocation,ConnectionPredicate> predicates){
         super(original);
@@ -61,31 +58,16 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         int hashCode = data == null ? 0 : data.hashCode();
 
         // Get the quads from the cache
-        List<QuadView> quads;
+        List<ModelQuadData> quads;
         synchronized(this.quadCache){
             quads = this.quadCache.get(hashCode);
         }
 
         if(quads == null){
             // Capture the quads
-            List<QuadView> captures = new ArrayList<>();
+            List<ModelQuadData> captures = new ArrayList<>();
             context.pushTransform(quad -> {
-                //noinspection UnstableApiUsage
-                MutableQuadViewImpl copy = new MutableQuadViewImpl() {
-                    {
-                        //noinspection UnstableApiUsage
-                        this.data = new int[EncodingFormat.TOTAL_STRIDE];
-                    }
-
-                    @Override
-                    public QuadEmitter emit(){
-                        throw new AssertionError();
-                    }
-                };
-                quad.copyTo(copy);
-                //noinspection UnstableApiUsage
-                copy.material(quad.material());
-                captures.add(copy);
+                captures.add(ModelQuadData.copyOf(quad));
                 return true;
             });
 
@@ -101,18 +83,14 @@ public class ConnectingBakedModel extends WrappedBakedModel {
             context.popTransform();
 
             // Cache the collected quads
-            quads = Arrays.asList(captures.toArray(QuadView[]::new));
+            quads = Arrays.asList(captures.toArray(ModelQuadData[]::new));
             synchronized(this.quadCache){
                 this.quadCache.putIfAbsent(hashCode, quads);
             }
         }else{
             // Submit the quads
             QuadEmitter emitter = context.getEmitter();
-            quads.forEach(quad -> {
-                quad.copyTo(emitter);
-                emitter.material(quad.material());
-                emitter.emit();
-            });
+            quads.forEach(quad -> quad.emit(emitter));
         }
     }
 

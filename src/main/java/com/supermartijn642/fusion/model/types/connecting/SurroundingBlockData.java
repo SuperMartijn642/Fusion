@@ -21,7 +21,7 @@ import java.util.Map;
  */
 public class SurroundingBlockData {
 
-    private static final BlockPos.MutableBlockPos MUTABLE_POS = new BlockPos.MutableBlockPos();
+    private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
 
     public static SurroundingBlockData create(BlockAndTintGetter level, BlockPos pos, Transformation rotation, Map<ResourceLocation,ConnectionPredicate> predicates){
         Transformation inverseRotation = rotation.inverse();
@@ -29,9 +29,10 @@ public class SurroundingBlockData {
         Matrix4f inverseRotationMatrix = inverseRotation == null ? Transformation.identity().getMatrix() : inverseRotation.getMatrix();
         // Collect all surrounding blocks
         BlockState[][][] states = new BlockState[3][3][3];
+        BlockPos.MutableBlockPos neighborPos = MUTABLE_POS.get();
         for(int i = 0; i < 27; i++){
-            MUTABLE_POS.set(pos.getX() + i % 3 - 1, pos.getY() + i / 3 % 3 - 1, pos.getZ() + i / 9 % 3 - 1);
-            states[i % 3][i / 3 % 3][i / 9 % 3] = level.getBlockState(MUTABLE_POS);
+            neighborPos.set(pos.getX() + i % 3 - 1, pos.getY() + i / 3 % 3 - 1, pos.getZ() + i / 9 % 3 - 1);
+            states[i % 3][i / 3 % 3][i / 9 % 3] = level.getBlockState(neighborPos);
         }
         // Test all the predicates
         ImmutableMap.Builder<ResourceLocation,Map<Direction,SideConnections>> connectionsBuilder = ImmutableMap.builder();
@@ -81,8 +82,9 @@ public class SurroundingBlockData {
 
     private static boolean shouldConnect(BlockState[][][] states, Direction side, Direction originalSide, BlockState self, int neighborX, int neighborY, int neighborZ, ConnectionDirection direction, ConnectionPredicate predicate, BlockAndTintGetter level, BlockPos pos){
         BlockState otherState = states[neighborX + 1][neighborY + 1][neighborZ + 1];
-        MUTABLE_POS.set(pos.getX() + neighborX, pos.getY() + neighborY, pos.getZ() + neighborZ);
-        otherState = otherState.getAppearance(level, MUTABLE_POS, side, self, pos);
+        BlockPos.MutableBlockPos neighborPos = MUTABLE_POS.get();
+        neighborPos.set(pos.getX() + neighborX, pos.getY() + neighborY, pos.getZ() + neighborZ);
+        otherState = otherState.getAppearance(level, neighborPos, side, self, pos);
         BlockState stateInFront = states[neighborX + 1 + side.getStepX()][neighborY + 1 + side.getStepY()][neighborZ + 1 + side.getStepZ()];
         return predicate.shouldConnect(originalSide, self, otherState, stateInFront, direction);
     }

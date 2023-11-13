@@ -13,6 +13,9 @@ import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSpri
 import com.supermartijn642.fusion.util.TextureAtlases;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
+import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
@@ -30,9 +33,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -44,7 +44,8 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     private final Transformation modelRotation;
     private final Map<ResourceLocation,ConnectionPredicate> predicates;
     // [cullface][hashcode * 6]
-    private final IntObjectMap<List<ModelQuadData>> quadCache = new IntObjectHashMap<>();
+    private final IntObjectMap<Mesh> quadCache = new IntObjectHashMap<>();
+    private final ThreadLocal<MeshBuilder> meshBuilder = ThreadLocal.withInitial(() -> RendererAccess.INSTANCE.getRenderer().meshBuilder());
 
     public ConnectingBakedModel(BakedModel original, Transformation modelRotation, Map<ResourceLocation,ConnectionPredicate> predicates){
         super(original);
@@ -58,16 +59,19 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         int hashCode = data == null ? 0 : data.hashCode();
 
         // Get the quads from the cache
-        List<ModelQuadData> quads;
+        Mesh quads;
         synchronized(this.quadCache){
             quads = this.quadCache.get(hashCode);
         }
 
         if(quads == null){
             // Capture the quads
-            List<ModelQuadData> captures = new ArrayList<>();
+            MeshBuilder meshBuilder = this.meshBuilder.get();
+            QuadEmitter meshEmitter = meshBuilder.getEmitter();
             context.pushTransform(quad -> {
-                captures.add(ModelQuadData.copyOf(quad));
+                quad.copyTo(meshEmitter);
+                meshEmitter.material(quad.material());
+                meshEmitter.emit();
                 return true;
             });
 
@@ -83,14 +87,13 @@ public class ConnectingBakedModel extends WrappedBakedModel {
             context.popTransform();
 
             // Cache the collected quads
-            quads = Arrays.asList(captures.toArray(ModelQuadData[]::new));
+            quads = meshBuilder.build();
             synchronized(this.quadCache){
                 this.quadCache.putIfAbsent(hashCode, quads);
             }
         }else{
             // Submit the quads
-            QuadEmitter emitter = context.getEmitter();
-            quads.forEach(quad -> quad.emit(emitter));
+            context.meshConsumer().accept(quads);
         }
     }
 

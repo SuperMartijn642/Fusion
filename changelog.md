@@ -1,3 +1,6 @@
+### Fusion 1.1.0b
+- Added workaround for weird Fabric API quirks when caching quads in connecting models
+
 ### Fusion 1.1.0a
 - Added ModMenu library badge
 - Fixed concurrency issue when checking connections for connecting models

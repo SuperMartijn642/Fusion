@@ -6,6 +6,7 @@ import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class IsSameStateConnectionPredicate implements ConnectionPredicate {
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        return ownState == otherState;
+        return otherState.getBlock() != Blocks.AIR && ownState == otherState;
     }
 
     @Override

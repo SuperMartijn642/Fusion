@@ -15,6 +15,7 @@
     "FolderPackResourcesMixin",
     "LegacyResourcePackWrapperMixin",
     "ModFileResourcePackMixin",
+    "MultiPartBakedModelMixin",
     "PackMixin",
     "TextureAtlasMixin",
     "TextureAtlasSpriteMixin",

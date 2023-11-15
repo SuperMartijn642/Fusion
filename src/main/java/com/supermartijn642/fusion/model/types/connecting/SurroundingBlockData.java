@@ -68,7 +68,6 @@ public class SurroundingBlockData {
         down = Direction.rotate(rotation, down);
 
         BlockState self = states[1][1][1];
-        self = self.getAppearance(level, pos, side, null, pos);
         boolean connectTop = shouldConnect(states, side, originalSide, self, up.getStepX(), up.getStepY(), up.getStepZ(), ConnectionDirection.TOP, predicate, level, pos);
         boolean connectTopRight = shouldConnect(states, side, originalSide, self, up.getStepX() + right.getStepX(), up.getStepY() + right.getStepY(), up.getStepZ() + right.getStepZ(), ConnectionDirection.TOP_RIGHT, predicate, level, pos);
         boolean connectRight = shouldConnect(states, side, originalSide, self, right.getStepX(), right.getStepY(), right.getStepZ(), ConnectionDirection.RIGHT, predicate, level, pos);
@@ -84,9 +83,10 @@ public class SurroundingBlockData {
         BlockState otherState = states[neighborX + 1][neighborY + 1][neighborZ + 1];
         BlockPos.MutableBlockPos neighborPos = MUTABLE_POS.get();
         neighborPos.set(pos.getX() + neighborX, pos.getY() + neighborY, pos.getZ() + neighborZ);
-        otherState = otherState.getAppearance(level, neighborPos, side, self, pos);
+        BlockState selfAppearance = self.getAppearance(level, pos, side, otherState, neighborPos);
+        BlockState otherStateAppearance = otherState.getAppearance(level, neighborPos, side, self, pos);
         BlockState stateInFront = states[neighborX + 1 + side.getStepX()][neighborY + 1 + side.getStepY()][neighborZ + 1 + side.getStepZ()];
-        return predicate.shouldConnect(originalSide, self, otherState, stateInFront, direction);
+        return predicate.shouldConnect(originalSide, selfAppearance, otherStateAppearance, stateInFront, direction);
     }
 
     private final Map<ResourceLocation,Map<Direction,SideConnections>> connections;

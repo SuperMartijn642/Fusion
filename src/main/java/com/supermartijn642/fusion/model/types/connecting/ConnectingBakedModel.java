@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 public class ConnectingBakedModel extends WrappedBakedModel {
 
     private static final int BLOCK_VERTEX_DATA_UV_OFFSET = findUVOffset(DefaultVertexFormat.BLOCK);
-    private static final ModelProperty<SurroundingBlockData> SURROUNDING_BLOCK_DATA_MODEL_PROPERTY = new ModelProperty<>();
+    public static final ModelProperty<SurroundingBlockData> SURROUNDING_BLOCK_DATA_MODEL_PROPERTY = new ModelProperty<>();
 
     private final Transformation modelRotation;
     private final Map<ResourceLocation,ConnectionPredicate> predicates;

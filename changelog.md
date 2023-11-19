@@ -1,3 +1,6 @@
+### Fusion 1.1.0b
+- Fixed Fusion's appearance API checks, so it works properly with mods like FramedBlocks
+
 ### Fusion 1.1.0a
 - Fixed crash when rendering the breaking overlay for connecting models
 - Fixed concurrency issue when checking connections for connecting models

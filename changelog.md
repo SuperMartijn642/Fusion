@@ -1,3 +1,6 @@
+### Fusion 1.1.0c
+- Fixed Fusion's appearance API checks, so it works properly with mods like FramedBlocks
+
 ### Fusion 1.1.0b
 - Added workaround for weird Fabric API quirks when caching quads in connecting models
 

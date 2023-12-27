@@ -132,13 +132,13 @@ curseforge {
         }
 
         mainArtifact(jar) {
-            it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)}"
+            it.displayName = "${project.mod_name} ${project.mod_version} for NeoForge ${project.minecraft_suffix.substring(2)}"
         }
         addArtifact(javadocJar) {
-            it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)}"
+            it.displayName = "${project.mod_name} ${project.mod_version} for NeoForge ${project.minecraft_suffix.substring(2)}"
         }
         addArtifact(sourcesJar) {
-            it.displayName = "${project.mod_name} ${project.mod_version} for Forge ${project.minecraft_suffix.substring(2)}"
+            it.displayName = "${project.mod_name} ${project.mod_version} for NeoForge ${project.minecraft_suffix.substring(2)}"
         }
     }
     options {

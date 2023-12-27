@@ -19,7 +19,7 @@ public class DatagenModLoaderMixin {
         method = "begin",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraftforge/data/event/GatherDataEvent$DataGeneratorConfig;runAll()V",
+            target = "Lnet/neoforged/neoforge/data/event/GatherDataEvent$DataGeneratorConfig;runAll()V",
             shift = At.Shift.BEFORE
         )
     )

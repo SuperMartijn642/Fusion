@@ -2,8 +2,10 @@ package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Sets;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
+import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.FileUtil;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.AbstractPackResources;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PathPackResources;
@@ -17,6 +19,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.IOException;
@@ -48,6 +51,24 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
     @Override
     public void setFusionOverridesFolder(@NotNull String folder){
         this.overridesFolderRoot = this.root.resolve(folder);
+    }
+
+    @Inject(
+        method = "<init>",
+        at = @At("RETURN")
+    )
+    private void init(String name, Path root, boolean isBuiltin, CallbackInfo ci){
+        Path path = root.resolve("pack.mcmeta");
+        if(Files.exists(path)){
+            String overridesFolder;
+            try(InputStream stream = Files.newInputStream(path)){
+                overridesFolder = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.INSTANCE, stream);
+            }catch(IOException ignored){
+                return;
+            }
+            if(overridesFolder != null)
+                this.setFusionOverridesFolder(overridesFolder);
+        }
     }
 
     @Inject(

@@ -5,9 +5,9 @@ import net.minecraft.client.resources.model.MultiPartBakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.extensions.IForgeBakedModel;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.client.model.data.ModelProperty;
+import net.neoforged.neoforge.client.extensions.IBakedModelExtension;
+import net.neoforged.neoforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.model.data.ModelProperty;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
@@ -22,16 +22,16 @@ import java.util.function.Predicate;
  * Created 04/07/2023 by SuperMartijn642
  */
 @Mixin(value = MultiPartBakedModel.class, priority = 900)
-public class MultiPartBakedModelMixin implements IForgeBakedModel {
+public class MultiPartBakedModelMixin implements IBakedModelExtension {
 
     @Final
     @Shadow
-    private List<Pair<Predicate<BlockState>, BakedModel>> selectors;
+    private List<Pair<Predicate<BlockState>,BakedModel>> selectors;
 
     @Override
     public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
         if(state == null)
-            return IForgeBakedModel.super.getModelData(level, pos, state, modelData);
+            return IBakedModelExtension.super.getModelData(level, pos, state, modelData);
 
         // Combine the model data from all the sub-models, so it doesn't get lost
         ModelData.Builder builder = ModelData.builder();

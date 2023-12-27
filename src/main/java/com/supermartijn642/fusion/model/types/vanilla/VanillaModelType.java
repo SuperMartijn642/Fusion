@@ -9,7 +9,7 @@ import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.model.ExtendedBlockModelDeserializer;
+import net.neoforged.neoforge.client.model.ExtendedBlockModelDeserializer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;

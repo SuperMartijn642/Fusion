@@ -8,8 +8,8 @@ import net.minecraft.util.random.WeightedEntry;
 import net.minecraft.util.random.WeightedRandom;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.extensions.IForgeBakedModel;
-import net.minecraftforge.client.model.data.ModelData;
+import net.neoforged.neoforge.client.extensions.IBakedModelExtension;
+import net.neoforged.neoforge.client.model.data.ModelData;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,7 +22,7 @@ import java.util.List;
  * Created 26/10/2023 by SuperMartijn642
  */
 @Mixin(WeightedBakedModel.class)
-public class WeightedBakedModelMixin implements IForgeBakedModel {
+public class WeightedBakedModelMixin implements IBakedModelExtension {
 
     @Final
     @Shadow

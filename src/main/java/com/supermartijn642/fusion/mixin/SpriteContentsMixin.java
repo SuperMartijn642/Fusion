@@ -11,7 +11,6 @@ import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceMetadata;
-import net.minecraftforge.client.textures.ForgeTextureMetadata;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -37,7 +36,7 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
     }
 
     @ModifyVariable(
-        method = "<init>(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Lnet/minecraft/server/packs/resources/ResourceMetadata;Lnet/minecraftforge/client/textures/ForgeTextureMetadata;)V",
+        method = "<init>(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Lnet/minecraft/server/packs/resources/ResourceMetadata;)V",
         at = @At(
             value = "INVOKE",
             target = "Ljava/lang/Object;<init>()V",
@@ -45,7 +44,7 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
         ),
         ordinal = 0
     )
-    private FrameSize initMetadata(FrameSize originalSize, ResourceLocation identifier, FrameSize ignore, NativeImage image, ResourceMetadata resourceMetadata, ForgeTextureMetadata forgeTextureMetadata){
+    private FrameSize initMetadata(FrameSize originalSize, ResourceLocation identifier, FrameSize ignore, NativeImage image, ResourceMetadata resourceMetadata){
         // Get the fusion metadata
         Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
         if(metadata != null){

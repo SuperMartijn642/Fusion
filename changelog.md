@@ -1,4 +1,4 @@
-### Fusion 1.1.0c
+### Fusion 1.1.0a
 - Fix Forge's `render_type` property not working for connecting models
 
 ### Fusion 1.1.0

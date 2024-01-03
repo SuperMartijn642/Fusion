@@ -1,3 +1,6 @@
+### Fusion 1.1.0c
+- Fix Forge's `render_type` property not working for connecting models
+
 ### Fusion 1.1.0b
 - Fixed Fusion's appearance API checks, so it works properly with mods like FramedBlocks
 

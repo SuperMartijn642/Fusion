@@ -31,7 +31,7 @@ public class ModNioResourcePackMixin {
     @ModifyVariable(
         method = "create",
         at = @At("STORE"),
-        ordinal = 1
+        ordinal = 0
     )
     private static List<Path> create(List<Path> rootPaths, String id, ModContainer mod, String subPath, PackType type){
         List<Path> newRootPaths = null;

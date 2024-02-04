@@ -1,3 +1,6 @@
+### Fusion 1.1.0d
+- Add workaround for crash with Sodium 0.5.8
+
 ### Fusion 1.1.0c
 - Fixed Fusion's appearance API checks, so it works properly with mods like FramedBlocks
 

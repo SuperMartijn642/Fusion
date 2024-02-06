@@ -37,7 +37,7 @@ public class ModNioResourcePackMixin {
         List<Path> newRootPaths = null;
         for(Path rootPath : rootPaths){
             Path metaPath = rootPath.resolve("pack.mcmeta").toAbsolutePath().normalize();
-            if(!metaPath.startsWith(rootPath) || !exists(metaPath))
+            if(!exists(metaPath))
                 continue;
 
             Path overridesPath = null;

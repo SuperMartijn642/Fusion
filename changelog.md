@@ -1,3 +1,8 @@
+### Fusion 1.1.1
+- Added `match_state` connection predicate
+- Added `is_face_visible` connection predicate
+- Fixed log spam for resource packs which don't have a pack.mcmeta file
+
 ### Fusion 1.1.0c
 - Fix Forge's `render_type` property not working for connecting models
 

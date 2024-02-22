@@ -9,6 +9,8 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockReader;
 
 import javax.annotation.Nullable;
 
@@ -45,6 +47,16 @@ public class NotConnectionPredicate implements ConnectionPredicate {
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
         return !this.predicate.shouldConnect(side, ownState, otherState, blockInFront, direction);
+    }
+
+    @Override
+    public boolean shouldConnect(IBlockReader level, BlockPos pos, Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
+        return !this.predicate.shouldConnect(level, pos, side, ownState, otherState, blockInFront, direction);
+    }
+
+    @Override
+    public boolean isSensitive(){
+        return this.predicate.isSensitive();
     }
 
     @Override

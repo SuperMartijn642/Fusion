@@ -4,6 +4,8 @@ accessWidener v1 named
 accessible method net/minecraft/server/packs/AbstractPackResources getRelativePath (Ljava/io/File;Ljava/io/File;)Ljava/lang/String;
 accessible field net/minecraft/server/packs/AbstractPackResources file Ljava/io/File;
 accessible method net/minecraft/server/packs/AbstractPackResources logWarning (Ljava/lang/String;)V
+# Block
+accessible field net/minecraft/world/level/block/Block OCCLUSION_CACHE Ljava/lang/ThreadLocal;
 # BlockModel
 accessible field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
 accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/google/gson/Gson;

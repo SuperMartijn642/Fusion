@@ -86,7 +86,7 @@ public class SurroundingBlockData {
         BlockState selfAppearance = self.getAppearance(level, pos, side, otherState, neighborPos);
         BlockState otherStateAppearance = otherState.getAppearance(level, neighborPos, side, self, pos);
         BlockState stateInFront = states[neighborX + 1 + side.getStepX()][neighborY + 1 + side.getStepY()][neighborZ + 1 + side.getStepZ()];
-        return predicate.shouldConnect(originalSide, selfAppearance, otherStateAppearance, stateInFront, direction);
+        return predicate.shouldConnect(level, pos, originalSide, selfAppearance, otherStateAppearance, stateInFront, direction);
     }
 
     private final Map<ResourceLocation,Map<Direction,SideConnections>> connections;

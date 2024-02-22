@@ -34,13 +34,13 @@ public class SurroundingBlockData {
         for(ResourceLocation sprite : predicates.keySet()){
             Map<Direction,SideConnections> spriteConnections = new EnumMap<>(Direction.class);
             for(Direction side : Direction.values())
-                spriteConnections.put(side, getConnections(side, rotation, inverseRotation, states, predicates.get(sprite)));
+                spriteConnections.put(side, getConnections(side, rotation, inverseRotation, states, predicates.get(sprite), level, pos));
             connectionsBuilder.put(sprite, spriteConnections);
         }
         return new SurroundingBlockData(connectionsBuilder.build());
     }
 
-    private static SideConnections getConnections(Direction side, TRSRTransformation rotation, TRSRTransformation inverseRotation, BlockState[][][] states, ConnectionPredicate predicate){
+    private static SideConnections getConnections(Direction side, TRSRTransformation rotation, TRSRTransformation inverseRotation, BlockState[][][] states, ConnectionPredicate predicate, IEnviromentBlockReader level, BlockPos pos){
         Direction originalSide = inverseRotation.rotateTransform(side);
         Direction left;
         Direction right;
@@ -63,21 +63,21 @@ public class SurroundingBlockData {
         down = rotation.rotateTransform(down);
 
         BlockState self = states[1][1][1];
-        boolean connectTop = shouldConnect(states, side, originalSide, self, up.getStepX(), up.getStepY(), up.getStepZ(), ConnectionDirection.TOP, predicate);
-        boolean connectTopRight = shouldConnect(states, side, originalSide, self, up.getStepX() + right.getStepX(), up.getStepY() + right.getStepY(), up.getStepZ() + right.getStepZ(), ConnectionDirection.TOP_RIGHT, predicate);
-        boolean connectRight = shouldConnect(states, side, originalSide, self, right.getStepX(), right.getStepY(), right.getStepZ(), ConnectionDirection.RIGHT, predicate);
-        boolean connectBottomRight = shouldConnect(states, side, originalSide, self, down.getStepX() + right.getStepX(), down.getStepY() + right.getStepY(), down.getStepZ() + right.getStepZ(), ConnectionDirection.BOTTOM_RIGHT, predicate);
-        boolean connectBottom = shouldConnect(states, side, originalSide, self, down.getStepX(), down.getStepY(), down.getStepZ(), ConnectionDirection.BOTTOM, predicate);
-        boolean connectBottomLeft = shouldConnect(states, side, originalSide, self, down.getStepX() + left.getStepX(), down.getStepY() + left.getStepY(), down.getStepZ() + left.getStepZ(), ConnectionDirection.BOTTOM_LEFT, predicate);
-        boolean connectLeft = shouldConnect(states, side, originalSide, self, left.getStepX(), left.getStepY(), left.getStepZ(), ConnectionDirection.LEFT, predicate);
-        boolean connectTopLeft = shouldConnect(states, side, originalSide, self, up.getStepX() + left.getStepX(), up.getStepY() + left.getStepY(), up.getStepZ() + left.getStepZ(), ConnectionDirection.TOP_LEFT, predicate);
+        boolean connectTop = shouldConnect(states, side, originalSide, self, up.getStepX(), up.getStepY(), up.getStepZ(), ConnectionDirection.TOP, predicate, level, pos);
+        boolean connectTopRight = shouldConnect(states, side, originalSide, self, up.getStepX() + right.getStepX(), up.getStepY() + right.getStepY(), up.getStepZ() + right.getStepZ(), ConnectionDirection.TOP_RIGHT, predicate, level, pos);
+        boolean connectRight = shouldConnect(states, side, originalSide, self, right.getStepX(), right.getStepY(), right.getStepZ(), ConnectionDirection.RIGHT, predicate, level, pos);
+        boolean connectBottomRight = shouldConnect(states, side, originalSide, self, down.getStepX() + right.getStepX(), down.getStepY() + right.getStepY(), down.getStepZ() + right.getStepZ(), ConnectionDirection.BOTTOM_RIGHT, predicate, level, pos);
+        boolean connectBottom = shouldConnect(states, side, originalSide, self, down.getStepX(), down.getStepY(), down.getStepZ(), ConnectionDirection.BOTTOM, predicate, level, pos);
+        boolean connectBottomLeft = shouldConnect(states, side, originalSide, self, down.getStepX() + left.getStepX(), down.getStepY() + left.getStepY(), down.getStepZ() + left.getStepZ(), ConnectionDirection.BOTTOM_LEFT, predicate, level, pos);
+        boolean connectLeft = shouldConnect(states, side, originalSide, self, left.getStepX(), left.getStepY(), left.getStepZ(), ConnectionDirection.LEFT, predicate, level, pos);
+        boolean connectTopLeft = shouldConnect(states, side, originalSide, self, up.getStepX() + left.getStepX(), up.getStepY() + left.getStepY(), up.getStepZ() + left.getStepZ(), ConnectionDirection.TOP_LEFT, predicate, level, pos);
         return new SideConnections(side, connectTop, connectTopRight, connectRight, connectBottomRight, connectBottom, connectBottomLeft, connectLeft, connectTopLeft);
     }
 
-    private static boolean shouldConnect(BlockState[][][] states, Direction side, Direction originalSide, BlockState self, int neighborX, int neighborY, int neighborZ, ConnectionDirection direction, ConnectionPredicate predicate){
+    private static boolean shouldConnect(BlockState[][][] states, Direction side, Direction originalSide, BlockState self, int neighborX, int neighborY, int neighborZ, ConnectionDirection direction, ConnectionPredicate predicate, IEnviromentBlockReader level, BlockPos pos){
         BlockState otherState = states[neighborX + 1][neighborY + 1][neighborZ + 1];
         BlockState stateInFront = states[neighborX + 1 + side.getStepX()][neighborY + 1 + side.getStepY()][neighborZ + 1 + side.getStepZ()];
-        return predicate.shouldConnect(originalSide, self, otherState, stateInFront, direction);
+        return predicate.shouldConnect(level, pos, originalSide, self, otherState, stateInFront, direction);
     }
 
     private final Map<ResourceLocation,Map<Direction,SideConnections>> connections;

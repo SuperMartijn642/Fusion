@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.io.FileNotFoundException;
+
 /**
  * Created 23/10/2023 by SuperMartijn642
  */
@@ -42,6 +44,9 @@ public class FMLClientHandlerMixin {
             try{
                 FusionPackMetadataSection.Data data = resources.getPackMetadata(METADATA_SERIALIZER, FusionPackMetadataSection.INSTANCE.getSectionName());
                 overridesFolder = data == null ? null : data.overridesFolder;
+            }catch(FileNotFoundException ignore){
+                // Ignore resource packs which don't have a pack.mcmeta file
+                return;
             }catch(Exception e){
                 FusionClient.LOGGER.error("Encountered an exception whilst reading fusion metadata for pack '" + resources.getPackName() + "':", e);
                 return;

@@ -1,3 +1,8 @@
+### Fusion 1.1.1
+- Added `match_state` connection predicate
+- Added `is_face_visible` connection predicate
+- Fixed log spam for resource packs which don't have a pack.mcmeta file
+
 ### Fusion 1.1.0
 - Added an option for resource packs to have optional Fusion integration
 - Added the option for connecting textures to override their render type

@@ -66,8 +66,8 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
                     throw new JsonParseException("Property '" + entry.getKey() + "' must be a string or an array of strings!");
                 properties.add(Pair.of(property, builder.build()));
             }
-            //noinspection unchecked,DataFlowIssue
-            properties = Arrays.asList((Pair<Property<?>,Set<?>>[])properties.toArray());
+            //noinspection unchecked
+            properties = Arrays.asList(properties.toArray(Pair[]::new));
 
             return new MatchStateConnectionPredicate(block, properties);
         }

@@ -1,3 +1,7 @@
+### Fusion 1.1.1
+- Added `match_state` connection predicate
+- Added `is_face_visible` connection predicate
+
 ### Fusion 1.1.0c
 - Fixed Fusion's appearance API checks, so it works properly with mods like FramedBlocks
 

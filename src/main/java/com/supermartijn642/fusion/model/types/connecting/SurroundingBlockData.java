@@ -34,13 +34,13 @@ public class SurroundingBlockData {
         for(ResourceLocation sprite : predicates.keySet()){
             Map<EnumFacing,SideConnections> spriteConnections = new EnumMap<>(EnumFacing.class);
             for(EnumFacing side : EnumFacing.values())
-                spriteConnections.put(side, getConnections(side, rotation, inverseRotation, states, predicates.get(sprite)));
+                spriteConnections.put(side, getConnections(side, rotation, inverseRotation, states, predicates.get(sprite), level, pos));
             connectionsBuilder.put(sprite, spriteConnections);
         }
         return new SurroundingBlockData(connectionsBuilder.build());
     }
 
-    private static SideConnections getConnections(EnumFacing side, TRSRTransformation rotation, TRSRTransformation inverseRotation, IBlockState[][][] states, ConnectionPredicate predicate){
+    private static SideConnections getConnections(EnumFacing side, TRSRTransformation rotation, TRSRTransformation inverseRotation, IBlockState[][][] states, ConnectionPredicate predicate, IBlockAccess level, BlockPos pos){
         EnumFacing originalSide = inverseRotation.rotate(side);
         EnumFacing left;
         EnumFacing right;
@@ -63,21 +63,21 @@ public class SurroundingBlockData {
         down = rotation.rotate(down);
 
         IBlockState self = states[1][1][1];
-        boolean connectTop = shouldConnect(states, side, originalSide, self, up.getFrontOffsetX(), up.getFrontOffsetY(), up.getFrontOffsetZ(), ConnectionDirection.TOP, predicate);
-        boolean connectTopRight = shouldConnect(states, side, originalSide, self, up.getFrontOffsetX() + right.getFrontOffsetX(), up.getFrontOffsetY() + right.getFrontOffsetY(), up.getFrontOffsetZ() + right.getFrontOffsetZ(), ConnectionDirection.TOP_RIGHT, predicate);
-        boolean connectRight = shouldConnect(states, side, originalSide, self, right.getFrontOffsetX(), right.getFrontOffsetY(), right.getFrontOffsetZ(), ConnectionDirection.RIGHT, predicate);
-        boolean connectBottomRight = shouldConnect(states, side, originalSide, self, down.getFrontOffsetX() + right.getFrontOffsetX(), down.getFrontOffsetY() + right.getFrontOffsetY(), down.getFrontOffsetZ() + right.getFrontOffsetZ(), ConnectionDirection.BOTTOM_RIGHT, predicate);
-        boolean connectBottom = shouldConnect(states, side, originalSide, self, down.getFrontOffsetX(), down.getFrontOffsetY(), down.getFrontOffsetZ(), ConnectionDirection.BOTTOM, predicate);
-        boolean connectBottomLeft = shouldConnect(states, side, originalSide, self, down.getFrontOffsetX() + left.getFrontOffsetX(), down.getFrontOffsetY() + left.getFrontOffsetY(), down.getFrontOffsetZ() + left.getFrontOffsetZ(), ConnectionDirection.BOTTOM_LEFT, predicate);
-        boolean connectLeft = shouldConnect(states, side, originalSide, self, left.getFrontOffsetX(), left.getFrontOffsetY(), left.getFrontOffsetZ(), ConnectionDirection.LEFT, predicate);
-        boolean connectTopLeft = shouldConnect(states, side, originalSide, self, up.getFrontOffsetX() + left.getFrontOffsetX(), up.getFrontOffsetY() + left.getFrontOffsetY(), up.getFrontOffsetZ() + left.getFrontOffsetZ(), ConnectionDirection.TOP_LEFT, predicate);
+        boolean connectTop = shouldConnect(states, side, originalSide, self, up.getFrontOffsetX(), up.getFrontOffsetY(), up.getFrontOffsetZ(), ConnectionDirection.TOP, predicate, level, pos);
+        boolean connectTopRight = shouldConnect(states, side, originalSide, self, up.getFrontOffsetX() + right.getFrontOffsetX(), up.getFrontOffsetY() + right.getFrontOffsetY(), up.getFrontOffsetZ() + right.getFrontOffsetZ(), ConnectionDirection.TOP_RIGHT, predicate, level, pos);
+        boolean connectRight = shouldConnect(states, side, originalSide, self, right.getFrontOffsetX(), right.getFrontOffsetY(), right.getFrontOffsetZ(), ConnectionDirection.RIGHT, predicate, level, pos);
+        boolean connectBottomRight = shouldConnect(states, side, originalSide, self, down.getFrontOffsetX() + right.getFrontOffsetX(), down.getFrontOffsetY() + right.getFrontOffsetY(), down.getFrontOffsetZ() + right.getFrontOffsetZ(), ConnectionDirection.BOTTOM_RIGHT, predicate, level, pos);
+        boolean connectBottom = shouldConnect(states, side, originalSide, self, down.getFrontOffsetX(), down.getFrontOffsetY(), down.getFrontOffsetZ(), ConnectionDirection.BOTTOM, predicate, level, pos);
+        boolean connectBottomLeft = shouldConnect(states, side, originalSide, self, down.getFrontOffsetX() + left.getFrontOffsetX(), down.getFrontOffsetY() + left.getFrontOffsetY(), down.getFrontOffsetZ() + left.getFrontOffsetZ(), ConnectionDirection.BOTTOM_LEFT, predicate, level, pos);
+        boolean connectLeft = shouldConnect(states, side, originalSide, self, left.getFrontOffsetX(), left.getFrontOffsetY(), left.getFrontOffsetZ(), ConnectionDirection.LEFT, predicate, level, pos);
+        boolean connectTopLeft = shouldConnect(states, side, originalSide, self, up.getFrontOffsetX() + left.getFrontOffsetX(), up.getFrontOffsetY() + left.getFrontOffsetY(), up.getFrontOffsetZ() + left.getFrontOffsetZ(), ConnectionDirection.TOP_LEFT, predicate, level, pos);
         return new SideConnections(side, connectTop, connectTopRight, connectRight, connectBottomRight, connectBottom, connectBottomLeft, connectLeft, connectTopLeft);
     }
 
-    private static boolean shouldConnect(IBlockState[][][] states, EnumFacing side, EnumFacing originalSide, IBlockState self, int neighborX, int neighborY, int neighborZ, ConnectionDirection direction, ConnectionPredicate predicate){
+    private static boolean shouldConnect(IBlockState[][][] states, EnumFacing side, EnumFacing originalSide, IBlockState self, int neighborX, int neighborY, int neighborZ, ConnectionDirection direction, ConnectionPredicate predicate, IBlockAccess level, BlockPos pos){
         IBlockState otherState = states[neighborX + 1][neighborY + 1][neighborZ + 1];
         IBlockState stateInFront = states[neighborX + 1 + side.getFrontOffsetX()][neighborY + 1 + side.getFrontOffsetY()][neighborZ + 1 + side.getFrontOffsetZ()];
-        return predicate.shouldConnect(originalSide, self, otherState, stateInFront, direction);
+        return predicate.shouldConnect(level, pos, originalSide, self, otherState, stateInFront, direction);
     }
 
     private final Map<ResourceLocation,Map<EnumFacing,SideConnections>> connections;

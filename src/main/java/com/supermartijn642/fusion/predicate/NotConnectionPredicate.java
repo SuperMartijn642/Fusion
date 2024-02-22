@@ -9,6 +9,8 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nullable;
 
@@ -45,6 +47,16 @@ public class NotConnectionPredicate implements ConnectionPredicate {
     @Override
     public boolean shouldConnect(EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction){
         return !this.predicate.shouldConnect(side, ownState, otherState, blockInFront, direction);
+    }
+
+    @Override
+    public boolean shouldConnect(IBlockAccess level, BlockPos pos, EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction){
+        return !this.predicate.shouldConnect(level, pos, side, ownState, otherState, blockInFront, direction);
+    }
+
+    @Override
+    public boolean isSensitive(){
+        return this.predicate.isSensitive();
     }
 
     @Override

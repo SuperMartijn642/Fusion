@@ -10,6 +10,8 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -50,14 +52,26 @@ public class OrConnectionPredicate implements ConnectionPredicate {
     };
 
     private final List<ConnectionPredicate> predicates;
+    private final boolean isSensitive;
 
     public OrConnectionPredicate(List<ConnectionPredicate> predicates){
         this.predicates = predicates;
+        this.isSensitive = predicates.stream().anyMatch(ConnectionPredicate::isSensitive);
     }
 
     @Override
     public boolean shouldConnect(EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction){
         return this.predicates.stream().anyMatch(predicate -> predicate.shouldConnect(side, ownState, otherState, blockInFront, direction));
+    }
+
+    @Override
+    public boolean shouldConnect(IBlockAccess level, BlockPos pos, EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction){
+        return this.predicates.stream().anyMatch(predicate -> predicate.shouldConnect(level, pos, side, ownState, otherState, blockInFront, direction));
+    }
+
+    @Override
+    public boolean isSensitive(){
+        return this.isSensitive;
     }
 
     @Override

@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.io.FileNotFoundException;
 import java.util.function.Supplier;
 
 /**
@@ -33,6 +34,8 @@ public class PackMixin {
     private void init(String identifier, boolean required, Supplier<IResourcePack> resourcesSupplier, ITextComponent title, ITextComponent description, PackCompatibility compatibility, ResourcePackInfo.Priority position, boolean fixedPosition, IPackNameDecorator packSource, boolean hidden, CallbackInfo ci){
         try(IResourcePack resources = resourcesSupplier.get()){
             this.overridesFolder = resources.getMetadataSection(FusionPackMetadataSection.INSTANCE);
+        }catch(FileNotFoundException ignore){
+            // Ignore resource packs which don't have a pack.mcmeta file
         }catch(Exception e){
             FusionClient.LOGGER.error("Encountered an exception whilst reading fusion metadata for pack '" + identifier + "':", e);
         }

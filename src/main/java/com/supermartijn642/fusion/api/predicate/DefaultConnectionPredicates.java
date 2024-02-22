@@ -83,6 +83,6 @@ public final class DefaultConnectionPredicates {
      */
     public static ConnectionPredicate matchState(BlockState state){
         //noinspection unchecked
-        return matchState(state.getBlock(), (Pair<Property<?>,?>[])state.getProperties().stream().map(p -> Pair.of(p, state.getValue(p))).toArray());
+        return matchState(state.getBlock(), state.getProperties().stream().map(p -> Pair.of(p, state.getValue(p))).toArray(Pair[]::new));
     }
 }

@@ -1,7 +1,10 @@
 package com.supermartijn642.fusion.api.predicate;
 
+import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.predicate.*;
 import net.minecraft.block.Block;
+import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.IBlockState;
 
 import java.util.Arrays;
 
@@ -56,5 +59,23 @@ public final class DefaultConnectionPredicates {
      */
     public static ConnectionPredicate matchBlock(Block block){
         return new MatchBlockConnectionPredicate(block);
+    }
+
+    /**
+     * Creates a predicate which is satisfied if the state in the connection direction is the same as the provided block and matches the provided properties.
+     * @param block      block which should be matched
+     * @param properties property value pairs which should be matched
+     */
+    public static ConnectionPredicate matchState(Block block, Pair<IProperty<?>,?>... properties){
+        return new MatchStateConnectionPredicate(block, properties);
+    }
+
+    /**
+     * Creates a predicate which is satisfied if the state in the connection direction is the same as the provided state.
+     * @param state state which should be matched
+     */
+    public static ConnectionPredicate matchState(IBlockState state){
+        //noinspection unchecked
+        return matchState(state.getBlock(), (Pair<IProperty<?>,?>[])state.getProperties().entrySet().stream().map(entry -> Pair.of(entry.getKey(), entry.getValue())).toArray());
     }
 }

@@ -25,8 +25,10 @@ bin/
 # macos
 *.DS_Store
 
-# forge
-forge*changelog.txt
+# neoforge
+runs
+run-data
+repo
 
 # other
 eclipse/
@@ -35,5 +37,4 @@ libs/
 lib/
 logs/
 images/
-TextureGenerator/
 desktop.ini

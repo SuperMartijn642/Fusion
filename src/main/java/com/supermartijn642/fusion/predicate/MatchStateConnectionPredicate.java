@@ -40,7 +40,9 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
 
             List<Pair<Property<?>,Set<?>>> properties = new ArrayList<>();
             if(!json.has("properties") || !json.get("properties").isJsonObject())
-                throw new JsonParseException("Match block predicate must have string property 'block'!");
+                throw new JsonParseException("Match block predicate must have object property 'properties'!");
+            if(json.getAsJsonObject("properties").size() == 0)
+                throw new JsonParseException("At least one property must be specified for match state predicate!");
             for(Map.Entry<String,JsonElement> entry : json.getAsJsonObject("properties").entrySet()){
                 // Parse the property
                 Property<?> property = block.getStateDefinition().getProperty(entry.getKey());
@@ -54,6 +56,8 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
                         throw new JsonParseException("Unknown value '" + entry.getValue().getAsString() + "' for property '" + property.getName() + "' in block '" + identifier + "'!");
                     builder.add(value.get());
                 }else if(entry.getValue().isJsonArray()){
+                    if(entry.getValue().getAsJsonArray().size() == 0)
+                        throw new JsonParseException("Valid values for property '" + property.getName() + "' cannot be empty!");
                     for(JsonElement element : entry.getValue().getAsJsonArray()){
                         if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
                             throw new JsonParseException("Property '" + entry.getKey() + "' must be a string or an array of strings!");

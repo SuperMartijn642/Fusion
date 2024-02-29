@@ -19,7 +19,7 @@ import net.minecraft.util.registry.Registry;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created 22/02/2024 by SuperMartijn642
@@ -131,24 +131,34 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
 
     private <T extends Comparable<T>> void computeStates(){
         // Compute the number of states matching this predicate
+        Set<IProperty<?>> unrestrictedProperties = new HashSet<>(this.block.getStateDefinition().getProperties());
         int validStates = 1;
-        for(Pair<IProperty<?>,Set<?>> pair : this.properties)
+        for(Pair<IProperty<?>,Set<?>> pair : this.properties){
             validStates *= pair.right().size();
+            unrestrictedProperties.remove(pair.left());
+        }
+        for(IProperty<?> property : unrestrictedProperties)
+            validStates *= property.getPossibleValues().size();
 
         // If less than 64 states match, store and compare states directly
         if(validStates > 64)
             return;
-        Collection<BlockState> states = Collections.singleton(this.block.getStateDefinition().any());
+        Stream<BlockState> states = Stream.of(this.block.getStateDefinition().any());
         for(Pair<IProperty<?>,Set<?>> pair : this.properties){
             IProperty<?> property = pair.left();
             Set<?> values = pair.right();
-            //noinspection rawtypes,unchecked,RedundantCast
-            states = (Collection<BlockState>)states.stream() // (Collection<BlockState>) is needed or the compiler won't accept it
-                .flatMap(state -> values.stream().map(value -> state.setValue((IProperty)property, (T)value)))
-                .collect(Collectors.toList());
+            //noinspection rawtypes,unchecked
+            states = states.flatMap(state -> values.stream().map(value -> state.setValue((IProperty)property, (T)value)));
         }
+        for(IProperty<?> property : unrestrictedProperties)
+            //noinspection rawtypes,unchecked
+            states = states.flatMap(state -> property.getPossibleValues().stream().map(value -> state.setValue((IProperty)property, (T)value)));
         this.compareStates = true;
-        this.states = ImmutableSet.copyOf(states);
+        //noinspection UnstableApiUsage
+        this.states = states.collect(ImmutableSet.toImmutableSet());
+        // Sanity check
+        if(this.states.size() != validStates)
+            throw new AssertionError("Got two different numbers of valid states: " + validStates + " and " + this.states.size() + "!");
     }
 
     @Override

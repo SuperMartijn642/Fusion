@@ -2,9 +2,7 @@ package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.fabricmc.fabric.impl.resource.loader.ModNioResourcePack;
-import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.server.packs.AbstractPackResources;
-import net.minecraft.server.packs.PackType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,7 +21,7 @@ import java.util.List;
 @Mixin(ModNioResourcePack.class)
 public class ModNioResourcePackMixin {
 
-    @Shadow
+    @Shadow(remap = false)
     private static boolean exists(Path path){
         throw new AssertionError();
     }
@@ -33,7 +31,7 @@ public class ModNioResourcePackMixin {
         at = @At("STORE"),
         ordinal = 0
     )
-    private static List<Path> create(List<Path> rootPaths, String id, ModContainer mod, String subPath, PackType type){
+    private static List<Path> create(List<Path> rootPaths){
         List<Path> newRootPaths = null;
         for(Path rootPath : rootPaths){
             Path metaPath = rootPath.resolve("pack.mcmeta").toAbsolutePath().normalize();

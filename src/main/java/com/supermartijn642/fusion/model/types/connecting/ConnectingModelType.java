@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class ConnectingModelType implements ModelType<ConnectingModelData> {
 
-    public static final ResourceLocation DEFAULT_CONNECTION_KEY = new ResourceLocation("fusion", "default");
+    public static final ResourceLocation DEFAULT_CONNECTION_KEY = ResourceLocation.fromNamespaceAndPath("fusion", "default");
 
     @Override
     public Collection<ResourceLocation> getModelDependencies(ConnectingModelData data){

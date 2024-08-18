@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created 22/02/2024 by SuperMartijn642
@@ -33,14 +34,16 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
                 throw new JsonParseException("Match state predicate must have string property 'block'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
-            ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
+            ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
             if(!BuiltInRegistries.BLOCK.containsKey(identifier))
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
             Block block = BuiltInRegistries.BLOCK.get(identifier);
 
             List<Pair<Property<?>,Set<?>>> properties = new ArrayList<>();
             if(!json.has("properties") || !json.get("properties").isJsonObject())
-                throw new JsonParseException("Match block predicate must have string property 'block'!");
+                throw new JsonParseException("Match block predicate must have object property 'properties'!");
+            if(json.getAsJsonObject("properties").isEmpty())
+                throw new JsonParseException("At least one property must be specified for match state predicate!");
             for(Map.Entry<String,JsonElement> entry : json.getAsJsonObject("properties").entrySet()){
                 // Parse the property
                 Property<?> property = block.getStateDefinition().getProperty(entry.getKey());
@@ -54,6 +57,8 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
                         throw new JsonParseException("Unknown value '" + entry.getValue().getAsString() + "' for property '" + property.getName() + "' in block '" + identifier + "'!");
                     builder.add(value.get());
                 }else if(entry.getValue().isJsonArray()){
+                    if(entry.getValue().getAsJsonArray().isEmpty())
+                        throw new JsonParseException("Valid values for property '" + property.getName() + "' cannot be empty!");
                     for(JsonElement element : entry.getValue().getAsJsonArray()){
                         if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
                             throw new JsonParseException("Property '" + entry.getKey() + "' must be a string or an array of strings!");
@@ -127,22 +132,33 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
 
     private <T extends Comparable<T>> void computeStates(){
         // Compute the number of states matching this predicate
+        Set<Property<?>> unrestrictedProperties = new HashSet<>(this.block.getStateDefinition().getProperties());
         int validStates = 1;
-        for(Pair<Property<?>,Set<?>> pair : this.properties)
+        for(Pair<Property<?>,Set<?>> pair : this.properties){
             validStates *= pair.right().size();
+            unrestrictedProperties.remove(pair.left());
+        }
+        for(Property<?> property : unrestrictedProperties)
+            validStates *= property.getPossibleValues().size();
 
         // If less than 64 states match, store and compare states directly
         if(validStates > 64)
             return;
-        Collection<BlockState> states = Collections.singleton(this.block.getStateDefinition().any());
+        Stream<BlockState> states = Stream.of(this.block.getStateDefinition().any());
         for(Pair<Property<?>,Set<?>> pair : this.properties){
             Property<?> property = pair.left();
             Set<?> values = pair.right();
             //noinspection rawtypes,unchecked
-            states = states.stream().flatMap(state -> values.stream().map(value -> state.setValue((Property)property, (T)value))).collect(Collectors.toUnmodifiableList());
+            states = states.flatMap(state -> values.stream().map(value -> state.setValue((Property)property, (T)value)));
         }
+        for(Property<?> property : unrestrictedProperties)
+            //noinspection rawtypes,unchecked
+            states = states.flatMap(state -> property.getAllValues().map(value -> state.setValue((Property)property, (T)value.value())));
         this.compareStates = true;
-        this.states = ImmutableSet.copyOf(states);
+        this.states = states.collect(Collectors.toUnmodifiableSet());
+        // Sanity check
+        if(this.states.size() != validStates)
+            throw new AssertionError("Got two different numbers of valid states: " + validStates + " and " + this.states.size() + "!");
     }
 
     @Override

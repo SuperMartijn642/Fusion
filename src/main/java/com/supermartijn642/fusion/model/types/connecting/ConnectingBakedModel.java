@@ -123,7 +123,7 @@ public class ConnectingBakedModel extends WrappedBakedModel {
     }
 
     private static int[] adjustVertexDataUV(int[] vertexData, int newU, int newV, TextureAtlasSprite sprite){
-        int vertexSize = DefaultVertexFormat.BLOCK.getIntegerSize();
+        int vertexSize = DefaultVertexFormat.BLOCK.getVertexSize() / 4;
         int vertices = vertexData.length / vertexSize;
         int uvOffset = BLOCK_VERTEX_DATA_UV_OFFSET / 4;
 
@@ -147,18 +147,14 @@ public class ConnectingBakedModel extends WrappedBakedModel {
         VertexFormatElement element = null;
         for(index = 0; index < vertexFormat.getElements().size(); index++){
             VertexFormatElement el = vertexFormat.getElements().get(index);
-            if(el.getUsage() == VertexFormatElement.Usage.UV){
+            if(el.usage() == VertexFormatElement.Usage.UV){
                 element = el;
                 break;
             }
         }
         if(index == vertexFormat.getElements().size() || element == null)
             throw new RuntimeException("Expected vertex format to have a UV attribute");
-        if(element.getType() != VertexFormatElement.Type.FLOAT)
-            throw new RuntimeException("Expected UV attribute to have data type FLOAT");
-        if(element.getByteSize() < 4)
-            throw new RuntimeException("Expected UV attribute to have at least 4 dimensions");
-        return vertexFormat.offsets.getInt(index);
+        return vertexFormat.getOffset(element);
     }
 
     public SurroundingBlockData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state){

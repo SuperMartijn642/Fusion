@@ -4,16 +4,15 @@
   "package": "${mod_package}.${mixin_package}",
   "compatibilityLevel": "${mixin_compatibility_level}",
   "refmap": "${mod_id}.mixins.refmap.json",
-  "mixins": [],
+  "mixins": [
+    "DatagenModLoaderMixin"
+  ],
   "client": [
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
-    "DatagenModLoaderMixin",
     "FilePackResourcesMixin",
-    "ForgePathPackResourcesMixin",
     "PackMixin",
     "PathPackResourcesMixin",
-    "ResourcePackLoaderMixin",
     "MultiPartBakedModelMixin",
     "SpriteContentsMixin",
     "SpriteLoaderMixin",

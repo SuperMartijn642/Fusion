@@ -26,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -61,12 +60,10 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
 
         // Check if the overrides folder contains the requested file
         Path namespaceFolder = this.overridesFolderRoot.resolve(type.getDirectory()).resolve(location.getNamespace());
-        IoSupplier<InputStream> supplier = FileUtil.decomposePath(location.getPath()).get().map(list -> {
+        FileUtil.decomposePath(location.getPath()).result().map(list -> {
             Path path = FileUtil.resolvePath(namespaceFolder, list);
             return PathPackResources.returnFileIfExists(path);
-        }, o -> null);
-        if(supplier != null)
-            ci.setReturnValue(supplier);
+        }).ifPresent(ci::setReturnValue);
     }
 
     @Inject(
@@ -84,7 +81,7 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         try(DirectoryStream<Path> stream = Files.newDirectoryStream(typeFolder)){
             for(Path directory : stream){
                 String location = directory.getFileName().toString();
-                if(location.equals(location.toLowerCase(Locale.ROOT))){
+                if(ResourceLocation.isValidNamespace(location)){
                     namespaces.add(location);
                     continue;
                 }
@@ -108,13 +105,13 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
 
         // First send all override folder entries, then ignore regular entries which were overridden
         Set<ResourceLocation> overriddenLocations = new HashSet<>();
-        FileUtil.decomposePath(path).get().ifLeft(list -> {
+        FileUtil.decomposePath(path).ifSuccess(list -> {
             Path namespaceFolder = this.overridesFolderRoot.resolve(type.getDirectory()).resolve(namespace);
             PathPackResources.listPath(namespace, namespaceFolder, list, (location, streamSupplier) -> {
                 overriddenLocations.add(location);
                 output.accept(location, streamSupplier);
             });
-        }).ifRight(partialResult -> LOGGER.error("Invalid path {}: {}", path, partialResult.message()));
+        }).ifError(partialResult -> LOGGER.error("Invalid path {}: {}", path, partialResult.message()));
 
         // Filter all output resources
         return (location, streamSupplier) -> {

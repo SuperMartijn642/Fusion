@@ -3,10 +3,10 @@ package com.supermartijn642.fusion.mixin;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
-import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.repository.Pack;
-import net.minecraft.server.packs.repository.PackSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,11 +27,11 @@ public class PackMixin {
         method = "<init>",
         at = @At("RETURN")
     )
-    private void init(String identifier, boolean required, Pack.ResourcesSupplier resourcesSupplier, Component title, Pack.Info info, Pack.Position position, boolean fixedPosition, PackSource packSource, CallbackInfo ci){
-        try(PackResources resources = resourcesSupplier.openPrimary(identifier)){
+    private void init(PackLocationInfo locationInfo, Pack.ResourcesSupplier resourcesSupplier, Pack.Metadata metadata, PackSelectionConfig config, CallbackInfo ci){
+        try(PackResources resources = resourcesSupplier.openPrimary(locationInfo)){
             this.overridesFolder = resources.getMetadataSection(FusionPackMetadataSection.INSTANCE);
         }catch(Exception e){
-            FusionClient.LOGGER.error("Encountered an exception whilst reading fusion metadata for pack '" + identifier + "':", e);
+            FusionClient.LOGGER.error("Encountered an exception whilst reading fusion metadata for pack '" + locationInfo.id() + "':", e);
         }
     }
 

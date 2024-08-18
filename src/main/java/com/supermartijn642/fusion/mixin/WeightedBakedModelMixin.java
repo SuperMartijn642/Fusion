@@ -43,7 +43,7 @@ public class WeightedBakedModelMixin implements IForgeBakedModel {
         randomSource.setSeed(state.getSeed(pos));
         // Update the model data for the selected sub model
         BakedModel model = WeightedRandom.getWeightedItem(this.list, Math.abs((int)randomSource.nextLong()) % this.totalWeight)
-            .map(WeightedEntry.Wrapper::getData).orElse(null);
+            .map(WeightedEntry.Wrapper::data).orElse(null);
         return model == null ? modelData : model.getModelData(level, pos, state, modelData);
     }
 }

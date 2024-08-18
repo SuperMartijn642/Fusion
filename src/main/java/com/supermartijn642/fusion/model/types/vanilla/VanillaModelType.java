@@ -31,7 +31,7 @@ public class VanillaModelType implements ModelType<BlockModel> {
             if(model != null)
                 data.parent = model.getAsVanillaModel();
         }
-        return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation(), context.getModelIdentifier());
+        return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation());
     }
 
     @Nullable

@@ -5,10 +5,7 @@ import com.supermartijn642.fusion.extensions.PackResourcesExtension;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.FileUtil;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.AbstractPackResources;
-import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.PathPackResources;
+import net.minecraft.server.packs.*;
 import net.minecraft.server.packs.resources.IoSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -29,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -57,7 +53,7 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         method = "<init>",
         at = @At("RETURN")
     )
-    private void init(String name, Path root, boolean isBuiltin, CallbackInfo ci){
+    private void init(PackLocationInfo info, Path root, CallbackInfo ci){
         Path path = root.resolve("pack.mcmeta");
         if(Files.exists(path)){
             String overridesFolder;
@@ -82,12 +78,10 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
 
         // Check if the overrides folder contains the requested file
         Path namespaceFolder = this.overridesFolderRoot.resolve(type.getDirectory()).resolve(location.getNamespace());
-        IoSupplier<InputStream> supplier = FileUtil.decomposePath(location.getPath()).get().map(list -> {
+        FileUtil.decomposePath(location.getPath()).result().map(list -> {
             Path path = FileUtil.resolvePath(namespaceFolder, list);
             return PathPackResources.returnFileIfExists(path);
-        }, o -> null);
-        if(supplier != null)
-            ci.setReturnValue(supplier);
+        }).ifPresent(ci::setReturnValue);
     }
 
     @Inject(
@@ -105,7 +99,7 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         try(DirectoryStream<Path> stream = Files.newDirectoryStream(typeFolder)){
             for(Path directory : stream){
                 String location = directory.getFileName().toString();
-                if(location.equals(location.toLowerCase(Locale.ROOT))){
+                if(ResourceLocation.isValidNamespace(location)){
                     namespaces.add(location);
                     continue;
                 }
@@ -129,13 +123,13 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
 
         // First send all override folder entries, then ignore regular entries which were overridden
         Set<ResourceLocation> overriddenLocations = new HashSet<>();
-        FileUtil.decomposePath(path).get().ifLeft(list -> {
+        FileUtil.decomposePath(path).ifSuccess(list -> {
             Path namespaceFolder = this.overridesFolderRoot.resolve(type.getDirectory()).resolve(namespace);
             PathPackResources.listPath(namespace, namespaceFolder, list, (location, streamSupplier) -> {
                 overriddenLocations.add(location);
                 output.accept(location, streamSupplier);
             });
-        }).ifRight(partialResult -> LOGGER.error("Invalid path {}: {}", path, partialResult.message()));
+        }).ifError(partialResult -> LOGGER.error("Invalid path {}: {}", path, partialResult.message()));
 
         // Filter all output resources
         return (location, streamSupplier) -> {

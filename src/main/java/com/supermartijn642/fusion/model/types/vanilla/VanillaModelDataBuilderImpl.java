@@ -58,7 +58,7 @@ public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<Vani
     public BlockModel build(){
         Map<String,Either<Material,String>> textures = this.textures.entrySet().stream()
             .map(entry -> Pair.of(entry.getKey(), entry.getValue()))
-            .map(pair -> pair.<Either<Material,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new Material(TextureAtlases.getBlocks(), new ResourceLocation(s)))))
+            .map(pair -> pair.<Either<Material,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new Material(TextureAtlases.getBlocks(), ResourceLocation.parse(s)))))
             .collect(Collectors.toMap(Pair::left, Pair::right));
         return new BlockModel(this.parent, Collections.emptyList(), textures, null, null, ItemTransforms.NO_TRANSFORMS, Collections.emptyList());
     }

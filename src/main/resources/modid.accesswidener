@@ -13,7 +13,6 @@ accessible field net/minecraft/client/renderer/block/model/BlockModel parent Lne
 accessible field net/minecraft/client/renderer/block/model/BlockModel parentLocation Lnet/minecraft/resources/ResourceLocation;
 accessible field net/minecraft/client/renderer/block/model/BlockModel textureMap Ljava/util/Map;
 accessible field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
-accessible method net/minecraft/client/renderer/block/model/BlockModel bakeFace (Lnet/minecraft/client/renderer/block/model/BlockElement;Lnet/minecraft/client/renderer/block/model/BlockElementFace;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/core/Direction;Lnet/minecraft/client/resources/model/ModelState;Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/block/model/BakedQuad;
 accessible method net/minecraft/client/renderer/block/model/BlockModel findTextureEntry (Ljava/lang/String;)Lcom/mojang/datafixers/util/Either;
 # FilePackResources
 accessible field net/minecraft/server/packs/FilePackResources LOGGER Lorg/slf4j/Logger;
@@ -53,5 +52,3 @@ mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
-# VertexFormat
-accessible field com/mojang/blaze3d/vertex/VertexFormat offsets Lit/unimi/dsi/fastutil/ints/IntList;

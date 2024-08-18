@@ -38,7 +38,7 @@ public class BlockModelDeserializerMixin {
 
         JsonElement loaderJson = json.getAsJsonObject().get("loader");
         if(loaderJson != null && loaderJson.isJsonPrimitive() && loaderJson.getAsJsonPrimitive().isString() && IdentifierUtil.isValidIdentifier(loaderJson.getAsString())){
-            ResourceLocation loader = new ResourceLocation(loaderJson.getAsString());
+            ResourceLocation loader = ResourceLocation.parse(loaderJson.getAsString());
             if(loader.getNamespace().equals("fusion") && loader.getPath().equals("model")){
                 // Finalize model type registration
                 ModelTypeRegistryImpl.finalizeRegistration();

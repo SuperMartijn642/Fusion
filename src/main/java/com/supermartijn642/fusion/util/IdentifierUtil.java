@@ -51,7 +51,7 @@ public class IdentifierUtil {
     public static ResourceLocation withFusionNamespace(String identifier){
         String[] parts = identifier.split(":");
         return parts.length == 1 ?
-            new ResourceLocation("fusion", parts[0]) :
-            new ResourceLocation(identifier);
+            ResourceLocation.fromNamespaceAndPath("fusion", parts[0]) :
+            ResourceLocation.parse(identifier);
     }
 }

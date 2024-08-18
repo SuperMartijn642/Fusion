@@ -33,7 +33,7 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
                 throw new JsonParseException("Match state predicate must have string property 'block'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
-            ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
+            ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
             if(!BuiltInRegistries.BLOCK.containsKey(identifier))
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
             Block block = BuiltInRegistries.BLOCK.get(identifier);

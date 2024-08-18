@@ -33,6 +33,6 @@ public class UnknownModelType implements ModelType<UnbakedModel> {
 
     @Override
     public BakedModel bake(ModelBakingContext context, UnbakedModel data){
-        return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation(), context.getModelIdentifier());
+        return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation());
     }
 }

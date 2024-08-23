@@ -53,7 +53,8 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
             json.addProperty("layout", data.getLayout().name().toLowerCase(Locale.ROOT));
         if(data.getRenderType() != null)
             json.addProperty("render_type", data.getRenderType().name().toLowerCase(Locale.ROOT));
-        return json.isEmpty() ? null : json;
+        //noinspection SizeReplaceableByIsEmpty
+        return json.size() == 0 ? null : json;
     }
 
     @Override

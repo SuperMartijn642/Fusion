@@ -42,7 +42,8 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
             List<Pair<Property<?>,Set<?>>> properties = new ArrayList<>();
             if(!json.has("properties") || !json.get("properties").isJsonObject())
                 throw new JsonParseException("Match block predicate must have object property 'properties'!");
-            if(json.getAsJsonObject("properties").isEmpty())
+            //noinspection SizeReplaceableByIsEmpty
+            if(json.getAsJsonObject("properties").size() == 0)
                 throw new JsonParseException("At least one property must be specified for match state predicate!");
             for(Map.Entry<String,JsonElement> entry : json.getAsJsonObject("properties").entrySet()){
                 // Parse the property

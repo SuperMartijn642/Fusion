@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.predicate.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
@@ -17,6 +17,8 @@ import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
+import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
+import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
@@ -29,17 +31,19 @@ import org.slf4j.LoggerFactory;
 public class FusionClient implements ClientModInitializer {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
-    private static final RenderMaterial[] RENDER_MATERIALS = new RenderMaterial[ConnectingTextureData.RenderType.values().length];
+    private static final RenderMaterial[] RENDER_MATERIALS = new RenderMaterial[(2 | (1 << 2) | ((BaseTextureData.RenderType.values().length + 1) << 3)) + 1];
 
     @Override
     public void onInitializeClient(){
         // Register default texture types
         FusionTextureTypeRegistry.registerTextureType(ResourceLocation.fromNamespaceAndPath("fusion", "vanilla"), DefaultTextureTypes.VANILLA);
+        FusionTextureTypeRegistry.registerTextureType(ResourceLocation.fromNamespaceAndPath("fusion", "base"), DefaultTextureTypes.BASE);
         FusionTextureTypeRegistry.registerTextureType(ResourceLocation.fromNamespaceAndPath("fusion", "connecting"), DefaultTextureTypes.CONNECTING);
         FusionTextureTypeRegistry.registerTextureType(ResourceLocation.fromNamespaceAndPath("fusion", "scrolling"), DefaultTextureTypes.SCROLLING);
         // Register default model types
         FusionModelTypeRegistry.registerModelType(ResourceLocation.fromNamespaceAndPath("fusion", "unknown"), DefaultModelTypes.UNKNOWN);
         FusionModelTypeRegistry.registerModelType(ResourceLocation.fromNamespaceAndPath("fusion", "vanilla"), DefaultModelTypes.VANILLA);
+        FusionModelTypeRegistry.registerModelType(ResourceLocation.fromNamespaceAndPath("fusion", "base"), DefaultModelTypes.BASE);
         FusionModelTypeRegistry.registerModelType(ResourceLocation.fromNamespaceAndPath("fusion", "connecting"), DefaultModelTypes.CONNECTING);
         // Register default connection predicates
         FusionPredicateRegistry.registerConnectionPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "and"), AndConnectionPredicate.SERIALIZER);
@@ -63,17 +67,26 @@ public class FusionClient implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
     }
 
-    public static RenderMaterial getRenderTypeMaterial(ConnectingTextureData.RenderType renderType){
-        RenderMaterial material = RENDER_MATERIALS[renderType.ordinal()];
+    public static RenderMaterial getRenderTypeMaterial(Boolean ambientOcclusion, BaseTextureData.RenderType renderType, boolean emissive){
+        int index = (ambientOcclusion == null ? 2 : ambientOcclusion ? 1 : 0)
+            | (emissive ? 1 : 0) << 2
+            | (renderType == null ? 0 : renderType.ordinal() + 1) << 3;
+        RenderMaterial material = RENDER_MATERIALS[index];
         if(material == null){
             MaterialFinder materialFinder = RendererAccess.INSTANCE.getRenderer().materialFinder();
-            for(ConnectingTextureData.RenderType value : ConnectingTextureData.RenderType.values()){
-                BlendMode mode = value == ConnectingTextureData.RenderType.OPAQUE ? BlendMode.SOLID
-                    : value == ConnectingTextureData.RenderType.CUTOUT ? BlendMode.CUTOUT
-                    : value == ConnectingTextureData.RenderType.TRANSLUCENT ? BlendMode.TRANSLUCENT : null;
-                RENDER_MATERIALS[value.ordinal()] = materialFinder.blendMode(mode).find();
+            materialFinder.shadeMode(ShadeMode.VANILLA);
+            if(ambientOcclusion != null)
+                materialFinder.ambientOcclusion(ambientOcclusion ? TriState.TRUE : TriState.FALSE);
+            if(renderType != null){
+                BlendMode mode = renderType == BaseTextureData.RenderType.OPAQUE ? BlendMode.SOLID
+                    : renderType == BaseTextureData.RenderType.CUTOUT ? BlendMode.CUTOUT
+                    : renderType == BaseTextureData.RenderType.TRANSLUCENT ? BlendMode.TRANSLUCENT : null;
+                materialFinder.blendMode(mode);
             }
-            material = RENDER_MATERIALS[renderType.ordinal()];
+            if(emissive)
+                materialFinder.emissive(true);
+            material = materialFinder.find();
+            RENDER_MATERIALS[index] = material;
         }
         return material;
     }

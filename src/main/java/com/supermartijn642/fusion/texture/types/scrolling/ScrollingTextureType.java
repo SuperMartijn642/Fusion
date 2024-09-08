@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.SpriteTicker;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -158,13 +159,14 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
 
         // Finally create the new sprite
         ScrollingSpriteContents contents = new ScrollingSpriteContents(context.createOriginalSprite().contents(), xPositions, yPositions, frameTimes);
-        return new TextureAtlasSprite(
+        return new BaseTextureSprite(
             context.getTextureIdentifier(),
             contents,
             context.getAtlasWidth(),
             context.getAtlasHeight(),
             context.getSpritePositionX(),
-            context.getSpritePositionY()
+            context.getSpritePositionY(),
+            data
         );
     }
 

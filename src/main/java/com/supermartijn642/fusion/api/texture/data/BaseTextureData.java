@@ -35,7 +35,18 @@ public interface BaseTextureData {
     }
 
     enum QuadTinting {
-        // TODO
+        /**
+         * Provides a grass tint based on the biome the model is in.
+         */
+        BIOME_GRASS,
+        /**
+         * Provides a foliage tint based on the biome the model is in.
+         */
+        BIOME_FOLIAGE,
+        /**
+         * Provides a water tint based on the biome the model is in.
+         */
+        BIOME_WATER
     }
 
     interface Builder<T extends Builder<T,S>, S> {

@@ -2,8 +2,11 @@ package com.supermartijn642.fusion.texture;
 
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.FoliageColor;
+import net.minecraft.world.level.GrassColor;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -14,11 +17,25 @@ public class QuadTintingHelper {
     /**
      * @see com.supermartijn642.fusion.api.texture.data.BaseTextureData.QuadTinting
      */
-    private static final BlockColor[] TINT_FUNCTIONS = new BlockColor[] {
-        // TODO
+    private static final BlockColor[] TINT_FUNCTIONS = new BlockColor[]{
+        (state, level, pos, tintIndex) -> {
+            if(level == null || pos == null)
+                return GrassColor.get(0.5, 1.0);
+            return BiomeColors.getAverageGrassColor(level, pos);
+        },
+        (state, level, pos, tintIndex) -> {
+            if(level == null || pos == null)
+                return FoliageColor.getDefaultColor();
+            return BiomeColors.getAverageFoliageColor(level, pos);
+        },
+        (state, level, pos, tintIndex) -> {
+            if(level == null || pos == null)
+                return -1;
+            return BiomeColors.getAverageWaterColor(level, pos);
+        }
     };
 
-    static {
+    static{
         if(TINT_FUNCTIONS.length != BaseTextureData.QuadTinting.values().length)
             throw new AssertionError("Missing tinting functions!");
     }

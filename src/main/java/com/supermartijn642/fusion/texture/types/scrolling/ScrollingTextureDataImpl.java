@@ -1,18 +1,20 @@
 package com.supermartijn642.fusion.texture.types.scrolling;
 
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureDataImpl;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
  */
-public class ScrollingTextureDataImpl implements ScrollingTextureData {
+public class ScrollingTextureDataImpl extends BaseTextureDataImpl implements ScrollingTextureData {
 
     private final ScrollingTextureData.Position startPosition, endPosition;
     private final int frameTime, frameWidth, frameHeight;
     private final ScrollingTextureData.LoopType loopType;
     private final int loopPause;
 
-    public ScrollingTextureDataImpl(Position startPosition, Position endPosition, int frameTime, int frameWidth, int frameHeight, LoopType loopType, int loopPause){
+    public ScrollingTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting, Position startPosition, Position endPosition, int frameTime, int frameWidth, int frameHeight, LoopType loopType, int loopPause){
+        super(renderType, emissive, tinting);
         this.startPosition = startPosition;
         this.endPosition = endPosition;
         this.frameTime = frameTime;

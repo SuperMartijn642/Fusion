@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.mixin;
+package com.supermartijn642.fusion.mixin.fabric;
 
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.predicate.PredicateRegistryImpl;

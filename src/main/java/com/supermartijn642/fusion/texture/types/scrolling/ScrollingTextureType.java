@@ -5,11 +5,12 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
 import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureUtil;
-import net.minecraft.util.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -156,42 +157,27 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
 
         // Finally create the new sprite
         return new ScrollingSprite(
-            context.getTextureIdentifier(),
-            context.getSpriteWidth(),
-            context.getSpriteHeight(),
-            context.getAtlasWidth(),
-            context.getAtlasHeight(),
-            context.getSpritePositionX(),
-            context.getSpritePositionY(),
+            context.createOriginalSprite(),
             context.getTextureWidth(),
             context.getTextureHeight(),
-            context.getTextureBuffers(),
             xPositions,
             yPositions,
-            frameTimes
+            frameTimes,
+            data
         );
     }
 
-    private static class ScrollingSprite extends TextureAtlasSprite {
+    private static class ScrollingSprite extends BaseTextureSprite {
 
         private final int[] xPositions, yPositions;
         private final int[] frameTimes;
         private int frame, tickCounter;
 
-        protected ScrollingSprite(ResourceLocation identifier, int width, int height, int atlasWidth, int atlasHeight, int atlasX, int atlasY, int imageWidth, int imageHeight, List<int[][]> mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
-            super(identifier.toString());
-            this.width = width;
-            this.height = height;
-            this.originX = atlasX;
-            this.originY = atlasY;
-            this.minU = (float)atlasX / atlasWidth;
-            this.maxU = (float)(atlasX + width) / atlasWidth;
-            this.minV = (float)atlasY / atlasHeight;
-            this.maxV = (float)(atlasY + height) / atlasHeight;
+        protected ScrollingSprite(TextureAtlasSprite original, int imageWidth, int imageHeight, int[] xPositions, int[] yPositions, int[] frameTimes, BaseTextureData data){
+            super(original, data);
             this.xPositions = xPositions;
             this.yPositions = yPositions;
             this.frameTimes = frameTimes;
-            this.framesTextureData = mainImage;
             this.splitAnimationFrames(imageWidth, imageHeight);
         }
 

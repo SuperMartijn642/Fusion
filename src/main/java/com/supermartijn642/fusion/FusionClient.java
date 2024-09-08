@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.predicate.*;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 public class FusionClient implements ClientModInitializer {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
-    private static final RenderMaterial[] RENDER_MATERIALS = new RenderMaterial[ConnectingTextureData.RenderType.values().length];
+    private static final RenderMaterial[] RENDER_MATERIALS = new RenderMaterial[(2 | (1 << 2) | ((BaseTextureData.RenderType.values().length + 1) << 3)) + 1];
 
     private static NativeImage dummyImage;
 
@@ -42,11 +42,13 @@ public class FusionClient implements ClientModInitializer {
     public void onInitializeClient(){
         // Register default texture types
         FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "vanilla"), DefaultTextureTypes.VANILLA);
+        FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "base"), DefaultTextureTypes.BASE);
         FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "connecting"), DefaultTextureTypes.CONNECTING);
         FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "scrolling"), DefaultTextureTypes.SCROLLING);
         // Register default model types
         FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "unknown"), DefaultModelTypes.UNKNOWN);
         FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "vanilla"), DefaultModelTypes.VANILLA);
+        FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "base"), DefaultModelTypes.BASE);
         FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "connecting"), DefaultModelTypes.CONNECTING);
         // Register default connection predicates
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "and"), AndConnectionPredicate.SERIALIZER);
@@ -64,17 +66,25 @@ public class FusionClient implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
     }
 
-    public static RenderMaterial getRenderTypeMaterial(ConnectingTextureData.RenderType renderType){
-        RenderMaterial material = RENDER_MATERIALS[renderType.ordinal()];
+    public static RenderMaterial getRenderTypeMaterial(Boolean ambientOcclusion, BaseTextureData.RenderType renderType, boolean emissive){
+        int index = (ambientOcclusion == null ? 2 : ambientOcclusion ? 1 : 0)
+            | (emissive ? 1 : 0) << 2
+            | (renderType == null ? 0 : renderType.ordinal() + 1) << 3;
+        RenderMaterial material = RENDER_MATERIALS[index];
         if(material == null){
             MaterialFinder materialFinder = RendererAccess.INSTANCE.getRenderer().materialFinder();
-            for(ConnectingTextureData.RenderType value : ConnectingTextureData.RenderType.values()){
-                BlendMode mode = value == ConnectingTextureData.RenderType.OPAQUE ? BlendMode.SOLID
-                    : value == ConnectingTextureData.RenderType.CUTOUT ? BlendMode.CUTOUT
-                    : value == ConnectingTextureData.RenderType.TRANSLUCENT ? BlendMode.TRANSLUCENT : null;
-                RENDER_MATERIALS[value.ordinal()] = materialFinder.blendMode(0, mode).find();
+            if(ambientOcclusion != null)
+                materialFinder.disableAo(0, !ambientOcclusion);
+            if(renderType != null){
+                BlendMode mode = renderType == BaseTextureData.RenderType.OPAQUE ? BlendMode.SOLID
+                    : renderType == BaseTextureData.RenderType.CUTOUT ? BlendMode.CUTOUT
+                    : renderType == BaseTextureData.RenderType.TRANSLUCENT ? BlendMode.TRANSLUCENT : null;
+                materialFinder.blendMode(0, mode);
             }
-            material = RENDER_MATERIALS[renderType.ordinal()];
+            if(emissive)
+                materialFinder.emissive(0, true);
+            material = materialFinder.find();
+            RENDER_MATERIALS[index] = material;
         }
         return material;
     }

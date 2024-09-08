@@ -63,7 +63,7 @@ public class VanillaModelType implements ModelType<BlockModel> {
         return (JsonObject)VanillaModelSerializer.GSON.toJsonTree(value);
     }
 
-    private static void resolveParents(GatherTexturesContext context, BlockModel model){
+    public static void resolveParents(GatherTexturesContext context, BlockModel model){
         Set<BlockModel> passedModels = new LinkedHashSet<>();
         while(model.parentLocation != null && model.parent == null){
             passedModels.add(model);

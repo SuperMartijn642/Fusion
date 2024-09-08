@@ -4,7 +4,10 @@ import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.FoliageColors;
+import net.minecraft.world.GrassColors;
 import net.minecraft.world.ILightReader;
+import net.minecraft.world.biome.BiomeColors;
 
 /**
  * Created 07/09/2024 by SuperMartijn642
@@ -15,7 +18,21 @@ public class QuadTintingHelper {
      * @see com.supermartijn642.fusion.api.texture.data.BaseTextureData.QuadTinting
      */
     private static final IBlockColor[] TINT_FUNCTIONS = new IBlockColor[]{
-        // TODO
+        (state, level, pos, tintIndex) -> {
+            if(level == null || pos == null)
+                return GrassColors.get(0.5, 1.0);
+            return BiomeColors.getAverageGrassColor(level, pos);
+        },
+        (state, level, pos, tintIndex) -> {
+            if(level == null || pos == null)
+                return FoliageColors.getDefaultColor();
+            return BiomeColors.getAverageFoliageColor(level, pos);
+        },
+        (state, level, pos, tintIndex) -> {
+            if(level == null || pos == null)
+                return -1;
+            return BiomeColors.getAverageWaterColor(level, pos);
+        }
     };
 
     static{

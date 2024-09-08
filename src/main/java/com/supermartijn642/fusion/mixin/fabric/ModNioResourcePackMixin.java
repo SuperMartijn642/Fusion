@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.mixin;
+package com.supermartijn642.fusion.mixin.fabric;
 
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.fabricmc.fabric.impl.resource.loader.ModNioResourcePack;

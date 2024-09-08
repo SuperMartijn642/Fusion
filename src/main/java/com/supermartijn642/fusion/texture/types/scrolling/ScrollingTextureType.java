@@ -6,8 +6,10 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
 import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -166,18 +168,19 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
             context.getTextureBuffers(),
             xPositions,
             yPositions,
-            frameTimes
+            frameTimes,
+            data
         );
     }
 
-    private static class ScrollingSprite extends TextureAtlasSprite {
+    private static class ScrollingSprite extends BaseTextureSprite {
 
         private final int[] xPositions, yPositions;
         private final int[] frameTimes;
         private int frame, tickCounter;
 
-        protected ScrollingSprite(AtlasTexture atlas, Info info, int atlasWidth, int atlasHeight, int atlasX, int atlasY, NativeImage[] mainImage, int[] xPositions, int[] yPositions, int[] frameTimes){
-            super(atlas, info, 0, atlasWidth, atlasHeight, atlasX, atlasY, FusionClient.getDummyImage());
+        protected ScrollingSprite(AtlasTexture atlas, Info info, int atlasWidth, int atlasHeight, int atlasX, int atlasY, NativeImage[] mainImage, int[] xPositions, int[] yPositions, int[] frameTimes, BaseTextureData data){
+            super(atlas, info, 0, atlasWidth, atlasHeight, atlasX, atlasY, FusionClient.getDummyImage(), data);
             this.mainImage = mainImage;
             this.xPositions = xPositions;
             this.yPositions = yPositions;

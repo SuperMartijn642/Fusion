@@ -1,5 +1,8 @@
 accessWidener v1 named
 
+# BakedQuad
+accessible field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
+mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 # Block
 accessible field net/minecraft/world/level/block/Block OCCLUSION_CACHE Ljava/lang/ThreadLocal;
 # BlockModel

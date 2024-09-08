@@ -1,9 +1,11 @@
 package com.supermartijn642.fusion.api.texture;
 
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
 import com.supermartijn642.fusion.texture.types.VanillaTextureType;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureType;
 import com.supermartijn642.fusion.texture.types.scrolling.ScrollingTextureType;
 
@@ -18,6 +20,10 @@ public final class DefaultTextureTypes {
      * Model type used for vanilla textures.
      */
     public static final TextureType<Void> VANILLA = new VanillaTextureType();
+    /**
+     * Model type which adds some common properties.
+     */
+    public static final TextureType<BaseTextureData> BASE = new BaseTextureType();
     /**
      * Texture type with a connected texture layout. Should be used in conjunction with {@link DefaultModelTypes#CONNECTING} model type.
      * @see ConnectingTextureData#builder()

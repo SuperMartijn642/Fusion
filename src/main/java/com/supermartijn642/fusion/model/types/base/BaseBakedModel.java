@@ -30,8 +30,6 @@ import java.util.function.Supplier;
  */
 public class BaseBakedModel implements BakedModel, FabricBakedModel {
 
-    private static final RenderMaterial ITEM_MATERIAL = RendererAccess.INSTANCE.getRenderer().materialFinder().find();
-
     private final Mesh blockMesh, itemMesh;
     private final boolean hasAmbientOcclusion;
     private final boolean isGui3d;
@@ -67,7 +65,8 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
         builder = RendererAccess.INSTANCE.getRenderer().meshBuilder();
         emitter = builder.getEmitter();
         for(BaseModelQuad quad : quads){
-            emitter.fromVanilla(quad.bakedQuad(), ITEM_MATERIAL, quad.cullDirection());
+            RenderMaterial material = FusionClient.getRenderTypeMaterial(null, null, quad.emissive());
+            emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
             if(quad.lightEmission() != null){
                 for(int i = 0; i < 4; i++){
                     int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));

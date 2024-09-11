@@ -24,5 +24,9 @@ public enum ConnectingTextureLayout {
     /**
      * Allows for reduced connections with direct neighbors.
      */
-    COMPACT
+    COMPACT,
+    /**
+     * Allows for patterns with a border similar to the {@link #FULL} layout, but constructed from fewer tiles by piecing together corners from multiple of them.
+     */
+    PIECED
 }

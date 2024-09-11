@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 public class FusionClient implements ClientModInitializer {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
-    private static final RenderMaterial[] RENDER_MATERIALS = new RenderMaterial[(2 | (1 << 2) | ((BaseTextureData.RenderType.values().length + 1) << 3)) + 1];
+    private static final RenderMaterial[] RENDER_MATERIALS = new RenderMaterial[(2 | (1 << 2) | ((BaseTextureData.RenderType.values().length) << 3)) + 1];
 
     @Override
     public void onInitializeClient(){

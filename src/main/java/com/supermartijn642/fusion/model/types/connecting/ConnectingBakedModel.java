@@ -6,14 +6,13 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
-import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureLayoutHelper;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
+import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.renderer.LightTexture;
@@ -41,7 +40,6 @@ import java.util.function.Supplier;
  */
 public class ConnectingBakedModel implements BakedModel {
 
-    private static final RenderMaterial ITEM_MATERIAL = RendererAccess.INSTANCE.getRenderer().materialFinder().find();
     private static final int VERTEX_SIZE, VERTEX_UV_OFFSET, VERTEX_POSITION_OFFSET;
     /**
      * Stores world space vector point in the up and right direction of the default texture orientation for each face
@@ -114,49 +112,79 @@ public class ConnectingBakedModel implements BakedModel {
         this.transforms = transforms;
         this.overrides = overrides;
 
-        // Create block and item meshes from the quads
+        // Create block mesh from the quads
         MeshBuilder builder = RendererAccess.INSTANCE.getRenderer().meshBuilder();
         QuadEmitter emitter = builder.getEmitter();
         HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
         HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
         for(ConnectingModelQuad quad : quads){
-            RenderMaterial material = FusionClient.getRenderTypeMaterial(hasAmbientOcclusion, quad.renderType(), quad.emissive());
-            emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
-            if(quad.lightEmission() != null){
-                for(int i = 0; i < 4; i++){
-                    int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
-                    int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
-                    emitter.lightmap(i, LightTexture.pack(sky, block));
-                }
-            }
+            // Some layouts need auxiliary quads, hence simply repeat the quad that many times
+            Integer tag = null;
+            int auxiliaryQuadCount = 0;
             if(quad.hasConnectingTexture()){
                 Direction direction = quad.bakedQuad().getDirection();
                 TextureOrientation orientation = findOrientation(quad.bakedQuad());
                 ConnectionPredicate predicate = quad.connectionPredicate();
+                // Get the number of auxiliary quads needed
+                auxiliaryQuadCount = ConnectingTextureLayoutHandler.get(quad.getLayout()).getAuxiliaryQuadCount();
                 // Give each combination of direction, orientation, and predicate a unique index
                 int predicateIndex = predicates.computeIfAbsent(new QuadPredicates(direction, orientation, predicate), o -> predicates.size());
                 // Give each sprite a unique index
                 int spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
                 // Pack the predicate index and sprite index into the tag int
-                emitter.tag(1 | (predicateIndex << 1) | (spriteIndex << 11));
+                tag = 1 | (predicateIndex << 5) | (spriteIndex << 16);
             }
-            emitter.emit();
+            // Submit the quads
+            RenderMaterial material = FusionClient.getRenderTypeMaterial(hasAmbientOcclusion, quad.renderType(), quad.emissive());
+            for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
+                emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
+                if(quad.lightEmission() != null){
+                    for(int i = 0; i < 4; i++){
+                        int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
+                        int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
+                        emitter.lightmap(i, LightTexture.pack(sky, block));
+                    }
+                }
+                if(tag != null)
+                    emitter.tag(tag | (quadIndex << 1)); // Add the quad index to the tag
+                emitter.emit();
+            }
         }
         this.blockMesh = builder.build();
         this.predicates = predicates.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
         this.sprites = sprites.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
-        builder = RendererAccess.INSTANCE.getRenderer().meshBuilder();
+
+        // Create the item mesh
         emitter = builder.getEmitter();
+        MutableQuad mutableQuad = new MutableQuad();
         for(ConnectingModelQuad quad : quads){
-            emitter.fromVanilla(quad.bakedQuad(), ITEM_MATERIAL, quad.cullDirection());
-            if(quad.lightEmission() != null){
-                for(int i = 0; i < 4; i++){
-                    int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
-                    int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
-                    emitter.lightmap(i, LightTexture.pack(sky, block));
-                }
+            // Some layouts need auxiliary quads, hence simply repeat the quad that many times
+            int auxiliaryQuadCount = 0;
+            ConnectingTextureLayoutHandler layoutHandler = null;
+            if(quad.hasConnectingTexture()){
+                layoutHandler = ConnectingTextureLayoutHandler.get(quad.getLayout());
+                // Get the number of auxiliary quads needed
+                auxiliaryQuadCount = ConnectingTextureLayoutHandler.get(quad.getLayout()).getAuxiliaryQuadCount();
             }
-            emitter.emit();
+            // Process and submit the quads
+            RenderMaterial material = FusionClient.getRenderTypeMaterial(null, null, quad.emissive());
+            for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
+                emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
+                if(quad.lightEmission() != null){
+                    for(int i = 0; i < 4; i++){
+                        int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
+                        int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
+                        emitter.lightmap(i, LightTexture.pack(sky, block));
+                    }
+                }
+                // Process the quad if it has a connecting texture
+                // As item mesh does not depend on state, we can run the connecting texture processing immediately
+                if(layoutHandler != null){
+                    mutableQuad.set(emitter, TextureOrientation.NORMAL_0.vertexIndexPermutation);
+                    layoutHandler.processItemQuad(quadIndex, mutableQuad, quad.bakedQuad().getSprite());
+                }
+                emitter.emit();
+            }
         }
         this.itemMesh = builder.build();
     }
@@ -234,7 +262,7 @@ public class ConnectingBakedModel implements BakedModel {
     @Override
     public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
         // If either level or position is not given, the connected textures cannot be updated, so just push the mesh
-        if(blockView == null || pos == null){
+        if(blockView == null || pos == null || this.predicates.isEmpty()){
             this.blockMesh.outputTo(context.getEmitter());
             return;
         }
@@ -244,18 +272,21 @@ public class ConnectingBakedModel implements BakedModel {
         //
         SurroundingBlockCache blockCache = new SurroundingBlockCache(blockView, pos, state);
         // Push a transform which maps any connecting texture quads to the correct uv
+        MutableQuad mutableQuad = new MutableQuad();
         context.pushTransform(quad -> {
             if(quad.tag() != 0){
-                // Unpack predicate index and sprite index from the tag
+                // Unpack quad index, predicate index, and sprite index from the tag
                 int tag = quad.tag();
-                int predicateIndex = (tag >> 1) & ((1 << 10) - 1);
-                int spriteIndex = (tag >> 11) & ((1 << 10) - 1);
+                int quadIndex = (tag >> 1) & ((1 << 4) - 1);
+                int predicateIndex = (tag >> 5) & ((1 << 10) - 1);
+                int spriteIndex = (tag >> 16) & ((1 << 10) - 1);
 
+                // Get the connection predicate
+                QuadPredicates predicate = this.predicates.get(predicateIndex);
                 // Check if the connections have already been computed, otherwise compute them
                 TextureConnections connections = connectionsCache[predicateIndex];
                 if(connections == null){
-                    // Get the connection predicate and obtain the connections
-                    QuadPredicates predicate = this.predicates.get(predicateIndex);
+                    // Compute the connections
                     connections = connectionsCache[predicateIndex] = computeConnections(predicate, blockCache);
                 }
 
@@ -264,24 +295,13 @@ public class ConnectingBakedModel implements BakedModel {
                 ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).data().getLayout();
 
                 // Remap the quad's uv
-                int[] tilePosition = ConnectingTextureLayoutHelper.getTilePosition(layout, connections);
-                adjustQuadUV(quad, tilePosition[0], tilePosition[1], sprite);
+                mutableQuad.set(quad, predicate.orientation.vertexIndexPermutation);
+                return ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, sprite, connections);
             }
             return true;
         });
         this.blockMesh.outputTo(context.getEmitter());
         context.popTransform();
-    }
-
-    private static void adjustQuadUV(MutableQuadView quad, int tileU, int tileV, TextureAtlasSprite sprite){
-        for(int i = 0; i < 4; i++){
-            float width = sprite.getU1() - sprite.getU0();
-            float u = quad.u(i) + width * tileU;
-
-            float height = sprite.getV1() - sprite.getV0();
-            float v = quad.v(i) + height * tileV;
-            quad.uv(i, u, v);
-        }
     }
 
     private static TextureConnections computeConnections(QuadPredicates predicates, SurroundingBlockCache blocks){
@@ -399,12 +419,14 @@ public class ConnectingBakedModel implements BakedModel {
          * If {@code dir} is the in-world direction, {@code worldToTexture[dir.ordinal()]} is the texture space direction
          */
         public final ConnectionDirection[] worldToTexture;
+        public final int[] vertexIndexPermutation;
 
         TextureOrientation(boolean flipped, int rotations){
             this.flipped = flipped;
             this.rotations = rotations;
 
             this.worldToTexture = ConnectionDirection.values();
+            this.vertexIndexPermutation = new int[]{0, 3, 2, 1};
             // First apply flip
             if(flipped){
                 this.worldToTexture[ConnectionDirection.TOP.ordinal()] = ConnectionDirection.LEFT;
@@ -413,12 +435,17 @@ public class ConnectingBakedModel implements BakedModel {
                 this.worldToTexture[ConnectionDirection.LEFT.ordinal()] = ConnectionDirection.TOP;
                 this.worldToTexture[ConnectionDirection.BOTTOM_LEFT.ordinal()] = ConnectionDirection.TOP_RIGHT;
                 this.worldToTexture[ConnectionDirection.BOTTOM.ordinal()] = ConnectionDirection.RIGHT;
+                this.vertexIndexPermutation[1] = 1;
+                this.vertexIndexPermutation[3] = 3;
             }
             // Then apply rotation
             if(rotations != 0){
                 ConnectionDirection[] old = Arrays.copyOf(this.worldToTexture, this.worldToTexture.length);
                 for(int i = 0; i < 8; i++)
                     this.worldToTexture[i] = old[(i - rotations * 2 + 8) % 8];
+                int[] old2 = Arrays.copyOf(this.vertexIndexPermutation, this.vertexIndexPermutation.length);
+                for(int i = 0; i < 4; i++)
+                    this.vertexIndexPermutation[i] = old2[(i - rotations + 4) % 4];
             }
         }
 

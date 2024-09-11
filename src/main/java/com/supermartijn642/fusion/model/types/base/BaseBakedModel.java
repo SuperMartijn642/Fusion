@@ -3,7 +3,6 @@ package com.supermartijn642.fusion.model.types.base;
 import com.supermartijn642.fusion.FusionClient;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
-import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -29,8 +28,6 @@ import java.util.function.Supplier;
  * Created 06/09/2024 by SuperMartijn642
  */
 public class BaseBakedModel implements BakedModel {
-
-    private static final RenderMaterial ITEM_MATERIAL = RendererAccess.INSTANCE.getRenderer().materialFinder().shadeMode(ShadeMode.VANILLA).find();
 
     private final Mesh blockMesh, itemMesh;
     private final boolean hasAmbientOcclusion;
@@ -67,7 +64,8 @@ public class BaseBakedModel implements BakedModel {
         builder = RendererAccess.INSTANCE.getRenderer().meshBuilder();
         emitter = builder.getEmitter();
         for(BaseModelQuad quad : quads){
-            emitter.fromVanilla(quad.bakedQuad(), ITEM_MATERIAL, quad.cullDirection());
+            RenderMaterial material = FusionClient.getRenderTypeMaterial(null, null, quad.emissive());
+            emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
             if(quad.lightEmission() != null){
                 for(int i = 0; i < 4; i++){
                     int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));

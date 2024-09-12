@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 import java.util.Arrays;
@@ -55,9 +56,14 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
 
     @Override
     public TextureAtlasSprite createSprite(SpriteCreationContext context, ConnectingTextureData data){
+        ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(data.getLayout());
         TextureAtlasSprite sprite = context.createOriginalSprite();
-        sprite.u1 = sprite.u0 + (sprite.u1 - sprite.u0) / ConnectingTextureLayoutHelper.getWidth(data.getLayout());
-        sprite.v1 = sprite.v0 + (sprite.v1 - sprite.v0) / ConnectingTextureLayoutHelper.getHeight(data.getLayout());
+        float tileWidth = (sprite.u1 - sprite.u0) / layoutHandler.getWidth();
+        float tileHeight = (sprite.v1 - sprite.v0) / layoutHandler.getHeight();
+        sprite.u1 = sprite.u0 + tileWidth * (layoutHandler.defaultTileX() + 1);
+        sprite.v1 = sprite.v0 + tileHeight * (layoutHandler.defaultTileY() + 1);
+        sprite.u0 = sprite.u0 + tileWidth * layoutHandler.defaultTileX();
+        sprite.v0 = sprite.v0 + tileHeight * layoutHandler.defaultTileY();
         return new ConnectingTextureSprite(sprite, data);
     }
 }

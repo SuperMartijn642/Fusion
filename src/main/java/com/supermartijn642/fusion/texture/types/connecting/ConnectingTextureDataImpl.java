@@ -1,29 +1,24 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
-import org.jetbrains.annotations.Nullable;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureDataImpl;
 
 /**
  * Created 23/10/2023 by SuperMartijn642
  */
-public class ConnectingTextureDataImpl implements ConnectingTextureData {
+public class ConnectingTextureDataImpl extends BaseTextureDataImpl implements ConnectingTextureData {
 
     private final ConnectingTextureLayout layout;
-    private final RenderType renderType;
 
-    public ConnectingTextureDataImpl(ConnectingTextureLayout layout, RenderType renderType){
+    public ConnectingTextureDataImpl(BaseTextureData.RenderType renderType, boolean emissive, QuadTinting tinting, ConnectingTextureLayout layout){
+        super(renderType, emissive, tinting);
         this.layout = layout;
-        this.renderType = renderType;
     }
 
     @Override
     public ConnectingTextureLayout getLayout(){
         return this.layout;
-    }
-
-    @Override
-    public @Nullable RenderType getRenderType(){
-        return this.renderType;
     }
 }

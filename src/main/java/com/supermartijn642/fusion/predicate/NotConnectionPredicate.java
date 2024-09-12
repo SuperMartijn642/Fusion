@@ -62,4 +62,17 @@ public class NotConnectionPredicate implements ConnectionPredicate {
     public Serializer<? extends ConnectionPredicate> getSerializer(){
         return SERIALIZER;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(this == o) return true;
+        if(!(o instanceof NotConnectionPredicate that)) return false;
+
+        return this.predicate.equals(that.predicate);
+    }
+
+    @Override
+    public int hashCode(){
+        return this.predicate.hashCode();
+    }
 }

@@ -179,7 +179,9 @@ public class ConnectingBakedModel implements BakedModel, FabricBakedModel {
                 if(layoutHandler != null){
                     mutableQuad.set(emitter);
                     mutableQuad.set(TextureOrientation.NORMAL_0.vertexIndexPermutation);
-                    layoutHandler.processItemQuad(quadIndex, mutableQuad, quad.bakedQuad().getSprite());
+                    boolean keepQuad = layoutHandler.processItemQuad(quadIndex, mutableQuad, quad.bakedQuad().getSprite());
+                    if(!keepQuad)
+                        continue;
                 }
                 emitter.emit();
             }

@@ -330,6 +330,9 @@ public class ConnectingBakedModel implements BakedModel {
         // If the block cache is absent, the connected textures cannot be updated, so just push the mesh
         if(blockCache == null)
             return quads.stream().map(q -> q.bakedQuad).toList();
+        // Make sure to use the block state argument for the model's own block
+        if(state != null)
+            blockCache.setSelf(state);
 
         // Only compute connections for each predicate once
         TextureConnections[] connectionsCache = new TextureConnections[this.predicates.size()];

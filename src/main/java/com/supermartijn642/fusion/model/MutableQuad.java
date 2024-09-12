@@ -17,22 +17,32 @@ public class MutableQuad {
     private static final int VERTEX_SIZE;
     private static final int LIGHTMAP_OFFSET;
     private static final int UV_OFFSET;
+    private static final int POSITION_OFFSET;
 
     static{
         VertexFormat format = DefaultVertexFormats.BLOCK;
         VERTEX_SIZE = format.getVertexSize() / 4;
         LIGHTMAP_OFFSET = format.getOffset(format.getElements().indexOf(DefaultVertexFormats.ELEMENT_UV2)) / 4;
         UV_OFFSET = format.getOffset(format.getElements().indexOf(DefaultVertexFormats.ELEMENT_UV0)) / 4;
+        POSITION_OFFSET = format.getOffset(format.getElements().indexOf(DefaultVertexFormats.ELEMENT_POSITION)) / 4;
     }
 
     private static final int FULL_BRIGHT_LIGHTMAP = LightTexture.pack(15, 15);
 
-    private final int[] vertices = new int[VERTEX_SIZE * 4];
+    private final int[] vertices;
     private int tintIndex;
     private Direction lightFace;
     private TextureAtlasSprite sprite;
     private boolean shade;
     private boolean emissive = false;
+
+    protected MutableQuad(int[] vertexData){
+        this.vertices = vertexData;
+    }
+
+    public MutableQuad(){
+        this(new int[VERTEX_SIZE * 4]);
+    }
 
     public void fillFromBakedQuad(BakedQuad quad){
         System.arraycopy(quad.getVertices(), 0, this.vertices, 0, this.vertices.length);
@@ -70,6 +80,28 @@ public class MutableQuad {
 
     public float v(int vertexIndex){
         int offset = vertexIndex * VERTEX_SIZE + UV_OFFSET + 1;
+        return Float.intBitsToFloat(this.vertices[offset]);
+    }
+
+    public void pos(int vertexIndex, float x, float y, float z){
+        int offset = vertexIndex * VERTEX_SIZE + POSITION_OFFSET;
+        this.vertices[offset] = Float.floatToRawIntBits(x);
+        this.vertices[offset + 1] = Float.floatToRawIntBits(y);
+        this.vertices[offset + 2] = Float.floatToRawIntBits(z);
+    }
+
+    public float x(int vertexIndex){
+        int offset = vertexIndex * VERTEX_SIZE + POSITION_OFFSET;
+        return Float.intBitsToFloat(this.vertices[offset]);
+    }
+
+    public float y(int vertexIndex){
+        int offset = vertexIndex * VERTEX_SIZE + POSITION_OFFSET + 1;
+        return Float.intBitsToFloat(this.vertices[offset]);
+    }
+
+    public float z(int vertexIndex){
+        int offset = vertexIndex * VERTEX_SIZE + POSITION_OFFSET + 2;
         return Float.intBitsToFloat(this.vertices[offset]);
     }
 

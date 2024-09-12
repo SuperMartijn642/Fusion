@@ -57,7 +57,7 @@ public class BaseBakedModel implements IBakedModel {
                     mutableQuad.lightmap(i, (sky << 20 | block << 4));
                 }
             }
-            BakedQuad bakedQuad = mutableQuad.toBakedQuad();
+            BakedQuad finishedQuad = mutableQuad.toBakedQuad();
             // Add the block quads
             BlockRenderLayer renderType = FusionClient.getRenderTypeMaterial(quad.renderType());
             blockRenderTypes.add(renderType);
@@ -70,9 +70,9 @@ public class BaseBakedModel implements IBakedModel {
             }
             if(mesh[cullIndex] == null)
                 mesh[cullIndex] = new ArrayList<>();
-            mesh[cullIndex].add(mutableQuad.toBakedQuad());
+            mesh[cullIndex].add(finishedQuad);
             // Add the item quads
-            itemMesh.add(bakedQuad);
+            itemMesh.add(finishedQuad);
         }
         this.blockMesh = blockMesh;
         this.blockRenderTypes = blockRenderTypes.stream().filter(Objects::nonNull).collect(Collectors.toList());

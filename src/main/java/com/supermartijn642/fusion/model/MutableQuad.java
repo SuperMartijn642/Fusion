@@ -16,13 +16,21 @@ public class MutableQuad {
 
     private static final int FULL_BRIGHT_LIGHTMAP = 15 << 20 | 15 << 4;
 
-    private int[] vertices = new int[DefaultVertexFormats.BLOCK.getIntegerSize() * 4];
+    private int[] vertices;
     private VertexFormat vertexFormat;
     private int tintIndex;
     private EnumFacing lightFace;
     private TextureAtlasSprite sprite;
     private boolean shade;
     private boolean emissive = false;
+
+    protected MutableQuad(int[] vertexData){
+        this.vertices = vertexData;
+    }
+
+    public MutableQuad(){
+        this(new int[DefaultVertexFormats.BLOCK.getIntegerSize() * 4]);
+    }
 
     public void fillFromBakedQuad(BakedQuad quad){
         if(this.vertices.length < quad.getVertexData().length)
@@ -71,6 +79,48 @@ public class MutableQuad {
         if(!this.vertexFormat.hasUvOffset(0))
             this.addVertexFormatElement(DefaultVertexFormats.TEX_2F);
         int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getUvOffsetById(0) / 4 + 1;
+        return Float.intBitsToFloat(this.vertices[offset]);
+    }
+
+    public void pos(int vertexIndex, float x, float y, float z){
+        int elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.POSITION_3F);
+        if(elementIndex < 0){
+            this.addVertexFormatElement(DefaultVertexFormats.POSITION_3F);
+            elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.POSITION_3F);
+        }
+        int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getOffset(elementIndex) / 4;
+        this.vertices[offset] = Float.floatToRawIntBits(x);
+        this.vertices[offset + 1] = Float.floatToRawIntBits(y);
+        this.vertices[offset + 2] = Float.floatToRawIntBits(z);
+    }
+
+    public float x(int vertexIndex){
+        int elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.POSITION_3F);
+        if(elementIndex < 0){
+            this.addVertexFormatElement(DefaultVertexFormats.POSITION_3F);
+            elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.POSITION_3F);
+        }
+        int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getOffset(elementIndex) / 4;
+        return Float.intBitsToFloat(this.vertices[offset]);
+    }
+
+    public float y(int vertexIndex){
+        int elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.POSITION_3F);
+        if(elementIndex < 0){
+            this.addVertexFormatElement(DefaultVertexFormats.POSITION_3F);
+            elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.POSITION_3F);
+        }
+        int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getOffset(elementIndex) / 4 + 1;
+        return Float.intBitsToFloat(this.vertices[offset]);
+    }
+
+    public float z(int vertexIndex){
+        int elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.POSITION_3F);
+        if(elementIndex < 0){
+            this.addVertexFormatElement(DefaultVertexFormats.POSITION_3F);
+            elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.POSITION_3F);
+        }
+        int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getOffset(elementIndex) / 4 + 1;
         return Float.intBitsToFloat(this.vertices[offset]);
     }
 

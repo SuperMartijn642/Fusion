@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.texture.types.connecting;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 /**
@@ -13,7 +14,7 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
     protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureData data){
         super(original, data);
         this.resizeUV();
-        if(ConnectingTextureLayoutHelper.shouldBeRotated(data.getLayout()))
+        if(ConnectingTextureLayoutHandler.get(data.getLayout()).shouldBeRotated())
             this.rotateLayout();
     }
 
@@ -24,7 +25,8 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
 
     public void rotateLayout(){
         int[][] pixelsPerLevel = this.framesTextureData.get(0);
-        int layoutWidth = ConnectingTextureLayoutHelper.getWidth(this.data().getLayout()), layoutHeight = ConnectingTextureLayoutHelper.getHeight(this.data().getLayout());
+        ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(this.data().getLayout());
+        int layoutWidth = layoutHandler.getWidth(), layoutHeight = layoutHandler.getHeight();
         int textureWidth = (int)Math.round(Math.sqrt((double)pixelsPerLevel[0].length * layoutWidth / layoutHeight)), textureHeight = pixelsPerLevel[0].length / textureWidth;
 
         // Rotate the sprite tiling so we get width > height
@@ -54,8 +56,9 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
     }
 
     private void resizeUV(){
-        int layoutWidth = ConnectingTextureLayoutHelper.getWidth(this.data().getLayout());
-        int layoutHeight = ConnectingTextureLayoutHelper.getHeight(this.data().getLayout());
+        ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(this.data().getLayout());
+        int layoutWidth = layoutHandler.getWidth();
+        int layoutHeight = layoutHandler.getHeight();
         if(layoutHeight > layoutWidth){
             int width = layoutWidth;
             //noinspection SuspiciousNameCombination

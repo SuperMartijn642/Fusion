@@ -10,6 +10,7 @@ import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 import java.util.Arrays;
@@ -57,7 +58,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
 
     @Override
     public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, ConnectingTextureData data){
-        if(ConnectingTextureLayoutHelper.shouldBeRotated(data.getLayout()))
+        if(ConnectingTextureLayoutHandler.get(data.getLayout()).shouldBeRotated())
             return Pair.of(context.getOriginalFrameHeight(), context.getOriginalFrameWith());
         return context.getOriginalFrameSize();
     }

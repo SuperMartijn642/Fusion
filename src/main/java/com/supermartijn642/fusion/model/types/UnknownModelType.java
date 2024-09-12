@@ -47,6 +47,6 @@ public class UnknownModelType implements ModelType<IUnbakedModel> {
 
     @Override
     public IBakedModel bake(ModelBakingContext context, IUnbakedModel data){
-        return data.bake(context.getModelBakery(), material -> context.getTexture(SpriteIdentifier.of(TextureAtlases.getBlocks(), material)), context.getTransformation(), DefaultVertexFormats.BLOCK);
+        return data.bake(context.getModelBakery(), material -> context.getTexture(SpriteIdentifier.of(TextureAtlases.getBlocks(), material)), context.getTransformation(), DefaultVertexFormats.BLOCK_NORMALS);
     }
 }

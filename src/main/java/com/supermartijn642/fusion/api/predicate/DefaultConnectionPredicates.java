@@ -43,21 +43,21 @@ public final class DefaultConnectionPredicates {
      * Creates a predicate which is satisfied if the block in the connection direction is visible.
      */
     public static ConnectionPredicate isFaceVisible(){
-        return new IsSameBlockConnectionPredicate();
+        return IsSameBlockConnectionPredicate.INSTANCE;
     }
 
     /**
      * Creates a predicate which is satisfied if the block in the connection direction is the same as the block of the model itself.
      */
     public static ConnectionPredicate isSameBlock(){
-        return new IsSameBlockConnectionPredicate();
+        return IsSameBlockConnectionPredicate.INSTANCE;
     }
 
     /**
      * Creates a predicate which is satisfied if the block state in the connection direction is the same as the block state of the model itself.
      */
     public static ConnectionPredicate isSameState(){
-        return new IsSameStateConnectionPredicate();
+        return IsSameStateConnectionPredicate.INSTANCE;
     }
 
     /**

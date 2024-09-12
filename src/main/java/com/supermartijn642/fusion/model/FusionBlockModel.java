@@ -38,6 +38,7 @@ public class FusionBlockModel extends BlockModel {
             return null;
         }
     };
+
     public static IUnbakedModel getDummyModel(){
         return DUMMY_MODEL;
     }

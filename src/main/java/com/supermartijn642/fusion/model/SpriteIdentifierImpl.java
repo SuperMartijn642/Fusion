@@ -24,4 +24,20 @@ public class SpriteIdentifierImpl implements SpriteIdentifier {
     public ResourceLocation getTexture(){
         return this.texture;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(this == o) return true;
+        if(!(o instanceof SpriteIdentifierImpl)) return false;
+
+        SpriteIdentifierImpl that = (SpriteIdentifierImpl)o;
+        return this.atlas.equals(that.atlas) && this.texture.equals(that.texture);
+    }
+
+    @Override
+    public int hashCode(){
+        int result = this.atlas.hashCode();
+        result = 31 * result + this.texture.hashCode();
+        return result;
+    }
 }

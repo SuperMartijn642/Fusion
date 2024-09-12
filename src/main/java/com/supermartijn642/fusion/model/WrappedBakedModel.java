@@ -7,18 +7,21 @@ import net.minecraft.client.renderer.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
-import net.minecraftforge.client.model.data.IDynamicBakedModel;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraftforge.client.model.data.IModelData;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.vecmath.Matrix4f;
 import java.util.List;
 import java.util.Random;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class WrappedBakedModel implements IBakedModel, IDynamicBakedModel {
+public class WrappedBakedModel implements IBakedModel {
 
     protected final IBakedModel original;
 
@@ -27,8 +30,13 @@ public class WrappedBakedModel implements IBakedModel, IDynamicBakedModel {
     }
 
     @Override
-    public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random rand, @Nonnull IModelData extraData){
-        return this.original.getQuads(state, side, rand, extraData);
+    public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @Nonnull Random random, @Nonnull IModelData data){
+        return this.original.getQuads(state, cullDirection, random, data);
+    }
+
+    @Override
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, Random random){
+        return this.original.getQuads(state, cullDirection, random);
     }
 
     @Override
@@ -39,16 +47,6 @@ public class WrappedBakedModel implements IBakedModel, IDynamicBakedModel {
     @Override
     public boolean isGui3d(){
         return this.original.isGui3d();
-    }
-
-    @Override
-    public boolean isAmbientOcclusion(BlockState state){
-        return this.original.isAmbientOcclusion(state);
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleTexture(@Nonnull IModelData data){
-        return this.original.getParticleTexture(data);
     }
 
     @Override
@@ -69,5 +67,31 @@ public class WrappedBakedModel implements IBakedModel, IDynamicBakedModel {
     @Override
     public ItemOverrideList getOverrides(){
         return this.original.getOverrides();
+    }
+
+    @Override
+    public boolean isAmbientOcclusion(BlockState state){
+        return this.original.isAmbientOcclusion(state);
+    }
+
+    @Override
+    public boolean doesHandlePerspectives(){
+        return this.original.doesHandlePerspectives();
+    }
+
+    @Override
+    public Pair<? extends IBakedModel,Matrix4f> handlePerspective(ItemCameraTransforms.TransformType transformType){
+        return this.original.handlePerspective(transformType);
+    }
+
+    @Nonnull
+    @Override
+    public IModelData getModelData(@Nonnull IEnviromentBlockReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData data){
+        return this.original.getModelData(level, pos, state, data);
+    }
+
+    @Override
+    public TextureAtlasSprite getParticleTexture(@Nonnull IModelData data){
+        return this.original.getParticleTexture(data);
     }
 }

@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
@@ -21,9 +22,9 @@ public class BlockStateMixin implements IForgeBlockState {
         IBakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
         if(model instanceof WeightedBakedModel)
             model = ((WeightedBakedModel)model).wrapped;
-        if(model instanceof ConnectingBakedModel
-            && !ConnectingBakedModel.ignoreModelRenderTypeCheck.get()
-            && ((ConnectingBakedModel)model).getCustomRenderTypes().contains(renderType))
+        if(model instanceof BaseBakedModel && ((BaseBakedModel)model).getBlockRenderTypes().contains(renderType))
+            return true;
+        else if(model instanceof ConnectingBakedModel && ((ConnectingBakedModel)model).getBlockRenderTypes().contains(renderType))
             return true;
 
         return getBlockState().getBlock().canRenderInLayer(getBlockState(), renderType);

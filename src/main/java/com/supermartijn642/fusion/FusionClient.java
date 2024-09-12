@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.predicate.*;
 import net.minecraft.client.renderer.RenderType;
@@ -26,6 +26,8 @@ public class FusionClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
 
+    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", null, null, 0, false, false, RenderType.CompositeState.builder().createCompositeState(false));
+
     private static NativeImage dummyImage;
 
     public static NativeImage getDummyImage(){
@@ -39,11 +41,13 @@ public class FusionClient {
     public static void init(){
         // Register default texture types
         FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "vanilla"), DefaultTextureTypes.VANILLA);
+        FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "base"), DefaultTextureTypes.BASE);
         FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "connecting"), DefaultTextureTypes.CONNECTING);
         FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "scrolling"), DefaultTextureTypes.SCROLLING);
         // Register default model types
         FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "unknown"), DefaultModelTypes.UNKNOWN);
         FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "vanilla"), DefaultModelTypes.VANILLA);
+        FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "base"), DefaultModelTypes.BASE);
         FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "connecting"), DefaultModelTypes.CONNECTING);
         // Register default connection predicates
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "and"), AndConnectionPredicate.SERIALIZER);
@@ -61,10 +65,12 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
 
         // Integration with FramedBlocks
-        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.SURROUNDING_BLOCK_DATA_MODEL_PROPERTY));
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.BLOCK_CACHE_PROPERTY));
     }
 
-    public static RenderType getRenderTypeMaterial(ConnectingTextureData.RenderType renderType){
+    public static RenderType getRenderTypeMaterial(BaseTextureData.RenderType renderType){
+        if(renderType == null)
+            return USE_ORIGINAL_RENDER_TYPE_MARKER;
         RenderType material;
         //noinspection EnhancedSwitchMigration
         switch(renderType){

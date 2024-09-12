@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.mixin;
+package com.supermartijn642.fusion.mixin.forge;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Sets;

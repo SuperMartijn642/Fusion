@@ -186,8 +186,10 @@ public class ConnectingBakedModel implements BakedModel {
                 // As item mesh does not depend on state, we can run the connecting texture processing immediately
                 if(hasConnectingTexture){
                     mutableQuad.set(TextureOrientation.NORMAL_0.vertexIndexPermutation);
-                    layoutHandler.processItemQuad(quadIndex, mutableQuad, quad.bakedQuad().getSprite());
+                    boolean keepQuad = layoutHandler.processItemQuad(quadIndex, mutableQuad, quad.bakedQuad().getSprite());
                     mutableQuad.resetPermutation();
+                    if(!keepQuad)
+                        continue;
                 }
                 itemQuads.add(mutableQuad.toBakedQuad());
             }

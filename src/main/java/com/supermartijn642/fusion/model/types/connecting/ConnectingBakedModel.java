@@ -155,7 +155,7 @@ public class ConnectingBakedModel implements BakedModel {
 
         // Create the item mesh
         emitter = builder.getEmitter();
-        MutableQuad mutableQuad = new MutableQuad();
+        OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
         for(ConnectingModelQuad quad : quads){
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times
             int auxiliaryQuadCount = 0;
@@ -179,7 +179,8 @@ public class ConnectingBakedModel implements BakedModel {
                 // Process the quad if it has a connecting texture
                 // As item mesh does not depend on state, we can run the connecting texture processing immediately
                 if(layoutHandler != null){
-                    mutableQuad.set(emitter, TextureOrientation.NORMAL_0.vertexIndexPermutation);
+                    mutableQuad.set(emitter);
+                    mutableQuad.set(TextureOrientation.NORMAL_0.vertexIndexPermutation);
                     layoutHandler.processItemQuad(quadIndex, mutableQuad, quad.bakedQuad().getSprite());
                 }
                 emitter.emit();
@@ -280,7 +281,7 @@ public class ConnectingBakedModel implements BakedModel {
         //
         SurroundingBlockCache blockCache = new SurroundingBlockCache(blockView, pos, state);
         // Push a transform which maps any connecting texture quads to the correct uv
-        MutableQuad mutableQuad = new MutableQuad();
+        OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
         context.pushTransform(quad -> {
             if(quad.tag() != 0){
                 // Ignore the quad if it will be culled anyway
@@ -308,7 +309,8 @@ public class ConnectingBakedModel implements BakedModel {
                 ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).data().getLayout();
 
                 // Remap the quad's uv
-                mutableQuad.set(quad, predicate.orientation.vertexIndexPermutation);
+                mutableQuad.set(quad);
+                mutableQuad.set(predicate.orientation.vertexIndexPermutation);
                 return ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, sprite, connections);
             }
             return true;

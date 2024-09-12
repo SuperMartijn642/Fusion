@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
-import com.supermartijn642.fusion.model.types.connecting.MutableQuad;
+import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 

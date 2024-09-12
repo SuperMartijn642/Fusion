@@ -5,7 +5,7 @@
   "compatibilityLevel": "${mixin_compatibility_level}",
   "refmap": "${mod_id}.mixins.refmap.json",
   "mixins": [
-    "DatagenModLoaderMixin"
+    "forge.DatagenModLoaderMixin"
   ],
   "client": [
     "BlockModelDeserializerMixin",
@@ -13,6 +13,7 @@
     "FilePackResourcesMixin",
     "PackMixin",
     "PathPackResourcesMixin",
+    "ModelBlockRendererMixin",
     "MultiPartBakedModelMixin",
     "SpriteContentsMixin",
     "SpriteLoaderMixin",

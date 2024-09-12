@@ -5,9 +5,10 @@
   "compatibilityLevel": "${mixin_compatibility_level}",
   "refmap": "${mod_id}.mixins.refmap.json",
   "mixins": [
-    "DatagenModLoaderMixin"
+    "forge.DatagenModLoaderMixin"
   ],
   "client": [
+    "forge.ModFileResourcePackMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "FilePackResourcesMixin",
@@ -15,9 +16,9 @@
     "ItemBlockRenderTypesMixin",
     "LegacyResourcePackWrapperMixin",
     "LegacyResourcePackWrapperV4Mixin",
-    "ModFileResourcePackMixin",
     "MultiPartBakedModelMixin",
     "PackMixin",
+    "ModelBlockRendererMixin",
     "TextureAtlasMixin",
     "TextureAtlasSpriteMixin",
     "WeightedBakedModelMixin"

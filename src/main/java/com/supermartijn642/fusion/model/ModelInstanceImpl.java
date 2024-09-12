@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -49,5 +50,10 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     @Override
     public BakedModel bake(ModelBakingContext context){
         return this.modelType.bake(context, this.modelData);
+    }
+
+    @Override
+    public List<ResourceLocation> getParentModels(){
+        return this.modelType.getParentModels(this.modelData);
     }
 }

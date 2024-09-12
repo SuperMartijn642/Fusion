@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -44,5 +45,11 @@ public interface ModelInstance<T> {
      * Represents the model as a vanilla {@link BlockModel} instance. May be used gather info from other models, such as with the vanilla 'parent' property.
      * @return a representation of the model as a vanilla {@link BlockModel} instance, or {@code null} if such a representation is not available
      */
-    @Nullable BlockModel getAsVanillaModel();
+    @Nullable
+    BlockModel getAsVanillaModel();
+
+    /**
+     * Gets any 'parent' models which the model may inherit properties from.
+     */
+    List<ResourceLocation> getParentModels();
 }

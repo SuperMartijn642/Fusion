@@ -1,0 +1,51 @@
+package com.supermartijn642.fusion.model;
+
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.client.model.data.EmptyModelData;
+import net.minecraftforge.client.model.data.IModelData;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.List;
+import java.util.Random;
+
+/**
+ * Created 12/09/2024 by SuperMartijn642
+ */
+public abstract class ItemBakedModel extends WrappedBakedModel {
+
+    private final List<BakedModel> asList = List.of(this);
+    private ItemStack stack;
+    private boolean fabulous;
+
+    public ItemBakedModel(BakedModel original){
+        super(original);
+    }
+
+    protected abstract List<BakedQuad> getQuads(ItemStack stack, boolean fabulous, @Nonnull Random random, @Nonnull IModelData data, @Nonnull RenderType renderType);
+
+    @Override
+    public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @Nonnull Random random, @Nonnull IModelData data){
+        return this.getQuads(this.stack, this.fabulous, random, data, MinecraftForgeClient.getRenderLayer());
+    }
+
+    @Override
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, Random random){
+        return this.getQuads(this.stack, this.fabulous, random, EmptyModelData.INSTANCE, MinecraftForgeClient.getRenderLayer());
+    }
+
+    public void set(ItemStack stack, boolean fabulous){
+        this.stack = stack;
+        this.fabulous = fabulous;
+    }
+
+    public List<BakedModel> asList(){
+        return this.asList;
+    }
+}

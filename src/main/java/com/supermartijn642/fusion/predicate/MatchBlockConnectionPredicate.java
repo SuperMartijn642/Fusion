@@ -56,4 +56,17 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
     public Serializer<? extends ConnectionPredicate> getSerializer(){
         return SERIALIZER;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(this == o) return true;
+        if(!(o instanceof MatchBlockConnectionPredicate that)) return false;
+
+        return this.block.equals(that.block);
+    }
+
+    @Override
+    public int hashCode(){
+        return this.block.hashCode();
+    }
 }

@@ -1,9 +1,11 @@
 package com.supermartijn642.fusion.api.model;
 
+import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.api.model.data.ConnectingModelData;
 import com.supermartijn642.fusion.api.model.data.ConnectingModelDataBuilder;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
+import com.supermartijn642.fusion.model.types.base.BaseModelType;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelType;
 import com.supermartijn642.fusion.model.types.vanilla.VanillaModelType;
 import net.minecraft.client.renderer.model.BlockModel;
@@ -24,6 +26,10 @@ public class DefaultModelTypes {
      * Model type used for any unknown models added by other mods.
      */
     public static final ModelType<IUnbakedModel> UNKNOWN = new UnknownModelType();
+    /**
+     * Model type which extends the vanilla model with some common properties.
+     */
+    public static final ModelType<BaseModelData> BASE = new BaseModelType();
     /**
      * Model type which allows for connecting textures.
      * @see DefaultTextureTypes#CONNECTING

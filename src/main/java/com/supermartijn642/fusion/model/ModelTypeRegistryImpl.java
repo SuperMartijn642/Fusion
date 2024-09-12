@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.model;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.util.IdentifierUtil;
@@ -59,19 +60,24 @@ public class ModelTypeRegistryImpl {
     public static ModelInstance<?> deserializeModelData(JsonObject json){
         if(!finalized)
             throw new RuntimeException("Can only deserialize model data after registration has completed!");
-        JsonElement typeJson = json.getAsJsonObject().get("type");
-        if(typeJson == null || !typeJson.isJsonPrimitive() || !typeJson.getAsJsonPrimitive().isString())
-            throw new JsonParseException("Fusion model must have string property 'type'!");
-        if(!IdentifierUtil.isValidIdentifier(typeJson.getAsString()))
-            throw new JsonParseException("Property 'type' must be a valid identifier!");
-        ResourceLocation identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
-        //noinspection unchecked
-        ModelType<Object> modelType = (ModelType<Object>)IDENTIFIER_TO_MODEL_TYPE.get(identifier);
-        if(modelType == null)
-            throw new JsonParseException("Unknown model type '" + identifier + "'!");
+        //noinspection rawtypes,unchecked
+        ModelType<Object> modelType = (ModelType)DefaultModelTypes.BASE;
+        ResourceLocation identifier = getIdentifier(modelType);
+        if(json.has("type")){
+            JsonElement typeJson = json.getAsJsonObject().get("type");
+            if(typeJson == null || !typeJson.isJsonPrimitive() || !typeJson.getAsJsonPrimitive().isString())
+                throw new JsonParseException("Fusion model must have string property 'type'!");
+            if(!IdentifierUtil.isValidIdentifier(typeJson.getAsString()))
+                throw new JsonParseException("Property 'type' must be a valid identifier!");
+            identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
+            //noinspection unchecked
+            modelType = (ModelType<Object>)IDENTIFIER_TO_MODEL_TYPE.get(identifier);
+            if(modelType == null)
+                throw new JsonParseException("Unknown model type '" + identifier + "'!");
+        }
 
         // Deserialize the model data
-        json.remove("loader");
+        JsonElement loaderJson = json.remove("loader");
         Object modelData;
         try{
             modelData = modelType.deserialize(json);
@@ -80,7 +86,8 @@ public class ModelTypeRegistryImpl {
         }catch(Exception e){
             throw new RuntimeException("Encountered an exception whilst deserializing data for model type '" + identifier + "'!", e);
         }finally{
-            json.add("loader", typeJson);
+            if(loaderJson != null)
+                json.add("loader", loaderJson);
         }
         return ModelInstance.of(modelType, modelData);
     }

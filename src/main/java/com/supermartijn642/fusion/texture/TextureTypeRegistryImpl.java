@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.texture;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.util.IdentifierUtil;
@@ -57,16 +58,21 @@ public class TextureTypeRegistryImpl {
     public static <T> Pair<TextureType<T>,T> deserializeTextureData(JsonObject json){
         if(!finalized)
             throw new RuntimeException("Can only deserialize texture data after registration has completed!");
-        JsonElement typeJson = json.getAsJsonObject().get("type");
-        if(typeJson == null || !typeJson.isJsonPrimitive() || !typeJson.getAsJsonPrimitive().isString())
-            throw new JsonParseException("Fusion texture must have string property 'type'!");
-        if(!IdentifierUtil.isValidIdentifier(typeJson.getAsString()))
-            throw new JsonParseException("Property 'type' must be a valid identifier!");
-        ResourceLocation identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
         //noinspection unchecked
-        TextureType<T> textureType = (TextureType<T>)IDENTIFIER_TO_TEXTURE_TYPE.get(identifier);
-        if(textureType == null)
-            throw new JsonParseException("Unknown texture type '" + identifier + "'!");
+        TextureType<T> textureType = (TextureType<T>)DefaultTextureTypes.BASE;
+        ResourceLocation identifier = getIdentifier(textureType);
+        if(json.has("type")){
+            JsonElement typeJson = json.getAsJsonObject().get("type");
+            if(typeJson == null || !typeJson.isJsonPrimitive() || !typeJson.getAsJsonPrimitive().isString())
+                throw new JsonParseException("Fusion texture must have string property 'type'!");
+            if(!IdentifierUtil.isValidIdentifier(typeJson.getAsString()))
+                throw new JsonParseException("Property 'type' must be a valid identifier!");
+            identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
+            //noinspection unchecked
+            textureType = (TextureType<T>)IDENTIFIER_TO_TEXTURE_TYPE.get(identifier);
+            if(textureType == null)
+                throw new JsonParseException("Unknown texture type '" + identifier + "'!");
+        }
 
         // Deserialize the texture data
         T textureData;

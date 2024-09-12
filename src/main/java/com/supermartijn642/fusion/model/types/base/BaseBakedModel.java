@@ -70,7 +70,7 @@ public class BaseBakedModel implements BakedModel {
                     mutableQuad.lightmap(i, LightTexture.pack(sky, block));
                 }
             }
-            BakedQuad bakedQuad = mutableQuad.toBakedQuad();
+            BakedQuad finishedQuad = mutableQuad.toBakedQuad();
             // Add the block quads
             RenderType renderType = FusionClient.getRenderTypeMaterial(quad.renderType());
             blockRenderTypes.add(renderType);
@@ -93,7 +93,7 @@ public class BaseBakedModel implements BakedModel {
                 itemRenderTypesFabulous.add(fabulousRenderType);
                 itemMesh.put(fabulousRenderType, itemQuads);
             }
-            itemQuads.add(bakedQuad);
+            itemQuads.add(finishedQuad);
         }
         this.blockMesh = Map.copyOf(blockMesh);
         this.blockRenderTypes = blockRenderTypes.stream().filter(r -> r != FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER).toList();

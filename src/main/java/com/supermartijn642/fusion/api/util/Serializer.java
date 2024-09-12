@@ -17,5 +17,5 @@ public interface Serializer<T> {
     /**
      * Serializes the given data to json.
      */
-    JsonObject serialize(T value);
+    JsonObject serialize(T data);
 }

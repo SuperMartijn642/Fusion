@@ -60,7 +60,7 @@ public class BaseTextureType implements TextureType<BaseTextureData> {
             try{
                 tinting = BaseTextureData.QuadTinting.valueOf(tintingString.toUpperCase(Locale.ROOT));
             }catch(IllegalArgumentException e){
-                throw new JsonParseException("Property 'tinting' must be one of " + Arrays.toString(BaseTextureData.RenderType.values()).toLowerCase(Locale.ROOT) + ", not '" + tintingString + "'!");
+                throw new JsonParseException("Property 'tinting' must be one of " + Arrays.toString(BaseTextureData.QuadTinting.values()).toLowerCase(Locale.ROOT) + ", not '" + tintingString + "'!");
             }
             builder.tinting(tinting);
         }

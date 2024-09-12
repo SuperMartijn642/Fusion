@@ -14,10 +14,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class IsSameStateConnectionPredicate implements ConnectionPredicate {
 
+    public static final IsSameStateConnectionPredicate INSTANCE = new IsSameStateConnectionPredicate();
     public static final Serializer<IsSameStateConnectionPredicate> SERIALIZER = new Serializer<>() {
         @Override
         public IsSameStateConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
-            return new IsSameStateConnectionPredicate();
+            return INSTANCE;
         }
 
         @Override
@@ -25,6 +26,9 @@ public class IsSameStateConnectionPredicate implements ConnectionPredicate {
             return null;
         }
     };
+
+    private IsSameStateConnectionPredicate(){
+    }
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){

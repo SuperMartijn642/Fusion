@@ -7,6 +7,8 @@ import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -45,5 +47,15 @@ public interface ModelType<T> extends Serializer<T> {
     @Nullable
     default BlockModel getAsVanillaModel(T data){
         return null;
+    }
+
+    /**
+     * Gets any 'parent' models which the model may inherit properties from.
+     */
+    default List<ResourceLocation> getParentModels(T data){
+        BlockModel vanillaModel = this.getAsVanillaModel(data);
+        if(vanillaModel != null && vanillaModel.parentLocation != null)
+            return List.of(vanillaModel.parentLocation);
+        return Collections.emptyList();
     }
 }

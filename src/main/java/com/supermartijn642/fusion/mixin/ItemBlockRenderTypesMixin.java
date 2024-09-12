@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -28,9 +29,9 @@ public class ItemBlockRenderTypesMixin {
         BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
         if(model instanceof WeightedBakedModel)
             model = ((WeightedBakedModel)model).wrapped;
-        if(model instanceof ConnectingBakedModel
-            && !ConnectingBakedModel.ignoreModelRenderTypeCheck.get()
-            && ((ConnectingBakedModel)model).getCustomRenderTypes().contains(renderType))
+        if(model instanceof BaseBakedModel && ((BaseBakedModel)model).getBlockRenderTypes().contains(renderType))
+            ci.setReturnValue(true);
+        else if(model instanceof ConnectingBakedModel && ((ConnectingBakedModel)model).getBlockRenderTypes().contains(renderType))
             ci.setReturnValue(true);
     }
 }

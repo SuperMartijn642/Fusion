@@ -1,17 +1,19 @@
 package com.supermartijn642.fusion.model;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
-import net.minecraftforge.client.model.IDynamicBakedModel;
 import net.minecraftforge.client.model.data.ModelData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +23,7 @@ import java.util.List;
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class WrappedBakedModel implements BakedModel, IDynamicBakedModel {
+public class WrappedBakedModel implements BakedModel {
 
     protected final BakedModel original;
 
@@ -30,8 +32,13 @@ public class WrappedBakedModel implements BakedModel, IDynamicBakedModel {
     }
 
     @Override
-    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType){
-        return this.original.getQuads(state, side, rand, extraData, renderType);
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType){
+        return this.original.getQuads(state, cullDirection, random, data, renderType);
+    }
+
+    @Override
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random){
+        return this.original.getQuads(state, cullDirection, random);
     }
 
     @Override
@@ -77,5 +84,35 @@ public class WrappedBakedModel implements BakedModel, IDynamicBakedModel {
     @Override
     public List<RenderType> getRenderTypes(ItemStack itemStack, boolean fabulous){
         return this.original.getRenderTypes(itemStack, fabulous);
+    }
+
+    @Override
+    public boolean useAmbientOcclusion(BlockState state){
+        return this.original.useAmbientOcclusion(state);
+    }
+
+    @Override
+    public boolean useAmbientOcclusion(BlockState state, RenderType renderType){
+        return this.original.useAmbientOcclusion(state, renderType);
+    }
+
+    @Override
+    public BakedModel applyTransform(ItemTransforms.TransformType transformType, PoseStack poseStack, boolean applyLeftHandTransform){
+        return this.original.applyTransform(transformType, poseStack, applyLeftHandTransform);
+    }
+
+    @Override
+    public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
+        return this.original.getModelData(level, pos, state, data);
+    }
+
+    @Override
+    public TextureAtlasSprite getParticleIcon(ModelData data){
+        return this.original.getParticleIcon(data);
+    }
+
+    @Override
+    public List<BakedModel> getRenderPasses(ItemStack stack, boolean fabulous){
+        return this.original.getRenderPasses(stack, fabulous);
     }
 }

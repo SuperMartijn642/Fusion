@@ -7,26 +7,31 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
+import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.api.model.data.ConnectingModelData;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.predicate.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
-import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
+import com.supermartijn642.fusion.model.types.base.BaseModelElement;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.block.model.ItemTransform;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
 public class ConnectingModelType implements ModelType<ConnectingModelData> {
 
-    public static final ResourceLocation DEFAULT_CONNECTION_KEY = new ResourceLocation("fusion", "default");
+    public static final String DEFAULT_CONNECTION_KEY = "default";
 
     @Override
     public Collection<ResourceLocation> getModelDependencies(ConnectingModelData data){
@@ -40,25 +45,50 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
     }
 
     @Override
+    public List<ResourceLocation> getParentModels(ConnectingModelData data){
+        return data.getParents();
+    }
+
+    @Override
     public BakedModel bake(ModelBakingContext context, ConnectingModelData data){
-        BakedModel model = DefaultModelTypes.VANILLA.bake(context, data.getVanillaModel());
-        Map<ResourceLocation,ConnectionPredicate> predicates = data.getAllConnectionPredicates().entrySet().stream()
-            .map(entry -> Pair.of(entry.getKey().equals("default") ? DEFAULT_CONNECTION_KEY : data.getVanillaModel().getMaterial(entry.getKey()).texture(), entry.getValue()))
-            .filter(pair -> !pair.left().equals(MissingTextureAtlasSprite.getLocation()))
-            .collect(Collectors.toUnmodifiableMap(
-                Pair::left,
-                Pair::right,
-                DefaultConnectionPredicates::or
-            ));
-        return new ConnectingBakedModel(model, context.getTransformation().getRotation(), predicates);
+        // Check for circular dependencies
+        ((ConnectingModelDataImpl)data).validateParents(context);
+        // Bake the quads
+        //noinspection unchecked,rawtypes
+        List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
+        // Gather remaining model properties
+        boolean ambientOcclusion = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.hasAmbientOcclusion, true);
+        boolean gui3d = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        TextureAtlasSprite particleSprite = context.getTexture(((ConnectingModelDataImpl)data).findParticleSprite(context));
+        ItemTransform transformThirdPersonLeftHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemTransforms.TransformType.THIRD_PERSON_LEFT_HAND) ? model.transforms.getTransform(ItemTransforms.TransformType.THIRD_PERSON_LEFT_HAND) : null, ItemTransform.NO_TRANSFORM);
+        ItemTransform transformThirdPersonRightHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemTransforms.TransformType.THIRD_PERSON_RIGHT_HAND) ? model.transforms.getTransform(ItemTransforms.TransformType.THIRD_PERSON_RIGHT_HAND) : null, ItemTransform.NO_TRANSFORM);
+        ItemTransform transformFirstPersonLeftHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND) ? model.transforms.getTransform(ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND) : null, ItemTransform.NO_TRANSFORM);
+        ItemTransform transformFirstPersonRightHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND) ? model.transforms.getTransform(ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND) : null, ItemTransform.NO_TRANSFORM);
+        ItemTransform transformHead = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemTransforms.TransformType.HEAD) ? model.transforms.getTransform(ItemTransforms.TransformType.HEAD) : null, ItemTransform.NO_TRANSFORM);
+        ItemTransform transformGui = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemTransforms.TransformType.GUI) ? model.transforms.getTransform(ItemTransforms.TransformType.GUI) : null, ItemTransform.NO_TRANSFORM);
+        ItemTransform transformGround = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemTransforms.TransformType.GROUND) ? model.transforms.getTransform(ItemTransforms.TransformType.GROUND) : null, ItemTransform.NO_TRANSFORM);
+        ItemTransform transformFixed = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemTransforms.TransformType.FIXED) ? model.transforms.getTransform(ItemTransforms.TransformType.FIXED) : null, ItemTransform.NO_TRANSFORM);
+        ItemTransforms itemTransforms = new ItemTransforms(transformThirdPersonLeftHand, transformThirdPersonRightHand, transformFirstPersonLeftHand, transformFirstPersonRightHand, transformHead, transformGui, transformGround, transformFixed);
+        ItemOverrides itemOverrides = data.getVanillaModel().overrides.isEmpty() ? ItemOverrides.EMPTY : new ItemOverrides(context.getModelBaker(), data.getVanillaModel(), data.getVanillaModel().overrides);
+        // Finally, create the model
+        return new ConnectingBakedModel(
+            quads,
+            ambientOcclusion,
+            gui3d,
+            true,
+            particleSprite,
+            itemTransforms,
+            itemOverrides
+        );
     }
 
     @Override
     public ConnectingModelData deserialize(JsonObject json) throws JsonParseException{
-        // Deserialize the vanilla model
-        BlockModel model = DefaultModelTypes.VANILLA.deserialize(json);
+        // Deserialize the base model
+        BaseModelData base = DefaultModelTypes.BASE.deserialize(json);
         // Deserialize all the predicates from the 'connections' array
         Map<String,ConnectionPredicate> predicates = new HashMap<>();
+        Map<String,String> connectionReferences = new HashMap<>();
         predicates.put("default", DefaultConnectionPredicates.isSameState());
         if(json.has("connections")){
             JsonElement connectionsElement = json.get("connections");
@@ -68,18 +98,54 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
                 JsonObject object = connectionsElement.getAsJsonObject();
                 if(object.size() == 0)
                     throw new JsonParseException("Property 'connections' must have a 'type' key or keys per texture!");
-                for(String texture : object.keySet())
-                    predicates.put(texture, loadPredicate(object.get(texture), texture));
+                for(String texture : object.keySet()){
+                    if(object.get(texture).isJsonPrimitive() && object.getAsJsonPrimitive(texture).isString())
+                        connectionReferences.put(texture, object.get(texture).getAsString());
+                    else
+                        predicates.put(texture, loadPredicate(object.get(texture), texture));
+                }
             }else
                 throw new JsonParseException("Property 'connections' must be an array!");
         }
-
-        return new ConnectingModelDataImpl(model, predicates);
+        // Read the 'connections' keys for all element faces
+        List<ConnectingModelElement> elements = new ArrayList<>(((BaseModelDataImpl)base).getElements().size());
+        JsonArray elementsJson = json.getAsJsonArray("elements");
+        for(int i = 0; i < ((BaseModelDataImpl)base).getElements().size(); i++){
+            JsonObject elementFaces = elementsJson.get(i).getAsJsonObject().getAsJsonObject("faces");
+            BaseModelElement baseElement = ((BaseModelDataImpl)base).getElements().get(i);
+            Map<Direction,String> connectionKeys = null;
+            if(elementFaces != null){
+                for(Direction side : Direction.values()){
+                    if(elementFaces.has(side.getName()) && elementFaces.get(side.getName()).isJsonObject() && elementFaces.getAsJsonObject(side.getName()).has("connections")){
+                        JsonElement connectionsJson = elementFaces.getAsJsonObject(side.getName()).get("connections");
+                        if(!connectionsJson.isJsonPrimitive() || !connectionsJson.getAsJsonPrimitive().isString())
+                            throw new JsonParseException("Face property 'connections' must be a string!");
+                        String key = connectionsJson.getAsString();
+                        if(key.isEmpty())
+                            throw new JsonParseException("Face property 'connections' must not be empty!");
+                        if(connectionKeys == null)
+                            connectionKeys = new EnumMap<>(Direction.class);
+                        connectionKeys.put(side, key);
+                    }
+                }
+            }
+            elements.add(new ConnectingModelElement(
+                baseElement.from,
+                baseElement.to,
+                baseElement.faces,
+                baseElement.rotation,
+                baseElement.shade,
+                baseElement.light_emission,
+                connectionKeys
+            ));
+        }
+        return new ConnectingModelDataImpl(base.getVanillaModel(), base.getParents(), elements, predicates, connectionReferences);
     }
 
     @Override
     public JsonObject serialize(ConnectingModelData value){
-        JsonObject json = DefaultModelTypes.VANILLA.serialize(value.getVanillaModel());
+        // Serialize base model
+        JsonObject json = DefaultModelTypes.BASE.serialize(value);
         // Create an array with all the serialized predicates
         Map<String,ConnectionPredicate> predicates = value.getAllConnectionPredicates();
         if(predicates.size() == 1 && predicates.containsKey("default"))
@@ -89,7 +155,20 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
             predicates.forEach((texture, predicate) -> connectionsJson.add(texture, FusionPredicateRegistry.serializeConnectionPredicate(predicate)));
             json.add("connections", connectionsJson);
         }
-        return json.size() == 0 ? null : json;
+        // Add 'connections' property to element faces
+        for(int i = 0; i < ((ConnectingModelDataImpl)value).getElements().size(); i++){
+            Map<Direction,String> connectionKeys = ((ConnectingModelDataImpl)value).getElements().get(i).faceConnectionKeys;
+            if(connectionKeys.isEmpty())
+                continue;
+            JsonObject elementFaces = json.getAsJsonArray("elements").get(i).getAsJsonObject().getAsJsonObject("faces");
+            if(elementFaces == null)
+                continue;
+            for(Direction side : connectionKeys.keySet()){
+                if(elementFaces.has(side.getName()))
+                    elementFaces.getAsJsonObject(side.getName()).addProperty("connections", connectionKeys.get(side));
+            }
+        }
+        return json;
     }
 
     private static ConnectionPredicate loadPredicate(JsonElement element, String key){

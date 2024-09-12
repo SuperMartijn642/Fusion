@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.mixin;
+package com.supermartijn642.fusion.mixin.forge;
 
 import com.google.common.collect.Sets;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;

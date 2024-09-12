@@ -7,7 +7,7 @@ import com.supermartijn642.fusion.model.types.connecting.ConnectingModelDataBuil
 /**
  * Created 01/05/2023 by SuperMartijn642
  */
-public interface ConnectingModelDataBuilder extends VanillaModelDataBuilder<ConnectingModelDataBuilder,ConnectingModelData> {
+public interface ConnectingModelDataBuilder extends BaseModelDataBuilder<ConnectingModelDataBuilder,ConnectingModelData> {
 
     static ConnectingModelDataBuilder builder(){
         return new ConnectingModelDataBuilderImpl();

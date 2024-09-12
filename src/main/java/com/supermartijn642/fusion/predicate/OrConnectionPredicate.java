@@ -61,12 +61,20 @@ public class OrConnectionPredicate implements ConnectionPredicate {
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        return this.predicates.stream().anyMatch(predicate -> predicate.shouldConnect(side, ownState, otherState, blockInFront, direction));
+        for(ConnectionPredicate predicate : this.predicates){
+            if(predicate.shouldConnect(side, ownState, otherState, blockInFront, direction))
+                return true;
+        }
+        return false;
     }
 
     @Override
     public boolean shouldConnect(IBlockReader level, BlockPos pos, Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        return this.predicates.stream().anyMatch(predicate -> predicate.shouldConnect(level, pos, side, ownState, otherState, blockInFront, direction));
+        for(ConnectionPredicate predicate : this.predicates){
+            if(predicate.shouldConnect(level, pos, side, ownState, otherState, blockInFront, direction))
+                return true;
+        }
+        return false;
     }
 
     @Override

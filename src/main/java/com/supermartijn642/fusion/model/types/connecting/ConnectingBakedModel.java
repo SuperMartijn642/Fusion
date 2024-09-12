@@ -30,7 +30,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -266,7 +265,10 @@ public class ConnectingBakedModel implements IBakedModel {
                 if(additionalQuads != null){
                     if(quads == null)
                         quads = additionalQuads;
-                    quads = Stream.concat(quads.stream(), additionalQuads.stream()).collect(Collectors.toList());
+                    List<TaggedBakedQuad> combined = new ArrayList<>(quads.size() + additionalQuads.size());
+                    combined.addAll(quads);
+                    combined.addAll(additionalQuads);
+                    quads = combined;
                 }
             }
             if(quads == null)
@@ -284,7 +286,9 @@ public class ConnectingBakedModel implements IBakedModel {
 
         // Push a transform which maps any connecting texture quads to the correct uv
         OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
-        return quads.stream().map(quad -> {
+        ArrayList<BakedQuad> bakedQuads = new ArrayList<>(quads.size());
+        for(int i = 0; i < quads.size(); i++){
+            TaggedBakedQuad quad = quads.get(i);
             if(quad.hasConnectingTexture){
                 // Get the quad index, predicate index, and sprite index
                 int quadIndex = quad.quadIndex;
@@ -308,10 +312,12 @@ public class ConnectingBakedModel implements IBakedModel {
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad);
                 mutableQuad.set(predicate.orientation.vertexIndexPermutation);
                 boolean keepQuad = ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, sprite, connections);
-                return keepQuad ? mutableQuad.toBakedQuad() : null;
-            }
-            return quad.bakedQuad;
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+                if(keepQuad)
+                    bakedQuads.add(mutableQuad.toBakedQuad());
+            }else
+                bakedQuads.add(quad.bakedQuad);
+        }
+        return bakedQuads;
     }
 
     private static TextureConnections computeConnections(QuadPredicates predicates, SurroundingBlockCache blocks){

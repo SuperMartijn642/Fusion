@@ -30,6 +30,10 @@ public class SurroundingBlockCache {
         }
     }
 
+    public void setSelf(BlockState self){
+        this.states[13] = self;
+    }
+
     public BlockAndTintGetter getLevel(){
         return this.level;
     }

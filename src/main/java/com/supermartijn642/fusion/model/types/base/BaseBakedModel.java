@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * Created 06/09/2024 by SuperMartijn642
@@ -124,7 +123,10 @@ public class BaseBakedModel implements BakedModel {
                     if(additionalQuads != null){
                         if(quads == null)
                             quads = additionalQuads;
-                        quads = Stream.concat(quads.stream(), additionalQuads.stream()).toList();
+                        List<BakedQuad> combined = new ArrayList<>(quads.size() + additionalQuads.size());
+                        combined.addAll(quads);
+                        combined.addAll(additionalQuads);
+                        quads = combined;
                     }
                 }
                 return quads == null ? Collections.emptyList() : quads;
@@ -147,7 +149,10 @@ public class BaseBakedModel implements BakedModel {
             if(additionalQuads != null){
                 if(quads == null)
                     quads = additionalQuads;
-                quads = Stream.concat(quads.stream(), additionalQuads.stream()).toList();
+                List<BakedQuad> combined = new ArrayList<>(quads.size() + additionalQuads.size());
+                combined.addAll(quads);
+                combined.addAll(additionalQuads);
+                quads = combined;
             }
         }
         return quads == null ? Collections.emptyList() : quads;

@@ -97,7 +97,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
                 predicates.put("default", loadPredicate(connectionsElement, "connections"));
             else if(connectionsElement.isJsonObject()){ // Load predicates per texture
                 JsonObject object = connectionsElement.getAsJsonObject();
-                if(object.isEmpty())
+                //noinspection SizeReplaceableByIsEmpty
+                if(object.size() == 0)
                     throw new JsonParseException("Property 'connections' must have a 'type' key or keys per texture!");
                 for(String texture : object.keySet()){
                     if(object.get(texture).isJsonPrimitive() && object.getAsJsonPrimitive(texture).isString())

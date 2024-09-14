@@ -134,7 +134,7 @@ public class ConnectingBakedModel implements IBakedModel {
                 spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
             }
             // Submit the quads
-            for(int quadIndex = 0; quadIndex < auxiliaryQuadCount; quadIndex++){
+            for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad());
                 mutableQuad.emissive(quad.emissive());
                 if(quad.lightEmission() != null){

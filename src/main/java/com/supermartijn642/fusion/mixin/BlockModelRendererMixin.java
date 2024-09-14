@@ -21,7 +21,7 @@ import java.util.List;
  * Created 07/09/2024 by SuperMartijn642
  */
 @Mixin(BlockModelRenderer.class)
-public class ModelBlockRendererMixin {
+public class BlockModelRendererMixin {
 
     @ModifyVariable(
         method = "renderModelFaceAO",

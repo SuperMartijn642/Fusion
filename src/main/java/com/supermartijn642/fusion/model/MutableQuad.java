@@ -84,10 +84,6 @@ public class MutableQuad {
 
     public void pos(int vertexIndex, float x, float y, float z){
         int elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.ELEMENT_POSITION);
-        if(elementIndex < 0){
-            this.addVertexFormatElement(DefaultVertexFormats.ELEMENT_POSITION);
-            elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.ELEMENT_POSITION);
-        }
         int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getOffset(elementIndex) / 4;
         this.vertices[offset] = Float.floatToRawIntBits(x);
         this.vertices[offset + 1] = Float.floatToRawIntBits(y);
@@ -96,31 +92,19 @@ public class MutableQuad {
 
     public float x(int vertexIndex){
         int elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.ELEMENT_POSITION);
-        if(elementIndex < 0){
-            this.addVertexFormatElement(DefaultVertexFormats.ELEMENT_POSITION);
-            elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.ELEMENT_POSITION);
-        }
         int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getOffset(elementIndex) / 4;
         return Float.intBitsToFloat(this.vertices[offset]);
     }
 
     public float y(int vertexIndex){
         int elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.ELEMENT_POSITION);
-        if(elementIndex < 0){
-            this.addVertexFormatElement(DefaultVertexFormats.ELEMENT_POSITION);
-            elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.ELEMENT_POSITION);
-        }
         int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getOffset(elementIndex) / 4 + 1;
         return Float.intBitsToFloat(this.vertices[offset]);
     }
 
     public float z(int vertexIndex){
         int elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.ELEMENT_POSITION);
-        if(elementIndex < 0){
-            this.addVertexFormatElement(DefaultVertexFormats.ELEMENT_POSITION);
-            elementIndex = this.vertexFormat.getElements().indexOf(DefaultVertexFormats.ELEMENT_POSITION);
-        }
-        int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getOffset(elementIndex) / 4 + 1;
+        int offset = vertexIndex * this.vertexFormat.getIntegerSize() + this.vertexFormat.getOffset(elementIndex) / 4 + 2;
         return Float.intBitsToFloat(this.vertices[offset]);
     }
 

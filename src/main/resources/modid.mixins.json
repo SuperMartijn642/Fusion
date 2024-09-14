@@ -7,20 +7,20 @@
   "plugin": "${mod_package}.${mixin_package}.${mixin_plugin}",
   "mixins": [],
   "client": [
+    "forge.FMLClientHandlerMixin",
+    "forge.ForgeBlockModelRendererMixin",
+    "forge.VanillaLoaderMixin",
+    "forge.VanillaModelWrapperMixin",
     "BlockMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "BlockModelRendererMixin",
     "FileResourcePackMixin",
-    "FMLClientHandlerMixin",
     "FolderResourcePackMixin",
-    "ForgeBlockModelRendererMixin",
     "LegacyResourcePackWrapperMixin",
     "ResourcePackRepositoryMixin",
     "TextureAtlasMixin",
-    "TextureAtlasSpriteMixin",
-    "VanillaLoaderMixin",
-    "VanillaModelWrapperMixin"
+    "TextureAtlasSpriteMixin"
   ],
   "server": [],
   "injectors": {

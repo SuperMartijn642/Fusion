@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.*;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
+import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelBakery;
@@ -18,10 +19,8 @@ import net.minecraftforge.client.model.animation.ModelBlockAnimation;
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -39,20 +38,29 @@ public class VanillaModelType implements ModelType<ModelBlock> {
 
     @Override
     public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, ModelBlock data){
-        // Find the parent models
-        resolveParents(context, data);
-        // Get the textures
-        Collection<ResourceLocation> materials = getAsForgeModel(data).getTextures();
-        return materials.stream().map(i -> SpriteIdentifier.of(TextureAtlases.getBlocks(), i)).collect(Collectors.toList());
+        // Resolve parents
+        if(data.parentLocation != null && data.parent == null)
+            resolveParents(context::getModel, data);
+
+        // Gather textures
+        HashSet<SpriteIdentifier> textures = new HashSet<>();
+        data.textures.values().stream()
+            .filter(s -> !s.isEmpty() && s.charAt(0) != '#')
+            .filter(IdentifierUtil::isValidIdentifier)
+            .map(s -> SpriteIdentifier.of(TextureAtlases.getBlocks(), new ResourceLocation(s)))
+            .forEach(textures::add);
+        if(data.parentLocation != null){
+            ModelInstance<?> model = context.getModel(data.parentLocation);
+            if(model != null)
+                textures.addAll(model.getTextureDependencies(context));
+        }
+        return textures;
     }
 
     @Override
     public IBakedModel bake(ModelBakingContext context, ModelBlock data){
-        if(data.parentLocation != null && data.parent == null){
-            ModelInstance<?> model = context.getModel(data.parentLocation);
-            if(model != null)
-                data.parent = model.getAsVanillaModel();
-        }
+        if(data.parentLocation != null && data.parent == null)
+            resolveParents(context::getModel, data);
         return getAsForgeModel(data).bake(context.getTransformation(), DefaultVertexFormats.BLOCK, material -> context.getTexture(SpriteIdentifier.of(TextureAtlases.getBlocks(), material)));
     }
 
@@ -97,11 +105,11 @@ public class VanillaModelType implements ModelType<ModelBlock> {
         return wrapper;
     }
 
-    private static void resolveParents(GatherTexturesContext context, ModelBlock model){
+    public static void resolveParents(Function<ResourceLocation,ModelInstance<?>> context, ModelBlock model){
         Set<ModelBlock> passedModels = new LinkedHashSet<>();
         while(model.parentLocation != null && model.parent == null){
             passedModels.add(model);
-            ModelInstance<?> modelInstance = context.getModel(model.parentLocation);
+            ModelInstance<?> modelInstance = context.apply(model.parentLocation);
             ModelBlock parent = modelInstance.getAsVanillaModel();
             if(parent == null)
                 ModelBlock.LOGGER.warn("Vanilla model {} cannot have parent with model type {} for {}!", model, modelInstance.getModelType(), model.parentLocation);
@@ -111,7 +119,7 @@ public class VanillaModelType implements ModelType<ModelBlock> {
             }
             if(parent == null){
                 model.parentLocation = ModelBakery.MODEL_MISSING;
-                parent = context.getModel(model.parentLocation).getAsVanillaModel();
+                parent = context.apply(model.parentLocation).getAsVanillaModel();
                 if(parent == null)
                     throw new RuntimeException("Got null for missing model request!");
             }

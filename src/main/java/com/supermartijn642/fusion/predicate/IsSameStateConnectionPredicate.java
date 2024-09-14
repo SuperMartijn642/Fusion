@@ -15,10 +15,11 @@ import javax.annotation.Nullable;
  */
 public class IsSameStateConnectionPredicate implements ConnectionPredicate {
 
+    public static final IsSameStateConnectionPredicate INSTANCE = new IsSameStateConnectionPredicate();
     public static final Serializer<IsSameStateConnectionPredicate> SERIALIZER = new Serializer<IsSameStateConnectionPredicate>() {
         @Override
         public IsSameStateConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
-            return new IsSameStateConnectionPredicate();
+            return INSTANCE;
         }
 
         @Override
@@ -26,6 +27,9 @@ public class IsSameStateConnectionPredicate implements ConnectionPredicate {
             return null;
         }
     };
+
+    private IsSameStateConnectionPredicate(){
+    }
 
     @Override
     public boolean shouldConnect(EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction){

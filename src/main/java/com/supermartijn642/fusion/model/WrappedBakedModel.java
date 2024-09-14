@@ -7,8 +7,11 @@ import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
+import javax.vecmath.Matrix4f;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,8 +26,23 @@ public class WrappedBakedModel implements IBakedModel {
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand){
-        return this.original.getQuads(state, side, rand);
+    public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing cullDirection, long seed){
+        return Collections.emptyList();
+    }
+
+    @Override
+    public ItemCameraTransforms getItemCameraTransforms(){
+        return this.original.getItemCameraTransforms();
+    }
+
+    @Override
+    public boolean isAmbientOcclusion(IBlockState state){
+        return this.original.isAmbientOcclusion(state);
+    }
+
+    @Override
+    public Pair<? extends IBakedModel,Matrix4f> handlePerspective(ItemCameraTransforms.TransformType transformType){
+        return this.original.handlePerspective(transformType);
     }
 
     @Override
@@ -38,11 +56,6 @@ public class WrappedBakedModel implements IBakedModel {
     }
 
     @Override
-    public boolean isAmbientOcclusion(IBlockState state){
-        return this.original.isAmbientOcclusion(state);
-    }
-
-    @Override
     public boolean isBuiltInRenderer(){
         return this.original.isBuiltInRenderer();
     }
@@ -50,11 +63,6 @@ public class WrappedBakedModel implements IBakedModel {
     @Override
     public TextureAtlasSprite getParticleTexture(){
         return this.original.getParticleTexture();
-    }
-
-    @Override
-    public ItemCameraTransforms getItemCameraTransforms(){
-        return this.original.getItemCameraTransforms();
     }
 
     @Override

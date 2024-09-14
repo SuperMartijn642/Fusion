@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -28,9 +29,9 @@ public class BlockMixin {
         IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
         if(model instanceof WeightedBakedModel)
             model = ((WeightedBakedModel)model).baseModel;
-        if(model instanceof ConnectingBakedModel
-            && !ConnectingBakedModel.ignoreModelRenderTypeCheck.get()
-            && ((ConnectingBakedModel)model).getCustomRenderTypes().contains(renderType))
+        if(model instanceof BaseBakedModel && ((BaseBakedModel)model).getBlockRenderTypes().contains(renderType))
+            ci.setReturnValue(true);
+        else if(model instanceof ConnectingBakedModel && ((ConnectingBakedModel)model).getBlockRenderTypes().contains(renderType))
             ci.setReturnValue(true);
     }
 }

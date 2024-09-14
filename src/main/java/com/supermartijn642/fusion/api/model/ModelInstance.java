@@ -7,6 +7,7 @@ import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -46,4 +47,9 @@ public interface ModelInstance<T> {
      */
     @Nullable
     ModelBlock getAsVanillaModel();
+
+    /**
+     * Gets any 'parent' models which the model may inherit properties from.
+     */
+    List<ResourceLocation> getParentModels();
 }

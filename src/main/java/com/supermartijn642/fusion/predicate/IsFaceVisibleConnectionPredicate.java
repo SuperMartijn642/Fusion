@@ -18,10 +18,11 @@ import javax.annotation.Nullable;
  */
 public class IsFaceVisibleConnectionPredicate implements SensitiveConnectionPredicate {
 
+    public static final IsFaceVisibleConnectionPredicate INSTANCE = new IsFaceVisibleConnectionPredicate();
     public static final Serializer<IsFaceVisibleConnectionPredicate> SERIALIZER = new Serializer<IsFaceVisibleConnectionPredicate>() {
         @Override
         public IsFaceVisibleConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
-            return new IsFaceVisibleConnectionPredicate();
+            return INSTANCE;
         }
 
         @Override
@@ -30,7 +31,7 @@ public class IsFaceVisibleConnectionPredicate implements SensitiveConnectionPred
         }
     };
 
-    public IsFaceVisibleConnectionPredicate(){
+    private IsFaceVisibleConnectionPredicate(){
     }
 
     @Override

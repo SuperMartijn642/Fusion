@@ -2,41 +2,29 @@ package com.supermartijn642.fusion.texture.types.connecting;
 
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
  */
-public class ConnectingTextureSprite extends TextureAtlasSprite {
+public class ConnectingTextureSprite extends BaseTextureSprite {
 
-    private final ConnectingTextureLayout layout;
-    private final ConnectingTextureData.RenderType renderType;
-
-    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureLayout layout, ConnectingTextureData.RenderType renderType){
-        super(original.getIconName());
-        this.layout = layout;
-        this.renderType = renderType;
-        this.copyFrom(original);
-        this.framesTextureData = original.framesTextureData;
-        this.animationMetadata = original.animationMetadata;
+    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureData data){
+        super(original, data);
         this.resizeUV();
-
-        if(ConnectingTextureLayoutHelper.shouldBeRotated(layout))
+        if(ConnectingTextureLayoutHelper.shouldBeRotated(data.getLayout()))
             this.rotateLayout();
     }
 
-    public ConnectingTextureLayout getLayout(){
-        return this.layout;
-    }
-
-    public ConnectingTextureData.RenderType getRenderType(){
-        return this.renderType;
+    @Override
+    public ConnectingTextureData data(){
+        return (ConnectingTextureData)super.data();
     }
 
     public void rotateLayout(){
         int[][] pixelsPerLevel = this.framesTextureData.get(0);
-        int layoutWidth = ConnectingTextureLayoutHelper.getWidth(this.layout), layoutHeight = ConnectingTextureLayoutHelper.getHeight(this.layout);
+        int layoutWidth = ConnectingTextureLayoutHelper.getWidth(this.data().getLayout()), layoutHeight = ConnectingTextureLayoutHelper.getHeight(this.data().getLayout());
         int textureWidth = (int)Math.round(Math.sqrt((double)pixelsPerLevel[0].length * layoutWidth / layoutHeight)), textureHeight = pixelsPerLevel[0].length / textureWidth;
 
         // Rotate the sprite tiling so we get width > height
@@ -66,8 +54,8 @@ public class ConnectingTextureSprite extends TextureAtlasSprite {
     }
 
     private void resizeUV(){
-        int layoutWidth = ConnectingTextureLayoutHelper.getWidth(this.layout);
-        int layoutHeight = ConnectingTextureLayoutHelper.getHeight(this.layout);
+        int layoutWidth = ConnectingTextureLayoutHelper.getWidth(this.data().getLayout());
+        int layoutHeight = ConnectingTextureLayoutHelper.getHeight(this.data().getLayout());
         if(layoutHeight > layoutWidth){
             int width = layoutWidth;
             //noinspection SuspiciousNameCombination

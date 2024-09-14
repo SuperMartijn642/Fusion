@@ -78,4 +78,18 @@ public class AndConnectionPredicate implements ConnectionPredicate {
     public Serializer<? extends ConnectionPredicate> getSerializer(){
         return SERIALIZER;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(this == o) return true;
+        if(!(o instanceof AndConnectionPredicate)) return false;
+
+        AndConnectionPredicate that = (AndConnectionPredicate)o;
+        return this.predicates.equals(that.predicates);
+    }
+
+    @Override
+    public int hashCode(){
+        return this.predicates.hashCode();
+    }
 }

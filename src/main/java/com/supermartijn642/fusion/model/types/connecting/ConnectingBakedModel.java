@@ -1,236 +1,497 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
+import com.google.common.collect.ImmutableList;
 import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
-import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
-import com.supermartijn642.fusion.api.texture.SpriteHelper;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
-import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.WrappedBakedModel;
+import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureLayoutHelper;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.MinecraftForgeClient;
-import net.minecraftforge.common.model.TRSRTransformation;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class ConnectingBakedModel extends WrappedBakedModel {
+public class ConnectingBakedModel implements IBakedModel {
 
-    private static final int BLOCK_VERTEX_DATA_UV_OFFSET = findUVOffset(DefaultVertexFormats.BLOCK);
-    public static final ThreadLocal<Boolean> ignoreModelRenderTypeCheck = ThreadLocal.withInitial(() -> false);
-    public static final ThreadLocal<Pair<IBlockAccess,BlockPos>> levelCapture = new ThreadLocal<>();
+    public static final ThreadLocal<SurroundingBlockCache> BLOCK_CACHE = new ThreadLocal<>();
+    /**
+     * Stores world space vector point in the up and right direction of the default texture orientation for each face
+     */
+    private static final int[][] DEFAULT_TEXTURE_ROTATIONS_UP = new int[6][];
+    private static final int[][] DEFAULT_TEXTURE_ROTATIONS_RIGHT = new int[6][];
 
-    private final TRSRTransformation modelRotation;
-    private final Map<ResourceLocation,ConnectionPredicate> predicates;
-    // [cullface][hashcode * 6]
-    private final Map<RenderKey,List<BakedQuad>> quadCache = new HashMap<>();
-    private final RenderKey mutableKey = new RenderKey(0, null, null);
-    private List<BlockRenderLayer> customRenderTypes;
+    static{
+        for(EnumFacing direction : EnumFacing.values()){
+            int upX = 0, upY = 0, upZ = 0, rightX = 0, rightY = 0, rightZ = 0;
+            if(direction == EnumFacing.DOWN){
+                upZ = 1;
+                rightX = 1;
+            }else if(direction == EnumFacing.UP){
+                upZ = -1;
+                rightX = 1;
+            }else if(direction == EnumFacing.NORTH){
+                upY = 1;
+                rightX = -1;
+            }else if(direction == EnumFacing.SOUTH){
+                upY = 1;
+                rightX = 1;
+            }else if(direction == EnumFacing.WEST){
+                upY = 1;
+                rightZ = 1;
+            }else if(direction == EnumFacing.EAST){
+                upY = 1;
+                rightZ = -1;
+            }
+            DEFAULT_TEXTURE_ROTATIONS_UP[direction.ordinal()] = new int[]{upX, upY, upZ};
+            DEFAULT_TEXTURE_ROTATIONS_RIGHT[direction.ordinal()] = new int[]{rightX, rightY, rightZ};
+        }
+    }
 
-    public ConnectingBakedModel(IBakedModel original, TRSRTransformation modelRotation, Map<ResourceLocation,ConnectionPredicate> predicates){
-        super(original);
-        this.modelRotation = modelRotation;
-        this.predicates = predicates;
+    private static float[] getUV(BakedQuad quad, int vertexIndex){
+        VertexFormat format = quad.getFormat();
+        int offset = vertexIndex * format.getIntegerSize() + format.getUvOffsetById(0) / 4;
+        return new float[]{Float.intBitsToFloat(quad.getVertexData()[offset]), Float.intBitsToFloat(quad.getVertexData()[offset + 1])};
+    }
+
+    private static float[] getPosition(BakedQuad quad, int vertexIndex){
+        VertexFormat format = quad.getFormat();
+        int offset = vertexIndex * format.getIntegerSize() + format.getOffset(format.getElements().indexOf(DefaultVertexFormats.POSITION_3F));
+        return new float[]{
+            Float.intBitsToFloat(quad.getVertexData()[offset]),
+            Float.intBitsToFloat(quad.getVertexData()[offset + 1]),
+            Float.intBitsToFloat(quad.getVertexData()[offset + 2])
+        };
+    }
+
+    private final List<TaggedQuad>[] completeBlockMesh;
+    private final List<TaggedQuad>[][] blockMesh; // indexed by render layer ordinal, cull direction
+    private final List<BakedQuad> itemMesh;
+    private final List<BlockRenderLayer> blockRenderTypes;
+    private final boolean shouldCheckOriginalBlockRenderTypes;
+    private final List<QuadPredicates> predicates;
+    private final List<TextureAtlasSprite> sprites;
+    private final boolean hasAmbientOcclusion;
+    private final boolean isGui3d;
+    private final TextureAtlasSprite particleIcon;
+    private final ItemCameraTransforms transforms;
+    private final ItemOverrideList overrides;
+
+    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, TextureAtlasSprite particleIcon, ItemCameraTransforms transforms, ItemOverrideList overrides){
+        this.hasAmbientOcclusion = hasAmbientOcclusion;
+        this.isGui3d = isGui3d;
+        this.particleIcon = particleIcon;
+        this.transforms = transforms;
+        this.overrides = overrides;
+
+        // Create block and item meshes from the quads
+        //noinspection unchecked
+        List<TaggedQuad>[][] blockMesh = new List[BlockRenderLayer.values().length + 1][];
+        Set<BlockRenderLayer> blockRenderTypes = new HashSet<>();
+        List<BakedQuad> itemMesh = new ArrayList<>();
+        HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
+        HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
+        MutableQuad mutableQuad = new MutableQuad();
+        for(ConnectingModelQuad quad : quads){
+            mutableQuad.fillFromBakedQuad(quad.bakedQuad());
+            mutableQuad.emissive(quad.emissive());
+            if(quad.lightEmission() != null){
+                for(int i = 0; i < 4; i++){
+                    int sky = Math.max(quad.lightEmission(), mutableQuad.lightmap(i) >> 20 & 0xffff);
+                    int block = Math.max(quad.lightEmission(), (mutableQuad.lightmap(i) & 0xffff) >> 4);
+                    mutableQuad.lightmap(i, (sky << 20 | block << 4));
+                }
+            }
+            boolean hasConnectingTexture = quad.hasConnectingTexture();
+            int predicateIndex = 0;
+            int spriteIndex = 0;
+            if(quad.hasConnectingTexture()){
+                EnumFacing direction = quad.bakedQuad().getFace();
+                TextureOrientation orientation = findOrientation(quad.bakedQuad());
+                ConnectionPredicate predicate = quad.connectionPredicate();
+                // Give each combination of direction, orientation, and predicate a unique index
+                predicateIndex = predicates.computeIfAbsent(new QuadPredicates(direction, orientation, predicate), o -> predicates.size());
+                // Give each sprite a unique index
+                spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
+            }
+            TaggedQuad bakedQuad = new TaggedQuad(mutableQuad.toBakedQuad(), hasConnectingTexture, predicateIndex, spriteIndex);
+            // Add the block quads
+            BlockRenderLayer renderType = FusionClient.getRenderTypeMaterial(quad.renderType());
+            blockRenderTypes.add(renderType);
+            int cullIndex = cullIndex(quad.cullDirection());
+            List<TaggedQuad>[] mesh = blockMesh[renderType == null ? 0 : renderType.ordinal() + 1];
+            if(mesh == null){
+                // noinspection unchecked
+                mesh = new List[7];
+                blockMesh[renderType == null ? 0 : renderType.ordinal() + 1] = mesh;
+            }
+            if(mesh[cullIndex] == null)
+                mesh[cullIndex] = new ArrayList<>();
+            mesh[cullIndex].add(bakedQuad);
+            // Add the item quads
+            itemMesh.add(mutableQuad.toBakedQuad());
+        }
+        this.blockMesh = blockMesh;
+        this.blockRenderTypes = blockRenderTypes.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        this.shouldCheckOriginalBlockRenderTypes = blockRenderTypes.contains(null);
+        this.itemMesh = ImmutableList.copyOf(itemMesh);
+        this.predicates = predicates.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).collect(Collectors.toList());
+        this.sprites = sprites.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).collect(Collectors.toList());
+
+        //noinspection unchecked
+        this.completeBlockMesh = new List[7];
+        for(int i = 0; i < 7; i++){
+            int cullIndex = i;
+            this.completeBlockMesh[i] = Arrays.stream(this.blockMesh).filter(Objects::nonNull).map(arr -> arr[cullIndex]).filter(Objects::nonNull).flatMap(List::stream).collect(Collectors.toList());
+        }
+    }
+
+    private static TextureOrientation findOrientation(BakedQuad quad){
+        // First determine the texture orientation relative to the vertex indices
+        float[][] uvs = {getUV(quad, 0), getUV(quad, 1), getUV(quad, 2), getUV(quad, 3)};
+        // Compare the angle between directions v1 to v2 and v1 to v3, to check whether the texture is flipped
+        double angle1to2 = Math.atan2(uvs[1][1] - uvs[0][1], uvs[1][0] - uvs[0][0]), angle1to3 = Math.atan2(uvs[2][1] - uvs[0][1], uvs[2][0] - uvs[0][0]);
+        boolean textureFlipped = (angle1to2 - angle1to3 + 4 * Math.PI) % (2 * Math.PI) < Math.PI;
+        // Find the top-left-most-ish index, if we assume the uvs form an axis-aligned square this should work
+        int topLeftMostIndex = 0;
+        for(int i = 1; i < 4; i++){
+            float[] best = uvs[topLeftMostIndex], current = uvs[i];
+            if(current[0] + current[1] < best[0] + best[1])
+                topLeftMostIndex = i;
+        }
+        int textureRotation = textureFlipped ? topLeftMostIndex : (4 - topLeftMostIndex) % 4;
+
+        // Determine the vertex indices rotation relative to the block face
+        float[][] positions3d = {getPosition(quad, 0), getPosition(quad, 1), getPosition(quad, 2), getPosition(quad, 3)};
+        // Project the 3d positions onto the plane perpendicular to the facing of the quad
+        float[][] pos = new float[4][2];
+        EnumFacing direction = quad.getFace();
+        for(int i = 0; i < 4; i++){
+            if(direction == EnumFacing.DOWN){
+                pos[i][0] = positions3d[i][0];
+                pos[i][1] = -positions3d[i][2];
+            }else if(direction == EnumFacing.UP){
+                pos[i][0] = positions3d[i][0];
+                pos[i][1] = positions3d[i][2];
+            }else if(direction == EnumFacing.NORTH){
+                pos[i][0] = -positions3d[i][0];
+                pos[i][1] = -positions3d[i][1];
+            }else if(direction == EnumFacing.SOUTH){
+                pos[i][0] = positions3d[i][0];
+                pos[i][1] = -positions3d[i][1];
+            }else if(direction == EnumFacing.WEST){
+                pos[i][0] = positions3d[i][2];
+                pos[i][1] = -positions3d[i][1];
+            }else if(direction == EnumFacing.EAST){
+                pos[i][0] = -positions3d[i][2];
+                pos[i][1] = -positions3d[i][1];
+            }
+        }
+        // Compare the angle between directions v1 to v2 and v1 to v3, to check whether the texture is flipped
+        angle1to2 = Math.atan2(pos[1][1] - pos[0][1], pos[1][0] - pos[0][0]);
+        angle1to3 = Math.atan2(pos[2][1] - pos[0][1], pos[2][0] - pos[0][0]);
+        boolean quadFlipped = (angle1to2 - angle1to3 + 4 * Math.PI) % (2 * Math.PI) < Math.PI;
+        // Find the top-left-most-ish index, if we assume the uvs form an axis-aligned square this should work
+        topLeftMostIndex = 0;
+        for(int i = 1; i < 4; i++){
+            float[] best = pos[topLeftMostIndex], current = pos[i];
+            if(current[0] + current[1] < best[0] + best[1])
+                topLeftMostIndex = i;
+        }
+        int quadRotation = textureFlipped ? topLeftMostIndex : (4 - topLeftMostIndex);
+
+        // Combine the two, to get the in-world orientation of the texture
+        boolean flipped = textureFlipped ^ quadFlipped;
+        int rotation = quadFlipped ? (4 - textureRotation + quadRotation) % 4 : (textureRotation + quadRotation) % 4;
+        return TextureOrientation.of(flipped, rotation);
+    }
+
+    public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing cullDirection, long seed, @Nullable BlockRenderLayer renderType){
+        // If the block state is null, assume this call is intended for item rendering
+        if(state == null)
+            return cullDirection == null ? this.itemMesh : Collections.emptyList();
+
+        // If render type is not set, use all block quads
+        List<TaggedQuad> quads;
+        if(renderType == null)
+            quads = this.completeBlockMesh[cullIndex(cullDirection)];
+        else{
+            List<TaggedQuad>[] mesh = this.blockMesh[renderType.ordinal() + 1];
+            quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
+            if(this.shouldCheckOriginalBlockRenderTypes && state.getBlock().getBlockLayer() == renderType){
+                mesh = this.blockMesh[0];
+                List<TaggedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
+                if(additionalQuads != null){
+                    if(quads == null)
+                        quads = additionalQuads;
+                    quads = Stream.concat(quads.stream(), additionalQuads.stream()).collect(Collectors.toList());
+                }
+            }
+            if(quads == null)
+                quads = Collections.emptyList();
+        }
+
+        // Get the block cache from the model data
+        SurroundingBlockCache blockCache = BLOCK_CACHE.get();
+        // If the block cache is absent, the connected textures cannot be updated, so just push the mesh
+        if(blockCache == null)
+            return quads.stream().map(q -> q.quad).collect(Collectors.toList());
+
+        // Only compute connections for each predicate once
+        TextureConnections[] connectionsCache = new TextureConnections[this.predicates.size()];
+
+        // Push a transform which maps any connecting texture quads to the correct uv
+        MutableQuad mutableQuad = new MutableQuad();
+        return quads.stream().map(quad -> {
+            if(quad.hasConnectingTexture){
+                // Get predicate index and sprite index
+                int predicateIndex = quad.predicateIndex;
+                int spriteIndex = quad.spriteIndex;
+
+                // Check if the connections have already been computed, otherwise compute them
+                TextureConnections connections = connectionsCache[predicateIndex];
+                if(connections == null){
+                    // Get the connection predicate and obtain the connections
+                    QuadPredicates predicate = this.predicates.get(predicateIndex);
+                    connections = connectionsCache[predicateIndex] = computeConnections(predicate, blockCache);
+                }
+
+                // Get the sprite and the texture layout
+                TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
+                ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).data().getLayout();
+
+                // Remap the quad's uv
+                mutableQuad.fillFromBakedQuad(quad.quad);
+                int[] tilePosition = ConnectingTextureLayoutHelper.getTilePosition(layout, connections);
+                adjustQuadUV(mutableQuad, tilePosition[0], tilePosition[1], sprite);
+                return mutableQuad.toBakedQuad();
+            }
+            return quad.quad;
+        }).collect(Collectors.toList());
+    }
+
+    private static void adjustQuadUV(MutableQuad quad, int tileU, int tileV, TextureAtlasSprite sprite){
+        for(int i = 0; i < 4; i++){
+            float width = sprite.getMaxU() - sprite.getMinU();
+            float u = quad.u(i) + width * tileU;
+
+            float height = sprite.getMaxV() - sprite.getMinV();
+            float v = quad.v(i) + height * tileV;
+            quad.uv(i, u, v);
+        }
+    }
+
+    private static TextureConnections computeConnections(QuadPredicates predicates, SurroundingBlockCache blocks){
+        ConnectionPredicate predicate = predicates.predicate;
+        EnumFacing face = predicates.direction;
+        TextureOrientation orientation = predicates.orientation;
+
+        // Get the up and right vectors for the way textures are rotated by default for quad's facing
+        int[] up = orientation.transformWorldVector(DEFAULT_TEXTURE_ROTATIONS_UP[face.ordinal()], face);
+        int[] right = orientation.transformWorldVector(DEFAULT_TEXTURE_ROTATIONS_RIGHT[face.ordinal()], face);
+
+        boolean connectTop = shouldConnect(predicate, blocks, face, orientation.worldToTexture[0], up[0], up[1], up[2]);
+        boolean connectTopRight = shouldConnect(predicate, blocks, face, orientation.worldToTexture[1], up[0] + right[0], up[1] + right[1], up[2] + right[2]);
+        boolean connectRight = shouldConnect(predicate, blocks, face, orientation.worldToTexture[2], right[0], right[1], right[2]);
+        boolean connectBottomRight = shouldConnect(predicate, blocks, face, orientation.worldToTexture[3], -up[0] + right[0], -up[1] + right[1], -up[2] + right[2]);
+        boolean connectBottom = shouldConnect(predicate, blocks, face, orientation.worldToTexture[4], -up[0], -up[1], -up[2]);
+        boolean connectBottomLeft = shouldConnect(predicate, blocks, face, orientation.worldToTexture[5], -up[0] - right[0], -up[1] - right[1], -up[2] - right[2]);
+        boolean connectLeft = shouldConnect(predicate, blocks, face, orientation.worldToTexture[6], -right[0], -right[1], -right[2]);
+        boolean connectTopLeft = shouldConnect(predicate, blocks, face, orientation.worldToTexture[7], up[0] - right[0], up[1] - right[1], up[2] - right[2]);
+        return new TextureConnections(connectTop, connectTopRight, connectRight, connectBottomRight, connectBottom, connectBottomLeft, connectLeft, connectTopLeft);
+    }
+
+    private static boolean shouldConnect(ConnectionPredicate predicate, SurroundingBlockCache blocks, EnumFacing face, ConnectionDirection direction, int neighborX, int neighborY, int neighborZ){
+        IBlockAccess level = blocks.getLevel();
+        BlockPos position = blocks.getRealPos();
+        IBlockState self = blocks.getCenter();
+        IBlockState neighborState = blocks.getState(neighborX, neighborY, neighborZ);
+        IBlockState stateInFront = blocks.getState(neighborX + face.getFrontOffsetX(), neighborY + face.getFrontOffsetY(), neighborZ + face.getFrontOffsetZ());
+        return predicate.shouldConnect(level, position, face, self, neighborState, stateInFront, direction);
     }
 
     @Override
-    public @Nonnull List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long random){
-        SurroundingBlockData data = levelCapture.get() == null ? null : this.getModelData(levelCapture.get().left(), levelCapture.get().right(), state);
-        int hashCode = data == null ? 0 : data.hashCode();
-
-        // Find the current render type
-        BlockRenderLayer renderType = MinecraftForgeClient.getRenderLayer();
-
-        // Get the correct cache and quads
-        List<BakedQuad> quads;
-        synchronized(this.quadCache){
-            this.mutableKey.update(hashCode, side, renderType);
-            quads = this.quadCache.get(this.mutableKey);
-        }
-
-        // Compute the quads if they don't exist yet
-        if(quads == null){
-            ignoreModelRenderTypeCheck.set(true);
-            boolean isOriginalRenderType = state == null || renderType == null || state.getBlock().canRenderInLayer(state, renderType);
-            ignoreModelRenderTypeCheck.set(false);
-            quads = this.remapQuads(this.original.getQuads(state, side, random), data, renderType, isOriginalRenderType);
-            synchronized(this.quadCache){
-                this.mutableKey.update(hashCode, side, renderType);
-                if(!this.quadCache.containsKey(this.mutableKey)){
-                    RenderKey key = new RenderKey(hashCode, side, renderType);
-                    this.quadCache.put(key, quads);
-                }else
-                    quads = this.quadCache.get(this.mutableKey);
-            }
-        }
-
-        // Safety check even though this should never happen
-        if(quads == null)
-            throw new IllegalStateException("Tried returning null list from ConnectingBakedModel#getQuads for side '" + side + "'!");
-
-        return quads;
+    public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing cullDirection, long seed){
+        return this.getQuads(state, cullDirection, seed, MinecraftForgeClient.getRenderLayer());
     }
 
-    private List<BakedQuad> remapQuads(List<BakedQuad> originalQuads, SurroundingBlockData surroundingBlocks, BlockRenderLayer renderType, boolean originalRenderType){
-        if(surroundingBlocks == null)
-            return originalQuads;
-        return originalQuads.stream().map(quad -> this.remapQuad(quad, surroundingBlocks, renderType, originalRenderType)).filter(Objects::nonNull).collect(Collectors.toList());
+    public List<BlockRenderLayer> getBlockRenderTypes(){
+        return this.blockRenderTypes;
     }
 
-    protected BakedQuad remapQuad(BakedQuad quad, SurroundingBlockData surroundingBlocks, BlockRenderLayer renderType, boolean originalRenderType){
-        TextureAtlasSprite sprite = quad.getSprite();
-        if(SpriteHelper.getTextureType(sprite) != DefaultTextureTypes.CONNECTING)
-            return originalRenderType ? quad : null;
-
-        ConnectingTextureData.RenderType spriteRenderType = ((ConnectingTextureSprite)sprite).getRenderType();
-        if(spriteRenderType == null ? !originalRenderType : FusionClient.getRenderTypeMaterial(spriteRenderType) != renderType)
-            return null;
-
-        ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).getLayout();
-
-        int[] vertexData = quad.getVertexData();
-        // Make sure we don't change the original quad
-        vertexData = Arrays.copyOf(vertexData, vertexData.length);
-
-        // Adjust the uv
-        ResourceLocation spriteIdentifier = new ResourceLocation(sprite.getIconName());
-        if(!this.predicates.containsKey(spriteIdentifier))
-            spriteIdentifier = ConnectingModelType.DEFAULT_CONNECTION_KEY;
-        SurroundingBlockData.SideConnections connections = surroundingBlocks.getConnections(spriteIdentifier, quad.getFace());
-        int[] uv = ConnectingTextureLayoutHelper.getStatePosition(layout, connections);
-        if(ConnectingTextureLayoutHelper.shouldBeRotated(layout)){
-            int u = uv[0];
-            uv[0] = uv[1];
-            uv[1] = u;
-        }
-        adjustVertexDataUV(vertexData, uv[0], uv[1], sprite);
-
-        // Create a new quad
-        return new BakedQuad(vertexData, quad.getTintIndex(), quad.getFace(), quad.getSprite(), quad.shouldApplyDiffuseLighting(), quad.getFormat());
+    @Override
+    public boolean isAmbientOcclusion(){
+        return this.hasAmbientOcclusion;
     }
 
-    private static int[] adjustVertexDataUV(int[] vertexData, int newU, int newV, TextureAtlasSprite sprite){
-        int vertexSize = DefaultVertexFormats.BLOCK.getIntegerSize();
-        int vertices = vertexData.length / vertexSize;
-        int uvOffset = BLOCK_VERTEX_DATA_UV_OFFSET / 4;
-
-        for(int i = 0; i < vertices; i++){
-            int offset = i * vertexSize + uvOffset;
-
-            float width = sprite.getMaxU() - sprite.getMinU();
-            float u = Float.intBitsToFloat(vertexData[offset]) + width * newU;
-            vertexData[offset] = Float.floatToRawIntBits(u);
-
-            float height = sprite.getMaxV() - sprite.getMinV();
-            float v = Float.intBitsToFloat(vertexData[offset + 1]) + height * newV;
-            vertexData[offset + 1] = Float.floatToRawIntBits(v);
-        }
-        return vertexData;
+    @Override
+    public boolean isGui3d(){
+        return this.isGui3d;
     }
 
-    private static int findUVOffset(VertexFormat vertexFormat){
-        int index;
-        VertexFormatElement element = null;
-        for(index = 0; index < vertexFormat.getElements().size(); index++){
-            VertexFormatElement el = vertexFormat.getElements().get(index);
-            if(el.getUsage() == VertexFormatElement.EnumUsage.UV){
-                element = el;
-                break;
-            }
-        }
-        if(index == vertexFormat.getElements().size() || element == null)
-            throw new RuntimeException("Expected vertex format to have a UV attribute");
-        if(element.getType() != VertexFormatElement.EnumType.FLOAT)
-            throw new RuntimeException("Expected UV attribute to have data type FLOAT");
-        if(element.getSize() < 4)
-            throw new RuntimeException("Expected UV attribute to have at least 4 dimensions");
-        return vertexFormat.offsets.get(index);
+    @Override
+    public boolean isBuiltInRenderer(){
+        return false;
     }
 
-    public SurroundingBlockData getModelData(IBlockAccess level, BlockPos pos, IBlockState state){
-        return SurroundingBlockData.create(level, pos, this.modelRotation, this.predicates);
+    @Override
+    public TextureAtlasSprite getParticleTexture(){
+        return this.particleIcon;
     }
 
-    public List<BlockRenderLayer> getCustomRenderTypes(){
-        if(this.customRenderTypes == null)
-            this.calculateCustomRenderTypes();
-        return this.customRenderTypes;
-    }
-
-    private void calculateCustomRenderTypes(){
-        Set<BlockRenderLayer> renderTypes = new HashSet<>();
-        for(EnumFacing cullFace : new EnumFacing[]{EnumFacing.UP, EnumFacing.DOWN, EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST, null}){
-            this.original.getQuads(null, cullFace, 42).stream()
-                .map(BakedQuad::getSprite)
-                .filter(sprite -> SpriteHelper.getTextureType(sprite) == DefaultTextureTypes.CONNECTING)
-                .map(sprite -> ((ConnectingTextureSprite)sprite).getRenderType())
-                .filter(Objects::nonNull)
-                .map(FusionClient::getRenderTypeMaterial)
-                .forEach(renderTypes::add);
-        }
-        this.customRenderTypes = Arrays.asList(renderTypes.toArray(new BlockRenderLayer[0]));
+    @Override
+    public ItemCameraTransforms getItemCameraTransforms(){
+        return this.transforms;
     }
 
     @Override
     public ItemOverrideList getOverrides(){
-        return ItemOverrideList.NONE;
+        return this.overrides;
     }
 
-    private static class RenderKey {
-        private int surroundingBlockData;
-        private EnumFacing face;
-        private BlockRenderLayer renderType;
+    private static int cullIndex(EnumFacing cullDirection){
+        return cullDirection == null ? 0 : cullDirection.ordinal() + 1;
+    }
 
-        private RenderKey(int surroundingBlockData, EnumFacing face, BlockRenderLayer renderType){
-            this.surroundingBlockData = surroundingBlockData;
-            this.face = face;
-            this.renderType = renderType;
-        }
+    private static class QuadPredicates {
+        public final EnumFacing direction;
+        public final TextureOrientation orientation;
+        public final ConnectionPredicate predicate;
 
-        void update(int surroundingBlockData, EnumFacing face, BlockRenderLayer renderType){
-            this.surroundingBlockData = surroundingBlockData;
-            this.face = face;
-            this.renderType = renderType;
+        private QuadPredicates(EnumFacing direction, TextureOrientation orientation, ConnectionPredicate predicate){
+            this.direction = direction;
+            this.orientation = orientation;
+            this.predicate = predicate;
         }
 
         @Override
-        public boolean equals(Object o){
+        public final boolean equals(Object o){
             if(this == o) return true;
-            if(o == null || this.getClass() != o.getClass()) return false;
+            if(!(o instanceof QuadPredicates)) return false;
 
-            RenderKey renderKey = (RenderKey)o;
-
-            if(this.surroundingBlockData != renderKey.surroundingBlockData) return false;
-            if(this.face != renderKey.face) return false;
-            return Objects.equals(this.renderType, renderKey.renderType);
+            QuadPredicates that = (QuadPredicates)o;
+            return this.direction == that.direction && this.orientation == that.orientation && this.predicate.equals(that.predicate);
         }
 
         @Override
         public int hashCode(){
-            int result = this.surroundingBlockData;
-            result = 31 * result + (this.face != null ? this.face.hashCode() : 0);
-            result = 31 * result + (this.renderType != null ? this.renderType.hashCode() : 0);
+            int result = this.direction.hashCode();
+            result = 31 * result + this.orientation.hashCode();
+            result = 31 * result + this.predicate.hashCode();
             return result;
+        }
+    }
+
+    private enum TextureOrientation {
+        NORMAL_0(false, 0), NORMAL_90(false, 1), NORMAL_180(false, 2), NORMAL_270(false, 3),
+        FLIPPED_0(true, 0), FLIPPED_90(false, 1), FLIPPED_180(true, 2), FLIPPED_270(true, 3);
+
+        public static TextureOrientation of(boolean flipped, int rotations){
+            return TextureOrientation.values()[flipped ? 4 + rotations : rotations];
+        }
+
+        public final boolean flipped;
+        public final int rotations;
+        /**
+         * If {@code dir} is the in-world direction, {@code worldToTexture[dir.ordinal()]} is the texture space direction
+         */
+        public final ConnectionDirection[] worldToTexture;
+
+        TextureOrientation(boolean flipped, int rotations){
+            this.flipped = flipped;
+            this.rotations = rotations;
+
+            this.worldToTexture = ConnectionDirection.values();
+            // First apply flip
+            if(flipped){
+                this.worldToTexture[ConnectionDirection.TOP.ordinal()] = ConnectionDirection.LEFT;
+                this.worldToTexture[ConnectionDirection.TOP_RIGHT.ordinal()] = ConnectionDirection.BOTTOM_LEFT;
+                this.worldToTexture[ConnectionDirection.RIGHT.ordinal()] = ConnectionDirection.BOTTOM;
+                this.worldToTexture[ConnectionDirection.LEFT.ordinal()] = ConnectionDirection.TOP;
+                this.worldToTexture[ConnectionDirection.BOTTOM_LEFT.ordinal()] = ConnectionDirection.TOP_RIGHT;
+                this.worldToTexture[ConnectionDirection.BOTTOM.ordinal()] = ConnectionDirection.RIGHT;
+            }
+            // Then apply rotation
+            if(rotations != 0){
+                ConnectionDirection[] old = Arrays.copyOf(this.worldToTexture, this.worldToTexture.length);
+                for(int i = 0; i < 8; i++)
+                    this.worldToTexture[i] = old[(i - rotations * 2 + 8) % 8];
+            }
+        }
+
+        public int[] transformWorldVector(int[] vector, EnumFacing face){ // TODO improve this
+            if(!this.flipped && this.rotations == 0)
+                return vector;
+            int[] newVector = Arrays.copyOf(vector, vector.length);
+            EnumFacing.Axis axis = face.getAxis();
+            boolean positive = face.getAxisDirection() == EnumFacing.AxisDirection.POSITIVE;
+            if(this.flipped){
+                if(face.getAxis() == EnumFacing.Axis.X){
+                    newVector[1] = positive ? vector[2] : -vector[2];
+                    newVector[2] = positive ? vector[1] : -vector[1];
+                }
+                if(face.getAxis() == EnumFacing.Axis.Y){
+                    newVector[0] = positive ? vector[2] : -vector[2];
+                    newVector[2] = positive ? vector[0] : -vector[0];
+                }
+                if(face.getAxis() == EnumFacing.Axis.Z){
+                    newVector[0] = positive ? vector[1] : -vector[1];
+                    newVector[1] = positive ? vector[0] : -vector[0];
+                }
+            }
+            if(this.rotations > 0){
+                if(this.rotations == 2){
+                    if(axis != EnumFacing.Axis.X)
+                        newVector[0] = -newVector[0];
+                    if(axis != EnumFacing.Axis.Y)
+                        newVector[1] = -newVector[1];
+                    if(axis != EnumFacing.Axis.Z)
+                        newVector[2] = -newVector[2];
+                }else{
+                    int oldX = newVector[0];
+                    int oldY = newVector[1];
+                    if(axis != EnumFacing.Axis.X)
+                        newVector[0] = ((positive ^ this.rotations == 3) ? 1 : -1) * (axis == EnumFacing.Axis.Y ? -newVector[2] : newVector[1]);
+                    if(axis != EnumFacing.Axis.Y)
+                        newVector[1] = ((positive ^ this.rotations == 3) ? 1 : -1) * (axis == EnumFacing.Axis.Z ? -oldX : newVector[2]);
+                    if(axis != EnumFacing.Axis.Z)
+                        newVector[2] = ((positive ^ this.rotations == 3) ? 1 : -1) * (axis == EnumFacing.Axis.X ? -oldY : oldX);
+                }
+            }
+            return newVector;
+        }
+    }
+
+    private static class TaggedQuad {
+        final BakedQuad quad;
+        final boolean hasConnectingTexture;
+        final int predicateIndex;
+        final int spriteIndex;
+
+        private TaggedQuad(BakedQuad quad, boolean hasConnectingTexture, int predicateIndex, int spriteIndex){
+            this.quad = quad;
+            this.hasConnectingTexture = hasConnectingTexture;
+            this.predicateIndex = predicateIndex;
+            this.spriteIndex = spriteIndex;
         }
     }
 }

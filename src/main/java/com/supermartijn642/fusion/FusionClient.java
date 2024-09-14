@@ -5,7 +5,7 @@ import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.predicate.*;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
@@ -22,11 +22,13 @@ public class FusionClient {
     public static void init(){
         // Register default texture types
         FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "vanilla"), DefaultTextureTypes.VANILLA);
+        FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "base"), DefaultTextureTypes.BASE);
         FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "connecting"), DefaultTextureTypes.CONNECTING);
         FusionTextureTypeRegistry.registerTextureType(new ResourceLocation("fusion", "scrolling"), DefaultTextureTypes.SCROLLING);
         // Register default model types
         FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "unknown"), DefaultModelTypes.UNKNOWN);
         FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "vanilla"), DefaultModelTypes.VANILLA);
+        FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "base"), DefaultModelTypes.BASE);
         FusionModelTypeRegistry.registerModelType(new ResourceLocation("fusion", "connecting"), DefaultModelTypes.CONNECTING);
         // Register default connection predicates
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "and"), AndConnectionPredicate.SERIALIZER);
@@ -44,7 +46,9 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
     }
 
-    public static BlockRenderLayer getRenderTypeMaterial(ConnectingTextureData.RenderType renderType){
+    public static BlockRenderLayer getRenderTypeMaterial(BaseTextureData.RenderType renderType){
+        if(renderType == null)
+            return null;
         BlockRenderLayer material;
         switch(renderType){
             case OPAQUE:

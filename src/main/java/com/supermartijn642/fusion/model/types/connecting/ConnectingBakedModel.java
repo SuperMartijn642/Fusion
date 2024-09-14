@@ -129,7 +129,7 @@ public class ConnectingBakedModel implements IBakedModel {
                 spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
             }
             // Submit the quads
-            for(int quadIndex = 0; quadIndex < auxiliaryQuadCount; quadIndex++){
+            for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad());
                 mutableQuad.emissive(quad.emissive());
                 if(quad.lightEmission() != null){
@@ -277,6 +277,9 @@ public class ConnectingBakedModel implements IBakedModel {
         // If the block cache is absent, the connected textures cannot be updated, so just push the mesh
         if(blockCache == null)
             return quads.stream().map(q -> q.bakedQuad).collect(Collectors.toList());
+        // Make sure to use the block state argument for the model's own block
+        if(state != null)
+            blockCache.setSelf(state);
 
         // Only compute connections for each predicate once
         TextureConnections[] connectionsCache = new TextureConnections[this.predicates.size()];

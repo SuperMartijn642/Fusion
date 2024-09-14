@@ -9,8 +9,10 @@
   "client": [
     "forge.FMLClientHandlerMixin",
     "forge.ForgeBlockModelRendererMixin",
+    "forge.LightUtilMixin",
     "forge.VanillaLoaderMixin",
     "forge.VanillaModelWrapperMixin",
+    "forge.VertexLighterFlatMixin",
     "BlockMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",

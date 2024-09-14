@@ -78,8 +78,8 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
     private static void remapUVCornerSprite(MutableQuad quad, int corner, int tileIndex, TextureAtlasSprite sprite){
         float width = sprite.getMaxU() - sprite.getMinU();
         float height = sprite.getMaxV() - sprite.getMinV();
-        float minU = sprite.getMinV() + (corner == 0 || corner == 3 ? 0 : 0.5f) * width;
-        float maxU = sprite.getMinV() + (corner == 0 || corner == 3 ? 0.5f : 1) * width;
+        float minU = sprite.getMinU() + (corner == 0 || corner == 3 ? 0 : 0.5f) * width;
+        float maxU = sprite.getMinU() + (corner == 0 || corner == 3 ? 0.5f : 1) * width;
         float minV = sprite.getMinV() + (corner == 0 || corner == 1 ? 0 : 0.5f) * height;
         float maxV = sprite.getMinV() + (corner == 0 || corner == 1 ? 0.5f : 1) * height;
         for(int i = 0; i < 4; i++){

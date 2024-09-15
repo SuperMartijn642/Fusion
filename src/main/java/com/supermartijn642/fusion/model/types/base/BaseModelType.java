@@ -6,15 +6,16 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.*;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
-import com.supermartijn642.fusion.model.types.vanilla.VanillaModelType;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created 06/09/2024 by SuperMartijn642
@@ -28,23 +29,10 @@ public class BaseModelType implements ModelType<BaseModelData> {
 
     @Override
     public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, BaseModelData data){
-        // Resolve parents for vanilla model
-        VanillaModelType.resolveParents(context::getModel, data.getVanillaModel());
-
+        // Check for circular dependencies
+        ((BaseModelDataImpl)data).validateParents(context::getModel, null);
         // Gather textures
-        Set<SpriteIdentifier> textures = new HashSet<>();
-        data.getVanillaModel().textures.values().stream()
-            .filter(s -> !s.isEmpty() && s.charAt(0) != '#')
-            .filter(IdentifierUtil::isValidIdentifier)
-            .map(s -> SpriteIdentifier.of(TextureAtlases.getBlocks(), new ResourceLocation(s)))
-            .forEach(textures::add);
-        for(ResourceLocation parent : data.getParents()){
-            // Find the parent model
-            ModelInstance<?> model = context.getModel(parent);
-            // Get the textures
-            textures.addAll(model.getTextureDependencies(context));
-        }
-        return textures;
+        return ((BaseModelDataImpl)data).gatherTextures(context);
     }
 
     @Nullable
@@ -62,7 +50,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
     @Override
     public IBakedModel bake(ModelBakingContext context, BaseModelData data){
         // Check for circular dependencies
-        ((BaseModelDataImpl)data).validateParents(context);
+        ((BaseModelDataImpl)data).validateParents(context::getModel, context.getModelIdentifier());
         // Bake the quads
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties

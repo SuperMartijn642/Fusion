@@ -52,7 +52,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
     @Override
     public IBakedModel bake(ModelBakingContext context, ConnectingModelData data){
         // Check for circular dependencies
-        ((ConnectingModelDataImpl)data).validateParents(context);
+        ((ConnectingModelDataImpl)data).validateParents(context::getModel, context.getModelIdentifier());
         // Bake the quads
         //noinspection unchecked,rawtypes
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);

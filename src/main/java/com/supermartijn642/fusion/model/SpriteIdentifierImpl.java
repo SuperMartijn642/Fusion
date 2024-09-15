@@ -1,12 +1,16 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
+import com.supermartijn642.fusion.util.TextureAtlases;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.ResourceLocation;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
  */
 public class SpriteIdentifierImpl implements SpriteIdentifier {
+
+    public static final SpriteIdentifier MISSING = SpriteIdentifier.of(TextureAtlases.getBlocks(), TextureMap.LOCATION_MISSING_TEXTURE);
 
     private final ResourceLocation atlas, texture;
 

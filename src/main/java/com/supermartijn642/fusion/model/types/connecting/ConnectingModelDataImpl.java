@@ -88,7 +88,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
             for(BlockPart element : elements){
                 for(EnumFacing direction : element.mapFaces.keySet()){
                     BlockPartFace face = element.mapFaces.get(direction);
-                    TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture));
+                    TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context::getModel, modelStack, face.texture, context.getModelIdentifier()));
                     BakedQuad quad = FACE_BAKERY.makeBakedQuad(element.positionFrom, element.positionTo, face, sprite, direction, context.getTransformation().apply(Optional.empty()).orElse(TRSRTransformation.identity()), element.partRotation, false, element.shade);
                     EnumFacing cullDirection = context.getTransformation().apply(Optional.empty()).map(t -> t.rotate(face.cullFace)).orElse(face.cullFace);
                     Integer lightEmission = element instanceof BaseModelElement ? ((BaseModelElement)element).light_emission : null;

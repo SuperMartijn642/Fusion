@@ -2,7 +2,10 @@ package com.supermartijn642.fusion.model.types.vanilla;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.*;
+import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.ModelInstance;
+import com.supermartijn642.fusion.api.model.ModelType;
+import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBakery;
@@ -26,11 +29,9 @@ public class VanillaModelType implements ModelType<BlockModel> {
 
     @Override
     public BakedModel bake(ModelBakingContext context, BlockModel data){
-        if(data.parentLocation != null && data.parent == null){
-            ModelInstance<?> model = context.getModel(data.parentLocation);
-            if(model != null)
-                data.parent = model.getAsVanillaModel();
-        }
+        // Resolve parent models
+        resolveParents(context, data);
+        // Bake the model
         return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation(), context.getModelIdentifier());
     }
 
@@ -50,11 +51,13 @@ public class VanillaModelType implements ModelType<BlockModel> {
         return (JsonObject)VanillaModelSerializer.GSON.toJsonTree(value);
     }
 
-    private static void resolveParents(GatherTexturesContext context, BlockModel model){
+    private static void resolveParents(ModelBakingContext context, BlockModel model){
         Set<BlockModel> passedModels = new LinkedHashSet<>();
         while(model.parentLocation != null && model.parent == null){
             passedModels.add(model);
             ModelInstance<?> modelInstance = context.getModel(model.parentLocation);
+            if(modelInstance == null)
+                return;
             BlockModel parent = modelInstance.getAsVanillaModel();
             if(parent == null)
                 BlockModel.LOGGER.warn("Vanilla model {} cannot have parent with model type {} for {}!", model, modelInstance.getModelType(), model.parentLocation);

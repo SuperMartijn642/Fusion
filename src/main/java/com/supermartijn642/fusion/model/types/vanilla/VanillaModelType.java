@@ -2,7 +2,6 @@ package com.supermartijn642.fusion.model.types.vanilla;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.datafixers.util.Pair;
 import com.supermartijn642.fusion.api.model.*;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.IBakedModel;
@@ -30,21 +29,15 @@ public class VanillaModelType implements ModelType<BlockModel> {
 
     @Override
     public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, BlockModel data){
-        // Find the parent models
+        // Resolve parent models
         resolveParents(context, data);
-        // Get the textures
-        Set<Pair<String,String>> errors = new HashSet<>();
-        Collection<Material> materials = data.getMaterials(location -> context.getModel(location).getAsVanillaModel(), errors);
+        // Collect the textures
+        Collection<Material> materials = data.getMaterials(location -> context.getModel(location).getAsVanillaModel(), new HashSet<>());
         return materials.stream().map(SpriteIdentifier::of).collect(Collectors.toList());
     }
 
     @Override
     public IBakedModel bake(ModelBakingContext context, BlockModel data){
-        if(data.parentLocation != null && data.parent == null){
-            ModelInstance<?> model = context.getModel(data.parentLocation);
-            if(model != null)
-                data.parent = model.getAsVanillaModel();
-        }
         return data.bake(context.getModelBakery(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation(), context.getModelIdentifier());
     }
 

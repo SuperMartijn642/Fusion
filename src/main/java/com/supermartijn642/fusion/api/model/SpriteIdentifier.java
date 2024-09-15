@@ -1,9 +1,7 @@
 package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.model.SpriteIdentifierImpl;
-import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.model.Material;
-import net.minecraft.client.renderer.texture.MissingTextureSprite;
 import net.minecraft.util.ResourceLocation;
 
 /**
@@ -23,7 +21,7 @@ public interface SpriteIdentifier {
      * @return the identifier for the missing texture sprite in the block atlas
      */
     static SpriteIdentifier missing(){
-        return of(TextureAtlases.getBlocks(), MissingTextureSprite.getLocation());
+        return SpriteIdentifierImpl.MISSING;
     }
 
     ResourceLocation getAtlas();

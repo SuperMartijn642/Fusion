@@ -145,6 +145,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
                     break;
                 }
             }
+            findConnectionsEntry(context, modelStack.getLast(), currentKey);
             // If a key could not be found, try the default key
             if(either == null && !currentKey.equals(ConnectingModelType.DEFAULT_CONNECTION_KEY))
                 either = Either.right(ConnectingModelType.DEFAULT_CONNECTION_KEY);
@@ -166,5 +167,27 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
             }
             encounteredKeys.add(currentKey);
         }
+    }
+
+    private static Either<ConnectionPredicate,String> findConnectionsEntry(ModelBakingContext context, ModelInstance<?> model, String key){
+        // Check the model itself
+        if(model.getModelType() == DefaultModelTypes.CONNECTING){
+            ConnectionPredicate predicate = ((ConnectingModelDataImpl)model.getModelData()).predicates.get(key);
+            if(predicate != null)
+                return Either.left(predicate);
+            String reference = ((ConnectingModelDataImpl)model.getModelData()).connectionReferences.get(key);
+            if(reference != null)
+                return Either.right(reference);
+        }
+        // Check parent models
+        for(ResourceLocation location : model.getParentModels()){
+            ModelInstance<?> parent = context.getModel(location);
+            if(parent != null){
+                Either<ConnectionPredicate,String> entry = findConnectionsEntry(context, parent, key);
+                if(entry != null)
+                    return entry;
+            }
+        }
+        return null;
     }
 }

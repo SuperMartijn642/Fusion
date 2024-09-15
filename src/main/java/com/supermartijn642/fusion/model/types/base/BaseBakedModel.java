@@ -178,14 +178,14 @@ public class BaseBakedModel implements BakedModel {
         if(this.shouldCheckOriginalItemRenderTypes){
             // There's no way to know the render types beforehand through Forge's API, so just merge them here with the fixed render types
             RenderType renderType = ItemBlockRenderTypes.getRenderType(stack, fabulous);
-            if(!(fabulous ? this.itemRenderTypes : this.itemRenderTypesFabulous).contains(renderType)){
-                ArrayList<Pair<BakedModel,RenderType>> combined = new ArrayList<>((fabulous ? this.itemPasses : this.itemPassesFabulous).size() + 1);
-                combined.addAll(fabulous ? this.itemPasses : this.itemPassesFabulous);
+            if(!(fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes).contains(renderType)){
+                ArrayList<Pair<BakedModel,RenderType>> combined = new ArrayList<>((fabulous ? this.itemPassesFabulous : this.itemPasses).size() + 1);
+                combined.addAll(fabulous ? this.itemPassesFabulous : this.itemPasses);
                 combined.add(Pair.of(this.itemModel, renderType));
                 return combined;
             }
         }
-        return fabulous ? this.itemPasses : this.itemPassesFabulous;
+        return fabulous ? this.itemPassesFabulous : this.itemPasses;
     }
 
     @Override

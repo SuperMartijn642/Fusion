@@ -29,18 +29,18 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
 
     @Override
     public Collection<ResourceLocation> getModelDependencies(ConnectingModelData data){
-        return DefaultModelTypes.VANILLA.getModelDependencies(data.getVanillaModel());
+        return DefaultModelTypes.BASE.getModelDependencies(data);
     }
 
     @Override
     public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, ConnectingModelData data){
-        return DefaultModelTypes.VANILLA.getTextureDependencies(context, data.getVanillaModel());
+        return DefaultModelTypes.BASE.getTextureDependencies(context, data);
     }
 
     @Override
     @Nullable
     public BlockModel getAsVanillaModel(ConnectingModelData data){
-        return DefaultModelTypes.VANILLA.getAsVanillaModel(data.getVanillaModel());
+        return DefaultModelTypes.BASE.getAsVanillaModel(data);
     }
 
     @Override
@@ -52,7 +52,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
     @Override
     public IBakedModel bake(ModelBakingContext context, ConnectingModelData data){
         // Check for circular dependencies
-        ((ConnectingModelDataImpl)data).validateParents(context);
+        ((ConnectingModelDataImpl)data).validateParents(context::getModel, context.getModelIdentifier());
         // Bake the quads
         //noinspection unchecked,rawtypes
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);

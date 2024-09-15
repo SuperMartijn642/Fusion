@@ -3,12 +3,10 @@ package com.supermartijn642.fusion.model.types.vanilla;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.*;
-import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ModelBakery;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.ModelLoaderRegistry2;
 
@@ -31,25 +29,17 @@ public class VanillaModelType implements ModelType<BlockModel> {
 
     @Override
     public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, BlockModel data){
-        HashSet<SpriteIdentifier> textures = new HashSet<>();
-        data.textureMap.values().stream()
-            .filter(s -> !s.isEmpty() && s.charAt(0) != '#')
-            .filter(IdentifierUtil::isValidIdentifier)
-            .map(s -> SpriteIdentifier.of(TextureAtlases.getBlocks(), new ResourceLocation(s)))
-            .forEach(textures::add);
-        if(data.parentLocation != null){
-            ModelInstance<?> model = context.getModel(data.parentLocation);
-            if(model != null)
-                textures.addAll(model.getTextureDependencies(context));
-        }
-        return textures;
+        // Resolve parent models
+        resolveParents(context, data);
+        // Collect the textures
+        Collection<ResourceLocation> materials = data.getTextures(location -> context.getModel(location).getAsVanillaModel(), new HashSet<>());
+        return materials.stream().map(t -> SpriteIdentifier.of(TextureAtlases.getBlocks(), t)).collect(Collectors.toList());
     }
 
     @Override
     public IBakedModel bake(ModelBakingContext context, BlockModel data){
-        if(data.parentLocation != null && data.parent == null)
-            resolveParents(context, data);
-        return data.bake(context.getModelBakery(), material -> context.getTexture(SpriteIdentifier.of(TextureAtlases.getBlocks(), material)), context.getTransformation(), DefaultVertexFormats.BLOCK);
+        //noinspection deprecation
+        return data.bake(context.getModelBakery(), material -> context.getTexture(SpriteIdentifier.of(TextureAtlases.getBlocks(), material)), context.getTransformation());
     }
 
     @Nullable
@@ -68,7 +58,7 @@ public class VanillaModelType implements ModelType<BlockModel> {
         return (JsonObject)VanillaModelSerializer.GSON.toJsonTree(value);
     }
 
-    private static void resolveParents(ModelBakingContext context, BlockModel model){
+    private static void resolveParents(GatherTexturesContext context, BlockModel model){
         Set<BlockModel> passedModels = new LinkedHashSet<>();
         while(model.parentLocation != null && model.parent == null){
             passedModels.add(model);

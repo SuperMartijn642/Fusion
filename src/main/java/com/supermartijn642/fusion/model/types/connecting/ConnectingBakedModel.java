@@ -425,14 +425,14 @@ public class ConnectingBakedModel implements BakedModel {
         if(this.shouldCheckOriginalItemRenderTypes){
             // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
             RenderType renderType = RenderTypeHelper.getFallbackItemRenderType(stack, this, fabulous);
-            if(!(fabulous ? this.itemRenderTypes : this.itemRenderTypesFabulous).contains(renderType)){
-                ArrayList<RenderType> combined = new ArrayList<>((fabulous ? this.itemRenderTypes : this.itemRenderTypesFabulous).size() + 1);
-                combined.addAll(fabulous ? this.itemRenderTypes : this.itemRenderTypesFabulous);
+            if(!(fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes).contains(renderType)){
+                ArrayList<RenderType> combined = new ArrayList<>((fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes).size() + 1);
+                combined.addAll(fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes);
                 combined.add(renderType);
                 return combined;
             }
         }
-        return fabulous ? this.itemRenderTypes : this.itemRenderTypesFabulous;
+        return fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes;
     }
 
     @Override

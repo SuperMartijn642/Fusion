@@ -110,6 +110,8 @@ public class VanillaModelType implements ModelType<ModelBlock> {
         while(model.parentLocation != null && model.parent == null){
             passedModels.add(model);
             ModelInstance<?> modelInstance = context.apply(model.parentLocation);
+            if(modelInstance == null)
+                return;
             ModelBlock parent = modelInstance.getAsVanillaModel();
             if(parent == null)
                 ModelBlock.LOGGER.warn("Vanilla model {} cannot have parent with model type {} for {}!", model, modelInstance.getModelType(), model.parentLocation);

@@ -178,6 +178,7 @@ public class BaseModelDataImpl implements BaseModelData {
         String currentKey = key;
         while(true){
             String value = null;
+            // Check models in the model stack
             for(ModelInstance<?> model : modelStack){
                 ModelBlock vanillaModel = model.getAsVanillaModel();
                 if(vanillaModel == null)
@@ -185,6 +186,11 @@ public class BaseModelDataImpl implements BaseModelData {
                 value = vanillaModel.textures.get(currentKey);
                 if(value != null)
                     break;
+            }
+            // If no value is found, check the parents of the last model
+            if(value == null){
+                String finalCurrentKey = currentKey;
+                value = this.findProperty(context, modelStack.getLast(), model -> model.textures.get(finalCurrentKey));
             }
             // If a key could not be found, return the missing texture
             if(value == null)

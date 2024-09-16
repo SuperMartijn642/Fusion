@@ -9,15 +9,18 @@
   "client": [
     "fabric.AbstractQuadRendererMixin",
     "fabric.FabricDataGenHelperMixin",
+    "fabric.ItemRenderContextMixin",
     "fabric.ModNioResourcePackMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "FilePackResourcesMixin",
     "FolderPackResourcesMixin",
+    "ItemRendererMixin",
     "LegacyPackResourcesAdapterMixin",
     "ModelBlockRendererMixin",
     "PackMixin",
     "PackResourcesAdapterV4Mixin",
+    "TerrainParticleMixin",
     "TextureAtlasMixin",
     "TextureAtlasSpriteMixin"
   ],

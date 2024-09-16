@@ -125,7 +125,7 @@ public class BaseModelDataImpl implements BaseModelData {
     }
 
     private void bakeQuads(ModelBakingContext context, ModelInstance<?> model, Deque<ModelInstance<?>> modelStack, Consumer<BaseModelQuad> output){
-        modelStack.push(model);
+        modelStack.addLast(model);
 
         // If the model has elements, bake them
         List<? extends BlockPart> elements = null;
@@ -160,7 +160,7 @@ public class BaseModelDataImpl implements BaseModelData {
                 this.bakeQuads(context, dependency, modelStack, output);
         }
 
-        modelStack.pop();
+        modelStack.removeLast();
     }
 
     public Set<SpriteIdentifier> gatherTextures(GatherTexturesContext context){
@@ -170,7 +170,7 @@ public class BaseModelDataImpl implements BaseModelData {
     }
 
     private void gatherTextures(GatherTexturesContext context, ModelInstance<?> model, Deque<ModelInstance<?>> modelStack, Consumer<SpriteIdentifier> output){
-        modelStack.push(model);
+        modelStack.addLast(model);
 
         // If the model has elements, get their textures
         List<? extends BlockPart> elements = null;
@@ -203,7 +203,7 @@ public class BaseModelDataImpl implements BaseModelData {
                 this.gatherTextures(context, dependency, modelStack, output);
         }
 
-        modelStack.pop();
+        modelStack.removeLast();
     }
 
     protected SpriteIdentifier resolveMaterial(Function<ResourceLocation,ModelInstance<?>> modelResolver, Deque<ModelInstance<?>> modelStack, String key, ResourceLocation rootModel){

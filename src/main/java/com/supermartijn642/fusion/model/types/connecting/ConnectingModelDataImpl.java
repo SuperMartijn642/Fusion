@@ -69,7 +69,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
     }
 
     private void bakeQuads(ModelBakingContext context, ModelInstance<?> model, Deque<ModelInstance<?>> modelStack, Consumer<BaseModelQuad> output){
-        modelStack.push(model);
+        modelStack.addLast(model);
 
         // If the model has elements, bake them
         List<? extends BlockPart> elements = null;
@@ -106,7 +106,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
                 this.bakeQuads(context, dependency, modelStack, output);
         }
 
-        modelStack.pop();
+        modelStack.removeLast();
     }
 
     private ConnectionPredicate resolveConnectionKey(ModelBakingContext context, Deque<ModelInstance<?>> modelStack, String key){

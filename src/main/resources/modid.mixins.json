@@ -20,6 +20,8 @@
     "FileResourcePackMixin",
     "FolderResourcePackMixin",
     "LegacyResourcePackWrapperMixin",
+    "ParticleDiggingMixin",
+    "RenderItemMixin",
     "ResourcePackRepositoryMixin",
     "TextureAtlasMixin",
     "TextureAtlasSpriteMixin"

@@ -10,15 +10,18 @@
   "client": [
     "forge.ForgePathPackResourcesMixin",
     "forge.ResourcePackLoaderMixin",
+    "forge.QuadLighterMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "FilePackResourcesMixin",
+    "ItemRendererMixin",
     "PackMixin",
     "PathPackResourcesMixin",
     "ModelBlockRendererMixin",
     "MultiPartBakedModelMixin",
     "SpriteContentsMixin",
     "SpriteLoaderMixin",
+    "TerrainParticleMixin",
     "TextureAtlasSpriteMixin",
     "WeightedBakedModelMixin"
   ],

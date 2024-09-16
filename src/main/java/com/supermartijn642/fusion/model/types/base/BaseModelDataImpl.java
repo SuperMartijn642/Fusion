@@ -132,7 +132,7 @@ public class BaseModelDataImpl implements BaseModelData {
     }
 
     private void bakeQuads(ModelBakingContext context, ModelInstance<?> model, Deque<ModelInstance<?>> modelStack, Consumer<BaseModelQuad> output){
-        modelStack.push(model);
+        modelStack.addLast(model);
 
         // If the model has elements, bake them
         List<? extends BlockElement> elements = null;
@@ -167,7 +167,7 @@ public class BaseModelDataImpl implements BaseModelData {
                 this.bakeQuads(context, dependency, modelStack, output);
         }
 
-        modelStack.pop();
+        modelStack.removeLast();
     }
 
     protected SpriteIdentifier resolveMaterial(ModelBakingContext context, Deque<ModelInstance<?>> modelStack, String key){

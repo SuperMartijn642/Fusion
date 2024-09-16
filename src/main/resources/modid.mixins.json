@@ -8,12 +8,16 @@
     "forge.DatagenModLoaderMixin"
   ],
   "client": [
+    "forge.LightUtilMixin",
     "forge.ModFileResourcePackMixin",
+    "forge.VertexLighterFlatMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "DiggingParticleMixin",
     "FilePackResourcesMixin",
     "FolderPackResourcesMixin",
     "ItemBlockRenderTypesMixin",
+    "ItemRendererMixin",
     "LegacyResourcePackWrapperMixin",
     "LegacyResourcePackWrapperV4Mixin",
     "MultiPartBakedModelMixin",

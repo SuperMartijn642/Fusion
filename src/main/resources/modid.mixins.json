@@ -13,8 +13,12 @@
     "forge.QuadLighterMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "EntityModelSetMixin",
     "FilePackResourcesMixin",
+    "HierarchicalModelMixin",
     "ItemRendererMixin",
+    "LivingEntityRendererMixin",
+    "ModelPartMixin",
     "PackMixin",
     "PathPackResourcesMixin",
     "ModelBlockRendererMixin",
@@ -23,7 +27,8 @@
     "SpriteLoaderMixin",
     "TerrainParticleMixin",
     "TextureAtlasSpriteMixin",
-    "WeightedBakedModelMixin"
+    "WeightedBakedModelMixin",
+    "WolfModelMixin"
   ],
   "server": [],
   "injectors": {

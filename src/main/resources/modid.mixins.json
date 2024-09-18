@@ -13,16 +13,21 @@
     "fabric.ModNioResourcePackMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "EntityModelSetMixin",
     "FilePackResourcesMixin",
     "FolderPackResourcesMixin",
+    "HierarchicalModelMixin",
     "ItemRendererMixin",
     "LegacyPackResourcesAdapterMixin",
+    "LivingEntityRendererMixin",
     "ModelBlockRendererMixin",
+    "ModelPartMixin",
     "PackMixin",
     "PackResourcesAdapterV4Mixin",
     "TerrainParticleMixin",
     "TextureAtlasMixin",
-    "TextureAtlasSpriteMixin"
+    "TextureAtlasSpriteMixin",
+    "WolfModelMixin"
   ],
   "server": [],
   "injectors": {

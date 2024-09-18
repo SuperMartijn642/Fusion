@@ -27,9 +27,18 @@ accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deseria
 accessible class net/minecraft/client/renderer/block/model/ItemTransform$Deserializer
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
+# ModelPart#Cube
+accessible field net/minecraft/client/model/geom/ModelPart$Cube polygons [Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+# MultiPackResourceManager
+accessible field net/minecraft/server/packs/resources/MultiPackResourceManager packs Ljava/util/List;
+# PartDefinition
+accessible field net/minecraft/client/model/geom/builders/PartDefinition children Ljava/util/Map;
+accessible method net/minecraft/client/model/geom/builders/PartDefinition <init> (Ljava/util/List;Lnet/minecraft/client/model/geom/PartPose;)V
 # PathPackResources
 accessible field net/minecraft/server/packs/PathPackResources LOGGER Lorg/slf4j/Logger;
 accessible method net/minecraft/server/packs/PathPackResources returnFileIfExists (Ljava/nio/file/Path;)Lnet/minecraft/server/packs/resources/IoSupplier;
+# ReloadableResourceManager
+accessible field net/minecraft/server/packs/resources/ReloadableResourceManager resources Lnet/minecraft/server/packs/resources/CloseableResourceManager;
 # SpriteContents
 accessible field net/minecraft/client/renderer/texture/SpriteContents originalImage Lcom/mojang/blaze3d/platform/NativeImage;
 accessible field net/minecraft/client/renderer/texture/SpriteContents byMipLevel [Lcom/mojang/blaze3d/platform/NativeImage;

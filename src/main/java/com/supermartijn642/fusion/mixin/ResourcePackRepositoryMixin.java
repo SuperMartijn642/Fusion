@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.extensions.PackResourcesExtension;
+import com.supermartijn642.fusion.extensions.ResourcePackExtension;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.client.resources.ResourcePackRepository;
@@ -34,7 +34,7 @@ public class ResourcePackRepositoryMixin {
     )
     private void getResourcePack(File file, CallbackInfoReturnable<IResourcePack> ci){
         IResourcePack resources = ci.getReturnValue();
-        if(resources instanceof PackResourcesExtension){
+        if(resources instanceof ResourcePackExtension){
             String overridesFolder;
             try{
                 FusionPackMetadataSection.Data data = resources.getPackMetadata(METADATA_SERIALIZER, FusionPackMetadataSection.INSTANCE.getSectionName());
@@ -47,7 +47,7 @@ public class ResourcePackRepositoryMixin {
                 return;
             }
             if(overridesFolder != null)
-                ((PackResourcesExtension)resources).setFusionOverridesFolder(overridesFolder);
+                ((ResourcePackExtension)resources).setFusionOverridesFolder(overridesFolder);
         }
     }
 }

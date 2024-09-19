@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin.forge;
 
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.extensions.PackResourcesExtension;
+import com.supermartijn642.fusion.extensions.ResourcePackExtension;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.client.resources.data.MetadataSerializer;
@@ -39,7 +39,7 @@ public class FMLClientHandlerMixin {
     private void addModAsResource(ModContainer container, CallbackInfo ci){
         //noinspection DataFlowIssue
         IResourcePack resources = ((FMLClientHandler)(Object)this).getResourcePackFor(container.getModId());
-        if(resources instanceof PackResourcesExtension){
+        if(resources instanceof ResourcePackExtension){
             String overridesFolder;
             try{
                 FusionPackMetadataSection.Data data = resources.getPackMetadata(METADATA_SERIALIZER, FusionPackMetadataSection.INSTANCE.getSectionName());
@@ -52,7 +52,7 @@ public class FMLClientHandlerMixin {
                 return;
             }
             if(overridesFolder != null)
-                ((PackResourcesExtension)resources).setFusionOverridesFolder(overridesFolder);
+                ((ResourcePackExtension)resources).setFusionOverridesFolder(overridesFolder);
         }
     }
 }

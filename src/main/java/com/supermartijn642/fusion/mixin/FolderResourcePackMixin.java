@@ -1,9 +1,11 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Sets;
-import com.supermartijn642.fusion.extensions.PackResourcesExtension;
+import com.supermartijn642.fusion.extensions.ResourcePackExtension;
+import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.resources.AbstractResourcePack;
 import net.minecraft.client.resources.FolderResourcePack;
+import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -16,23 +18,55 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * Created 19/10/2023 by SuperMartijn642
  */
 @Mixin(FolderResourcePack.class)
-public class FolderResourcePackMixin implements PackResourcesExtension {
+public abstract class FolderResourcePackMixin extends AbstractResourcePack implements ResourcePackExtension {
 
     @Unique
     private File overridesFolder;
 
+    public FolderResourcePackMixin(File file){
+        super(file);
+    }
+
     @Override
     public void setFusionOverridesFolder(@Nonnull String folder){
-        //noinspection DataFlowIssue
-        this.overridesFolder = new File(((FolderResourcePack)(Object)this).resourcePackFile, folder);
+        this.overridesFolder = new File(this.resourcePackFile, folder);
+    }
+
+    @Override
+    public Collection<ResourceLocation> fusionGetResources(String folder, int maxDepth, Predicate<String> filter){
+        File assetsFolder = new File(this.resourcePackFile, "assets");
+        File overwritesAssetsFolder = new File(this.overridesFolder, "assets");
+        Set<ResourceLocation> resources = new HashSet<>();
+        for(String namespace : this.getResourceDomains()){
+            this.listResources(new File(new File(assetsFolder, namespace), folder), maxDepth, namespace, resources, folder + "/", filter);
+            this.listResources(new File(new File(overwritesAssetsFolder, namespace), folder), maxDepth, namespace, resources, folder + "/", filter);
+        }
+        return resources;
+    }
+
+    @Unique
+    private void listResources(File currentFolder, int maxDepth, String namespace, Collection<ResourceLocation> resources, String folder, Predicate<String> filter){
+        File[] files = currentFolder.listFiles();
+        if(files != null){
+            for(File file : files){
+                String fileName = file.getName();
+                if(file.isDirectory()){
+                    if(maxDepth > 0)
+                        this.listResources(file, maxDepth - 1, namespace, resources, folder + fileName + "/", filter);
+                }else if(!fileName.endsWith(".mcmeta") && filter.test(fileName) && IdentifierUtil.isValidPath(fileName))
+                    resources.add(new ResourceLocation(namespace, folder + fileName));
+            }
+        }
     }
 
     @Shadow

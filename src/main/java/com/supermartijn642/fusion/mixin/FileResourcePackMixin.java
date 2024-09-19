@@ -2,8 +2,9 @@ package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.supermartijn642.fusion.extensions.PackResourcesExtension;
+import com.supermartijn642.fusion.extensions.ResourcePackExtension;
 import net.minecraft.client.resources.FileResourcePack;
+import net.minecraft.util.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -14,10 +15,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -25,7 +24,7 @@ import java.util.zip.ZipFile;
  * Created 19/10/2023 by SuperMartijn642
  */
 @Mixin(FileResourcePack.class)
-public class FileResourcePackMixin implements PackResourcesExtension {
+public class FileResourcePackMixin implements ResourcePackExtension {
 
     @Unique
     private String overridesFolder;
@@ -35,8 +34,51 @@ public class FileResourcePackMixin implements PackResourcesExtension {
         this.overridesFolder = folder;
     }
 
+    @Override
+    public Collection<ResourceLocation> fusionGetResources(String folder, int maxDepth, Predicate<String> filter){
+        ZipFile zipfile;
+        try{
+            zipfile = this.getResourcePackZipFile();
+        }catch(IOException e){
+            return Collections.emptySet();
+        }
+
+        Set<ResourceLocation> resources = new HashSet<>();
+        String assetsPath = "assets/", overwritesAssetsPath = this.overridesFolder + assetsPath;
+
+        // Go through all files in the zip file
+        Enumeration<? extends ZipEntry> entries = zipfile.entries();
+        while(entries.hasMoreElements()){
+            ZipEntry entry = entries.nextElement();
+            if(entry.isDirectory()) // Check entry is within the assets folder
+                continue;
+            if(entry.getName().endsWith(".mcmeta")) // Ignore metadata files
+                continue;
+            String path;
+            if(entry.getName().startsWith(assetsPath))
+                path = entry.getName().substring(assetsPath.length());
+            else if(entry.getName().startsWith(overwritesAssetsPath))
+                path = entry.getName().substring(overwritesAssetsPath.length());
+            else
+                continue; // Ignore files not in the assets folder
+            int namespaceEnd = path.indexOf('/');
+            if(namespaceEnd < 0) // Ignore any files directly in the assets folder
+                continue;
+            String file = path.substring(namespaceEnd + 1);
+            if(file.startsWith(folder + "/")){
+                String[] fileParts = file.substring(folder.length() + 2).split("/");
+                if(fileParts.length >= maxDepth + 1 && filter.test(file)){
+                    String namespace = path.substring(0, namespaceEnd);
+                    resources.add(new ResourceLocation(namespace, file));
+                }
+            }
+        }
+
+        return resources;
+    }
+
     @Shadow
-    private ZipFile getResourcePackZipFile(){
+    private ZipFile getResourcePackZipFile() throws IOException{
         throw new AssertionError();
     }
 

@@ -20,6 +20,8 @@
     "FileResourcePackMixin",
     "FolderResourcePackMixin",
     "LegacyResourcePackWrapperMixin",
+    "MinecraftMixin",
+    "ModelLoaderMixin",
     "ParticleDiggingMixin",
     "RenderItemMixin",
     "ResourcePackRepositoryMixin",

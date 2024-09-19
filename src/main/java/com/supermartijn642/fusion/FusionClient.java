@@ -7,13 +7,20 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.model.FusionBlockModel;
+import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
 import com.supermartijn642.fusion.predicate.*;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.model.IUnbakedModel;
+import net.minecraft.client.renderer.model.ModelManager;
+import net.minecraft.resources.SimpleReloadableResourceManager;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.event.ParticleFactoryRegisterEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -48,6 +55,26 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> TextureTypeRegistryImpl.finalizeRegistration()); TODO
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModelTypeRegistryImpl.finalizeRegistration());
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
+
+        // Register block model overlay reload listener
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<ParticleFactoryRegisterEvent>)event -> {
+            // Forge's Mixin version doesn't allow for proper constructor mixins, so rather than registering our reload listener
+            // before the model manager in the Minecraft constructor, use the resource manager internals to add it at a specific index
+            SimpleReloadableResourceManager resourceManager = (SimpleReloadableResourceManager)Minecraft.getInstance().getResourceManager();
+            ModelManager modelManager = Minecraft.getInstance().getModelManager();
+            int index = resourceManager.listeners.indexOf(modelManager);
+            if(index == -1){
+                for(int i = 0; i < resourceManager.listeners.size(); i++){
+                    if(resourceManager.listeners.get(i) instanceof ModelManager){
+                        index = i;
+                        break;
+                    }
+                }
+            }
+            if(index == -1)
+                throw new RuntimeException("Fusion could not find model manager in resource manager reload listeners!");
+            resourceManager.listeners.add(index, BlockModelOverlayReloadListener.INSTANCE);
+        });
     }
 
     public static Function<ResourceLocation,IUnbakedModel> getProperModel(Function<ResourceLocation,IUnbakedModel> modelGetter){

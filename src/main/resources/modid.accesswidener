@@ -27,7 +27,11 @@ accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deseria
 accessible class net/minecraft/client/renderer/block/model/ItemTransform$Deserializer
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
-# ModelPart#Cube
+# ModelBakery
+accessible field net/minecraft/client/resources/model/ModelBakery unbakedCache Ljava/util/Map;
+accessible field net/minecraft/client/resources/model/ModelBakery topLevelModels Ljava/util/Map;
+accessible method net/minecraft/client/resources/model/ModelBakery getModel (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/resources/model/UnbakedModel;
+# ModelPart$Cube
 accessible field net/minecraft/client/model/geom/ModelPart$Cube polygons [Lnet/minecraft/client/model/geom/ModelPart$Polygon;
 # MultiPackResourceManager
 accessible field net/minecraft/server/packs/resources/MultiPackResourceManager packs Ljava/util/List;

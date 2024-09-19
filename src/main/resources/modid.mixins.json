@@ -20,9 +20,10 @@
     "ItemRendererMixin",
     "LegacyResourcePackWrapperMixin",
     "LegacyResourcePackWrapperV4Mixin",
+    "ModelBlockRendererMixin",
+    "ModelManagerMixin",
     "MultiPartBakedModelMixin",
     "PackMixin",
-    "ModelBlockRendererMixin",
     "TextureAtlasMixin",
     "TextureAtlasSpriteMixin",
     "WeightedBakedModelMixin"

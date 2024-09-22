@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.model.items.ItemModelPredicatesReloadListener;
 import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelManager;
@@ -9,6 +10,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
  * Created 19/09/2024 by SuperMartijn642
@@ -17,11 +19,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ModelManagerMixin {
 
     @Inject(
-        method = "apply",
+        method = "prepare",
         at = @At("HEAD")
     )
-    private void registerBlockModelOverlays(ModelBakery modelBakery, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci){
-        BlockModelOverlayReloadListener.INSTANCE.registerOverlays(modelBakery);
+    private void loadBlockModelOverlays(ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfoReturnable<ModelBakery> ci){
+        BlockModelOverlayReloadListener.INSTANCE.reload(resourceManager);
+        ItemModelPredicatesReloadListener.INSTANCE.reload(resourceManager);
     }
 
     @Inject(
@@ -34,5 +37,6 @@ public class ModelManagerMixin {
     )
     private void applyBlockModelOverlays(ModelBakery modelBakery, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci){
         BlockModelOverlayReloadListener.INSTANCE.applyOverlays(modelBakery);
+        ItemModelPredicatesReloadListener.INSTANCE.applyPredicateModels(modelBakery);
     }
 }

@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.predicate;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
@@ -25,7 +24,6 @@ public class NotConnectionPredicate implements ConnectionPredicate {
             if(!json.has("predicate") || !json.get("predicate").isJsonObject())
                 throw new JsonParseException("Not-predicate must have object property 'predicate'!");
             // Deserialize the predicate
-            JsonArray array = json.getAsJsonArray("predicates");
             ConnectionPredicate predicate = FusionPredicateRegistry.deserializeConnectionPredicate(json.getAsJsonObject("predicate"));
             return new NotConnectionPredicate(predicate);
         }

@@ -20,9 +20,6 @@ import net.minecraft.init.Blocks;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.RegistrySimple;
-import net.minecraftforge.client.resource.IResourceType;
-import net.minecraftforge.client.resource.ISelectiveResourceReloadListener;
-import net.minecraftforge.client.resource.VanillaResourceType;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import java.io.BufferedReader;
@@ -36,7 +33,7 @@ import java.util.stream.Stream;
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelOverlayReloadListener implements ISelectiveResourceReloadListener {
+public class BlockModelOverlayReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/block_model_overlays";
@@ -70,13 +67,7 @@ public class BlockModelOverlayReloadListener implements ISelectiveResourceReload
         return new ModelResourceLocation(modelLocation, "fusion_overlay_model");
     }
 
-    @Override
-    public void onResourceManagerReload(IResourceManager resourceManager, Predicate<IResourceType> predicate){
-        if(predicate.test(VanillaResourceType.MODELS))
-            this.reload(resourceManager);
-    }
-
-    private void reload(IResourceManager resourceManager){
+    public void reload(IResourceManager resourceManager){
         this.models.clear();
 
         // Find all overlay files
@@ -223,7 +214,7 @@ public class BlockModelOverlayReloadListener implements ISelectiveResourceReload
     /**
      * Copies the listResources behaviour from 1.14+
      */
-    private static Collection<ResourceLocation> listResources(IResourceManager resourceManager, String folder, Predicate<String> predicate){
+    public static Collection<ResourceLocation> listResources(IResourceManager resourceManager, String folder, Predicate<String> predicate){
         if(resourceManager instanceof SimpleReloadableResourceManager){
             Set<ResourceLocation> resources = Sets.newHashSet();
 

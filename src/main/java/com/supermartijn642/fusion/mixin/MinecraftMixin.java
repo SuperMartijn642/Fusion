@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.model.items.ItemModelPredicatesReloadListener;
 import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
@@ -24,6 +25,8 @@ public class MinecraftMixin {
     )
     private void registerBlockModelOverlayReloadListener(CallbackInfo ci){
         //noinspection DataFlowIssue
-        ((ReloadableResourceManager)((Minecraft)(Object)this).getResourceManager()).registerReloadListener(BlockModelOverlayReloadListener.INSTANCE);
+        ReloadableResourceManager resourceManager = ((ReloadableResourceManager)((Minecraft)(Object)this).getResourceManager());
+        resourceManager.registerReloadListener(BlockModelOverlayReloadListener.INSTANCE);
+        resourceManager.registerReloadListener(ItemModelPredicatesReloadListener.INSTANCE);
     }
 }

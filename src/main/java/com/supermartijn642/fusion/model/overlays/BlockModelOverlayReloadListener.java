@@ -47,6 +47,7 @@ public class BlockModelOverlayReloadListener implements PreparableReloadListener
         for(ResourceLocation model : models){
             UnbakedModel unbakedModel = bakery.getModel(model);
             bakery.registerModelAndLoadDependencies(overlayModelLocation(model), unbakedModel);
+            unbakedModel.resolveParents(bakery::getModel);
         }
     }
 
@@ -207,6 +208,6 @@ public class BlockModelOverlayReloadListener implements PreparableReloadListener
 
     @Override
     public String getName(){
-        return "Fusion Model Appender Reload Listener";
+        return "Fusion Block Model Overlay Reload Listener";
     }
 }

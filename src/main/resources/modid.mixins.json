@@ -15,6 +15,7 @@
     "EntityModelSetMixin",
     "FilePackResourcesMixin",
     "HierarchicalModelMixin",
+    "ItemModelShaperMixin",
     "ItemRendererMixin",
     "LivingEntityRendererMixin",
     "MinecraftMixin",

@@ -6,6 +6,8 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.model.items.ItemModelPredicatesReloadListener;
+import com.supermartijn642.fusion.model.items.predicates.*;
 import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.predicate.*;
@@ -52,6 +54,14 @@ public class FusionClient {
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "is_same_state"), IsSameStateConnectionPredicate.SERIALIZER);
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "match_block"), MatchBlockConnectionPredicate.SERIALIZER);
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "match_state"), MatchStateConnectionPredicate.SERIALIZER);
+        // Register default item model predicates
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "and"), AndItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "or"), OrItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "not"), NotItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "count"), CountItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "durability"), DurabilityItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "enchantment"), EnchantmentItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "potion"), PotionItemPredicate.SERIALIZER);
 
         // Finalize registration
 
@@ -77,6 +87,7 @@ public class FusionClient {
             if(index == -1)
                 throw new RuntimeException("Fusion could not find model manager in resource manager reload listeners!");
             resourceManager.listeners.add(index, BlockModelOverlayReloadListener.INSTANCE);
+            resourceManager.listeners.add(index, ItemModelPredicatesReloadListener.INSTANCE);
         });
 
         // Integration with FramedBlocks

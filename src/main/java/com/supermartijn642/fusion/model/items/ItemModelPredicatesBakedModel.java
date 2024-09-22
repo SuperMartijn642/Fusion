@@ -1,6 +1,7 @@
-package com.supermartijn642.fusion.model;
+package com.supermartijn642.fusion.model.items;
 
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
+import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.model.items.predicates.ItemPredicate;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -19,68 +20,78 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /**
- * Created 27/04/2023 by SuperMartijn642
+ * Created 20/09/2024 by SuperMartijn642
  */
-public class WrappedBakedModel implements BakedModel, FabricBakedModel {
+public class ItemModelPredicatesBakedModel implements BakedModel {
 
-    protected final BakedModel original;
+    private final BakedModel defaultModel;
+    private final List<Pair<ItemPredicate,BakedModel>> models;
 
-    public WrappedBakedModel(BakedModel original){
-        this.original = original;
+    public ItemModelPredicatesBakedModel(BakedModel defaultModel, List<Pair<ItemPredicate,BakedModel>> models){
+        this.defaultModel = defaultModel;
+        this.models = models;
+    }
+
+    public BakedModel forStack(ItemStack stack){
+        for(Pair<ItemPredicate,BakedModel> entry : this.models){
+            if(entry.left().test(stack))
+                return entry.right();
+        }
+        return this.defaultModel;
     }
 
     @Override
     public boolean isVanillaAdapter(){
-        return this.original.isVanillaAdapter();
+        return false;
     }
 
     @Override
     public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
-        this.original.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+        this.defaultModel.emitBlockQuads(blockView, state, pos, randomSupplier, context);
     }
 
     @Override
     public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
-        this.original.emitItemQuads(stack, randomSupplier, context);
+        this.defaultModel.emitItemQuads(stack, randomSupplier, context);
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random){
-        return this.original.getQuads(state, direction, random);
+    public List<BakedQuad> getQuads(@Nullable BlockState blockState, @Nullable Direction direction, RandomSource randomSource){
+        return this.defaultModel.getQuads(blockState, direction, randomSource);
     }
 
     @Override
     public boolean useAmbientOcclusion(){
-        return this.original.useAmbientOcclusion();
+        return this.defaultModel.useAmbientOcclusion();
     }
 
     @Override
     public boolean isGui3d(){
-        return this.original.isGui3d();
+        return this.defaultModel.isGui3d();
     }
 
     @Override
     public boolean usesBlockLight(){
-        return this.original.usesBlockLight();
+        return this.defaultModel.usesBlockLight();
     }
 
     @Override
     public boolean isCustomRenderer(){
-        return this.original.isCustomRenderer();
+        return this.defaultModel.isCustomRenderer();
     }
 
     @Override
     public TextureAtlasSprite getParticleIcon(){
-        return this.original.getParticleIcon();
+        return this.defaultModel.getParticleIcon();
     }
 
     @Override
     public ItemTransforms getTransforms(){
-        return this.original.getTransforms();
+        return this.defaultModel.getTransforms();
     }
 
     @Override
     public ItemOverrides getOverrides(){
-        return this.original.getOverrides();
+        return this.defaultModel.getOverrides();
     }
 }

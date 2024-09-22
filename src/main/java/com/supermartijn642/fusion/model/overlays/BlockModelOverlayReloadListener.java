@@ -12,8 +12,6 @@ import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.IUnbakedModel;
 import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.client.renderer.model.ModelResourceLocation;
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.resources.IFutureReloadListener;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.state.Property;
@@ -25,15 +23,13 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelOverlayReloadListener implements IFutureReloadListener {
+public class BlockModelOverlayReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/block_model_overlays";
@@ -67,13 +63,7 @@ public class BlockModelOverlayReloadListener implements IFutureReloadListener {
         }
     }
 
-    @Override
-    public CompletableFuture<Void> reload(IStage barrier, IResourceManager resourceManager, IProfiler profiler, IProfiler profiler2, Executor executor, Executor executor2){
-        return CompletableFuture.runAsync(() -> this.reload(resourceManager))
-            .thenCompose(barrier::wait);
-    }
-
-    private void reload(IResourceManager resourceManager){
+    public void reload(IResourceManager resourceManager){
         this.models.clear();
 
         // Find all overlay files
@@ -218,10 +208,5 @@ public class BlockModelOverlayReloadListener implements IFutureReloadListener {
     private static <T extends Comparable<T>> BlockState stateWithValue(BlockState state, Property<?> property, Object value){
         //noinspection unchecked
         return state.setValue((Property<T>)property, (T)value);
-    }
-
-    @Override
-    public String getName(){
-        return "Fusion Model Appender Reload Listener";
     }
 }

@@ -14,6 +14,7 @@
     "EntityModelSetMixin",
     "FilePackResourcesMixin",
     "HierarchicalModelMixin",
+    "ItemModelShaperMixin",
     "ItemRendererMixin",
     "LivingEntityRendererMixin",
     "ModelBlockRendererMixin",

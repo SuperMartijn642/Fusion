@@ -7,19 +7,12 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
+import com.supermartijn642.fusion.model.items.predicates.*;
 import com.supermartijn642.fusion.predicate.*;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ReloadableResourceManager;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.function.Consumer;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -60,31 +53,19 @@ public class FusionClient {
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "is_same_state"), IsSameStateConnectionPredicate.SERIALIZER);
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "match_block"), MatchBlockConnectionPredicate.SERIALIZER);
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "match_state"), MatchStateConnectionPredicate.SERIALIZER);
+        // Register default item model predicates
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "and"), AndItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "or"), OrItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "not"), NotItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "count"), CountItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "durability"), DurabilityItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "enchantment"), EnchantmentItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "potion"), PotionItemPredicate.SERIALIZER);
 
         // Finalize registration
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> TextureTypeRegistryImpl.finalizeRegistration()); TODO
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModelTypeRegistryImpl.finalizeRegistration());
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
-
-        // Register block model overlay reload listener
-        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<RegisterClientReloadListenersEvent>)event -> {
-            // Forge's Mixin version doesn't allow for proper constructor mixins, so rather than registering our reload listener
-            // before the model manager in the Minecraft constructor, use the resource manager internals to add it at a specific index
-            ReloadableResourceManager resourceManager = (ReloadableResourceManager)Minecraft.getInstance().getResourceManager();
-            ModelManager modelManager = Minecraft.getInstance().getModelManager();
-            int index = resourceManager.listeners.indexOf(modelManager);
-            if(index == -1){
-                for(int i = 0; i < resourceManager.listeners.size(); i++){
-                    if(resourceManager.listeners.get(i) instanceof ModelManager){
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if(index == -1)
-                throw new RuntimeException("Fusion could not find model manager in resource manager reload listeners!");
-            resourceManager.listeners.add(index, BlockModelOverlayReloadListener.INSTANCE);
-        });
     }
 
     public static RenderType getRenderTypeMaterial(BaseTextureData.RenderType renderType){

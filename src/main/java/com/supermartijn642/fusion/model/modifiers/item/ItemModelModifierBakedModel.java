@@ -1,7 +1,7 @@
-package com.supermartijn642.fusion.model.items;
+package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.items.predicates.ItemPredicate;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -23,12 +23,12 @@ import java.util.function.Supplier;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class ItemModelPredicatesBakedModel implements BakedModel, FabricBakedModel {
+public class ItemModelModifierBakedModel implements BakedModel, FabricBakedModel {
 
     private final BakedModel defaultModel;
     private final List<Pair<ItemPredicate,BakedModel>> models;
 
-    public ItemModelPredicatesBakedModel(BakedModel defaultModel, List<Pair<ItemPredicate,BakedModel>> models){
+    public ItemModelModifierBakedModel(BakedModel defaultModel, List<Pair<ItemPredicate,BakedModel>> models){
         this.defaultModel = defaultModel;
         this.models = models;
     }

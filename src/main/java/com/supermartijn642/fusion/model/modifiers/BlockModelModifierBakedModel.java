@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.overlays;
+package com.supermartijn642.fusion.model.modifiers;
 
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
@@ -22,12 +22,12 @@ import java.util.function.Supplier;
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelOverlayBakedModel implements BakedModel, FabricBakedModel {
+public class BlockModelModifierBakedModel implements BakedModel, FabricBakedModel {
 
     private final BakedModel original;
     private final List<BakedModel> models;
 
-    public BlockModelOverlayBakedModel(BakedModel original, List<BakedModel> models){
+    public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models){
         this.original = original;
         this.models = List.copyOf(models);
     }

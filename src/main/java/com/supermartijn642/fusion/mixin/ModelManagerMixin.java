@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.items.ItemModelPredicatesReloadListener;
-import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
+import com.supermartijn642.fusion.model.modifiers.BlockModelModifierReloadListener;
+import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -23,8 +23,8 @@ public class ModelManagerMixin {
         at = @At("HEAD")
     )
     private void loadBlockModelOverlays(ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfoReturnable<ModelBakery> ci){
-        BlockModelOverlayReloadListener.INSTANCE.reload(resourceManager);
-        ItemModelPredicatesReloadListener.INSTANCE.reload(resourceManager);
+        BlockModelModifierReloadListener.INSTANCE.reload(resourceManager);
+        ItemModelModifierReloadListener.INSTANCE.reload(resourceManager);
     }
 
     @Inject(
@@ -36,7 +36,7 @@ public class ModelManagerMixin {
         )
     )
     private void applyBlockModelOverlays(ModelBakery modelBakery, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci){
-        BlockModelOverlayReloadListener.INSTANCE.applyOverlays(modelBakery);
-        ItemModelPredicatesReloadListener.INSTANCE.applyPredicateModels(modelBakery);
+        BlockModelModifierReloadListener.INSTANCE.applyOverlays(modelBakery);
+        ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(modelBakery);
     }
 }

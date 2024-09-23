@@ -7,9 +7,9 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.model.items.ItemModelPredicatesReloadListener;
-import com.supermartijn642.fusion.model.items.predicates.*;
-import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
+import com.supermartijn642.fusion.model.modifiers.BlockModelModifierReloadListener;
+import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.predicate.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
@@ -96,8 +96,8 @@ public class FusionClient {
             }
             if(index == -1)
                 throw new RuntimeException("Fusion could not find model manager in resource manager reload listeners!");
-            resourceManager.listeners.add(index, BlockModelOverlayReloadListener.INSTANCE);
-            resourceManager.listeners.add(index, ItemModelPredicatesReloadListener.INSTANCE);
+            resourceManager.listeners.add(index, BlockModelModifierReloadListener.INSTANCE);
+            resourceManager.listeners.add(index, ItemModelModifierReloadListener.INSTANCE);
         });
 
         // Integration with FramedBlocks

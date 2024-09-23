@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.overlays;
+package com.supermartijn642.fusion.model.modifiers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.RenderType;
@@ -30,7 +30,7 @@ import java.util.stream.IntStream;
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelOverlayBakedModel implements BakedModel {
+public class BlockModelModifierBakedModel implements BakedModel {
 
     private static final Function<SimpleBakedModel,ChunkRenderTypeSet> getBlockRenderTypes;
     private static final Function<SimpleBakedModel,List<RenderType>> getItemRenderTypes, getFabulousItemRenderTypes;
@@ -84,7 +84,7 @@ public class BlockModelOverlayBakedModel implements BakedModel {
     private final List<RenderType> itemRenderTypes, fabulousItemRenderTypes;
     private final boolean addNativeBlockRenderTypes, addNativeItemRenderTypes, addNativeFabulousItemRenderTypes;
 
-    public BlockModelOverlayBakedModel(BakedModel original, List<BakedModel> models){
+    public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models){
         this.original = original;
         this.models = new ArrayList<>(models.size() + 1);
         this.models.add(original);

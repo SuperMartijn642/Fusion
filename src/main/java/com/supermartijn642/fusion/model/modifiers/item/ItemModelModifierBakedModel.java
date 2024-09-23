@@ -1,8 +1,8 @@
-package com.supermartijn642.fusion.model.items;
+package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.items.predicates.ItemPredicate;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -24,12 +24,12 @@ import java.util.List;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class ItemModelPredicatesBakedModel implements BakedModel {
+public class ItemModelModifierBakedModel implements BakedModel {
 
     private final BakedModel defaultModel;
     private final List<Pair<ItemPredicate,BakedModel>> models;
 
-    public ItemModelPredicatesBakedModel(BakedModel defaultModel, List<Pair<ItemPredicate,BakedModel>> models){
+    public ItemModelModifierBakedModel(BakedModel defaultModel, List<Pair<ItemPredicate,BakedModel>> models){
         this.defaultModel = defaultModel;
         this.models = models;
     }

@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.items.ItemModelPredicatesReloadListener;
-import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
+import com.supermartijn642.fusion.model.modifiers.BlockModelModifierReloadListener;
+import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.resources.model.AtlasSet;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelManager;
@@ -25,8 +25,8 @@ public class ModelManagerMixin {
         at = @At("HEAD")
     )
     private void registerBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, CallbackInfoReturnable<?> ci){
-        BlockModelOverlayReloadListener.INSTANCE.registerOverlays(modelBakery);
-        ItemModelPredicatesReloadListener.INSTANCE.registerPredicateModels(modelBakery);
+        BlockModelModifierReloadListener.INSTANCE.registerOverlays(modelBakery);
+        ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(modelBakery);
     }
 
     @Inject(
@@ -38,7 +38,7 @@ public class ModelManagerMixin {
         )
     )
     private void applyBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, CallbackInfoReturnable<?> ci){
-        BlockModelOverlayReloadListener.INSTANCE.applyOverlays(modelBakery);
-        ItemModelPredicatesReloadListener.INSTANCE.applyPredicateModels(modelBakery);
+        BlockModelModifierReloadListener.INSTANCE.applyOverlays(modelBakery);
+        ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(modelBakery);
     }
 }

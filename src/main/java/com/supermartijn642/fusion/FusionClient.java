@@ -8,7 +8,7 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
-import com.supermartijn642.fusion.model.items.predicates.*;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.predicate.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;

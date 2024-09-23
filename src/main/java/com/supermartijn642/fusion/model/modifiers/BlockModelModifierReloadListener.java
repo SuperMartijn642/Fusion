@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.overlays;
+package com.supermartijn642.fusion.model.modifiers;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.*;
@@ -29,16 +29,16 @@ import java.util.stream.Stream;
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelOverlayReloadListener {
+public class BlockModelModifierReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
-    private static final String LOCATION = "fusion/block_model_overlays";
+    private static final String LOCATION = "fusion/model_modifiers/blocks";
 
-    public static final BlockModelOverlayReloadListener INSTANCE = new BlockModelOverlayReloadListener();
+    public static final BlockModelModifierReloadListener INSTANCE = new BlockModelModifierReloadListener();
 
     private final Map<ModelResourceLocation,List<ResourceLocation>> models = new HashMap<>();
 
-    private BlockModelOverlayReloadListener(){
+    private BlockModelModifierReloadListener(){
     }
 
     public void registerOverlays(ModelBakery bakery){
@@ -59,7 +59,7 @@ public class BlockModelOverlayReloadListener {
             IBakedModel targetModel = bakedModels.get(target);
             List<ResourceLocation> overlays = entry.getValue();
             List<IBakedModel> overlayModels = overlays.stream().map(bakedModels::get).collect(Collectors.toList());
-            bakedModels.put(target, new BlockModelOverlayBakedModel(targetModel, overlayModels));
+            bakedModels.put(target, new BlockModelModifierBakedModel(targetModel, overlayModels));
         }
     }
 

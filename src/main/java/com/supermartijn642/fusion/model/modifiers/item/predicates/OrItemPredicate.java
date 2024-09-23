@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.items.predicates;
+package com.supermartijn642.fusion.model.modifiers.item.predicates;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -13,13 +13,13 @@ import java.util.List;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class AndItemPredicate implements ItemPredicate {
+public class OrItemPredicate implements ItemPredicate {
 
-    public static final Serializer<AndItemPredicate> SERIALIZER = new Serializer<AndItemPredicate>() {
+    public static final Serializer<OrItemPredicate> SERIALIZER = new Serializer<OrItemPredicate>() {
         @Override
-        public AndItemPredicate deserialize(JsonObject json) throws JsonParseException{
+        public OrItemPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("predicates") || !json.get("predicates").isJsonArray())
-                throw new JsonParseException("And-predicate must have array property 'predicates'!");
+                throw new JsonParseException("Or-predicate must have array property 'predicates'!");
             List<ItemPredicate> predicates = new ArrayList<>();
             // Deserialize all the predicates from the 'predicates' array
             JsonArray array = json.getAsJsonArray("predicates");
@@ -29,11 +29,11 @@ public class AndItemPredicate implements ItemPredicate {
                 ItemPredicate predicate = ItemPredicateRegistry.deserializeItemPredicate(element.getAsJsonObject());
                 predicates.add(predicate);
             }
-            return new AndItemPredicate(predicates);
+            return new OrItemPredicate(predicates);
         }
 
         @Override
-        public JsonObject serialize(AndItemPredicate value){
+        public JsonObject serialize(OrItemPredicate value){
             JsonObject json = new JsonObject();
             // Create an array with all the serialized predicates
             JsonArray predicatesJson = new JsonArray();
@@ -46,17 +46,17 @@ public class AndItemPredicate implements ItemPredicate {
 
     private final List<ItemPredicate> predicates;
 
-    public AndItemPredicate(List<ItemPredicate> predicates){
+    public OrItemPredicate(List<ItemPredicate> predicates){
         this.predicates = predicates;
     }
 
     @Override
     public boolean test(ItemStack stack){
         for(ItemPredicate predicate : this.predicates){
-            if(!predicate.test(stack))
-                return false;
+            if(predicate.test(stack))
+                return true;
         }
-        return true;
+        return false;
     }
 
     @Override

@@ -7,7 +7,7 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.model.FusionBlockModel;
-import com.supermartijn642.fusion.model.items.predicates.*;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.predicate.*;
 import net.minecraft.client.renderer.model.IUnbakedModel;
 import net.minecraft.util.BlockRenderLayer;

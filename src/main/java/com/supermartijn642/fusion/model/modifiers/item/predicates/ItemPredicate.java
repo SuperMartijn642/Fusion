@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.items.predicates;
+package com.supermartijn642.fusion.model.modifiers.item.predicates;
 
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.item.ItemStack;

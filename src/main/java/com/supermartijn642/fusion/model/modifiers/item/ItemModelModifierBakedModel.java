@@ -1,7 +1,7 @@
-package com.supermartijn642.fusion.model.items;
+package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.items.predicates.ItemPredicate;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
@@ -23,12 +23,12 @@ import java.util.Random;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class ItemModelPredicatesBakedModel implements IBakedModel {
+public class ItemModelModifierBakedModel implements IBakedModel {
 
     private final IBakedModel defaultModel;
     private final List<Pair<ItemPredicate,IBakedModel>> models;
 
-    public ItemModelPredicatesBakedModel(IBakedModel defaultModel, List<Pair<ItemPredicate,IBakedModel>> models){
+    public ItemModelModifierBakedModel(IBakedModel defaultModel, List<Pair<ItemPredicate,IBakedModel>> models){
         this.defaultModel = defaultModel;
         this.models = models;
     }

@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.items.ItemModelPredicatesReloadListener;
-import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
+import com.supermartijn642.fusion.model.modifiers.BlockModelModifierReloadListener;
+import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.renderer.model.ModelBakery;
 import net.minecraft.client.renderer.model.ModelResourceLocation;
 import org.spongepowered.asm.mixin.Final;
@@ -29,8 +29,8 @@ public class ModelBakeryMixin {
         if(location == MISSING_MODEL_LOCATION){
             //noinspection DataFlowIssue
             ModelBakery modelBakery = (ModelBakery)(Object)this;
-            BlockModelOverlayReloadListener.INSTANCE.registerOverlays(modelBakery);
-            ItemModelPredicatesReloadListener.INSTANCE.registerPredicateModels(modelBakery);
+            BlockModelModifierReloadListener.INSTANCE.registerOverlays(modelBakery);
+            ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(modelBakery);
         }
     }
 }

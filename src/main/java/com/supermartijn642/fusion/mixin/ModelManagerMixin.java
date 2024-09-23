@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.items.ItemModelPredicatesReloadListener;
-import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
+import com.supermartijn642.fusion.model.modifiers.BlockModelModifierReloadListener;
+import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.renderer.block.model.ModelManager;
 import net.minecraft.client.resources.IResourceManager;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +20,7 @@ public class ModelManagerMixin {
         at = @At("HEAD")
     )
     private void loadBlockModelOverlays(IResourceManager resourceManager, CallbackInfo ci){
-        BlockModelOverlayReloadListener.INSTANCE.reload(resourceManager);
-        ItemModelPredicatesReloadListener.INSTANCE.reload(resourceManager);
+        BlockModelModifierReloadListener.INSTANCE.reload(resourceManager);
+        ItemModelModifierReloadListener.INSTANCE.reload(resourceManager);
     }
 }

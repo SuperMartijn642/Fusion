@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.overlays;
+package com.supermartijn642.fusion.model.modifiers;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -33,23 +33,23 @@ import java.util.stream.Stream;
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelOverlayReloadListener {
+public class BlockModelModifierReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
-    private static final String LOCATION = "fusion/block_model_overlays";
+    private static final String LOCATION = "fusion/model_modifiers/blocks";
 
-    public static final BlockModelOverlayReloadListener INSTANCE = new BlockModelOverlayReloadListener();
+    public static final BlockModelModifierReloadListener INSTANCE = new BlockModelModifierReloadListener();
 
     private final Map<ModelResourceLocation,List<ResourceLocation>> models = new HashMap<>();
 
-    private BlockModelOverlayReloadListener(){
+    private BlockModelModifierReloadListener(){
     }
 
     public List<ModelResourceLocation> registerOverlays(){
         Set<ResourceLocation> models = new HashSet<>();
         for(List<ResourceLocation> list : this.models.values())
             models.addAll(list);
-        return models.stream().map(BlockModelOverlayReloadListener::overlayModelLocation).collect(Collectors.toList());
+        return models.stream().map(BlockModelModifierReloadListener::overlayModelLocation).collect(Collectors.toList());
     }
 
     public void applyOverlays(ModelBakery bakery){
@@ -58,8 +58,8 @@ public class BlockModelOverlayReloadListener {
             ModelResourceLocation target = entry.getKey();
             IBakedModel targetModel = bakedModels.getObject(target);
             List<ResourceLocation> overlays = entry.getValue();
-            List<IBakedModel> overlayModels = overlays.stream().map(BlockModelOverlayReloadListener::overlayModelLocation).map(bakedModels::getObject).collect(Collectors.toList());
-            bakedModels.putObject(target, new BlockModelOverlayBakedModel(targetModel, overlayModels));
+            List<IBakedModel> overlayModels = overlays.stream().map(BlockModelModifierReloadListener::overlayModelLocation).map(bakedModels::getObject).collect(Collectors.toList());
+            bakedModels.putObject(target, new BlockModelModifierBakedModel(targetModel, overlayModels));
         }
     }
 

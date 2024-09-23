@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.items.predicates;
+package com.supermartijn642.fusion.model.modifiers.item.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;

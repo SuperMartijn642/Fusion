@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.overlays;
+package com.supermartijn642.fusion.model.modifiers;
 
 import com.google.common.collect.ImmutableList;
 import net.minecraft.block.state.IBlockState;
@@ -17,7 +17,7 @@ import java.util.stream.IntStream;
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelOverlayBakedModel implements IBakedModel {
+public class BlockModelModifierBakedModel implements IBakedModel {
 
     private final IBakedModel original;
     private final List<IBakedModel> models;
@@ -27,7 +27,7 @@ public class BlockModelOverlayBakedModel implements IBakedModel {
     @SuppressWarnings("unchecked")
     private final List<BakedQuad>[] culledQuads = new List[6];
 
-    public BlockModelOverlayBakedModel(IBakedModel original, List<IBakedModel> models){
+    public BlockModelModifierBakedModel(IBakedModel original, List<IBakedModel> models){
         this.original = original;
         this.models = new ArrayList<>(models.size() + 1);
         this.models.add(original);

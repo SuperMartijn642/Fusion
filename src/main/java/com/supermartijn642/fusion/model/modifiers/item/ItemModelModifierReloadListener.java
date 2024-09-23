@@ -1,12 +1,12 @@
-package com.supermartijn642.fusion.model.items;
+package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.items.predicates.AndItemPredicate;
-import com.supermartijn642.fusion.model.items.predicates.ItemPredicate;
-import com.supermartijn642.fusion.model.items.predicates.ItemPredicateRegistry;
-import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
+import com.supermartijn642.fusion.model.modifiers.BlockModelModifierReloadListener;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.AndItemPredicate;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateRegistry;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelBakery;
@@ -29,23 +29,23 @@ import java.util.stream.Collectors;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class ItemModelPredicatesReloadListener {
+public class ItemModelModifierReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
-    private static final String LOCATION = "fusion/item_model_predicates";
+    private static final String LOCATION = "fusion/model_modifiers/items";
 
-    public static final ItemModelPredicatesReloadListener INSTANCE = new ItemModelPredicatesReloadListener();
+    public static final ItemModelModifierReloadListener INSTANCE = new ItemModelModifierReloadListener();
 
     private final Map<ModelResourceLocation,ItemModelPredicatesProperties> models = new HashMap<>();
 
-    private ItemModelPredicatesReloadListener(){
+    private ItemModelModifierReloadListener(){
     }
 
     public List<ModelResourceLocation> registerPredicateModels(){
         Set<ResourceLocation> models = new HashSet<>();
         for(ItemModelPredicatesProperties properties : this.models.values())
             models.addAll(properties.dependencies());
-        return models.stream().map(ItemModelPredicatesReloadListener::predicateModelLocation).collect(Collectors.toList());
+        return models.stream().map(ItemModelModifierReloadListener::predicateModelLocation).collect(Collectors.toList());
     }
 
     public void applyPredicateModels(ModelBakery bakery){
@@ -55,9 +55,9 @@ public class ItemModelPredicatesReloadListener {
             ItemModelPredicatesProperties properties = entry.getValue();
             IBakedModel defaultModel = properties.defaultModel == null ? bakedModels.getObject(target) : bakedModels.getObject(predicateModelLocation(properties.defaultModel));
             List<Pair<ItemPredicate,IBakedModel>> models = properties.models.stream()
-                .map(pair -> pair.mapRight(ItemModelPredicatesReloadListener::predicateModelLocation).mapRight(bakedModels::getObject))
+                .map(pair -> pair.mapRight(ItemModelModifierReloadListener::predicateModelLocation).mapRight(bakedModels::getObject))
                 .collect(Collectors.toList());
-            bakedModels.putObject(target, new ItemModelPredicatesBakedModel(defaultModel, models));
+            bakedModels.putObject(target, new ItemModelModifierBakedModel(defaultModel, models));
         }
     }
 
@@ -71,7 +71,7 @@ public class ItemModelPredicatesReloadListener {
 
         // Find all item model predicate files
         Map<ResourceLocation,JsonElement> resources = new HashMap<>();
-        for(ResourceLocation fullLocation : BlockModelOverlayReloadListener.listResources(resourceManager, LOCATION, s -> s.endsWith(".json"))){
+        for(ResourceLocation fullLocation : BlockModelModifierReloadListener.listResources(resourceManager, LOCATION, s -> s.endsWith(".json"))){
             ResourceLocation location = new ResourceLocation(fullLocation.getResourceDomain(), fullLocation.getResourcePath().substring(LOCATION.length() + 1, fullLocation.getResourcePath().length() - ".json".length()));
             try(IResource resource = resourceManager.getResource(fullLocation)){
                 Reader reader = new BufferedReader(new InputStreamReader(resource.getInputStream()));

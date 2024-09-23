@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.items.ItemModelPredicatesReloadListener;
-import com.supermartijn642.fusion.model.overlays.BlockModelOverlayReloadListener;
+import com.supermartijn642.fusion.model.modifiers.BlockModelModifierReloadListener;
+import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.util.ResourceLocation;
@@ -41,8 +41,8 @@ public class ModelLoaderMixin {
         )
     )
     private void loadModelsInject(CallbackInfoReturnable<?> ci){
-        Set<ModelResourceLocation> models = new HashSet<>(BlockModelOverlayReloadListener.INSTANCE.registerOverlays());
-        models.addAll(ItemModelPredicatesReloadListener.INSTANCE.registerPredicateModels());
+        Set<ModelResourceLocation> models = new HashSet<>(BlockModelModifierReloadListener.INSTANCE.registerOverlays());
+        models.addAll(ItemModelModifierReloadListener.INSTANCE.registerPredicateModels());
         for(ModelResourceLocation modelLocation : models){
             IModel model;
             try{
@@ -62,7 +62,7 @@ public class ModelLoaderMixin {
     private void applyBakedModels(CallbackInfoReturnable<?> ci){
         //noinspection DataFlowIssue
         ModelBakery bakery = (ModelBakery)(Object)this;
-        BlockModelOverlayReloadListener.INSTANCE.applyOverlays(bakery);
-        ItemModelPredicatesReloadListener.INSTANCE.applyPredicateModels(bakery);
+        BlockModelModifierReloadListener.INSTANCE.applyOverlays(bakery);
+        ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(bakery);
     }
 }

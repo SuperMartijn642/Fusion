@@ -1,11 +1,11 @@
-package com.supermartijn642.fusion.model.items;
+package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.items.predicates.AndItemPredicate;
-import com.supermartijn642.fusion.model.items.predicates.ItemPredicate;
-import com.supermartijn642.fusion.model.items.predicates.ItemPredicateRegistry;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.AndItemPredicate;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
+import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateRegistry;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBakery;
@@ -27,16 +27,16 @@ import java.util.*;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class ItemModelPredicatesReloadListener {
+public class ItemModelModifierReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
-    private static final String LOCATION = "fusion/item_model_predicates";
+    private static final String LOCATION = "fusion/model_modifiers/items";
 
-    public static final ItemModelPredicatesReloadListener INSTANCE = new ItemModelPredicatesReloadListener();
+    public static final ItemModelModifierReloadListener INSTANCE = new ItemModelModifierReloadListener();
 
     private final Map<ModelResourceLocation,ItemModelPredicatesProperties> models = new HashMap<>();
 
-    private ItemModelPredicatesReloadListener(){
+    private ItemModelModifierReloadListener(){
     }
 
     public void registerPredicateModels(ModelBakery bakery){
@@ -59,7 +59,7 @@ public class ItemModelPredicatesReloadListener {
             List<Pair<ItemPredicate,BakedModel>> models = properties.models.stream()
                 .map(pair -> pair.mapRight(bakedModels::get))
                 .toList();
-            bakedModels.put(target, new ItemModelPredicatesBakedModel(defaultModel, models));
+            bakedModels.put(target, new ItemModelModifierBakedModel(defaultModel, models));
         }
     }
 

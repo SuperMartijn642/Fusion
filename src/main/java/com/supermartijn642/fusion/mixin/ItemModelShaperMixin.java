@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.items.ItemModelPredicatesBakedModel;
+import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierBakedModel;
 import net.minecraft.client.renderer.ItemModelMesher;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.item.ItemStack;
@@ -22,7 +22,7 @@ public class ItemModelShaperMixin {
     )
     public void resolveItemPredicatesModel(ItemStack stack, CallbackInfoReturnable<IBakedModel> ci){
         IBakedModel model = ci.getReturnValue();
-        if(model instanceof ItemModelPredicatesBakedModel)
-            ci.setReturnValue(((ItemModelPredicatesBakedModel)model).forStack(stack));
+        if(model instanceof ItemModelModifierBakedModel)
+            ci.setReturnValue(((ItemModelModifierBakedModel)model).forStack(stack));
     }
 }

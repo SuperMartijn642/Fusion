@@ -29,15 +29,35 @@ accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deseria
 accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_TRANSLATION Lcom/mojang/math/Vector3f; # DEFAULT_TRANSLATION
 accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_SCALE Lcom/mojang/math/Vector3f; # DEFAULT_SCALE
 accessible class net/minecraft/client/renderer/block/model/ItemTransform$Deserializer
+# LayerDefinition
+accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init> (Lnet/minecraft/client/model/geom/builders/MeshDefinition;Lnet/minecraft/client/model/geom/builders/MaterialDefinition;)V
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
 # ModelBakery
 accessible field net/minecraft/client/resources/model/ModelBakery unbakedCache Ljava/util/Map;
 accessible field net/minecraft/client/resources/model/ModelBakery topLevelModels Ljava/util/Map;
 accessible method net/minecraft/client/resources/model/ModelBakery getModel (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/resources/model/UnbakedModel;
+# ModelLayers
+accessible field net/minecraft/client/model/geom/ModelLayers ALL_MODELS Ljava/util/Set;
+# ModelPart
+accessible field net/minecraft/client/model/geom/ModelPart children Ljava/util/Map;
+accessible field net/minecraft/client/model/geom/ModelPart cubes Ljava/util/List;
+accessible field net/minecraft/client/model/geom/ModelPart initialPose Lnet/minecraft/client/model/geom/PartPose;
+mutable field net/minecraft/client/model/geom/ModelPart children Ljava/util/Map;
+mutable field net/minecraft/client/model/geom/ModelPart cubes Ljava/util/List;
+extendable class net/minecraft/client/model/geom/ModelPart
 # ModelPart$Cube
 accessible field net/minecraft/client/model/geom/ModelPart$Cube polygons [Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+mutable field net/minecraft/client/model/geom/ModelPart$Cube maxX F
+mutable field net/minecraft/client/model/geom/ModelPart$Cube maxY F
+mutable field net/minecraft/client/model/geom/ModelPart$Cube maxZ F
+mutable field net/minecraft/client/model/geom/ModelPart$Cube minX F
+mutable field net/minecraft/client/model/geom/ModelPart$Cube minY F
+mutable field net/minecraft/client/model/geom/ModelPart$Cube minZ F
 mutable field net/minecraft/client/model/geom/ModelPart$Cube polygons [Lnet/minecraft/client/model/geom/ModelPart$Polygon;
+# ModelPart$Polygon
+mutable field net/minecraft/client/model/geom/ModelPart$Polygon vertices [Lnet/minecraft/client/model/geom/ModelPart$Vertex;
+mutable field net/minecraft/client/model/geom/ModelPart$Polygon normal Lcom/mojang/math/Vector3f;
 # MultiPackResourceManager
 accessible field net/minecraft/server/packs/resources/MultiPackResourceManager packs Ljava/util/List;
 # PartDefinition
@@ -47,6 +67,19 @@ accessible method net/minecraft/client/model/geom/builders/PartDefinition <init>
 accessible method com/mojang/blaze3d/platform/NativeImage <init> (Lcom/mojang/blaze3d/platform/NativeImage$Format;IIZJ)V
 # ReloadableResourceManager
 accessible field net/minecraft/server/packs/resources/ReloadableResourceManager resources Lnet/minecraft/server/packs/resources/CloseableResourceManager;
+# RenderStateShard
+accessible field net/minecraft/client/renderer/RenderStateShard name Ljava/lang/String;
+# RenderStateShard$EmptyTextureStateShard
+accessible class net/minecraft/client/renderer/RenderStateShard$EmptyTextureStateShard
+# RenderStateShard$TextureStateShard
+accessible field net/minecraft/client/renderer/RenderStateShard$TextureStateShard texture Ljava/util/Optional;
+# RenderType$CompositeRenderType
+accessible field net/minecraft/client/renderer/RenderType$CompositeRenderType state Lnet/minecraft/client/renderer/RenderType$CompositeState;
+# RenderType$CompositeState
+accessible field net/minecraft/client/renderer/RenderType$CompositeState outlineProperty Lnet/minecraft/client/renderer/RenderType$OutlineProperty;
+accessible field net/minecraft/client/renderer/RenderType$CompositeState textureState Lnet/minecraft/client/renderer/RenderStateShard$EmptyTextureStateShard;
+# RenderType$OutlineProperty
+accessible class net/minecraft/client/renderer/RenderType$OutlineProperty
 # TextureAtlasSprite
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite animatedTexture Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture;
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite mainImage [Lcom/mojang/blaze3d/platform/NativeImage;

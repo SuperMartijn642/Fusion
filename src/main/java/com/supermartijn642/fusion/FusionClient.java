@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.predicate.*;
@@ -62,6 +63,14 @@ public class FusionClient implements ClientModInitializer {
         ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "durability"), DurabilityItemPredicate.SERIALIZER);
         ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "enchantment"), EnchantmentItemPredicate.SERIALIZER);
         ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "potion"), PotionItemPredicate.SERIALIZER);
+        // Register default entity model predicates
+        EntityModelPredicateRegistry.registerEntityModelPredicate(new ResourceLocation("fusion", "and"), AndEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(new ResourceLocation("fusion", "or"), OrEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(new ResourceLocation("fusion", "not"), NotEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(new ResourceLocation("fusion", "altitude"), AltitudeEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(new ResourceLocation("fusion", "is_baby"), BabyEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(new ResourceLocation("fusion", "biome"), BiomeEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(new ResourceLocation("fusion", "dimension"), DimensionEntityModelPredicate.SERIALIZER);
 
         // Add Fusion's metadata section
         SpriteLoader.DEFAULT_METADATA_SECTIONS = ImmutableSet.<MetadataSectionSerializer<?>>builder()

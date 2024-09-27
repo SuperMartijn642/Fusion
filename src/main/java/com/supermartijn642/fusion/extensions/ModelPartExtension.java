@@ -5,7 +5,5 @@ package com.supermartijn642.fusion.extensions;
  */
 public interface ModelPartExtension {
 
-    boolean isFusionModelPart();
-
-    void setFusionModelPart();
+    boolean hasFusionChild(String name);
 }

@@ -1,0 +1,90 @@
+package com.supermartijn642.fusion.entity.model.predicates;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.util.Serializer;
+import com.supermartijn642.fusion.util.IdentifierUtil;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * Created 20/09/2024 by SuperMartijn642
+ */
+public class BiomeEntityModelPredicate implements EntityModelPredicate {
+
+    public static final Serializer<BiomeEntityModelPredicate> SERIALIZER = new Serializer<>() {
+        @Override
+        public BiomeEntityModelPredicate deserialize(JsonObject json) throws JsonParseException{
+            if(!json.has("biomes") || !json.get("biomes").isJsonArray())
+                throw new JsonParseException("Biome-predicate must have array property 'biomes'!");
+            Set<ResourceLocation> biomes = new HashSet<>();
+            for(JsonElement element : json.getAsJsonArray("biomes")){
+                if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                    throw new JsonParseException("Array property 'biomes' must only contain strings!");
+                if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                    throw new JsonParseException("Biome entries must be a valid identifier, not '" + element.getAsString() + "'!");
+                biomes.add(new ResourceLocation(element.getAsString()));
+            }
+            return new BiomeEntityModelPredicate(biomes);
+        }
+
+        @Override
+        public JsonObject serialize(BiomeEntityModelPredicate value){
+            JsonObject json = new JsonObject();
+            JsonArray biomes = new JsonArray(value.biomes.size());
+            value.biomes.stream()
+                .map(ResourceLocation::toString)
+                .sorted()
+                .forEach(biomes::add);
+            json.add("biomes", biomes);
+            return json;
+        }
+    };
+
+    private final Set<ResourceLocation> biomes;
+    private RegistryAccess registry;
+    private Set<Holder<Biome>> holders;
+
+    public BiomeEntityModelPredicate(Set<ResourceLocation> biomes){
+        this.biomes = Set.copyOf(biomes);
+    }
+
+    @Override
+    public boolean test(Entity entity){
+        if(this.biomes.isEmpty())
+            return false;
+        Level level = entity.level();
+        if(level == null || !level.hasBiomes())
+            return false;
+        if(level.registryAccess() != this.registry){
+            this.registry = level.registryAccess();
+            Registry<Biome> biomeRegistry = this.registry.registryOrThrow(Registries.BIOME);
+            ImmutableSet.Builder<Holder<Biome>> builder = ImmutableSet.builder();
+            for(ResourceLocation biome : this.biomes)
+                biomeRegistry.getHolder(ResourceKey.create(Registries.BIOME, biome)).ifPresent(builder::add);
+            this.holders = builder.build();
+        }
+        if(this.holders == null || this.holders.isEmpty())
+            return false;
+        Holder<Biome> biome = level.getBiome(entity.blockPosition());
+        return biome != null && this.holders.contains(biome);
+    }
+
+    @Override
+    public Serializer<? extends EntityModelPredicate> getSerializer(){
+        return SERIALIZER;
+    }
+}

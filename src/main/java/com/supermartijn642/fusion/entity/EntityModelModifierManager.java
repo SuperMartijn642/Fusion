@@ -58,7 +58,7 @@ public class EntityModelModifierManager {
                 Set<ResourceLocation> missingModels = new HashSet<>();
                 // Get the default models and textures
                 List<EntityLayerProperties.ModelOption> defaultModels = rawLayer.defaultModel.model == null ?
-                    bakeModelOptions(layerIdentifier, List.of(new EntityModelModifierReloadListener.ModelOption(Either.left(FusionEntityModelLoader.locationForLayer(layerIdentifier)), null, null, null, null, null, null, null, null)), null, rawLayer.defaultModel, vanillaModels, missingModels) :
+                    bakeModelOptions(layerIdentifier, List.of(new EntityModelModifierReloadListener.ModelOption(Either.left(FusionEntityModelLoader.locationForLayer(layerIdentifier)), null, null, null, null, null, null, null, null, 1)), null, rawLayer.defaultModel, vanillaModels, missingModels) :
                     bakeModelOptions(layerIdentifier, List.of(rawLayer.defaultModel), null, rawLayer.defaultModel, vanillaModels, missingModels);
                 if(defaultModels == null)
                     continue;

@@ -160,7 +160,7 @@ public class EntityModelModifierReloadListener {
         if(element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()){
             if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                 throw new JsonParseException("Property '" + propertyName + "' must be a valid identifier, not '" + element.getAsString() + "'!");
-            return new ModelOption(Either.left(ResourceLocation.parse(element.getAsString())), null, null, null, null, null, null, null, null);
+            return new ModelOption(Either.left(ResourceLocation.parse(element.getAsString())), null, null, null, null, null, null, null, null, 1);
         }
         if(element.isJsonObject()){
             JsonObject json = element.getAsJsonObject();
@@ -216,12 +216,21 @@ public class EntityModelModifierReloadListener {
             Float scale = null;
             if(json.has("scale")){
                 if(!json.get("scale").isJsonPrimitive() || !json.getAsJsonPrimitive("scale").isNumber())
-                    throw new JsonParseException("Property 'scale' in layer must be a number!");
+                    throw new JsonParseException("Property 'scale' must be a number!");
                 scale = json.get("scale").getAsFloat();
                 if(scale <= 0)
-                    throw new JsonParseException("Property 'scale' in layer must be greater than zero!");
+                    throw new JsonParseException("Property 'scale' must be greater than zero!");
             }
-            return new ModelOption(model, textures, flipX, flipY, flipZ, offsetX, offsetY, offsetZ, scale);
+            // Weight
+            float weight = 1;
+            if(json.has("weight")){
+                if(!json.get("weight").isJsonPrimitive() || !json.getAsJsonPrimitive("weight").isNumber())
+                    throw new JsonParseException("Property 'weight' must be a number!");
+                weight = json.get("weight").getAsFloat();
+                if(weight <= 0)
+                    throw new JsonParseException("Property 'weight' must be greater than zero!");
+            }
+            return new ModelOption(model, textures, flipX, flipY, flipZ, offsetX, offsetY, offsetZ, scale, weight);
         }
         throw new JsonParseException("Property '" + propertyName + "' must be a string or an object!");
     }
@@ -286,9 +295,9 @@ public class EntityModelModifierReloadListener {
         public final Boolean flipX, flipY, flipZ;
         public final Float offsetX, offsetY, offsetZ;
         public final Float scale;
-        public final double weight = 1;
+        public final double weight;
 
-        public ModelOption(Either<ResourceLocation,List<ModelOption>> model, List<ResourceLocation> textures, Boolean flipX, Boolean flipY, Boolean flipZ, Float offsetX, Float offsetY, Float offsetZ, Float scale){
+        public ModelOption(Either<ResourceLocation,List<ModelOption>> model, List<ResourceLocation> textures, Boolean flipX, Boolean flipY, Boolean flipZ, Float offsetX, Float offsetY, Float offsetZ, Float scale, float weight){
             this.model = model;
             this.textures = textures;
             this.flipX = flipX;
@@ -298,6 +307,7 @@ public class EntityModelModifierReloadListener {
             this.offsetY = offsetY;
             this.offsetZ = offsetZ;
             this.scale = scale;
+            this.weight = weight;
         }
 
         void gatherModelLocations(Consumer<ResourceLocation> output){

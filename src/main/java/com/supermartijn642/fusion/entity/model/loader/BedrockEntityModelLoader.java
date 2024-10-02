@@ -5,12 +5,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.extensions.ModelPartExtension;
+import com.supermartijn642.fusion.entity.model.DummyModelPart;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.LayerDefinition;
-import net.minecraft.client.model.geom.builders.MeshDefinition;
-import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.core.Direction;
 
 import java.util.*;
@@ -21,7 +18,7 @@ import java.util.stream.Collectors;
  */
 public class BedrockEntityModelLoader implements EntityModelLoader {
     @Override
-    public LayerDefinition loadModel(JsonObject json){
+    public ModelPart loadModel(JsonObject json){
         // Read the schema version
         if(!json.has("format_version"))
             throw new JsonParseException("Missing 'format_version'!");
@@ -30,7 +27,7 @@ public class BedrockEntityModelLoader implements EntityModelLoader {
         SchemaVersion version = SchemaVersion.fromName(json.get("format_version").getAsString());
         if(version == null)
             throw new JsonParseException("Unknown 'format_version': '" + json.get("format_version").getAsString() + "'!");
-        if(version == SchemaVersion.V1_8_0)
+        if(version.ordinal() < SchemaVersion.V1_12_0.ordinal())
             throw new JsonParseException("Unsupported 'format_version': '" + version + "'!");
         if(version.ordinal() > SchemaVersion.V1_12_0.ordinal())
             FusionClient.LOGGER.warn("Found an entity model with schema version '{}'. In case the model does not load as expected, please report it as a bug to Fusion!", version);
@@ -50,17 +47,7 @@ public class BedrockEntityModelLoader implements EntityModelLoader {
         JsonObject geometryJson = geometryArray.get(0).getAsJsonObject();
         // Read the geometry
         Geometry geometry = readGeometry(version, geometryJson);
-        return LayerDefinition.create(new MeshDefinition() {
-            @Override
-            public PartDefinition getRoot(){
-                return new PartDefinition(Collections.emptyList(), PartPose.ZERO) {
-                    @Override
-                    public ModelPart bake(int textureWidth, int textureHeight){
-                        return geometry.bake(textureWidth, textureHeight);
-                    }
-                };
-            }
-        }, geometry.textureWidth, geometry.textureHeight);
+        return geometry.bake();
     }
 
     private static Geometry readGeometry(SchemaVersion version, JsonObject json){
@@ -162,7 +149,7 @@ public class BedrockEntityModelLoader implements EntityModelLoader {
         }
 
         // Cubes
-        List<Cube> cubes = Collections.emptyList();
+        List<Cube> cubes = List.of();
         if(json.has("cubes")){
             if(!json.get("cubes").isJsonArray())
                 throw new JsonParseException("Bone property 'cubes' must be an array!");
@@ -343,16 +330,13 @@ public class BedrockEntityModelLoader implements EntityModelLoader {
             this.bones = bones;
         }
 
-        public ModelPart bake(int textureWidth, int textureHeight){
+        public ModelPart bake(){
             Map<String,ModelPart> children = this.bones.stream()
-                .collect(Collectors.toUnmodifiableMap(b -> b.name, b -> b.bake(this.textureWidth, this.textureHeight, textureWidth, textureHeight)));
-            ModelPart part = new ModelPart(
-                Collections.emptyList(),
+                .collect(Collectors.toUnmodifiableMap(b -> b.name, b -> b.bake(this.textureWidth, this.textureHeight)));
+            return new ModelPart(
+                List.of(),
                 children
             );
-            //noinspection DataFlowIssue
-            ((ModelPartExtension)(Object)part).setFusionModelPart();
-            return part;
         }
     }
 
@@ -376,19 +360,19 @@ public class BedrockEntityModelLoader implements EntityModelLoader {
             this.cubes = cubes;
         }
 
-        public ModelPart bake(int originalTextureWidth, int originalTextureHeight, int targetTextureWidth, int targetTextureHeight){
+        public ModelPart bake(int textureWidth, int textureHeight){
             // Bake all the children
             Map<String,ModelPart> children = new HashMap<>();
             for(Bone child : this.children){
                 children.put(
                     child.name,
-                    child.bake(originalTextureWidth, originalTextureHeight, targetTextureWidth, targetTextureHeight)
+                    child.bake(textureWidth, textureHeight)
                 );
             }
             // Bake the cube and add their model parts to the children
             int index = 0;
             for(Cube cube : this.cubes){
-                ModelPart part = cube.bake(this, originalTextureWidth, originalTextureHeight, targetTextureWidth, targetTextureHeight);
+                ModelPart part = cube.bake(this, textureWidth, textureHeight);
                 // Find arbitrary unused key
                 while(children.containsKey("Cube " + index))
                     index++;
@@ -399,15 +383,12 @@ public class BedrockEntityModelLoader implements EntityModelLoader {
             }
             // Create a model part with the children and this bone's transformations
             ModelPart mainPart = new ModelPart(
-                Collections.emptyList(),
+                List.of(),
                 Map.copyOf(children)
             );
             PartPose pose = PartPose.offset(this.pivot[0], -this.pivot[1], -this.pivot[2]);
             mainPart.loadPose(pose);
-            ModelPart pivotPart = new ModelPart(
-                Collections.emptyList(),
-                Map.of("", mainPart)
-            );
+            ModelPart pivotPart = new DummyModelPart(mainPart);
             pose = PartPose.offsetAndRotation(-this.pivot[0], this.pivot[1], this.pivot[2], (float)Math.toRadians(-this.rotation[0]), (float)Math.toRadians(-this.rotation[1]), (float)Math.toRadians(this.rotation[2]));
             pivotPart.loadPose(pose);
             return pivotPart;
@@ -433,15 +414,15 @@ public class BedrockEntityModelLoader implements EntityModelLoader {
             this.uvs = uvs;
         }
 
-        public ModelPart bake(Bone bone, int originalTextureWidth, int originalTextureHeight, int targetTextureWidth, int targetTextureHeight){
+        public ModelPart bake(Bone bone, int textureWidth, int textureHeight){
             float inflate = this.inflate == null ? bone.inflate : this.inflate;
             boolean mirror = this.mirror == null ? bone.mirror : this.mirror;
 
             // Adjust uv for target texture size
             for(Direction side : Direction.values()){
                 this.uvs.computeIfPresent(side, (s, f) -> new Face(
-                    new float[]{f.uv[0] / originalTextureWidth * targetTextureWidth, f.uv[1] / originalTextureHeight * targetTextureHeight},
-                    f.size == null ? null : new float[]{f.size[0] / originalTextureWidth * targetTextureWidth, f.size[1] / originalTextureHeight * targetTextureHeight},
+                    f.uv,
+                    f.size,
                     f.rotation,
                     f.sideSpecific
                 ));
@@ -451,7 +432,7 @@ public class BedrockEntityModelLoader implements EntityModelLoader {
                 -this.origin[0] - this.size[0] - this.pivot[0], this.origin[1] + this.pivot[1], this.origin[2] + this.pivot[2],
                 this.size[0], this.size[1], this.size[2],
                 inflate,
-                targetTextureWidth, targetTextureHeight,
+                textureWidth, textureHeight,
                 this.uvs,
                 mirror
             );

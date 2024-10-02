@@ -1,13 +1,11 @@
-package com.supermartijn642.fusion.entity.model;
+package com.supermartijn642.fusion.entity.model.loader;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.entity.model.loader.BedrockEntityModelLoader;
-import com.supermartijn642.fusion.entity.model.loader.EntityModelLoader;
-import com.supermartijn642.fusion.entity.model.loader.OptifineEntityModelLoader;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.resources.MultiPackResourceManager;
@@ -30,7 +28,13 @@ public class FusionEntityModelLoader {
         Pair.of(".jem", new OptifineEntityModelLoader())
     );
 
-    public static Map<ModelLayerLocation,LayerDefinition> loadModels(List<ModelLayerLocation> identifiers, ResourceManager resourceManager){
+    public static Map<ResourceLocation,ModelPart> MODELS = Map.of();
+
+    public static ResourceLocation locationForLayer(ModelLayerLocation layer){
+        return new ResourceLocation(layer.getModel().getNamespace(), layer.getModel().getPath() + "/" + layer.getLayer());
+    }
+
+    public static void loadModels(List<ResourceLocation> identifiers, ResourceManager resourceManager){
         // Find the resource packs order
         Map<PackResources,Integer> packOrder = Collections.emptyMap();
         if(resourceManager instanceof MultiPackResourceManager || (resourceManager instanceof ReloadableResourceManager && ((ReloadableResourceManager)resourceManager).resources instanceof MultiPackResourceManager)){
@@ -41,8 +45,8 @@ public class FusionEntityModelLoader {
         }
 
         // Load the resources
-        Map<ModelLayerLocation,LayerDefinition> models = new HashMap<>();
-        for(ModelLayerLocation identifier : identifiers){
+        ImmutableMap.Builder<ResourceLocation,ModelPart> models = ImmutableMap.builder();
+        for(ResourceLocation identifier : identifiers){
             // Find the resource with the highest pack index
             Resource resource = null;
             EntityModelLoader modelLoader = null;
@@ -50,8 +54,8 @@ public class FusionEntityModelLoader {
             int packIndex = -1;
             for(Pair<String,EntityModelLoader> loader : LOADERS){
                 ResourceLocation l = new ResourceLocation(
-                    identifier.getModel().getNamespace(),
-                    "fusion/entity_models/" + identifier.getModel().getPath() + "/" + identifier.getLayer() + loader.left()
+                    identifier.getNamespace(),
+                    "fusion/entity_models/" + identifier.getPath() + loader.left()
                 );
                 Optional<Resource> optional = resourceManager.getResource(l);
                 if(optional.isPresent()){
@@ -67,15 +71,15 @@ public class FusionEntityModelLoader {
             }
             // If a resource was found for the identifier, load it
             if(resource != null){
-                LayerDefinition model = loadModel(location, resource, modelLoader);
+                ModelPart model = loadModel(location, resource, modelLoader);
                 if(model != null)
                     models.put(identifier, model);
             }
         }
-        return models;
+        MODELS = models.build();
     }
 
-    private static LayerDefinition loadModel(ResourceLocation location, Resource resource, EntityModelLoader loader){
+    private static ModelPart loadModel(ResourceLocation location, Resource resource, EntityModelLoader loader){
         // Parse the file as JSON
         JsonObject json = new JsonObject();
         try(Reader input = resource.openAsReader()){

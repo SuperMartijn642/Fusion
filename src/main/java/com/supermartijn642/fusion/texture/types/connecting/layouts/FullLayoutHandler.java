@@ -8,7 +8,7 @@ import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 public class FullLayoutHandler extends ConnectingTextureLayoutHandler.SimpleHandler {
 
     public FullLayoutHandler(){
-        super(8, 8, 8);
+        super(8, 6, 8);
     }
 
     @Override

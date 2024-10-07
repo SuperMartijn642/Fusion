@@ -4,10 +4,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
+import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
@@ -52,6 +54,14 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
         if(data.getLayout() != ConnectingTextureLayout.FULL)
             json.addProperty("layout", data.getLayout().name().toLowerCase(Locale.ROOT));
         return json.size() == 0 ? null : json;
+    }
+
+    @Override
+    public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, ConnectingTextureData data){
+        // Legacy full layout was a square image, so change the framing to the new aspect ratio
+        if(data.getLayout() == ConnectingTextureLayout.FULL && context.getOriginalFrameWith() == context.getOriginalFrameHeight())
+            return Pair.of(context.getOriginalFrameWith(), context.getOriginalFrameHeight() * 6 / 8);
+        return TextureType.super.getFrameSize(context, data);
     }
 
     @Override

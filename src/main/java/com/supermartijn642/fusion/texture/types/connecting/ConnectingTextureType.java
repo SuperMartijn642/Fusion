@@ -10,7 +10,6 @@ import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 import java.util.Arrays;
@@ -61,10 +60,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
         // Legacy full layout was a square image, so change the framing to the new aspect ratio
         if(data.getLayout() == ConnectingTextureLayout.FULL && context.getOriginalFrameWith() == context.getOriginalFrameHeight())
             return Pair.of(context.getOriginalFrameWith(), context.getOriginalFrameHeight() * 6 / 8);
-        // Rotate layouts which have greater height than width
-        if(ConnectingTextureLayoutHandler.get(data.getLayout()).shouldBeRotated())
-            return Pair.of(context.getOriginalFrameHeight(), context.getOriginalFrameWith());
-        return context.getOriginalFrameSize();
+        return TextureType.super.getFrameSize(context, data);
     }
 
     @Override

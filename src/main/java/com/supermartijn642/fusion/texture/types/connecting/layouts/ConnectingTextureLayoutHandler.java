@@ -53,10 +53,6 @@ public abstract class ConnectingTextureLayoutHandler {
         return this.height;
     }
 
-    public boolean shouldBeRotated(){
-        return this.height > this.width;
-    }
-
     public int getAuxiliaryQuadCount(){
         return this.auxiliaryQuadCount;
     }
@@ -106,7 +102,10 @@ public abstract class ConnectingTextureLayoutHandler {
             // Get the correct tile position
             int[] tile = this.uvs[this.connectionsIndex(connections)];
             // Adjust the quad's uv
-            adjustQuadUV(quad, tile[0], tile[1], sprite);
+            if(sprite.rotated)
+                adjustQuadUV(quad, tile[1], tile[0], sprite);
+            else
+                adjustQuadUV(quad, tile[0], tile[1], sprite);
             // Always keep the quad
             return true;
         }

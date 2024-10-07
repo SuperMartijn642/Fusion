@@ -11,11 +11,14 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
  */
 public class ConnectingTextureSprite extends BaseTextureSprite {
 
+    private int originalWidth, originalHeight;
+    private boolean rotatedImage;
+
     protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureData data){
         super(original, data);
+        this.originalWidth = this.width;
+        this.originalHeight = this.height;
         this.resizeUV();
-        if(ConnectingTextureLayoutHandler.get(data.getLayout()).shouldBeRotated())
-            this.rotateLayout();
     }
 
     @Override
@@ -24,12 +27,13 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
     }
 
     public void rotateLayout(){
+        // TODO do this for every frame instead of just frame 0
         int[][] pixelsPerLevel = this.framesTextureData.get(0);
         ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(this.data().getLayout());
         int layoutWidth = layoutHandler.getWidth(), layoutHeight = layoutHandler.getHeight();
-        int textureWidth = (int)Math.round(Math.sqrt((double)pixelsPerLevel[0].length * layoutWidth / layoutHeight)), textureHeight = pixelsPerLevel[0].length / textureWidth;
+        int textureWidth = this.originalWidth, textureHeight = this.originalHeight; // TODO
 
-        // Rotate the sprite tiling so we get width > height
+        // Rotate the sprite tiling
         int tileWidth = textureWidth / layoutWidth, tileHeight = textureHeight / layoutHeight;
         int[] rotatedPixels = new int[textureWidth * textureHeight];
         for(int tileX = 0; tileX < layoutWidth; tileX++){
@@ -41,25 +45,33 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
         }
         pixelsPerLevel[0] = rotatedPixels;
 
-        this.framesTextureData.add(pixelsPerLevel);
+        this.framesTextureData.set(0, pixelsPerLevel);
         try{
             this.generateMipmaps(pixelsPerLevel.length - 1);
         }catch(Exception e){
             FusionClient.LOGGER.error("Encountered an exception whilst generating mipmaps for rotated connecting texture:", e);
         }
+
+        //noinspection SuspiciousNameCombination
+        this.width = this.originalHeight;
+        //noinspection SuspiciousNameCombination
+        this.height = this.originalWidth;
+        this.rotatedImage = true;
     }
 
     @Override
     public void initSprite(int inX, int inY, int originInX, int originInY, boolean rotatedIn){
         super.initSprite(inX, inY, originInX, originInY, rotatedIn);
         this.resizeUV();
+        if(this.rotated && !this.rotatedImage)
+            this.rotateLayout();
     }
 
     private void resizeUV(){
         ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(this.data().getLayout());
         int layoutWidth = layoutHandler.getWidth();
         int layoutHeight = layoutHandler.getHeight();
-        if(layoutHeight > layoutWidth){
+        if(this.rotatedImage){
             int width = layoutWidth;
             //noinspection SuspiciousNameCombination
             layoutWidth = layoutHeight;

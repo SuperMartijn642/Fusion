@@ -14,6 +14,8 @@ public class BaseTextureSprite extends TextureAtlasSprite {
         super(original.getName(), original.width, original.height);
         this.mainImage = original.mainImage;
         this.metadata = original.metadata;
+        this.framesX = original.framesX;
+        this.framesY = original.framesY;
         this.x = original.x;
         this.y = original.y;
         this.u0 = original.u0;

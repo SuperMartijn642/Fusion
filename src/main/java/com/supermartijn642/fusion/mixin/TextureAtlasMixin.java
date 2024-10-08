@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.PngSizeInfo;
 import net.minecraft.client.renderer.texture.Stitcher;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
@@ -24,6 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -40,31 +42,36 @@ public class TextureAtlasMixin {
         method = "lambda$getBasicSpriteInfos$2(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/resources/IResourceManager;Ljava/util/concurrent/ConcurrentLinkedQueue;)V",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;<init>(Lnet/minecraft/util/ResourceLocation;IILnet/minecraft/client/resources/data/AnimationMetadataSection;)V",
-            shift = At.Shift.BY,
-            by = 2
+            target = "Lnet/minecraft/client/resources/data/AnimationMetadataSection;getFrameSize(II)Lcom/mojang/datafixers/util/Pair;",
+            shift = At.Shift.BEFORE
         ),
+        cancellable = true,
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private void gatherMetadata(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<?> queue, CallbackInfo ci, ResourceLocation location, TextureAtlasSprite.Info info, IResource resource, Object object, PngSizeInfo pngInfo){
+    private void gatherMetadata(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<TextureAtlasSprite.Info> queue, CallbackInfo ci, ResourceLocation location, IResource resource, Object object, PngSizeInfo pngInfo, AnimationMetadataSection animationMetadata){
         // Get the fusion metadata
         Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionTextureMetadataSection.INSTANCE);
         if(metadata != null){
             synchronized(this.fusionTextureMetadata){
-                this.fusionTextureMetadata.put(info.name(), metadata);
+                this.fusionTextureMetadata.put(identifier, metadata);
             }
+            // Get the original frame size
+            com.mojang.datafixers.util.Pair<Integer,Integer> originalSize = animationMetadata.calculateFrameSize(pngInfo.width, pngInfo.height);
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(info.width(), info.height(), pngInfo.width, pngInfo.height, identifier), metadata.right());
+                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.getFirst(), originalSize.getSecond(), pngInfo.width, pngInfo.height, identifier, animationMetadata), metadata.right());
             }catch(Exception e){
                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!", e);
             }
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!");
+            // Validate frame size
+            if(pngInfo.width % newSize.left() != 0 || pngInfo.height % newSize.right() != 0)
+                throw new IllegalArgumentException(String.format(Locale.ROOT, "Image size %s,%s is not a multiple of frame size %s,%s", pngInfo.width, pngInfo.height, newSize.left(), newSize.left()));
             // Replace the current size
-            info.width = newSize.left();
-            info.height = newSize.right();
+            queue.add(new TextureAtlasSprite.Info(identifier, newSize.left(), newSize.right(), animationMetadata));
+            ci.cancel();
         }
     }
 

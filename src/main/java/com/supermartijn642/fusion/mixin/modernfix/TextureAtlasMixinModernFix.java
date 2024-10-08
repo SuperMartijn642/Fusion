@@ -11,6 +11,7 @@ import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.Stitcher;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
@@ -60,10 +61,12 @@ public class TextureAtlasMixinModernFix {
                             synchronized(this.fusionTextureMetadata){
                                 this.fusionTextureMetadata.put(info.name(), metadata);
                             }
+                            // Get animation metadata
+                            AnimationMetadataSection animationMetadata = resource.getMetadata(AnimationMetadataSection.SERIALIZER);
                             // Adjust the frame size
                             Pair<Integer,Integer> newSize;
                             try{
-                                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(info.width(), info.height(), info.width(), info.height(), info.name()), metadata.right());
+                                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(info.width(), info.height(), info.width(), info.height(), info.name(), animationMetadata), metadata.right());
                             }catch(Exception e){
                                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!", e);
                             }

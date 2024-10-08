@@ -31,13 +31,16 @@ public class BaseTextureSprite extends TextureAtlasSprite {
             FusionClient.getDummyImage(),
             data
         );
+        this.info = original.info;
+        this.metadata = original.metadata;
         this.mainImage = original.mainImage;
+        this.framesX = original.framesX;
+        this.framesY = original.framesY;
+        this.interpolationData = original.interpolationData;
         this.u0 = original.u0;
         this.u1 = original.u1;
         this.v0 = original.v0;
         this.v1 = original.v1;
-        this.framesX = original.framesX;
-        this.framesY = original.framesY;
     }
 
     public BaseTextureData data(){

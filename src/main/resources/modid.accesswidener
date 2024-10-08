@@ -1,5 +1,8 @@
 accessWidener v1 named
 
+# AnimationMetadataSection
+accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frameHeight I
+accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frameWidth I
 # BakedQuad
 accessible field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I

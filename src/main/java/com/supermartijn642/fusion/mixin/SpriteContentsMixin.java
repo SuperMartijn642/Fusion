@@ -5,8 +5,6 @@ import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.SpriteContentsExtension;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
-import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
-import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.resources.ResourceLocation;
@@ -14,7 +12,8 @@ import net.minecraft.server.packs.resources.ResourceMetadata;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Created 12/09/2023 by SuperMartijn642
@@ -35,32 +34,16 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
         this.fusionTextureMetadata = null;
     }
 
-    @ModifyVariable(
+    @Inject(
         method = "<init>(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Lnet/minecraft/server/packs/resources/ResourceMetadata;)V",
         at = @At(
             value = "INVOKE",
             target = "Ljava/lang/Object;<init>()V",
             shift = At.Shift.AFTER
-        ),
-        ordinal = 0
+        )
     )
-    private FrameSize initMetadata(FrameSize originalSize, ResourceLocation identifier, FrameSize ignore, NativeImage image, ResourceMetadata resourceMetadata){
+    private void initMetadata(ResourceLocation identifier, FrameSize frameSize, NativeImage image, ResourceMetadata resourceMetadata, CallbackInfo ci){
         // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
-        if(metadata != null){
-            this.fusionTextureMetadata = metadata;
-            // Adjust the frame size
-            Pair<Integer,Integer> newSize;
-            try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier), metadata.right());
-            }catch(Exception e){
-                throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!", e);
-            }
-            if(newSize == null)
-                throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
-            // Replace the current size
-            return new FrameSize(newSize.left(), newSize.right());
-        }
-        return originalSize;
+        resourceMetadata.getSection(FusionTextureMetadataSection.INSTANCE).ifPresent(metadata -> this.fusionTextureMetadata = metadata);
     }
 }

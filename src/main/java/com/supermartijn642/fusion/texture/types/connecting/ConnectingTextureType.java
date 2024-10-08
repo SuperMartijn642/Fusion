@@ -12,6 +12,7 @@ import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.data.AnimationMetadataSection;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -61,6 +62,25 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
         // Legacy full layout was a square image, so change the framing to the new aspect ratio
         if(data.getLayout() == ConnectingTextureLayout.FULL && context.getOriginalFrameWith() == context.getOriginalFrameHeight())
             return Pair.of(context.getOriginalFrameWith(), context.getOriginalFrameHeight() * 6 / 8);
+
+        // Handle animation metadata
+        if(context.getAnimationMetadata() != null){
+            AnimationMetadataSection animation = context.getAnimationMetadata();
+            if(animation.frameWidth != -1 && animation.frameHeight != -1)
+                //noinspection SuspiciousNameCombination
+                return Pair.of(animation.frameWidth, animation.frameHeight);
+            if(animation.frameWidth != -1)
+                return Pair.of(animation.frameWidth, context.getTextureHeight());
+            if(animation.frameHeight != -1)
+                //noinspection SuspiciousNameCombination
+                return Pair.of(context.getTextureWidth(), animation.frameHeight);
+            // Use the expected aspect ratio for the layout
+            ConnectingTextureLayoutHandler handler = ConnectingTextureLayoutHandler.get(data.getLayout());
+            int height = Math.min(context.getTextureWidth() / handler.getWidth() * handler.getHeight(), context.getTextureHeight());
+            //noinspection SuspiciousNameCombination
+            return Pair.of(context.getTextureWidth(), height);
+        }
+
         return TextureType.super.getFrameSize(context, data);
     }
 

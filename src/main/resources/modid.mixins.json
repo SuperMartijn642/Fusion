@@ -27,6 +27,7 @@
     "OutlineBufferSourceMixin",
     "PackMixin",
     "PathPackResourcesMixin",
+    "ResourceMetadata\$BuilderMixin",
     "SpriteContentsMixin",
     "SpriteLoaderMixin",
     "TerrainParticleMixin",

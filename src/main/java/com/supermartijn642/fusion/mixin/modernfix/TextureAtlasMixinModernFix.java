@@ -12,6 +12,7 @@ import net.minecraft.Util;
 import net.minecraft.client.renderer.texture.Stitcher;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -62,6 +63,11 @@ public class TextureAtlasMixinModernFix {
                     }catch(IOException e){
                         throw new RuntimeException("Encountered an exception whilst reading metadata for '" + location + "'!", e);
                     }
+                    // Get animation metadata
+                    AnimationMetadataSection animationMetadata = null;
+                    try{
+                        metadata = resource.metadata().getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
+                    }catch(IOException ignored){ /* Exceptions here will have already been logged by vanilla */ }
                     if(metadata != null){
                         synchronized(this.fusionTextureMetadata){
                             this.fusionTextureMetadata.put(info.name(), metadata);
@@ -69,7 +75,7 @@ public class TextureAtlasMixinModernFix {
                         // Adjust the frame size
                         Pair<Integer,Integer> newSize;
                         try{
-                            newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(info.width(), info.height(), info.width(), info.height(), info.name()), metadata.right());
+                            newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(info.width(), info.height(), info.width(), info.height(), info.name(), animationMetadata), metadata.right());
                         }catch(Exception e){
                             throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!", e);
                         }

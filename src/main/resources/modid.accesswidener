@@ -5,6 +5,10 @@ accessible field net/minecraft/server/packs/AbstractPackResources file Ljava/io/
 accessible field net/minecraft/server/packs/AbstractPackResources LOGGER Lorg/slf4j/Logger;
 accessible method net/minecraft/server/packs/AbstractPackResources getRelativePath (Ljava/io/File;Ljava/io/File;)Ljava/lang/String;
 accessible method net/minecraft/server/packs/AbstractPackResources logWarning (Ljava/lang/String;)V
+# AnimationMetadataSection
+accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frameHeight I
+accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frameWidth I
+accessible method net/minecraft/client/resources/metadata/animation/AnimationMetadataSection calculateFrameSize (II)Lcom/mojang/datafixers/util/Pair;
 # BakedQuad
 accessible field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I

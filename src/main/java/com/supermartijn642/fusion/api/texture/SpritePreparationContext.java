@@ -1,7 +1,9 @@
 package com.supermartijn642.fusion.api.texture;
 
 import com.supermartijn642.fusion.api.util.Pair;
+import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
@@ -39,4 +41,9 @@ public interface SpritePreparationContext {
      * Gets the identifier of the texture.
      */
     ResourceLocation getIdentifier();
+
+    /**
+     * Gets the vanilla animation metadata for the texture.
+     */
+    @Nullable AnimationMetadataSection getAnimationMetadata();
 }

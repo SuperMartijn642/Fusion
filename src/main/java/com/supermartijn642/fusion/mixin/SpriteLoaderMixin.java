@@ -16,7 +16,11 @@ import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.Mth;
+import org.slf4j.Logger;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -35,20 +39,23 @@ import java.util.concurrent.Executor;
 @Mixin(value = SpriteLoader.class, priority = 900)
 public class SpriteLoaderMixin {
 
+    @Final
+    @Shadow
+    private static Logger LOGGER;
     @Unique
     private static final Map<ResourceLocation,Pair<TextureType<Object>,Object>> fusionTextureMetadata = new ConcurrentHashMap<>(); // TODO find a place to clear this
 
     @Inject(
         method = "loadSprite",
         at = @At(
-            value = "INVOKE",
+            value = "INVOKE_ASSIGN",
             target = "Lnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;calculateFrameSize(II)Lnet/minecraft/client/resources/metadata/animation/FrameSize;",
-            shift = At.Shift.BEFORE
+            shift = At.Shift.AFTER
         ),
         cancellable = true,
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private static void gatherMetadata(ResourceLocation identifier, Resource resource, CallbackInfoReturnable<SpriteContents> ci, AnimationMetadataSection animationMetadataSection, NativeImage image){
+    private static void gatherMetadata(ResourceLocation identifier, Resource resource, CallbackInfoReturnable<SpriteContents> ci, AnimationMetadataSection animationMetadata, NativeImage image, FrameSize originalSize){
         // Get the fusion metadata
         Pair<TextureType<Object>,Object> metadata = null;
         try{
@@ -57,19 +64,25 @@ public class SpriteLoaderMixin {
         if(metadata != null){
             fusionTextureMetadata.put(identifier, metadata);
             // Adjust the frame size
-            FrameSize originalSize = animationMetadataSection.calculateFrameSize(image.getWidth(), image.getHeight());
             Pair<Integer,Integer> newSize;
             try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier), metadata.right());
+                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier, animationMetadata), metadata.right());
             }catch(Exception e){
                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!", e);
             }
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
+            // Validate frame size (same as the vanilla check)
+            if(!Mth.isDivisionInteger(image.getWidth(), newSize.left()) || !Mth.isDivisionInteger(image.getHeight(), newSize.right())){
+                LOGGER.error("Image {} size {},{} is not multiple of frame size {},{}", identifier, image.getWidth(), image.getHeight(), newSize.left(), newSize.right());
+                image.close();
+                ci.setReturnValue(null);
+                return;
+            }
             // Replace the current size
             FrameSize newFrameSize = new FrameSize(newSize.left(), newSize.right());
             //noinspection deprecation
-            ci.setReturnValue(new SpriteContents(identifier, newFrameSize, image, animationMetadataSection));
+            ci.setReturnValue(new SpriteContents(identifier, newFrameSize, image, animationMetadata));
         }
     }
 

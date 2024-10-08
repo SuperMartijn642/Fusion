@@ -28,6 +28,7 @@
     "PathPackResourcesMixin",
     "SpriteContentsMixin",
     "SpriteLoaderMixin",
+    "SpriteResourceLoaderMixin",
     "TerrainParticleMixin",
     "TextureAtlasSpriteMixin",
     "WeightedBakedModelMixin"

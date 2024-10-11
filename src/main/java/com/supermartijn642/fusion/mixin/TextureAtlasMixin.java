@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.util.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -26,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -60,7 +62,7 @@ public class TextureAtlasMixin {
             target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;loadSprite(Lnet/minecraft/client/renderer/texture/PngSizeInfo;Z)V"
         )
     )
-    private void gatherMetadata(TextureAtlasSprite sprite, PngSizeInfo pngSizeInfo, boolean hasAnimation) throws IOException{
+    private void gatherMetadata(TextureAtlasSprite sprite, PngSizeInfo pngInfo, boolean hasAnimation) throws IOException{
         // Get the fusion metadata
         FusionTextureMetadataSection.registerMetadata();
         FusionTextureMetadataSection.Data data = this.textureResource.get().getMetadata(FusionTextureMetadataSection.INSTANCE.getSectionName());
@@ -70,23 +72,42 @@ public class TextureAtlasMixin {
             synchronized(this.fusionTextureMetadata){
                 this.fusionTextureMetadata.put(identifier, metadata);
             }
+            // Get the animation metadata
+            AnimationMetadataSection animation = hasAnimation ? this.textureResource.get().getMetadata("animation") : null;
+            int originalWidth = pngInfo.pngWidth;
+            int originalHeight = pngInfo.pngHeight;
+            if(animation != null){
+                if(animation.frameWidth != -1 || animation.frameHeight != -1){
+                    originalWidth = animation.frameWidth == -1 ? animation.frameWidth : pngInfo.pngWidth;
+                    originalHeight = animation.frameHeight == -1 ? animation.frameHeight : pngInfo.pngHeight;
+                }else
+                    originalWidth = originalHeight = Math.min(pngInfo.pngWidth, pngInfo.pngHeight);
+            }
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(pngSizeInfo.pngWidth, sprite.hasAnimationMetadata() ? pngSizeInfo.pngWidth : pngSizeInfo.pngHeight, pngSizeInfo.pngWidth, pngSizeInfo.pngHeight, identifier), metadata.right());
+                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalWidth, originalHeight, pngInfo.pngWidth, pngInfo.pngHeight, identifier, animation), metadata.right());
             }catch(Exception e){
                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!", e);
             }
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
+            // Validate frame size
+            if(pngInfo.pngWidth % newSize.left() != 0 || pngInfo.pngHeight % newSize.right() != 0)
+                throw new IllegalArgumentException(String.format(Locale.ROOT, "Image size %s,%s is not a multiple of frame size %s,%s", pngInfo.pngWidth, pngInfo.pngHeight, newSize.left(), newSize.left()));
             // Replace the current size
-            ((TextureAtlasSpriteExtension)sprite).setTextureSize(pngSizeInfo.pngWidth, pngSizeInfo.pngHeight);
+            ((TextureAtlasSpriteExtension)sprite).setTextureSize(pngInfo.pngWidth, pngInfo.pngHeight);
             ((TextureAtlasSpriteExtension)sprite).setFusionTextureType(metadata.left());
-            pngSizeInfo.pngWidth = newSize.left();
-            pngSizeInfo.pngHeight = newSize.right();
+            pngInfo.pngWidth = newSize.left();
+            pngInfo.pngHeight = newSize.right();
+
+            // Fix the height afterward
+            sprite.loadSprite(pngInfo, hasAnimation);
+            sprite.height = newSize.right();
+            return;
         }
 
-        sprite.loadSprite(pngSizeInfo, hasAnimation);
+        sprite.loadSprite(pngInfo, hasAnimation);
     }
 
     @ModifyVariable(

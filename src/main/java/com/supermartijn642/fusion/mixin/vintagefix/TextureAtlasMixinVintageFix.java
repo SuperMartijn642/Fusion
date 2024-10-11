@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.util.ResourceLocation;
 import org.embeddedt.vintagefix.VintageFix;
 import org.spongepowered.asm.mixin.Final;
@@ -76,10 +77,21 @@ public class TextureAtlasMixinVintageFix {
                         Pair<TextureType<Object>,Object> metadata = data == null ? null : data.pair;
                         if(metadata != null){
                             ResourceLocation identifier = new ResourceLocation(sprite.getIconName());
+                            // Get the animation metadata
+                            AnimationMetadataSection animation = resource.getMetadata("animation");
+                            int originalWidth = sprite.width;
+                            int originalHeight = sprite.height;
+                            if(animation != null){
+                                if(animation.frameWidth != -1 || animation.frameHeight != -1){
+                                    originalWidth = animation.frameWidth == -1 ? animation.frameWidth : sprite.width;
+                                    originalHeight = animation.frameHeight == -1 ? animation.frameHeight : sprite.height;
+                                }else
+                                    originalWidth = originalHeight = Math.min(sprite.width, sprite.height);
+                            }
                             // Adjust the frame size
                             Pair<Integer,Integer> newSize;
                             try{
-                                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(sprite.width, sprite.hasAnimationMetadata() ? sprite.width : sprite.height, sprite.width, sprite.height, identifier), metadata.right());
+                                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalWidth, originalHeight, sprite.width, sprite.height, identifier, animation), metadata.right());
                             }catch(Exception e){
                                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!", e);
                             }

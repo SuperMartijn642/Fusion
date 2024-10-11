@@ -27,27 +27,28 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
     }
 
     public void rotateLayout(){
-        // TODO do this for every frame instead of just frame 0
-        int[][] pixelsPerLevel = this.framesTextureData.get(0);
-        ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(this.data().getLayout());
-        int layoutWidth = layoutHandler.getWidth(), layoutHeight = layoutHandler.getHeight();
-        int textureWidth = this.originalWidth, textureHeight = this.originalHeight; // TODO
+        for(int frame = 0; frame < this.framesTextureData.size(); frame++){
+            int[][] pixelsPerLevel = this.framesTextureData.get(frame);
+            ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(this.data().getLayout());
+            int layoutWidth = layoutHandler.getWidth(), layoutHeight = layoutHandler.getHeight();
+            int textureWidth = this.originalWidth, textureHeight = this.originalHeight;
 
-        // Rotate the sprite tiling
-        int tileWidth = textureWidth / layoutWidth, tileHeight = textureHeight / layoutHeight;
-        int[] rotatedPixels = new int[textureWidth * textureHeight];
-        for(int tileX = 0; tileX < layoutWidth; tileX++){
-            for(int tileY = 0; tileY < layoutHeight; tileY++){
-                // Copy one whole tile from tile position (x,y) to (y,x)
-                for(int line = 0; line < tileHeight; line++)
-                    System.arraycopy(pixelsPerLevel[0], textureWidth * (tileY * tileHeight + line) + tileX * tileWidth, rotatedPixels, textureHeight * (tileX * tileHeight + line) + tileY * tileWidth, tileWidth);
+            // Rotate the sprite tiling
+            int tileWidth = textureWidth / layoutWidth, tileHeight = textureHeight / layoutHeight;
+            int[] rotatedPixels = new int[textureWidth * textureHeight];
+            for(int tileX = 0; tileX < layoutWidth; tileX++){
+                for(int tileY = 0; tileY < layoutHeight; tileY++){
+                    // Copy one whole tile from tile position (x,y) to (y,x)
+                    for(int line = 0; line < tileHeight; line++)
+                        System.arraycopy(pixelsPerLevel[0], textureWidth * (tileY * tileHeight + line) + tileX * tileWidth, rotatedPixels, textureHeight * (tileX * tileHeight + line) + tileY * tileWidth, tileWidth);
+                }
             }
+            pixelsPerLevel[0] = rotatedPixels;
+            this.framesTextureData.set(frame, pixelsPerLevel);
         }
-        pixelsPerLevel[0] = rotatedPixels;
 
-        this.framesTextureData.set(0, pixelsPerLevel);
         try{
-            this.generateMipmaps(pixelsPerLevel.length - 1);
+            this.generateMipmaps(this.framesTextureData.get(0).length - 1);
         }catch(Exception e){
             FusionClient.LOGGER.error("Encountered an exception whilst generating mipmaps for rotated connecting texture:", e);
         }

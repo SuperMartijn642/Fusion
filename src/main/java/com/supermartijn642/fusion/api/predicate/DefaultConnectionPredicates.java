@@ -40,6 +40,13 @@ public final class DefaultConnectionPredicates {
     }
 
     /**
+     * Creates a predicate which is true only for the given directions.
+     */
+    public static ConnectionPredicate isDirection(ConnectionDirection... directions){
+        return new IsDirectionConnectionPredicate(directions);
+    }
+
+    /**
      * Creates a predicate which is satisfied if the block in the connection direction is visible.
      */
     public static ConnectionPredicate isFaceVisible(){

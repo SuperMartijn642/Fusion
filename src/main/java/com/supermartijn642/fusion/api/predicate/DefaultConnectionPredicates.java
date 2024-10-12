@@ -85,4 +85,30 @@ public final class DefaultConnectionPredicates {
         //noinspection unchecked
         return matchState(state.getBlock(), state.getProperties().stream().map(p -> Pair.of(p, state.getValue(p))).toArray(Pair[]::new));
     }
+
+    /**
+     * Creates a predicate which is satisfied if the block in front of the block in the connection direction is the same as the provided block.
+     * @param block block which should be matched
+     */
+    public static ConnectionPredicate matchBlockInFront(Block block){
+        return new MatchBlockInFrontConnectionPredicate(block);
+    }
+
+    /**
+     * Creates a predicate which is satisfied if the state in front of the state in the connection direction is the same as the provided block and matches the provided properties.
+     * @param block      block which should be matched
+     * @param properties property value pairs which should be matched
+     */
+    public static ConnectionPredicate matchStateInFront(Block block, Pair<Property<?>,?>... properties){
+        return new MatchStateInFrontConnectionPredicate(block, properties);
+    }
+
+    /**
+     * Creates a predicate which is satisfied if the state in front of the state in the connection direction is the same as the provided state.
+     * @param state state which should be matched
+     */
+    public static ConnectionPredicate matchStateInFront(BlockState state){
+        //noinspection unchecked
+        return matchStateInFront(state.getBlock(), state.getProperties().stream().map(p -> Pair.of(p, state.getValue(p))).toArray(Pair[]::new));
+    }
 }

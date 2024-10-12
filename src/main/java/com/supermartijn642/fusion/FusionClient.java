@@ -54,6 +54,8 @@ public class FusionClient {
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "is_same_state"), IsSameStateConnectionPredicate.SERIALIZER);
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "match_block"), MatchBlockConnectionPredicate.SERIALIZER);
         FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "match_state"), MatchStateConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "match_block_in_front"), MatchBlockInFrontConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(new ResourceLocation("fusion", "match_state_in_front"), MatchStateInFrontConnectionPredicate.SERIALIZER);
         // Register default item model predicates
         ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "and"), AndItemPredicate.SERIALIZER);
         ItemPredicateRegistry.registerItemPredicate(new ResourceLocation("fusion", "or"), OrItemPredicate.SERIALIZER);

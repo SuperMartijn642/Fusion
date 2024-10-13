@@ -9,8 +9,20 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
  */
 public class ConnectingTextureSprite extends BaseTextureSprite {
 
-    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureData data){
+    private final float startU, startV;
+
+    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureData data, float startU, float startV){
         super(original, data);
+        this.startU = startU;
+        this.startV = startV;
+    }
+
+    public float getStartU(){
+        return this.startU;
+    }
+
+    public float getStartV(){
+        return this.startV;
     }
 
     @Override

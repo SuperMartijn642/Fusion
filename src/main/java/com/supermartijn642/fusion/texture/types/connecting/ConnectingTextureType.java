@@ -88,12 +88,13 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
     public TextureAtlasSprite createSprite(SpriteCreationContext context, ConnectingTextureData data){
         ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(data.getLayout());
         TextureAtlasSprite sprite = context.createOriginalSprite();
+        float startU = sprite.u0, startV = sprite.v0;
         float tileWidth = (sprite.u1 - sprite.u0) / layoutHandler.getWidth();
         float tileHeight = (sprite.v1 - sprite.v0) / layoutHandler.getHeight();
         sprite.u1 = sprite.u0 + tileWidth * (layoutHandler.defaultTileX() + 1);
         sprite.v1 = sprite.v0 + tileHeight * (layoutHandler.defaultTileY() + 1);
         sprite.u0 = sprite.u0 + tileWidth * layoutHandler.defaultTileX();
         sprite.v0 = sprite.v0 + tileHeight * layoutHandler.defaultTileY();
-        return new ConnectingTextureSprite(sprite, data);
+        return new ConnectingTextureSprite(sprite, data, startU, startV);
     }
 }

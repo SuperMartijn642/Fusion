@@ -1,6 +1,8 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.texture.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
@@ -16,7 +18,6 @@ import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.util.Mth;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -67,22 +68,18 @@ public class SpriteLoaderMixin {
             Pair<Integer,Integer> newSize;
             try{
                 newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier, animationMetadata), metadata.right());
+            }catch(TextureErrorException e){
+                FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
+                image.close();
+                ci.setReturnValue(null);
+                return;
             }catch(Exception e){
                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!", e);
             }
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
-            // Validate frame size (same as the vanilla check)
-            if(!Mth.isMultipleOf(image.getWidth(), newSize.left()) || !Mth.isMultipleOf(image.getHeight(), newSize.right())){
-                LOGGER.error("Image {} size {},{} is not multiple of frame size {},{}", identifier, image.getWidth(), image.getHeight(), newSize.left(), newSize.right());
-                image.close();
-                ci.setReturnValue(null);
-                return;
-            }
-            // Replace the current size
-            FrameSize newFrameSize = new FrameSize(newSize.left(), newSize.right());
-            //noinspection deprecation
-            ci.setReturnValue(new SpriteContents(identifier, newFrameSize, image, animationMetadata));
+            // Create the sprite contents
+            ci.setReturnValue(new SpriteContents(identifier, new FrameSize(newSize.left(), newSize.right()), image, animationMetadata));
         }
     }
 

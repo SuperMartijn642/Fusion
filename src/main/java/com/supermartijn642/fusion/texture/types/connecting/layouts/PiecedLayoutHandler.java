@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
 import com.supermartijn642.fusion.model.MutableQuad;
+import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 /**
  * Created 09/09/2024 by SuperMartijn642
@@ -16,7 +16,7 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
     }
 
     @Override
-    public boolean processBlockQuad(int quadIndex, MutableQuad quad, TextureAtlasSprite sprite, TextureConnections connections){
+    public boolean processBlockQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite, TextureConnections connections){
         // If the connections just happen to match an entire sprite, just use that and discard the auxiliary quads
         int fullSpriteIndex = -1;
         if(!connections.top && !connections.right && !connections.bottom && !connections.left)
@@ -67,30 +67,30 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
         }
     }
 
-    private static void remapUVFullSprite(MutableQuad quad, int tileIndex, TextureAtlasSprite sprite){
+    private static void remapUVFullSprite(MutableQuad quad, int tileIndex, ConnectingTextureSprite sprite){
         for(int i = 0; i < 4; i++){
             float width = sprite.getMaxU() - sprite.getMinU();
-            float u = quad.u(i) + width * tileIndex;
+            float u = sprite.getStartU() + quad.u(i) - sprite.getMinU() + width * tileIndex;
             quad.uv(i, u, quad.v(i));
         }
     }
 
-    private static void remapUVCornerSprite(MutableQuad quad, int corner, int tileIndex, TextureAtlasSprite sprite){
+    private static void remapUVCornerSprite(MutableQuad quad, int corner, int tileIndex, ConnectingTextureSprite sprite){
         float width = sprite.getMaxU() - sprite.getMinU();
         float height = sprite.getMaxV() - sprite.getMinV();
-        float minU = sprite.getMinU() + (corner == 0 || corner == 3 ? 0 : 0.5f) * width;
-        float maxU = sprite.getMinU() + (corner == 0 || corner == 3 ? 0.5f : 1) * width;
-        float minV = sprite.getMinV() + (corner == 0 || corner == 1 ? 0 : 0.5f) * height;
-        float maxV = sprite.getMinV() + (corner == 0 || corner == 1 ? 0.5f : 1) * height;
+        float minU = (corner == 0 || corner == 3 ? 0 : 0.5f) * width;
+        float maxU = (corner == 0 || corner == 3 ? 0.5f : 1) * width;
+        float minV = (corner == 0 || corner == 1 ? 0 : 0.5f) * height;
+        float maxV = (corner == 0 || corner == 1 ? 0.5f : 1) * height;
         for(int i = 0; i < 4; i++){
-            float u = Math.min(Math.max(quad.u(i), minU), maxU) + width * tileIndex;
-            float v = Math.min(Math.max(quad.v(i), minV), maxV);
+            float u = sprite.getStartU() + Math.min(Math.max(quad.u(i) - sprite.getMinU(), minU), maxU) + width * tileIndex;
+            float v = sprite.getStartV() + Math.min(Math.max(quad.v(i) - sprite.getMinV(), minV), maxV);
             quad.uv(i, u, v);
         }
     }
 
     @Override
-    public boolean processItemQuad(int quadIndex, MutableQuad quad, TextureAtlasSprite sprite){
+    public boolean processItemQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite){
         return quadIndex == 0;
     }
 }

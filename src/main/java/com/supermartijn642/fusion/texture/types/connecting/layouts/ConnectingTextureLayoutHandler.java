@@ -2,8 +2,8 @@ package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.model.MutableQuad;
+import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 /**
  * Created 08/09/2024 by SuperMartijn642
@@ -69,13 +69,13 @@ public abstract class ConnectingTextureLayoutHandler {
      * @param quadIndex indicates the quad index when {@link #auxiliaryQuadCount} is greater than 0
      * @return if {@code false} is returned, the quad will be discarded
      */
-    public abstract boolean processBlockQuad(int quadIndex, MutableQuad quad, TextureAtlasSprite sprite, TextureConnections connections);
+    public abstract boolean processBlockQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite, TextureConnections connections);
 
     /**
      * @param quadIndex indicates the quad index when {@link #auxiliaryQuadCount} is greater than 0
      * @return if {@code false} is returned, the quad will be discarded
      */
-    public abstract boolean processItemQuad(int quadIndex, MutableQuad quad, TextureAtlasSprite sprite);
+    public abstract boolean processItemQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite);
 
     public abstract static class SimpleHandler extends ConnectingTextureLayoutHandler {
 
@@ -98,7 +98,7 @@ public abstract class ConnectingTextureLayoutHandler {
         protected abstract int[] getTilePos(TextureConnections connections);
 
         @Override
-        public boolean processBlockQuad(int quadIndex, MutableQuad quad, TextureAtlasSprite sprite, TextureConnections connections){
+        public boolean processBlockQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite, TextureConnections connections){
             // Get the correct tile position
             int[] tile = this.uvs[this.connectionsIndex(connections)];
             // Adjust the quad's uv
@@ -111,17 +111,17 @@ public abstract class ConnectingTextureLayoutHandler {
         }
 
         @Override
-        public boolean processItemQuad(int quadIndex, MutableQuad quad, TextureAtlasSprite sprite){
+        public boolean processItemQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite){
             return true;
         }
 
-        private static void adjustQuadUV(MutableQuad quad, int tileU, int tileV, TextureAtlasSprite sprite){
+        private static void adjustQuadUV(MutableQuad quad, int tileU, int tileV, ConnectingTextureSprite sprite){
             for(int i = 0; i < 4; i++){
                 float width = sprite.getMaxU() - sprite.getMinU();
-                float u = quad.u(i) + width * tileU;
+                float u = sprite.getStartU() + quad.u(i) - sprite.getMinU() + width * tileU;
 
                 float height = sprite.getMaxV() - sprite.getMinV();
-                float v = quad.v(i) + height * tileV;
+                float v = sprite.getStartV() + quad.v(i) - sprite.getMinV() + height * tileV;
                 quad.uv(i, u, v);
             }
         }

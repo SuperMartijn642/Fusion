@@ -87,6 +87,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
     @Override
     public TextureAtlasSprite createSprite(SpriteCreationContext context, ConnectingTextureData data){
         TextureAtlasSprite sprite = context.createOriginalSprite();
-        return new ConnectingTextureSprite(sprite, data);
+        float startU = sprite.getMinU(), startV = sprite.getMinV();
+        return new ConnectingTextureSprite(sprite, data, startU, startV);
     }
 }

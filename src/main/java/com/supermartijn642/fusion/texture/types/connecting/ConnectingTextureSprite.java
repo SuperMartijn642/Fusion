@@ -11,14 +11,25 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
  */
 public class ConnectingTextureSprite extends BaseTextureSprite {
 
-    private int originalWidth, originalHeight;
+    private final float startU, startV;
+    private final int originalWidth, originalHeight;
     private boolean rotatedImage;
 
-    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureData data){
+    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureData data, float startU, float startV){
         super(original, data);
+        this.startU = startU;
+        this.startV = startV;
         this.originalWidth = this.width;
         this.originalHeight = this.height;
         this.resizeUV();
+    }
+
+    public float getStartU(){
+        return this.startU;
+    }
+
+    public float getStartV(){
+        return this.startV;
     }
 
     @Override
@@ -79,7 +90,11 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
             //noinspection SuspiciousNameCombination
             layoutHeight = width;
         }
-        this.maxU = this.minU + (this.maxU - this.minU) / layoutWidth;
-        this.maxV = this.minV + (this.maxV - this.minV) / layoutHeight;
+        float tileWidth = (this.maxU - this.minU) / layoutWidth;
+        float tileHeight = (this.maxV - this.minV) / layoutHeight;
+        this.maxU = this.minU + tileWidth * (layoutHandler.defaultTileX() + 1);
+        this.maxV = this.minV + tileHeight * (layoutHandler.defaultTileY() + 1);
+        this.minU = this.minU + tileWidth * layoutHandler.defaultTileX();
+        this.minV = this.minV + tileHeight * layoutHandler.defaultTileY();
     }
 }

@@ -3,9 +3,13 @@ package com.supermartijn642.fusion.texture.types.base;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
+import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
+import com.supermartijn642.fusion.api.texture.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.Mth;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -14,6 +18,14 @@ import java.util.Locale;
  * Created 07/09/2024 by SuperMartijn642
  */
 public class BaseTextureType implements TextureType<BaseTextureData> {
+
+    @Override
+    public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, BaseTextureData data){
+        if(!Mth.isMultipleOf(context.getTextureWidth(), context.getOriginalFrameWith())
+            || !Mth.isMultipleOf(context.getTextureHeight(), context.getOriginalFrameHeight()))
+            throw new TextureErrorException("Image size {},{} is not a multiple of frame size {},{}");
+        return context.getOriginalFrameSize();
+    }
 
     @Override
     public TextureAtlasSprite createSprite(SpriteCreationContext context, BaseTextureData data){

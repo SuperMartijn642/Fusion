@@ -28,5 +28,9 @@ public enum ConnectingTextureLayout {
     /**
      * Allows for patterns with a border similar to the {@link #FULL} layout, but constructed from fewer tiles by piecing together corners from multiple of them.
      */
-    PIECED
+    PIECED,
+    /**
+     * Allows for making block overlays whilst using fewer tiles than the {@link #FULL} layout.
+     */
+    OVERLAY
 }

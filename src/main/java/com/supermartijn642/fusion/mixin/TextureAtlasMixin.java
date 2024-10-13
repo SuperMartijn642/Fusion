@@ -1,6 +1,8 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.mojang.blaze3d.platform.PngInfo;
+import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.texture.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
@@ -57,14 +59,15 @@ public class TextureAtlasMixin {
             Pair<Integer,Integer> newSize;
             try{
                 newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.getFirst(), originalSize.getSecond(), pngInfo.width, pngInfo.height, identifier, animationMetadata), metadata.right());
+            }catch(TextureErrorException e){
+                FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
+                ci.cancel();
+                return;
             }catch(Exception e){
                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!", e);
             }
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!");
-            // Validate frame size
-            if(pngInfo.width % newSize.left() != 0 || pngInfo.height % newSize.right() != 0)
-                throw new IllegalArgumentException(String.format(Locale.ROOT, "Image size %s,%s is not a multiple of frame size %s,%s", pngInfo.width, pngInfo.height, newSize.left(), newSize.left()));
             // Replace the current size
             queue.add(new TextureAtlasSprite.Info(identifier, newSize.left(), newSize.right(), animationMetadata));
             ci.cancel();

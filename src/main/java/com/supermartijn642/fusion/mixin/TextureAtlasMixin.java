@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.api.texture.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
@@ -27,7 +28,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -87,14 +87,13 @@ public class TextureAtlasMixin {
             Pair<Integer,Integer> newSize;
             try{
                 newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalWidth, originalHeight, pngInfo.pngWidth, pngInfo.pngHeight, identifier, animation), metadata.right());
+            }catch(TextureErrorException e){
+                throw e;
             }catch(Exception e){
                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!", e);
             }
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
-            // Validate frame size
-            if(pngInfo.pngWidth % newSize.left() != 0 || pngInfo.pngHeight % newSize.right() != 0)
-                throw new IllegalArgumentException(String.format(Locale.ROOT, "Image size %s,%s is not a multiple of frame size %s,%s", pngInfo.pngWidth, pngInfo.pngHeight, newSize.left(), newSize.left()));
             // Replace the current size
             ((TextureAtlasSpriteExtension)sprite).setTextureSize(pngInfo.pngWidth, pngInfo.pngHeight);
             ((TextureAtlasSpriteExtension)sprite).setFusionTextureType(metadata.left());

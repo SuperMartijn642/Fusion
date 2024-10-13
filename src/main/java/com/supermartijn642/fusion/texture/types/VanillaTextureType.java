@@ -4,9 +4,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
 import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
+import com.supermartijn642.fusion.api.texture.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.Mth;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
@@ -15,6 +17,9 @@ public class VanillaTextureType implements TextureType<Void> {
 
     @Override
     public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, Void data){
+        if(!Mth.isMultipleOf(context.getTextureWidth(), context.getOriginalFrameWith())
+            || !Mth.isMultipleOf(context.getTextureHeight(), context.getOriginalFrameHeight()))
+            throw new TextureErrorException("Image size {},{} is not a multiple of frame size {},{}");
         return context.getOriginalFrameSize();
     }
 

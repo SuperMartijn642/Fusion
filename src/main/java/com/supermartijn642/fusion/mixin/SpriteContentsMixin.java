@@ -1,6 +1,8 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.texture.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.ResourceMetadataExtension;
@@ -60,15 +62,18 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
             Pair<Integer,Integer> newSize;
             try{
                 newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier, animationMetadata), metadata.right());
+            }catch(TextureErrorException e){
+                FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
+                // TODO
+                // There is no way to make this content loading fail when the frame size is incorrect as Forge's Mixin version doesn't
+                // allow for mixins into interfaces and the entire sprite contents loading happens in a static interface method
+                // So just give up and see what happens
+                return originalSize;
             }catch(Exception e){
                 throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!", e);
             }
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
-
-            // There is no way to make this content loading fail when the frame size is incorrect as Forge's Mixin version doesn't
-            // allow for mixins into interfaces and the entire sprite contents loading happens in a static interface method
-            // So just give up and see what happens
 
             // Replace the current size
             return new FrameSize(newSize.left(), newSize.right());

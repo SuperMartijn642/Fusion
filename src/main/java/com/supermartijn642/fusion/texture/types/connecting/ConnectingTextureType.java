@@ -2,10 +2,7 @@ package com.supermartijn642.fusion.texture.types.connecting;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
-import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
-import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
-import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.*;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
@@ -13,6 +10,7 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
+import net.minecraft.util.Mth;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -66,22 +64,30 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
         // Handle animation metadata
         if(context.getAnimationMetadata() != null){
             AnimationMetadataSection animation = context.getAnimationMetadata();
+            Pair<Integer,Integer> frameSize;
             if(animation.frameWidth != -1 && animation.frameHeight != -1)
                 //noinspection SuspiciousNameCombination
-                return Pair.of(animation.frameWidth, animation.frameHeight);
-            if(animation.frameWidth != -1)
-                return Pair.of(animation.frameWidth, context.getTextureHeight());
-            if(animation.frameHeight != -1)
+                frameSize = Pair.of(animation.frameWidth, animation.frameHeight);
+            else if(animation.frameWidth != -1)
+                frameSize = Pair.of(animation.frameWidth, context.getTextureHeight());
+            else if(animation.frameHeight != -1)
                 //noinspection SuspiciousNameCombination
-                return Pair.of(context.getTextureWidth(), animation.frameHeight);
-            // Use the expected aspect ratio for the layout
-            ConnectingTextureLayoutHandler handler = ConnectingTextureLayoutHandler.get(data.getLayout());
-            int height = Math.min(context.getTextureWidth() / handler.getWidth() * handler.getHeight(), context.getTextureHeight());
-            //noinspection SuspiciousNameCombination
-            return Pair.of(context.getTextureWidth(), height);
+                frameSize = Pair.of(context.getTextureWidth(), animation.frameHeight);
+            else{
+                // Use the expected aspect ratio for the layout
+                ConnectingTextureLayoutHandler handler = ConnectingTextureLayoutHandler.get(data.getLayout());
+                int height = Math.min(context.getTextureWidth() / handler.getWidth() * handler.getHeight(), context.getTextureHeight());
+                //noinspection SuspiciousNameCombination
+                frameSize = Pair.of(context.getTextureWidth(), height);
+            }
+            // Do vanilla frame size check
+            if(!Mth.isDivisionInteger(context.getTextureWidth(), frameSize.left())
+                || !Mth.isDivisionInteger(context.getTextureHeight(), frameSize.right()))
+                throw new TextureErrorException("Image size {},{} is not a multiple of frame size {},{}");
+            return frameSize;
         }
 
-        return TextureType.super.getFrameSize(context, data);
+        return context.getOriginalFrameSize();
     }
 
     @Override

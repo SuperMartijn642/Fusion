@@ -98,4 +98,16 @@ public class IsDirectionConnectionPredicate implements ConnectionPredicate {
     public Serializer<? extends ConnectionPredicate> getSerializer(){
         return SERIALIZER;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof IsDirectionConnectionPredicate that)) return false;
+
+        return Arrays.equals(this.directions, that.directions);
+    }
+
+    @Override
+    public int hashCode(){
+        return Arrays.hashCode(this.directions);
+    }
 }

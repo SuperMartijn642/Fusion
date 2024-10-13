@@ -23,7 +23,8 @@ public abstract class ConnectingTextureLayoutHandler {
                 new SimpleLayoutHandler(),
                 new VerticalLayoutHandler(),
                 new CompactLayoutHandler(),
-                new PiecedLayoutHandler()
+                new PiecedLayoutHandler(),
+                new OverlayLayoutHandler()
             };
             if(HANDLERS.length != ConnectingTextureLayout.values().length)
                 throw new AssertionError("Missing connecting texture layout handlers!");

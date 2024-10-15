@@ -38,7 +38,7 @@ public class OverlayLayoutHandler extends ConnectingTextureLayoutHandler {
         if(connections.top && connections.right && connections.bottom && connections.left)
             return quadIndex == 0 ? new int[]{4, 1} : null;
         if(!connections.top && !connections.topRight && !connections.right && !connections.bottomRight && !connections.bottom && !connections.bottomLeft && !connections.left && !connections.topLeft)
-            return new int[]{1, 1};
+            return null;
         if(quadIndex == 0){
             if(connections.left)
                 return null;

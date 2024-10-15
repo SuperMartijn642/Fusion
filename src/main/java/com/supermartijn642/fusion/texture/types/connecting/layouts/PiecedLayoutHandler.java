@@ -69,9 +69,15 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
 
     private static void remapUVFullSprite(MutableQuad quad, int tileIndex, ConnectingTextureSprite sprite){
         for(int i = 0; i < 4; i++){
-            float width = sprite.getMaxU() - sprite.getMinU();
-            float u = sprite.getStartU() + quad.u(i) - sprite.getMinU() + width * tileIndex;
-            quad.uv(i, u, quad.v(i));
+            if(sprite.rotated){
+                float height = sprite.getMaxV() - sprite.getMinV();
+                float v = sprite.getStartV() + quad.v(i) - sprite.getMinV() + height * tileIndex;
+                quad.uv(i, quad.u(i), v);
+            }else{
+                float width = sprite.getMaxU() - sprite.getMinU();
+                float u = sprite.getStartU() + quad.u(i) - sprite.getMinU() + width * tileIndex;
+                quad.uv(i, u, quad.v(i));
+            }
         }
     }
 
@@ -83,8 +89,12 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
         float minV = (corner == 0 || corner == 1 ? 0 : 0.5f) * height;
         float maxV = (corner == 0 || corner == 1 ? 0.5f : 1) * height;
         for(int i = 0; i < 4; i++){
-            float u = sprite.getStartU() + Math.min(Math.max(quad.u(i) - sprite.getMinU(), minU), maxU) + width * tileIndex;
+            float u = sprite.getStartU() + Math.min(Math.max(quad.u(i) - sprite.getMinU(), minU), maxU);
             float v = sprite.getStartV() + Math.min(Math.max(quad.v(i) - sprite.getMinV(), minV), maxV);
+            if(sprite.rotated)
+                v += height * tileIndex;
+            else
+                u += width * tileIndex;
             quad.uv(i, u, v);
         }
     }

@@ -11,14 +11,12 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
  */
 public class ConnectingTextureSprite extends BaseTextureSprite {
 
-    private final float startU, startV;
     private final int originalWidth, originalHeight;
+    private float startU, startV;
     private boolean rotatedImage;
 
-    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureData data, float startU, float startV){
+    protected ConnectingTextureSprite(TextureAtlasSprite original, ConnectingTextureData data){
         super(original, data);
-        this.startU = startU;
-        this.startV = startV;
         this.originalWidth = this.width;
         this.originalHeight = this.height;
         this.resizeUV();
@@ -74,6 +72,8 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
     @Override
     public void initSprite(int inX, int inY, int originInX, int originInY, boolean rotatedIn){
         super.initSprite(inX, inY, originInX, originInY, rotatedIn);
+        this.startU = this.minU;
+        this.startV = this.minV;
         this.resizeUV();
         if(this.rotated && !this.rotatedImage)
             this.rotateLayout();

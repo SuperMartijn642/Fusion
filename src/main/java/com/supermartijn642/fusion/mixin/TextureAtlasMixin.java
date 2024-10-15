@@ -61,7 +61,9 @@ public class TextureAtlasMixin {
                 this.fusionTextureMetadata.put(identifier, metadata);
             }
             // Get the original frame size
-            com.mojang.datafixers.util.Pair<Integer,Integer> originalSize = TextureAtlasSprite.getFrameSize(animationMetadata.frameWidth, animationMetadata.frameHeight, pngInfo.width, pngInfo.height);
+            com.mojang.datafixers.util.Pair<Integer,Integer> originalSize = animationMetadata == null ?
+                new com.mojang.datafixers.util.Pair<>(pngInfo.width, pngInfo.height) :
+                TextureAtlasSprite.getFrameSize(animationMetadata.frameWidth, animationMetadata.frameHeight, pngInfo.width, pngInfo.height);
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{

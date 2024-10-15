@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * Created 06/09/2024 by SuperMartijn642
  */
-public class BaseBakedModel implements BakedModel {
+public class BaseBakedModel implements BakedModel, CustomRenderTypeBakedModel {
 
     private final List<BakedQuad>[] completeBlockMesh;
     private final List<BakedQuad> completeItemMesh;
@@ -169,6 +169,7 @@ public class BaseBakedModel implements BakedModel {
         return this.getQuads(state, cullDirection, random, EmptyModelData.INSTANCE, MinecraftForgeClient.getRenderType());
     }
 
+    @Override
     public List<RenderType> getBlockRenderTypes(){
         return this.blockRenderTypes;
     }

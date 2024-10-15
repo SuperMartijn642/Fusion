@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Created 22/09/2024 by SuperMartijn642
  */
-@Mixin(ModelBakery.class)
+@Mixin(value = ModelBakery.class, priority = 1001)
 public class ModelBakeryMixin {
 
     @Final

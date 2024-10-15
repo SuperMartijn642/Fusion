@@ -99,6 +99,8 @@ public class TextureAtlasMixin {
             }
             PngSizeInfo pngInfo = this.pngSizeInfo.get();
             AnimationMetadataSection animationMetadata = this.animationMetadata.get();
+            if(animationMetadata == null)
+                animationMetadata = AnimationMetadataSection.EMPTY;
             // Get the original frame size
             com.mojang.datafixers.util.Pair<Integer,Integer> originalSize = animationMetadata.calculateFrameSize(pngInfo.width, pngInfo.height);
             // Adjust the frame size

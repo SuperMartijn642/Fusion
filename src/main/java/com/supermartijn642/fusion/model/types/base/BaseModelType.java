@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.*;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
+import com.supermartijn642.fusion.model.types.vanilla.VanillaModelType;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -29,6 +30,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
 
     @Override
     public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, BaseModelData data){
+        VanillaModelType.resolveParents(context, data.getVanillaModel());
         // Check for circular dependencies
         ((BaseModelDataImpl)data).validateParents(context::getModel, null);
         // Gather textures

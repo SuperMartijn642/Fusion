@@ -91,7 +91,10 @@ public class OverlayLayoutHandler extends ConnectingTextureLayoutHandler {
         if(tile == null)
             return false;
         // Adjust the quad's uv
-        adjustQuadUV(quad, tile[0], tile[1], sprite);
+        if(sprite.rotated)
+            adjustQuadUV(quad, tile[1], tile[0], sprite);
+        else
+            adjustQuadUV(quad, tile[0], tile[1], sprite);
         return true;
     }
 

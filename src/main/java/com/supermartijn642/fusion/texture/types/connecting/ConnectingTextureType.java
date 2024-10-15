@@ -57,8 +57,8 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
     @Override
     public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, ConnectingTextureData data){
         // Legacy full layout was a square image, so change the framing to the new aspect ratio
-        if(data.getLayout() == ConnectingTextureLayout.FULL && context.getOriginalFrameWith() == context.getOriginalFrameHeight())
-            return Pair.of(context.getOriginalFrameWith(), context.getOriginalFrameHeight() * 6 / 8);
+        if(data.getLayout() == ConnectingTextureLayout.FULL && context.getTextureWidth() == context.getTextureHeight())
+            return Pair.of(context.getTextureWidth(), context.getTextureHeight() * 6 / 8);
 
         // Handle animation metadata
         if(context.getAnimationMetadata() != null){
@@ -86,7 +86,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
             return frameSize;
         }
 
-        return context.getOriginalFrameSize();
+        return Pair.of(context.getTextureWidth(), context.getTextureHeight());
     }
 
     @Override

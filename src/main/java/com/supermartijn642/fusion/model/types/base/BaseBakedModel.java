@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * Created 06/09/2024 by SuperMartijn642
  */
-public class BaseBakedModel implements IBakedModel {
+public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     private final List<BakedQuad>[] completeBlockMesh;
     private final List<BakedQuad>[][] blockMesh; // indexed by render layer ordinal, cull direction
@@ -125,6 +125,7 @@ public class BaseBakedModel implements IBakedModel {
         return this.getQuads(state, cullDirection, random, EmptyModelData.INSTANCE, MinecraftForgeClient.getRenderLayer());
     }
 
+    @Override
     public List<BlockRenderLayer> getBlockRenderTypes(){
         return this.blockRenderTypes;
     }

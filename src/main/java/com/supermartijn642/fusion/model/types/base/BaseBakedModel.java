@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 /**
  * Created 06/09/2024 by SuperMartijn642
  */
-public class BaseBakedModel implements IBakedModel {
+public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     private final List<BakedQuad>[] completeBlockMesh;
     private final Map<RenderType,List<BakedQuad>[]> blockMesh;
@@ -126,6 +126,7 @@ public class BaseBakedModel implements IBakedModel {
         return this.getQuads(state, cullDirection, random, EmptyModelData.INSTANCE, MinecraftForgeClient.getRenderLayer());
     }
 
+    @Override
     public List<RenderType> getBlockRenderTypes(){
         return this.blockRenderTypes;
     }

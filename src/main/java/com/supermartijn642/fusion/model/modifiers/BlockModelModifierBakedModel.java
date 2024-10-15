@@ -1,8 +1,11 @@
 package com.supermartijn642.fusion.model.modifiers;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
@@ -15,15 +18,13 @@ import net.minecraftforge.client.model.data.ModelProperty;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.IntStream;
 
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelModifierBakedModel implements IBakedModel {
+public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     private static final ModelProperty<IModelData[]> DATA_PROPERTY = new ModelProperty<>();
 
@@ -34,6 +35,7 @@ public class BlockModelModifierBakedModel implements IBakedModel {
     private final List<BakedQuad> quads;
     @SuppressWarnings("unchecked")
     private final List<BakedQuad>[] culledQuads = new List[6];
+    private final Set<RenderType> customBlockRenderTypes;
 
     public BlockModelModifierBakedModel(IBakedModel original, List<IBakedModel> models){
         this.original = original;
@@ -44,11 +46,14 @@ public class BlockModelModifierBakedModel implements IBakedModel {
         List<BakedQuad> quads = new ArrayList<>();
         //noinspection unchecked
         List<BakedQuad>[] culledQuads = IntStream.range(0, 6).mapToObj(i -> new ArrayList<>()).toArray(List[]::new);
+        Set<RenderType> customBlockRenderTypes = new HashSet<>();
         Random random = new Random();
         for(IBakedModel model : this.models){
-            if(!model.getClass().equals(SimpleBakedModel.class))
+            if(!model.getClass().equals(SimpleBakedModel.class)){
                 nonSimpleModels.add(model);
-            else{
+                if(model instanceof CustomRenderTypeBakedModel)
+                    customBlockRenderTypes.addAll(((CustomRenderTypeBakedModel)model).getBlockRenderTypes());
+            }else{
                 //noinspection deprecation
                 quads.addAll(model.getQuads(null, null, random));
                 for(Direction side : Direction.values())
@@ -61,6 +66,7 @@ public class BlockModelModifierBakedModel implements IBakedModel {
         this.quads = ImmutableList.copyOf(quads);
         for(Direction side : Direction.values())
             this.culledQuads[side.ordinal()] = ImmutableList.copyOf(culledQuads[side.ordinal()]);
+        this.customBlockRenderTypes = ImmutableSet.copyOf(customBlockRenderTypes);
     }
 
     @Override
@@ -82,6 +88,11 @@ public class BlockModelModifierBakedModel implements IBakedModel {
         for(IBakedModel model : this.nonSimpleModels)
             quads.addAll(model.getQuads(state, side, random));
         return quads;
+    }
+
+    @Override
+    public Collection<RenderType> getBlockRenderTypes(){
+        return this.customBlockRenderTypes;
     }
 
     @Override

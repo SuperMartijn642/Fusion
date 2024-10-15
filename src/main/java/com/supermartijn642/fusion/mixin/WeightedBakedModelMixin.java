@@ -1,6 +1,9 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.google.common.collect.ImmutableSet;
+import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.WeightedBakedModel;
@@ -14,17 +17,19 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Created 26/10/2023 by SuperMartijn642
  */
 @Mixin(WeightedBakedModel.class)
-public class WeightedBakedModelMixin implements IForgeBakedModel {
+public class WeightedBakedModelMixin implements IForgeBakedModel, CustomRenderTypeBakedModel {
 
     @Final
     @Shadow
@@ -34,6 +39,23 @@ public class WeightedBakedModelMixin implements IForgeBakedModel {
     private List<WeightedBakedModel.WeightedModel> list;
     @Unique
     private final ThreadLocal<Random> RANDOM = ThreadLocal.withInitial(Random::new);
+    @Unique
+    private Set<RenderType> customBlockRenderTypes;
+
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
+    public void init(List<WeightedBakedModel.WeightedModel> models, CallbackInfo ci){
+        Set<RenderType> customBlockRenderTypes = new HashSet<>();
+        this.list.stream()
+            .map(o -> o.model)
+            .filter(CustomRenderTypeBakedModel.class::isInstance)
+            .map(CustomRenderTypeBakedModel.class::cast)
+            .map(CustomRenderTypeBakedModel::getBlockRenderTypes)
+            .forEach(customBlockRenderTypes::addAll);
+        this.customBlockRenderTypes = ImmutableSet.copyOf(customBlockRenderTypes);
+    }
 
     @Nonnull
     @Override
@@ -53,5 +75,10 @@ public class WeightedBakedModelMixin implements IForgeBakedModel {
         WeightedBakedModel.WeightedModel entry = WeightedRandom.getWeightedItem(this.list, Math.abs((int)randomSource.nextLong()) % this.totalWeight);
         IBakedModel model = entry == null ? null : entry.model;
         return model == null ? modelData : model.getModelData(level, pos, state, modelData);
+    }
+
+    @Override
+    public Collection<RenderType> getBlockRenderTypes(){
+        return this.customBlockRenderTypes;
     }
 }

@@ -6,6 +6,7 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class ConnectingBakedModel implements IBakedModel {
+public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     public static final ModelProperty<SurroundingBlockCache> BLOCK_CACHE_PROPERTY = new ModelProperty<>();
     private static final int VERTEX_SIZE, VERTEX_UV_OFFSET, VERTEX_POSITION_OFFSET;
@@ -370,6 +371,7 @@ public class ConnectingBakedModel implements IBakedModel {
         return this.getQuads(state, cullDirection, random, EmptyModelData.INSTANCE, MinecraftForgeClient.getRenderLayer());
     }
 
+    @Override
     public List<RenderType> getBlockRenderTypes(){
         return this.blockRenderTypes;
     }

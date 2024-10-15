@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.modifiers;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
+import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -21,15 +22,13 @@ import net.minecraftforge.client.model.data.ModelProperty;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.IntStream;
 
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelModifierBakedModel implements BakedModel {
+public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTypeBakedModel {
 
     private static final ModelProperty<IModelData[]> DATA_PROPERTY = new ModelProperty<>();
 
@@ -40,6 +39,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
     private final List<BakedQuad> quads;
     @SuppressWarnings("unchecked")
     private final List<BakedQuad>[] culledQuads = new List[6];
+    private final Set<RenderType> customBlockRenderTypes;
     private final boolean hasLayeredModels;
 
     public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models){
@@ -51,11 +51,14 @@ public class BlockModelModifierBakedModel implements BakedModel {
         List<BakedQuad> quads = new ArrayList<>();
         //noinspection unchecked
         List<BakedQuad>[] culledQuads = IntStream.range(0, 6).mapToObj(i -> new ArrayList<>()).toArray(List[]::new);
+        Set<RenderType> customBlockRenderTypes = new HashSet<>();
         boolean hasLayeredModels = false;
         Random random = new Random();
         for(BakedModel model : this.models){
             if(!model.getClass().equals(SimpleBakedModel.class)){
                 nonSimpleModels.add(model);
+                if(model instanceof CustomRenderTypeBakedModel)
+                    customBlockRenderTypes.addAll(((CustomRenderTypeBakedModel)model).getBlockRenderTypes());
                 if(model.isLayered())
                     hasLayeredModels = true;
             }else{
@@ -71,6 +74,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
         this.quads = List.copyOf(quads);
         for(Direction side : Direction.values())
             this.culledQuads[side.ordinal()] = List.copyOf(culledQuads[side.ordinal()]);
+        this.customBlockRenderTypes = Set.copyOf(customBlockRenderTypes);
         this.hasLayeredModels = hasLayeredModels;
     }
 
@@ -93,6 +97,11 @@ public class BlockModelModifierBakedModel implements BakedModel {
         for(BakedModel model : this.nonSimpleModels)
             quads.addAll(model.getQuads(state, side, random));
         return quads;
+    }
+
+    @Override
+    public Collection<RenderType> getBlockRenderTypes(){
+        return this.customBlockRenderTypes;
     }
 
     @Override

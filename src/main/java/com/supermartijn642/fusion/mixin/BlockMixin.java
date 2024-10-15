@@ -1,12 +1,10 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
-import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
+import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.block.model.WeightedBakedModel;
 import net.minecraft.util.BlockRenderLayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,11 +25,7 @@ public class BlockMixin {
     )
     private void canRenderInLayer(IBlockState state, BlockRenderLayer renderType, CallbackInfoReturnable<Boolean> ci){ // Might not work for mods that overwrite this in their block class
         IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
-        if(model instanceof WeightedBakedModel)
-            model = ((WeightedBakedModel)model).baseModel;
-        if(model instanceof BaseBakedModel && ((BaseBakedModel)model).getBlockRenderTypes().contains(renderType))
-            ci.setReturnValue(true);
-        else if(model instanceof ConnectingBakedModel && ((ConnectingBakedModel)model).getBlockRenderTypes().contains(renderType))
+        if(model instanceof CustomRenderTypeBakedModel && ((CustomRenderTypeBakedModel)model).getBlockRenderTypes().contains(renderType))
             ci.setReturnValue(true);
     }
 }

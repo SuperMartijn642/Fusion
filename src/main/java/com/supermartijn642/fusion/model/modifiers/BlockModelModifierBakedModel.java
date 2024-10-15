@@ -1,23 +1,25 @@
 package com.supermartijn642.fusion.model.modifiers;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.vecmath.Matrix4f;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelModifierBakedModel implements IBakedModel {
+public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     private final IBakedModel original;
     private final List<IBakedModel> models;
@@ -26,6 +28,7 @@ public class BlockModelModifierBakedModel implements IBakedModel {
     private final List<BakedQuad> quads;
     @SuppressWarnings("unchecked")
     private final List<BakedQuad>[] culledQuads = new List[6];
+    private final Set<BlockRenderLayer> customBlockRenderTypes;
 
     public BlockModelModifierBakedModel(IBakedModel original, List<IBakedModel> models){
         this.original = original;
@@ -36,10 +39,13 @@ public class BlockModelModifierBakedModel implements IBakedModel {
         List<BakedQuad> quads = new ArrayList<>();
         //noinspection unchecked
         List<BakedQuad>[] culledQuads = IntStream.range(0, 6).mapToObj(i -> new ArrayList<>()).toArray(List[]::new);
+        Set<BlockRenderLayer> customBlockRenderTypes = new HashSet<>();
         for(IBakedModel model : this.models){
-            if(!model.getClass().equals(SimpleBakedModel.class))
+            if(!model.getClass().equals(SimpleBakedModel.class)){
                 nonSimpleModels.add(model);
-            else{
+                if(model instanceof CustomRenderTypeBakedModel)
+                    customBlockRenderTypes.addAll(((CustomRenderTypeBakedModel)model).getBlockRenderTypes());
+            }else{
                 //noinspection deprecation
                 quads.addAll(model.getQuads(null, null, 42));
                 for(EnumFacing side : EnumFacing.values())
@@ -52,6 +58,7 @@ public class BlockModelModifierBakedModel implements IBakedModel {
         this.quads = ImmutableList.copyOf(quads);
         for(EnumFacing side : EnumFacing.values())
             this.culledQuads[side.ordinal()] = ImmutableList.copyOf(culledQuads[side.ordinal()]);
+        this.customBlockRenderTypes = ImmutableSet.copyOf(customBlockRenderTypes);
     }
 
     @Override
@@ -67,6 +74,11 @@ public class BlockModelModifierBakedModel implements IBakedModel {
     @Override
     public ItemCameraTransforms getItemCameraTransforms(){
         return this.original.getItemCameraTransforms();
+    }
+
+    @Override
+    public Collection<BlockRenderLayer> getBlockRenderTypes(){
+        return this.customBlockRenderTypes;
     }
 
     @Override

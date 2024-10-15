@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class ConnectingBakedModel implements IBakedModel {
+public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     public static final ThreadLocal<SurroundingBlockCache> BLOCK_CACHE = new ThreadLocal<>();
     /**
@@ -354,6 +355,7 @@ public class ConnectingBakedModel implements IBakedModel {
         return this.getQuads(state, cullDirection, seed, MinecraftForgeClient.getRenderLayer());
     }
 
+    @Override
     public List<BlockRenderLayer> getBlockRenderTypes(){
         return this.blockRenderTypes;
     }

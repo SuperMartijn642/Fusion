@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.model.modifiers.item;
 import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.modifiers.BlockModelModifierReloadListener;
+import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.AndItemPredicate;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateRegistry;

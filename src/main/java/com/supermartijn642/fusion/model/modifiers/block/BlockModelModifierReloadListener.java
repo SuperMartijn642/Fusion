@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.modifiers;
+package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -40,26 +40,30 @@ public class BlockModelModifierReloadListener {
 
     public static final BlockModelModifierReloadListener INSTANCE = new BlockModelModifierReloadListener();
 
-    private final Map<ModelResourceLocation,List<ResourceLocation>> models = new HashMap<>();
+    private final Map<ModelResourceLocation,Properties> models = new HashMap<>();
 
     private BlockModelModifierReloadListener(){
     }
 
     public List<ModelResourceLocation> registerOverlays(){
         Set<ResourceLocation> models = new HashSet<>();
-        for(List<ResourceLocation> list : this.models.values())
-            models.addAll(list);
+        for(Properties properties : this.models.values())
+            models.addAll(properties.appendModels);
         return models.stream().map(BlockModelModifierReloadListener::overlayModelLocation).collect(Collectors.toList());
     }
 
     public void applyOverlays(ModelBakery bakery){
         RegistrySimple<ModelResourceLocation,IBakedModel> bakedModels = bakery.bakedRegistry;
-        for(Map.Entry<ModelResourceLocation,List<ResourceLocation>> entry : this.models.entrySet()){
+        for(Map.Entry<ModelResourceLocation,Properties> entry : this.models.entrySet()){
             ModelResourceLocation target = entry.getKey();
             IBakedModel targetModel = bakedModels.getObject(target);
-            List<ResourceLocation> overlays = entry.getValue();
+            Properties properties = entry.getValue();
+            List<ResourceLocation> overlays = properties.appendModels;
             List<IBakedModel> overlayModels = overlays.stream().map(BlockModelModifierReloadListener::overlayModelLocation).map(bakedModels::getObject).collect(Collectors.toList());
-            bakedModels.putObject(target, new BlockModelModifierBakedModel(targetModel, overlayModels));
+            IBakedModel model = new BlockModelModifierBakedModel(targetModel, overlayModels);
+            if(properties.paneCullingFix)
+                model = new PaneCullingBakedModel(model);
+            bakedModels.putObject(target, model);
         }
     }
 
@@ -142,10 +146,19 @@ public class BlockModelModifierReloadListener {
         if(models.isEmpty())
             return;
 
-        // Put the overlays into the map
+        // Pane culling option
+        boolean paneCullingFix = false;
+        if(json.has("pane_culling_fix")){
+            if(json.get("pane_culling_fix").isJsonPrimitive() || !json.getAsJsonPrimitive("pane_culling_fix").isBoolean())
+                throw new JsonParseException("Property 'pane_culling_fix' must be a boolean!");
+            paneCullingFix = json.get("pane_culling_fix").getAsBoolean();
+        }
+
+        // Put the properties into the map
         for(ModelResourceLocation target : targets){
-            List<ResourceLocation> overlays = this.models.computeIfAbsent(target, t -> new ArrayList<>());
-            overlays.addAll(models);
+            Properties properties = this.models.computeIfAbsent(target, t -> new Properties());
+            properties.appendModels.addAll(models);
+            properties.paneCullingFix = paneCullingFix;
         }
     }
 
@@ -238,5 +251,10 @@ public class BlockModelModifierReloadListener {
             return resources;
         }
         return Collections.emptyList();
+    }
+
+    private static class Properties {
+        final List<ResourceLocation> appendModels = new ArrayList<>();
+        boolean paneCullingFix;
     }
 }

@@ -10,7 +10,7 @@ import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
-import com.supermartijn642.fusion.predicate.*;
+import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.fml.InterModComms;

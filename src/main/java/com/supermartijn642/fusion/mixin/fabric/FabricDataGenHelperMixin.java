@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin.fabric;
 
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
-import com.supermartijn642.fusion.predicate.PredicateRegistryImpl;
+import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateRegistryImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.fabric.impl.datagen.FabricDataGenHelper;

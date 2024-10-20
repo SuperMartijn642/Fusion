@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.predicate;
+package com.supermartijn642.fusion.model.types.connecting.predicates;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
@@ -25,11 +25,11 @@ import java.util.stream.Stream;
 /**
  * Created 22/02/2024 by SuperMartijn642
  */
-public class MatchStateConnectionPredicate implements ConnectionPredicate {
+public class MatchStateInFrontConnectionPredicate implements ConnectionPredicate {
 
-    public static final Serializer<MatchStateConnectionPredicate> SERIALIZER = new Serializer<MatchStateConnectionPredicate>() {
+    public static final Serializer<MatchStateInFrontConnectionPredicate> SERIALIZER = new Serializer<MatchStateInFrontConnectionPredicate>() {
         @Override
-        public MatchStateConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
+        public MatchStateInFrontConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
                 throw new JsonParseException("Match state predicate must have string property 'block'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
@@ -74,11 +74,11 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
             //noinspection unchecked
             properties = Arrays.asList(properties.toArray(new Pair[0]));
 
-            return new MatchStateConnectionPredicate(block, properties);
+            return new MatchStateInFrontConnectionPredicate(block, properties);
         }
 
         @Override
-        public JsonObject serialize(MatchStateConnectionPredicate value){
+        public JsonObject serialize(MatchStateInFrontConnectionPredicate value){
             JsonObject json = new JsonObject();
             json.addProperty("block", ForgeRegistries.BLOCKS.getKey(value.block).toString());
             JsonObject properties = new JsonObject();
@@ -102,14 +102,14 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
     private boolean compareStates = false;
     private Set<IBlockState> states = null;
 
-    public MatchStateConnectionPredicate(Block block, List<Pair<IProperty<?>,Set<?>>> properties){
+    public MatchStateInFrontConnectionPredicate(Block block, List<Pair<IProperty<?>,Set<?>>> properties){
         this.block = block;
         this.properties = properties;
         this.computeStates();
     }
 
     @SafeVarargs
-    public MatchStateConnectionPredicate(Block block, Pair<IProperty<?>,?>... propertyPair){
+    public MatchStateInFrontConnectionPredicate(Block block, Pair<IProperty<?>,?>... propertyPair){
         this.block = block;
         Map<IProperty<?>,List<Object>> propertyMap = new HashMap<>();
         for(Pair<IProperty<?>,?> pair : propertyPair){
@@ -165,11 +165,11 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
     @Override
     public boolean shouldConnect(EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction){
         if(this.compareStates)
-            return this.states.contains(otherState);
-        if(otherState.getBlock() != this.block)
+            return this.states.contains(blockInFront);
+        if(blockInFront.getBlock() != this.block)
             return false;
         for(Pair<IProperty<?>,Set<?>> property : this.properties){
-            if(!property.right().contains(otherState.getValue(property.left())))
+            if(!property.right().contains(blockInFront.getValue(property.left())))
                 return false;
         }
         return true;
@@ -178,5 +178,21 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
     @Override
     public Serializer<? extends ConnectionPredicate> getSerializer(){
         return SERIALIZER;
+    }
+
+    @Override
+    public final boolean equals(Object o){
+        if(this == o) return true;
+        if(!(o instanceof MatchStateInFrontConnectionPredicate)) return false;
+
+        MatchStateInFrontConnectionPredicate that = (MatchStateInFrontConnectionPredicate)o;
+        return this.block.equals(that.block) && this.properties.equals(that.properties);
+    }
+
+    @Override
+    public int hashCode(){
+        int result = this.block.hashCode();
+        result = 31 * result + this.properties.hashCode();
+        return result;
     }
 }

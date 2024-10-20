@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.api.predicate;
 
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.predicate.*;
+import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import net.minecraft.block.Block;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;

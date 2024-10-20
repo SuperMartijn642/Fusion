@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.api.predicate;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
-import com.supermartijn642.fusion.predicate.PredicateRegistryImpl;
+import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateRegistryImpl;
 import net.minecraft.resources.ResourceLocation;
 
 /**

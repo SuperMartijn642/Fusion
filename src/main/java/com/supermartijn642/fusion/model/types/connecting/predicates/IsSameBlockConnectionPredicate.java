@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.predicate;
+package com.supermartijn642.fusion.model.types.connecting.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -13,27 +13,27 @@ import javax.annotation.Nullable;
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
-public class IsSameStateConnectionPredicate implements ConnectionPredicate {
+public class IsSameBlockConnectionPredicate implements ConnectionPredicate {
 
-    public static final IsSameStateConnectionPredicate INSTANCE = new IsSameStateConnectionPredicate();
-    public static final Serializer<IsSameStateConnectionPredicate> SERIALIZER = new Serializer<IsSameStateConnectionPredicate>() {
+    public static final IsSameBlockConnectionPredicate INSTANCE = new IsSameBlockConnectionPredicate();
+    public static final Serializer<IsSameBlockConnectionPredicate> SERIALIZER = new Serializer<IsSameBlockConnectionPredicate>() {
         @Override
-        public IsSameStateConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
+        public IsSameBlockConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
             return INSTANCE;
         }
 
         @Override
-        public JsonObject serialize(IsSameStateConnectionPredicate value){
+        public JsonObject serialize(IsSameBlockConnectionPredicate value){
             return null;
         }
     };
 
-    private IsSameStateConnectionPredicate(){
+    private IsSameBlockConnectionPredicate(){
     }
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        return ownState == otherState;
+        return ownState != null && ownState.getBlock() == otherState.getBlock();
     }
 
     @Override

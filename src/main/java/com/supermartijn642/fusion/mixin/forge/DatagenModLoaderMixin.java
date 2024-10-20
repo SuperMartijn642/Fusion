@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin.forge;
 
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
-import com.supermartijn642.fusion.predicate.PredicateRegistryImpl;
+import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateRegistryImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.minecraftforge.fml.ModLoader;
 import org.spongepowered.asm.mixin.Mixin;

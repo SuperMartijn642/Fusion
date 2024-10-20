@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.predicate;
+package com.supermartijn642.fusion.model.types.connecting.predicates;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -20,13 +20,13 @@ import java.util.List;
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
-public class AndConnectionPredicate implements ConnectionPredicate {
+public class OrConnectionPredicate implements ConnectionPredicate {
 
-    public static final Serializer<AndConnectionPredicate> SERIALIZER = new Serializer<AndConnectionPredicate>() {
+    public static final Serializer<OrConnectionPredicate> SERIALIZER = new Serializer<OrConnectionPredicate>() {
         @Override
-        public AndConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
+        public OrConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("predicates") || !json.get("predicates").isJsonArray())
-                throw new JsonParseException("And-predicate must have array property 'predicates'!");
+                throw new JsonParseException("Or-predicate must have array property 'predicates'!");
             List<ConnectionPredicate> predicates = new ArrayList<>();
             // Deserialize all the predicates from the 'predicates' array
             JsonArray array = json.getAsJsonArray("predicates");
@@ -36,11 +36,11 @@ public class AndConnectionPredicate implements ConnectionPredicate {
                 ConnectionPredicate predicate = FusionPredicateRegistry.deserializeConnectionPredicate(element.getAsJsonObject());
                 predicates.add(predicate);
             }
-            return new AndConnectionPredicate(predicates);
+            return new OrConnectionPredicate(predicates);
         }
 
         @Override
-        public JsonObject serialize(AndConnectionPredicate value){
+        public JsonObject serialize(OrConnectionPredicate value){
             JsonObject json = new JsonObject();
             // Create an array with all the serialized predicates
             JsonArray predicatesJson = new JsonArray();
@@ -54,7 +54,7 @@ public class AndConnectionPredicate implements ConnectionPredicate {
     private final List<ConnectionPredicate> predicates;
     private final boolean isSensitive;
 
-    public AndConnectionPredicate(List<ConnectionPredicate> predicates){
+    public OrConnectionPredicate(List<ConnectionPredicate> predicates){
         this.predicates = predicates;
         this.isSensitive = predicates.stream().anyMatch(ConnectionPredicate::isSensitive);
     }
@@ -62,19 +62,19 @@ public class AndConnectionPredicate implements ConnectionPredicate {
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
         for(ConnectionPredicate predicate : this.predicates){
-            if(!predicate.shouldConnect(side, ownState, otherState, blockInFront, direction))
-                return false;
+            if(predicate.shouldConnect(side, ownState, otherState, blockInFront, direction))
+                return true;
         }
-        return true;
+        return false;
     }
 
     @Override
     public boolean shouldConnect(IBlockReader level, BlockPos pos, Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
         for(ConnectionPredicate predicate : this.predicates){
-            if(!predicate.shouldConnect(level, pos, side, ownState, otherState, blockInFront, direction))
-                return false;
+            if(predicate.shouldConnect(level, pos, side, ownState, otherState, blockInFront, direction))
+                return true;
         }
-        return true;
+        return false;
     }
 
     @Override
@@ -90,9 +90,9 @@ public class AndConnectionPredicate implements ConnectionPredicate {
     @Override
     public final boolean equals(Object o){
         if(this == o) return true;
-        if(!(o instanceof AndConnectionPredicate)) return false;
+        if(!(o instanceof OrConnectionPredicate)) return false;
 
-        AndConnectionPredicate that = (AndConnectionPredicate)o;
+        OrConnectionPredicate that = (OrConnectionPredicate)o;
         return this.predicates.equals(that.predicates);
     }
 

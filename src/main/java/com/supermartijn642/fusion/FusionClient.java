@@ -8,7 +8,7 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
-import com.supermartijn642.fusion.predicate.*;
+import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.vertex.VertexFormat;

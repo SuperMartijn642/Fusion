@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin.neoforge;
 
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
-import com.supermartijn642.fusion.predicate.PredicateRegistryImpl;
+import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateRegistryImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import org.spongepowered.asm.mixin.Mixin;

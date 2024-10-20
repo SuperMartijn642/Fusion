@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.modifiers;
+package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

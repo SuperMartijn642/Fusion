@@ -1,0 +1,90 @@
+package com.supermartijn642.fusion.model.modifiers.block;
+
+import com.supermartijn642.fusion.model.WrappedBakedModel;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+
+import java.util.Random;
+import java.util.function.Supplier;
+
+/**
+ * Created 5/11/2020 by SuperMartijn642
+ */
+public class PaneCullingBakedModel extends WrappedBakedModel {
+
+    private static final BooleanProperty[] SIDE_PROPERTIES = {
+        null,
+        null,
+        BlockStateProperties.NORTH,
+        BlockStateProperties.SOUTH,
+        BlockStateProperties.WEST,
+        BlockStateProperties.EAST
+    };
+
+    public PaneCullingBakedModel(BakedModel original){
+        super(original);
+    }
+
+    @Override
+    public boolean isVanillaAdapter(){
+        return false;
+    }
+
+    @Override
+    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context){
+        // If state has no side properties, then there's nothing to be culled
+        if(!state.hasProperty(BlockStateProperties.NORTH) && !state.hasProperty(BlockStateProperties.SOUTH) && !state.hasProperty(BlockStateProperties.WEST) && !state.hasProperty(BlockStateProperties.EAST)){
+            super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+            return;
+        }
+
+        // Gather the states above and below
+        BlockState stateAbove = blockView.getBlockState(pos.above());
+        if(stateAbove.getBlock() != state.getBlock())
+            stateAbove = null;
+        BlockState stateBelow = blockView.getBlockState(pos.below());
+        if(stateBelow.getBlock() != state.getBlock())
+            stateBelow = null;
+
+        if(stateAbove == null && stateBelow == null){
+            super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+            return;
+        }
+
+        // Filter out certain quads
+        BlockState finalStateAbove = stateAbove;
+        BlockState finalStateBelow = stateBelow;
+        context.pushTransform(quad -> filterQuad(quad, finalStateAbove, finalStateBelow));
+        super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+        context.popTransform();
+    }
+
+    private static boolean filterQuad(QuadView quad, BlockState stateAbove, BlockState stateBelow){
+        // Check that the quad is part of the top or bottom face of the pane
+        Direction quadDirection = quad.nominalFace();
+        if(quadDirection != Direction.UP && quadDirection != Direction.DOWN)
+            return true;
+
+        // Find the center of the quad
+        float centerX = (quad.x(0) + quad.x(1) + quad.x(2) + quad.x(3)) / 4;
+        float centerZ = (quad.z(0) + quad.z(1) + quad.z(2) + quad.z(3)) / 4;
+        // If the quad's center is roughly at the center of the block, assume it is the middle part of the glass pane
+        double quadDistance = Math.sqrt((centerX - 0.5) * (centerX - 0.5) + (centerZ - 0.5) * (centerZ - 0.5));
+        if(quadDistance < 0.1) // Centerpiece
+            return quadDirection == Direction.UP ? stateAbove == null : stateBelow == null;
+
+        // Get the side of the pane the quad is on
+        Direction partSide = Direction.getNearest(centerX - 0.5, 0, centerZ - 0.5);
+        // If the pane above/below is connected on the quad's side, cull the quad
+        return quadDirection == Direction.UP ?
+            stateAbove == null || !stateAbove.getValue(SIDE_PROPERTIES[partSide.ordinal()]) :
+            stateBelow == null || !stateBelow.getValue(SIDE_PROPERTIES[partSide.ordinal()]);
+    }
+}

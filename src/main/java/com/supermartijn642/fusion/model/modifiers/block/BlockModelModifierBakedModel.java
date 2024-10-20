@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.modifiers;
+package com.supermartijn642.fusion.model.modifiers.block;
 
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;

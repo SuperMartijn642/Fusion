@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.predicate;
+package com.supermartijn642.fusion.model.types.connecting.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -15,13 +15,13 @@ import net.minecraft.util.registry.Registry;
 import javax.annotation.Nullable;
 
 /**
- * Created 12/10/2024 by SuperMartijn642
+ * Created 28/04/2023 by SuperMartijn642
  */
-public class MatchBlockInFrontConnectionPredicate implements ConnectionPredicate {
+public class MatchBlockConnectionPredicate implements ConnectionPredicate {
 
-    public static final Serializer<MatchBlockInFrontConnectionPredicate> SERIALIZER = new Serializer<MatchBlockInFrontConnectionPredicate>() {
+    public static final Serializer<MatchBlockConnectionPredicate> SERIALIZER = new Serializer<MatchBlockConnectionPredicate>() {
         @Override
-        public MatchBlockInFrontConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
+        public MatchBlockConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
                 throw new JsonParseException("Match block predicate must have string property 'block'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
@@ -30,11 +30,11 @@ public class MatchBlockInFrontConnectionPredicate implements ConnectionPredicate
             if(!Registry.BLOCK.containsKey(identifier))
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
             Block block = Registry.BLOCK.get(identifier);
-            return new MatchBlockInFrontConnectionPredicate(block);
+            return new MatchBlockConnectionPredicate(block);
         }
 
         @Override
-        public JsonObject serialize(MatchBlockInFrontConnectionPredicate value){
+        public JsonObject serialize(MatchBlockConnectionPredicate value){
             JsonObject json = new JsonObject();
             json.addProperty("block", Registry.BLOCK.getKey(value.block).toString());
             return json;
@@ -43,13 +43,13 @@ public class MatchBlockInFrontConnectionPredicate implements ConnectionPredicate
 
     private final Block block;
 
-    public MatchBlockInFrontConnectionPredicate(Block block){
+    public MatchBlockConnectionPredicate(Block block){
         this.block = block;
     }
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        return blockInFront.getBlock() == this.block;
+        return otherState.getBlock() == this.block;
     }
 
     @Override
@@ -60,9 +60,9 @@ public class MatchBlockInFrontConnectionPredicate implements ConnectionPredicate
     @Override
     public final boolean equals(Object o){
         if(this == o) return true;
-        if(!(o instanceof MatchBlockInFrontConnectionPredicate)) return false;
+        if(!(o instanceof MatchBlockConnectionPredicate)) return false;
 
-        MatchBlockInFrontConnectionPredicate that = (MatchBlockInFrontConnectionPredicate)o;
+        MatchBlockConnectionPredicate that = (MatchBlockConnectionPredicate)o;
         return this.block.equals(that.block);
     }
 

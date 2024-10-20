@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.model.modifiers;
+package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.RenderType;

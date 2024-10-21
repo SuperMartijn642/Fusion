@@ -21,6 +21,7 @@ import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
 import net.fabricmc.fabric.api.util.TriState;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
@@ -110,5 +111,17 @@ public class FusionClient implements ClientModInitializer {
             RENDER_MATERIALS[index] = material;
         }
         return material;
+    }
+
+    private static String fusionVersion;
+
+    public static String getFusionVersion(){
+        if(fusionVersion == null){
+            String version = FabricLoader.getInstance().getModContainer("fusion").orElseThrow().getMetadata().getVersion().getFriendlyString();
+            if(!version.matches("\\d+\\.\\d+\\.\\d+"))
+                version = version.substring(0, version.length() - version.replaceFirst("\\d+\\.\\d+\\.\\d+\\D", "").length() - 1);
+            fusionVersion = version;
+        }
+        return fusionVersion;
     }
 }

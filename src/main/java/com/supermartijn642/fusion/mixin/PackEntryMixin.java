@@ -98,6 +98,8 @@ public class PackEntryMixin {
         cancellable = true
     )
     private void showFusionWarningScreen(CallbackInfoReturnable<Boolean> ci){
+        if(this.metadata == null)
+            return;
         Consumer<Boolean> callback = select -> {
             Minecraft.getInstance().setScreen(this.parent.screen);
             if(select)

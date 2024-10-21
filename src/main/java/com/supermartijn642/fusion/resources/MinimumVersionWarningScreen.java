@@ -34,7 +34,7 @@ public class MinimumVersionWarningScreen extends GuiScreen {
     private final String currentVersionLabel, requiredVersionLabel;
     private final String currentVersion, requiredVersion;
     private final int versionLabelTextWidth, versionTextWidth;
-    private final GuiOptionButton cancelButton, confirmButton;
+    private final GuiOptionButton confirmButton, cancelButton;
 
     public MinimumVersionWarningScreen(ResourcePackRepository.Entry pack, Consumer<Boolean> confirmation){
         super();
@@ -70,27 +70,27 @@ public class MinimumVersionWarningScreen extends GuiScreen {
         this.versionTextWidth = Math.max(font.getStringWidth(this.currentVersion), font.getStringWidth(this.requiredVersion));
 
         // Confirmation buttons
-        this.cancelButton = new GuiOptionButton(0, 80, 20, new TextComponentTranslation("fusion.resource_packs.warning_screen.cancel").getFormattedText());
-        this.confirmButton = new GuiOptionButton(1, 80, 20, new TextComponentTranslation("fusion.resource_packs.warning_screen.confirm").getFormattedText());
+        this.confirmButton = new GuiOptionButton(0, 80, 20, new TextComponentTranslation("fusion.resource_packs.warning_screen.confirm").getFormattedText());
+        this.cancelButton = new GuiOptionButton(1, 80, 20, new TextComponentTranslation("fusion.resource_packs.warning_screen.cancel").getFormattedText());
     }
 
     @Override
     public void initGui(){
         super.initGui();
-        this.cancelButton.x = this.width / 2 - this.cancelButton.width - 2;
-        this.cancelButton.y = this.height / 2 + 110 - this.cancelButton.height;
-        this.confirmButton.x = this.width / 2 + 2;
+        this.confirmButton.x = this.width / 2 - this.confirmButton.width - 2;
         this.confirmButton.y = this.height / 2 + 110 - this.confirmButton.height;
-        this.addButton(this.cancelButton);
+        this.cancelButton.x = this.width / 2 + 2;
+        this.cancelButton.y = this.height / 2 + 110 - this.cancelButton.height;
         this.addButton(this.confirmButton);
+        this.addButton(this.cancelButton);
     }
 
     @Override
     protected void actionPerformed(GuiButton button) throws IOException{
-        if(button == this.cancelButton)
-            this.confirmation.accept(false);
-        else if(button == this.confirmButton)
+        if(button == this.confirmButton)
             this.confirmation.accept(true);
+        else if(button == this.cancelButton)
+            this.confirmation.accept(false);
         else
             super.actionPerformed(button);
     }

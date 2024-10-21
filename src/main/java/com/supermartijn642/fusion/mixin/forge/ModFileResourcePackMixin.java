@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.mixin.forge;
 
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
+import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.server.packs.AbstractPackResources;
 import net.minecraftforge.fmllegacy.packs.ModFileResourcePack;
@@ -33,7 +34,8 @@ public class ModFileResourcePackMixin {
             Path path = mf.findResource("pack.mcmeta");
             String overridesFolder;
             try(InputStream stream = Files.newInputStream(path)){
-                overridesFolder = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.INSTANCE, stream);
+                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.INSTANCE, stream);
+                overridesFolder = metadata != null ? metadata.getOverridesFolder() : null;
             }catch(IOException ignored){
                 return;
             }

@@ -22,6 +22,7 @@
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
+    "PackEntryMixin",
     "PackMixin",
     "PackResourcesAdapterV4Mixin",
     "TerrainParticleMixin",

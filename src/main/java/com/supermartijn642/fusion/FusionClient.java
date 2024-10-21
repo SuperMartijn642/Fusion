@@ -19,6 +19,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.fml.InterModComms;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
@@ -125,5 +126,17 @@ public class FusionClient {
                 throw new AssertionError();
         }
         return material;
+    }
+
+    private static String fusionVersion;
+
+    public static String getFusionVersion(){
+        if(fusionVersion == null){
+            String version = ModList.get().getModContainerById("fusion").orElseThrow().getModInfo().getVersion().toString();
+            if(!version.matches("\\d+\\.\\d+\\.\\d+"))
+                version = version.substring(0, version.length() - version.replaceFirst("\\d+\\.\\d+\\.\\d+\\D", "").length() - 1);
+            fusionVersion = version;
+        }
+        return fusionVersion;
     }
 }

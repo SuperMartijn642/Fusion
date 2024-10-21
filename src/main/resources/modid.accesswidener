@@ -59,6 +59,9 @@ mutable field net/minecraft/client/model/geom/ModelPart$Polygon vertices [Lnet/m
 mutable field net/minecraft/client/model/geom/ModelPart$Polygon normal Lorg/joml/Vector3f;
 # MultiPackResourceManager
 accessible field net/minecraft/server/packs/resources/MultiPackResourceManager packs Ljava/util/List;
+# PackSelectionModel
+accessible field net/minecraft/client/gui/screens/packs/PackSelectionModel$EntryBase pack Lnet/minecraft/server/packs/repository/Pack;
+accessible class net/minecraft/client/gui/screens/packs/PackSelectionModel$EntryBase
 # PartDefinition
 accessible field net/minecraft/client/model/geom/builders/PartDefinition children Ljava/util/Map;
 accessible method net/minecraft/client/model/geom/builders/PartDefinition <init> (Ljava/util/List;Lnet/minecraft/client/model/geom/PartPose;)V
@@ -100,5 +103,7 @@ mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
+# TransferableSelectionList
+accessible field net/minecraft/client/gui/screens/packs/TransferableSelectionList screen Lnet/minecraft/client/gui/screens/packs/PackSelectionScreen;
 # VertexFormat
 accessible field com/mojang/blaze3d/vertex/VertexFormat offsets Lit/unimi/dsi/fastutil/ints/IntList;

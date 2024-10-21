@@ -26,6 +26,7 @@
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
     "OutlineBufferSourceMixin",
+    "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
     "SpriteLoaderMixin",

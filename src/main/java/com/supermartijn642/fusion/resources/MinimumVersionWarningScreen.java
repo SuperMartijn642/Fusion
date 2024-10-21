@@ -35,7 +35,7 @@ public class MinimumVersionWarningScreen extends Screen {
     private final ITextComponent currentVersionLabel, requiredVersionLabel;
     private final ITextComponent currentVersion, requiredVersion;
     private final int versionLabelTextWidth, versionTextWidth;
-    private final Button cancelButton, confirmButton;
+    private final Button confirmButton, cancelButton;
 
     public MinimumVersionWarningScreen(PackLoadingManager.AbstractPack pack, Consumer<Boolean> confirmation){
         super(new TranslationTextComponent("fusion.resource_packs.warning_screen.title"));
@@ -71,8 +71,8 @@ public class MinimumVersionWarningScreen extends Screen {
         this.versionTextWidth = Math.max(font.width(this.currentVersion), font.width(this.requiredVersion));
 
         // Confirmation buttons
-        this.cancelButton = new Button(0, 0, 80, 20, new TranslationTextComponent("fusion.resource_packs.warning_screen.cancel"), b -> confirmation.accept(false));
         this.confirmButton = new Button(0, 0, 80, 20, new TranslationTextComponent("fusion.resource_packs.warning_screen.confirm"), b -> confirmation.accept(true));
+        this.cancelButton = new Button(0, 0, 80, 20, new TranslationTextComponent("fusion.resource_packs.warning_screen.cancel"), b -> confirmation.accept(false));
     }
 
     @Override
@@ -83,12 +83,12 @@ public class MinimumVersionWarningScreen extends Screen {
     @Override
     protected void init(){
         super.init();
-        this.cancelButton.x = this.width / 2 - this.cancelButton.getWidth() - 2;
-        this.cancelButton.y = this.height / 2 + 110 - this.cancelButton.getHeight();
-        this.confirmButton.x = this.width / 2 + 2;
+        this.confirmButton.x = this.width / 2 - this.confirmButton.getWidth() - 2;
         this.confirmButton.y = this.height / 2 + 110 - this.confirmButton.getHeight();
-        this.addButton(this.cancelButton);
+        this.cancelButton.x = this.width / 2 + 2;
+        this.cancelButton.y = this.height / 2 + 110 - this.cancelButton.getHeight();
         this.addButton(this.confirmButton);
+        this.addButton(this.cancelButton);
     }
 
     @Override

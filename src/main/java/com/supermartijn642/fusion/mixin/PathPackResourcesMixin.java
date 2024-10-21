@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Sets;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
+import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.FileUtil;
 import net.minecraft.resources.ResourceLocation;
@@ -62,7 +63,8 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         if(Files.exists(path)){
             String overridesFolder;
             try(InputStream stream = Files.newInputStream(path)){
-                overridesFolder = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.INSTANCE, stream);
+                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.INSTANCE, stream);
+                overridesFolder = metadata != null ? metadata.getOverridesFolder() : null;
             }catch(IOException ignored){
                 return;
             }

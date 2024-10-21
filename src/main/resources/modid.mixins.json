@@ -27,6 +27,7 @@
     "ModelManagerMixin",
     "MultiPartBakedModelMixin",
     "OutlineBufferSourceMixin",
+    "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
     "ResourceMetadata\$BuilderMixin",

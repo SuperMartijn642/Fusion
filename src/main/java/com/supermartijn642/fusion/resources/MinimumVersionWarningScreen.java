@@ -39,7 +39,7 @@ public class MinimumVersionWarningScreen extends Screen {
     private final Component currentVersionLabel, requiredVersionLabel;
     private final Component currentVersion, requiredVersion;
     private final int versionLabelTextWidth, versionTextWidth;
-    private final Button cancelButton, confirmButton;
+    private final Button confirmButton, cancelButton;
 
     public MinimumVersionWarningScreen(PackSelectionModel.EntryBase pack, Consumer<Boolean> confirmation){
         super(Component.translatable("fusion.resource_packs.warning_screen.title"));
@@ -73,8 +73,8 @@ public class MinimumVersionWarningScreen extends Screen {
         this.versionTextWidth = Math.max(font.width(this.currentVersion), font.width(this.requiredVersion));
 
         // Confirmation buttons
-        this.cancelButton = Button.builder(Component.translatable("fusion.resource_packs.warning_screen.cancel"), b -> confirmation.accept(false)).width(80).build();
         this.confirmButton = Button.builder(Component.translatable("fusion.resource_packs.warning_screen.confirm"), b -> confirmation.accept(true)).width(80).build();
+        this.cancelButton = Button.builder(Component.translatable("fusion.resource_packs.warning_screen.cancel"), b -> confirmation.accept(false)).width(80).build();
     }
 
     @Override
@@ -85,10 +85,10 @@ public class MinimumVersionWarningScreen extends Screen {
     @Override
     protected void init(){
         super.init();
-        this.cancelButton.setPosition(this.width / 2 - this.cancelButton.getWidth() - 2, this.height / 2 + 110 - this.cancelButton.getHeight());
-        this.confirmButton.setPosition(this.width / 2 + 2, this.height / 2 + 110 - this.confirmButton.getHeight());
-        this.addRenderableWidget(this.cancelButton);
+        this.confirmButton.setPosition(this.width / 2 - this.confirmButton.getWidth() - 2, this.height / 2 + 110 - this.confirmButton.getHeight());
+        this.cancelButton.setPosition(this.width / 2 + 2, this.height / 2 + 110 - this.cancelButton.getHeight());
         this.addRenderableWidget(this.confirmButton);
+        this.addRenderableWidget(this.cancelButton);
     }
 
     @Override

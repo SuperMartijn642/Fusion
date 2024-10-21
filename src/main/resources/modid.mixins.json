@@ -26,6 +26,7 @@
     "ModelManagerMixin",
     "MultiPartBakedModelMixin",
     "OutlineBufferSourceMixin",
+    "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
     "SpriteLoaderMixin",

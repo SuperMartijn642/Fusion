@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin.fabric;
 
+import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.fabricmc.fabric.impl.resource.loader.ModNioResourcePack;
 import net.fabricmc.loader.api.ModContainer;
@@ -42,9 +43,9 @@ public class ModNioResourcePackMixin {
 
             Path overridesPath = null;
             try(InputStream stream = Files.newInputStream(metaPath)){
-                String overridesFolder = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.INSTANCE, stream);
-                if(overridesFolder != null)
-                    overridesPath = rootPath.resolve(overridesFolder);
+                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.INSTANCE, stream);
+                if(metadata != null && metadata.hasOverridesFolder())
+                    overridesPath = rootPath.resolve(metadata.getOverridesFolder());
             }catch(Exception ignore){
                 continue;
             }

@@ -29,6 +29,7 @@
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
     "OutlineBufferSourceMixin",
+    "PackEntryMixin",
     "PackMixin",
     "PackResourcesAdapterV4Mixin",
     "TerrainParticleMixin",

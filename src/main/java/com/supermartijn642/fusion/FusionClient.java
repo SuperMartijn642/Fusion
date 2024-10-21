@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -91,5 +92,18 @@ public class FusionClient {
                 throw new AssertionError();
         }
         return material;
+    }
+
+    private static String fusionVersion;
+
+    public static String getFusionVersion(){
+        if(fusionVersion == null){
+            //noinspection OptionalGetWithoutIsPresent
+            String version = ModList.get().getModContainerById("fusion").get().getModInfo().getVersion().toString();
+            if(!version.matches("\\d+\\.\\d+\\.\\d+"))
+                version = version.substring(0, version.length() - version.replaceFirst("\\d+\\.\\d+\\.\\d+\\D", "").length() - 1);
+            fusionVersion = version;
+        }
+        return fusionVersion;
     }
 }

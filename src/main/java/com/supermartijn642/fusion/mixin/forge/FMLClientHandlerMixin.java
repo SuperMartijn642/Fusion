@@ -43,7 +43,7 @@ public class FMLClientHandlerMixin {
             String overridesFolder;
             try{
                 FusionPackMetadataSection.Data data = resources.getPackMetadata(METADATA_SERIALIZER, FusionPackMetadataSection.INSTANCE.getSectionName());
-                overridesFolder = data == null ? null : data.overridesFolder;
+                overridesFolder = data == null ? null : data.metadata.getOverridesFolder();
             }catch(FileNotFoundException ignore){
                 // Ignore resource packs which don't have a pack.mcmeta file
                 return;

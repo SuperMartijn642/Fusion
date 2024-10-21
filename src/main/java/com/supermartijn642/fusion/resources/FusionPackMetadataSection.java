@@ -24,15 +24,27 @@ public class FusionPackMetadataSection implements IMetadataSectionSerializer<Fus
     @Override
     public Data deserialize(JsonElement source, Type type, JsonDeserializationContext context) throws JsonParseException{
         JsonObject json = source.getAsJsonObject();
+
+        // Minimum version
+        String minimumVersion = "1.0.0";
+        if(json.has("minimum_version")){
+            if(!json.get("minimum_version").isJsonPrimitive() || !json.getAsJsonPrimitive("minimum_version").isString())
+                throw new JsonParseException("Property 'minimum_version' must be a string!");
+            minimumVersion = json.get("minimum_version").getAsString();
+            if(!minimumVersion.matches("\\d+\\.\\d+\\.\\d+([a-z].*|[+-].+)?"))
+                throw new JsonParseException("Property 'minimum_version' must be a valid Fusion version, not '" + minimumVersion + "'!");
+        }
+
+        // Overrides folder
         String overridesFolder = null;
         if(json.has("overrides_folder")){
             JsonElement element = json.get("overrides_folder");
             if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
-                throw new RuntimeException("'overrides_folder' must be a string!");
+                throw new RuntimeException("Property 'overrides_folder' must be a string!");
 
             overridesFolder = element.getAsString().trim();
             if(!overridesFolder.matches("[a-z0-9/._-]+"))
-                throw new RuntimeException("'overrides_folder' must be a valid path!");
+                throw new RuntimeException("Property 'overrides_folder' must be a valid path!");
 
             if(!overridesFolder.endsWith("/"))
                 overridesFolder += "/";
@@ -42,15 +54,15 @@ public class FusionPackMetadataSection implements IMetadataSectionSerializer<Fus
             if(overridesFolder.startsWith("data/"))
                 throw new RuntimeException("'overrides_folder' cannot be inside 'data'!");
         }
-        return new Data(overridesFolder);
+        return new Data(new FusionPackMetadata(minimumVersion, overridesFolder));
     }
 
     public static class Data implements IMetadataSection {
 
-        public final String overridesFolder;
+        public final FusionPackMetadata metadata;
 
-        public Data(String overridesFolder){
-            this.overridesFolder = overridesFolder;
+        public Data(FusionPackMetadata metadata){
+            this.metadata = metadata;
         }
     }
 }

@@ -9,7 +9,6 @@ import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Mth;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -21,9 +20,9 @@ public class BaseTextureType implements TextureType<BaseTextureData> {
 
     @Override
     public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, BaseTextureData data){
-        if(!Mth.isDivisionInteger(context.getTextureWidth(), context.getOriginalFrameWith())
-            || !Mth.isDivisionInteger(context.getTextureHeight(), context.getOriginalFrameHeight()))
-            throw new TextureErrorException("Image size {},{} is not a multiple of frame size {},{}");
+        if(context.getTextureWidth() % context.getOriginalFrameWith() != 0
+            || context.getTextureHeight() % context.getOriginalFrameHeight() != 0)
+            throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size " + context.getOriginalFrameWith() + "x" + context.getOriginalFrameHeight() + "!");
         return context.getOriginalFrameSize();
     }
 

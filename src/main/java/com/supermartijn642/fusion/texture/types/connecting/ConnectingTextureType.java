@@ -10,7 +10,6 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
-import net.minecraft.util.Mth;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -81,9 +80,9 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
                 frameSize = Pair.of(context.getTextureWidth(), height);
             }
             // Do vanilla frame size check
-            if(!Mth.isDivisionInteger(context.getTextureWidth(), frameSize.left())
-                || !Mth.isDivisionInteger(context.getTextureHeight(), frameSize.right()))
-                throw new TextureErrorException("Image size {},{} is not a multiple of frame size {},{}");
+            if(context.getTextureWidth() % frameSize.left() != 0
+                || context.getTextureHeight() % frameSize.right() != 0)
+                throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size " + frameSize.left() + "x" + frameSize.right() + "!");
             return frameSize;
         }
 

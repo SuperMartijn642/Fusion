@@ -8,7 +8,6 @@ import com.supermartijn642.fusion.api.texture.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.Mth;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
@@ -17,9 +16,9 @@ public class VanillaTextureType implements TextureType<Void> {
 
     @Override
     public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, Void data){
-        if(!Mth.isDivisionInteger(context.getTextureWidth(), context.getOriginalFrameWith())
-            || !Mth.isDivisionInteger(context.getTextureHeight(), context.getOriginalFrameHeight()))
-            throw new TextureErrorException("Image size {},{} is not a multiple of frame size {},{}");
+        if(context.getTextureWidth() % context.getOriginalFrameWith() != 0
+            || context.getTextureHeight() % context.getOriginalFrameHeight() != 0)
+            throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size " + context.getOriginalFrameWith() + "x" + context.getOriginalFrameHeight() + "!");
         return context.getOriginalFrameSize();
     }
 

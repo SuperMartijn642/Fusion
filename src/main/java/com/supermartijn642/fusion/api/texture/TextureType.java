@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.api.texture;
 
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.Serializer;
+import net.minecraft.client.renderer.texture.Stitcher;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 /**
@@ -18,6 +19,15 @@ public interface TextureType<T> extends Serializer<T> {
      */
     default Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, T data){
         return context.getOriginalFrameSize();
+    }
+
+    /**
+     * The {@link Stitcher} may rotate textures when stitching them onto the texture atlas.
+     * If {@code false} is returned, this behaviour is prevented and the texture will not be rotated.
+     * @return whether the texture is allowed to be rotated during atlas stitching
+     */
+    default boolean allowRotation(){
+        return true;
     }
 
     /**

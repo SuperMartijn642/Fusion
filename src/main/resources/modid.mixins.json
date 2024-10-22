@@ -28,6 +28,7 @@
     "RenderItemMixin",
     "ResourcePackRepositoryEntryMixin",
     "ResourcePackRepositoryMixin",
+    "StitcherHolderMixin",
     "StitcherMixin",
     "TextureAtlasMixin",
     "TextureAtlasSpriteMixin"

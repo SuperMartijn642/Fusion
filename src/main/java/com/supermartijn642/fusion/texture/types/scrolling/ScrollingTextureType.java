@@ -124,6 +124,11 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
     }
 
     @Override
+    public boolean allowRotation(){
+        return false;
+    }
+
+    @Override
     public TextureAtlasSprite createSprite(SpriteCreationContext context, ScrollingTextureData data){
         // Calculate frame start and end
         boolean reverse = data.getLoopType() == ScrollingTextureData.LoopType.REVERSE;

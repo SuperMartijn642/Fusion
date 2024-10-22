@@ -12,10 +12,8 @@ public class SpriteHelperImpl {
 
     public static TextureType<?> getTextureType(TextureAtlasSprite sprite){
         TextureType<?> textureType = ((TextureAtlasSpriteExtension)sprite).getFusionTextureType();
-        if(textureType == null){
-            ((TextureAtlasSpriteExtension)sprite).setFusionTextureType(DefaultTextureTypes.VANILLA);
+        if(textureType == null)
             return DefaultTextureTypes.VANILLA;
-        }
         return textureType;
     }
 }

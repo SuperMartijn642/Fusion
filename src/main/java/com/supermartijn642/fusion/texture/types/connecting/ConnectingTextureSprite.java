@@ -35,6 +35,35 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
         return (ConnectingTextureData)super.data();
     }
 
+    @Override
+    public void initSprite(int inX, int inY, int originInX, int originInY, boolean rotatedIn){
+        super.initSprite(inX, inY, originInX, originInY, rotatedIn);
+        this.startU = this.minU;
+        this.startV = this.minV;
+        this.resizeUV();
+        if(this.rotated && !this.rotatedImage)
+            this.rotateLayout();
+    }
+
+    private void resizeUV(){
+        ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(this.data().getLayout());
+        int layoutWidth = layoutHandler.getWidth();
+        int layoutHeight = layoutHandler.getHeight();
+        if(this.rotated){
+            int width = layoutWidth;
+            //noinspection SuspiciousNameCombination
+            layoutWidth = layoutHeight;
+            //noinspection SuspiciousNameCombination
+            layoutHeight = width;
+        }
+        float tileWidth = (this.maxU - this.minU) / layoutWidth;
+        float tileHeight = (this.maxV - this.minV) / layoutHeight;
+        this.maxU = this.minU + tileWidth * (layoutHandler.defaultTileX() + 1);
+        this.maxV = this.minV + tileHeight * (layoutHandler.defaultTileY() + 1);
+        this.minU = this.minU + tileWidth * layoutHandler.defaultTileX();
+        this.minV = this.minV + tileHeight * layoutHandler.defaultTileY();
+    }
+
     public void rotateLayout(){
         for(int frame = 0; frame < this.framesTextureData.size(); frame++){
             int[][] pixelsPerLevel = this.framesTextureData.get(frame);
@@ -67,34 +96,5 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
         //noinspection SuspiciousNameCombination
         this.height = this.originalWidth;
         this.rotatedImage = true;
-    }
-
-    @Override
-    public void initSprite(int inX, int inY, int originInX, int originInY, boolean rotatedIn){
-        super.initSprite(inX, inY, originInX, originInY, rotatedIn);
-        this.startU = this.minU;
-        this.startV = this.minV;
-        this.resizeUV();
-        if(this.rotated && !this.rotatedImage)
-            this.rotateLayout();
-    }
-
-    private void resizeUV(){
-        ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(this.data().getLayout());
-        int layoutWidth = layoutHandler.getWidth();
-        int layoutHeight = layoutHandler.getHeight();
-        if(this.rotatedImage){
-            int width = layoutWidth;
-            //noinspection SuspiciousNameCombination
-            layoutWidth = layoutHeight;
-            //noinspection SuspiciousNameCombination
-            layoutHeight = width;
-        }
-        float tileWidth = (this.maxU - this.minU) / layoutWidth;
-        float tileHeight = (this.maxV - this.minV) / layoutHeight;
-        this.maxU = this.minU + tileWidth * (layoutHandler.defaultTileX() + 1);
-        this.maxV = this.minV + tileHeight * (layoutHandler.defaultTileY() + 1);
-        this.minU = this.minU + tileWidth * layoutHandler.defaultTileX();
-        this.minV = this.minV + tileHeight * layoutHandler.defaultTileY();
     }
 }

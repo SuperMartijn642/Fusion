@@ -18,7 +18,7 @@ public class VanillaTextureType implements TextureType<Void> {
     public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, Void data){
         if(context.getTextureWidth() % context.getOriginalFrameWith() != 0
             || context.getTextureHeight() % context.getOriginalFrameHeight() != 0)
-            throw new TextureErrorException("Image size {},{} is not a multiple of frame size {},{}");
+            throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size " + context.getOriginalFrameWith() + "x" + context.getOriginalFrameHeight() + "!");
         return context.getOriginalFrameSize();
     }
 

@@ -23,7 +23,7 @@ public class BaseTextureType implements TextureType<BaseTextureData> {
     public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, BaseTextureData data){
         if(!Mth.isMultipleOf(context.getTextureWidth(), context.getOriginalFrameWith())
             || !Mth.isMultipleOf(context.getTextureHeight(), context.getOriginalFrameHeight()))
-            throw new TextureErrorException("Image size {},{} is not a multiple of frame size {},{}");
+            throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size " + context.getOriginalFrameWith() + "x" + context.getOriginalFrameHeight() + "!");
         return context.getOriginalFrameSize();
     }
 

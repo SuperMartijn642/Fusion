@@ -82,7 +82,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
             // Do vanilla frame size check
             if(context.getTextureWidth() % frameSize.left() != 0
                 || context.getTextureHeight() % frameSize.right() != 0)
-                throw new TextureErrorException("Image size {},{} is not a multiple of frame size {},{}");
+                throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size " + frameSize.left() + "x" + frameSize.right() + "!");
             return frameSize;
         }
 

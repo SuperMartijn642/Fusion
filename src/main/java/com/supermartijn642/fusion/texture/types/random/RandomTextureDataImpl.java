@@ -1,0 +1,42 @@
+package com.supermartijn642.fusion.texture.types.random;
+
+import com.supermartijn642.fusion.api.texture.data.RandomTextureData;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureDataImpl;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Created 22/10/2024 by SuperMartijn642
+ */
+public class RandomTextureDataImpl extends BaseTextureDataImpl implements RandomTextureData {
+
+    private final int rows, columns, count;
+    private final Long seed;
+
+    public RandomTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting, int rows, int columns, int count, Long seed){
+        super(renderType, emissive, tinting);
+        this.rows = rows;
+        this.columns = columns;
+        this.count = count;
+        this.seed = seed;
+    }
+
+    @Override
+    public int getRows(){
+        return this.rows;
+    }
+
+    @Override
+    public int getColumns(){
+        return this.columns;
+    }
+
+    @Override
+    public int getCount(){
+        return this.count;
+    }
+
+    @Override
+    public @Nullable Long getSeed(){
+        return this.seed;
+    }
+}

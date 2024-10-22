@@ -5,10 +5,15 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
+import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
+import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSprite;
+import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
+import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
+import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
@@ -94,9 +99,19 @@ public class ConnectingBakedModel implements BakedModel {
         };
     }
 
+    /*
+     * Quads are tagged if they need further processing.
+     * The tag consists of:
+     *  - 4 bits to indicate texture type (same as base model)
+     *  - 8 bits to indicate sprite index (same as base model)
+     *  - 8 bits to indicate predicate index
+     *  - 4 bits to indicate quad index, for layouts which have auxiliary quads
+     */
+
     private final Mesh blockMesh, itemMesh;
     private final List<QuadPredicates> predicates;
     private final List<TextureAtlasSprite> sprites;
+    private final boolean hasSpecialQuads;
     private final boolean hasAmbientOcclusion;
     private final boolean isGui3d;
     private final boolean usesBlockLight;
@@ -117,6 +132,7 @@ public class ConnectingBakedModel implements BakedModel {
         QuadEmitter emitter = builder.getEmitter();
         HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
         HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
+        boolean hasSpecialQuads = false;
         for(ConnectingModelQuad quad : quads){
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times
             Integer tag = null;
@@ -132,7 +148,16 @@ public class ConnectingBakedModel implements BakedModel {
                 // Give each sprite a unique index
                 int spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
                 // Pack the predicate index and sprite index into the tag int
-                tag = 1 | (predicateIndex << 5) | (spriteIndex << 16);
+                tag = 1 | (spriteIndex << 4) | (predicateIndex << 12);
+            }
+            // Tag quads which need additional processing
+            if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
+                int type = quad.textureType() == DefaultTextureTypes.RANDOM ? 2 : 3;
+                // Give each sprite a unique index
+                int spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
+                // Pack the type and sprite index into the tag
+                tag = type | (spriteIndex << 4);
+                hasSpecialQuads = true;
             }
             // Submit the quads
             RenderMaterial material = FusionClient.getRenderTypeMaterial(hasAmbientOcclusion, quad.renderType(), quad.emissive());
@@ -145,14 +170,17 @@ public class ConnectingBakedModel implements BakedModel {
                         emitter.lightmap(i, LightTexture.pack(sky, block));
                     }
                 }
-                if(tag != null)
-                    emitter.tag(tag | (quadIndex << 1)); // Add the quad index to the tag
+                if(tag != null && quadIndex > 0)
+                    emitter.tag(tag | (quadIndex << 20)); // Add the quad index to the tag
+                else if(tag != null)
+                    emitter.tag(tag);
                 emitter.emit();
             }
         }
         this.blockMesh = builder.build();
         this.predicates = predicates.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
         this.sprites = sprites.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
+        this.hasSpecialQuads = hasSpecialQuads;
 
         // Create the item mesh
         emitter = builder.getEmitter();
@@ -264,48 +292,94 @@ public class ConnectingBakedModel implements BakedModel {
 
     @Override
     public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
-        // If either level or position is not given, the connected textures cannot be updated, so just push the mesh
-        if(blockView == null || pos == null || this.predicates.isEmpty()){
+        // If either level or position is not given, the connected textures cannot be updated, so don't process them
+        boolean processConnectingTextures = blockView != null && pos != null && !this.predicates.isEmpty();
+        if(!processConnectingTextures && !this.hasSpecialQuads){
             this.blockMesh.outputTo(context.getEmitter());
             return;
         }
 
-        // Only compute connections for each predicate once
-        TextureConnections[] connectionsCache = new TextureConnections[this.predicates.size()];
-        //
-        SurroundingBlockCache blockCache = new SurroundingBlockCache(blockView, pos, state);
-        // Push a transform which maps any connecting texture quads to the correct uv
         OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
-        context.pushTransform(quad -> {
-            if(quad.tag() != 0){
-                // Unpack quad index, predicate index, and sprite index from the tag
-                int tag = quad.tag();
-                int quadIndex = (tag >> 1) & ((1 << 4) - 1);
-                int predicateIndex = (tag >> 5) & ((1 << 10) - 1);
-                int spriteIndex = (tag >> 16) & ((1 << 10) - 1);
+        // Process special texture type quads
+        if(this.hasSpecialQuads){
+            context.pushTransform(
+                quad -> {
+                    if(quad.tag() != 0){
+                        // Unpack type and sprite index from the tag
+                        int tag = quad.tag();
+                        int type = quad.tag() & ((1 << 4) - 1);
+                        int spriteIndex = (tag >> 4) & ((1 << 8) - 1);
 
-                // Get the connection predicate
-                QuadPredicates predicate = this.predicates.get(predicateIndex);
-                // Check if the connections have already been computed, otherwise compute them
-                TextureConnections connections = connectionsCache[predicateIndex];
-                if(connections == null){
-                    // Compute the connections
-                    connections = connectionsCache[predicateIndex] = computeConnections(predicate, blockCache);
+                        // Get the sprite
+                        TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
+
+                        // Handle random texture type
+                        if(type == 2){
+                            mutableQuad.set(quad);
+                            mutableQuad.resetPermutation();
+                            RandomTextureType.processQuad(mutableQuad, pos, quad.nominalFace(), randomSupplier, (RandomTextureSprite)sprite);
+                            return true;
+                        }
+                        // Handle continuous texture type
+                        if(type == 3){
+                            mutableQuad.set(quad);
+                            mutableQuad.resetPermutation();
+                            ContinuousTextureType.processQuad(mutableQuad, pos, quad.nominalFace(), (ContinuousTextureSprite)sprite);
+                            return true;
+                        }
+                    }
+                    return true;
                 }
+            );
+        }
 
-                // Get the sprite and the texture layout
-                TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
-                ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).data().getLayout();
+        if(processConnectingTextures){
+            // Only compute connections for each predicate once
+            TextureConnections[] connectionsCache = new TextureConnections[this.predicates.size()];
+            // Store a cache of the surrounding blocks
+            SurroundingBlockCache blockCache = new SurroundingBlockCache(blockView, pos, state);
+            // Push a transform which maps any connecting texture quads to the correct uv
+            context.pushTransform(quad -> {
+                if(quad.tag() != 0){
+                    // Unpack type, sprite index, predicate index, and quad index from the tag
+                    int tag = quad.tag();
+                    int type = tag & ((1 << 4) - 1);
+                    int spriteIndex = (tag >> 4) & ((1 << 8) - 1);
+                    int predicateIndex = (tag >> 12) & ((1 << 8) - 1);
+                    int quadIndex = (tag >> 20) & ((1 << 4) - 1);
 
-                // Remap the quad's uv
-                mutableQuad.set(quad);
-                mutableQuad.set(predicate.orientation.vertexIndexPermutation);
-                return ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, (ConnectingTextureSprite)sprite, connections);
-            }
-            return true;
-        });
+                    if(type != 1)
+                        return true;
+
+                    // Get the connection predicate
+                    QuadPredicates predicate = this.predicates.get(predicateIndex);
+                    // Check if the connections have already been computed, otherwise compute them
+                    TextureConnections connections = connectionsCache[predicateIndex];
+                    if(connections == null){
+                        // Compute the connections
+                        connections = connectionsCache[predicateIndex] = computeConnections(predicate, blockCache);
+                    }
+
+                    // Get the sprite and the texture layout
+                    TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
+                    ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).data().getLayout();
+
+                    // Remap the quad's uv
+                    mutableQuad.set(quad);
+                    mutableQuad.set(predicate.orientation.vertexIndexPermutation);
+                    return ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, (ConnectingTextureSprite)sprite, connections);
+                }
+                return true;
+            });
+        }
+
         this.blockMesh.outputTo(context.getEmitter());
-        context.popTransform();
+
+        // Pop the transforms
+        if(this.hasSpecialQuads)
+            context.popTransform();
+        if(processConnectingTextures)
+            context.popTransform();
     }
 
     private static TextureConnections computeConnections(QuadPredicates predicates, SurroundingBlockCache blocks){

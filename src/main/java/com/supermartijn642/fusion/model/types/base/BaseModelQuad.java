@@ -1,5 +1,7 @@
 package com.supermartijn642.fusion.model.types.base;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -12,6 +14,7 @@ import net.minecraft.core.Direction;
 public class BaseModelQuad {
 
     private final BakedQuad bakedQuad;
+    private final TextureType<?> textureType;
     private final Direction cullDirection;
     private final Integer lightEmission;
     private final BaseTextureData.RenderType renderType;
@@ -19,6 +22,7 @@ public class BaseModelQuad {
 
     public BaseModelQuad(BakedQuad bakedQuad, Direction cullDirection, Integer lightEmission){
         this.bakedQuad = bakedQuad;
+        this.textureType = SpriteHelper.getTextureType(bakedQuad.getSprite());
         this.cullDirection = cullDirection;
         this.lightEmission = lightEmission;
         TextureAtlasSprite sprite = bakedQuad.getSprite();
@@ -36,6 +40,10 @@ public class BaseModelQuad {
 
     public BakedQuad bakedQuad(){
         return this.bakedQuad;
+    }
+
+    public TextureType<?> textureType(){
+        return this.textureType;
     }
 
     public Direction cullDirection(){

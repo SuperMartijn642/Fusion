@@ -110,7 +110,7 @@ public class BaseBakedModel implements BakedModel, CustomRenderTypeBakedModel {
             List<BakedQuad> itemQuads = itemMesh.get(renderType);
             if(itemQuads == null){
                 itemQuads = new ArrayList<>();
-                itemMesh.put(renderType, itemQuads);
+                itemMesh.put(itemRenderType, itemQuads);
                 RenderType fabulousRenderType = renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER ? FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER
                     : renderType == RenderType.translucent() ? Sheets.translucentCullBlockSheet() : Sheets.cutoutBlockSheet();
                 itemRenderTypesFabulous.add(fabulousRenderType);

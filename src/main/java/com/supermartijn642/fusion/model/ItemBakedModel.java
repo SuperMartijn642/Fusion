@@ -16,31 +16,29 @@ import java.util.List;
 /**
  * Created 12/09/2024 by SuperMartijn642
  */
-public abstract class ItemBakedModel extends WrappedBakedModel{
+public abstract class ItemBakedModel extends WrappedBakedModel {
 
     private final List<BakedModel> asList = List.of(this);
     private ItemStack stack;
-    private boolean fabulous;
 
     public ItemBakedModel(BakedModel original){
         super(original);
     }
 
-    protected abstract List<BakedQuad> getQuads(ItemStack stack, boolean fabulous, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType);
+    protected abstract List<BakedQuad> getQuads(ItemStack stack, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType);
 
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType){
-        return this.getQuads(this.stack, this.fabulous, random, data, renderType);
+        return this.getQuads(this.stack, random, data, renderType);
     }
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random){
-        return this.getQuads(this.stack, this.fabulous, random, ModelData.EMPTY, null);
+        return this.getQuads(this.stack, random, ModelData.EMPTY, null);
     }
 
-    public void set(ItemStack stack, boolean fabulous){
+    public void set(ItemStack stack){
         this.stack = stack;
-        this.fabulous = fabulous;
     }
 
     public List<BakedModel> asList(){

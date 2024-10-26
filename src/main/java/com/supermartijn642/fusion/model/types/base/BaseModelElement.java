@@ -14,10 +14,7 @@ import java.util.Map;
  */
 public class BaseModelElement extends BlockElement {
 
-    public Integer light_emission;
-
-    public BaseModelElement(Vector3f from, Vector3f to, Map<Direction,BlockElementFace> faces, @Nullable BlockElementRotation rotation, boolean shade, Integer light_emission){
-        super(from, to, faces, rotation, shade);
-        this.light_emission = light_emission;
+    public BaseModelElement(Vector3f from, Vector3f to, Map<Direction,BlockElementFace> faces, @Nullable BlockElementRotation rotation, boolean shade, int lightEmission){
+        super(from, to, faces, rotation, shade, lightEmission);
     }
 }

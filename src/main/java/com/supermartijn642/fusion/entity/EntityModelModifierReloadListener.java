@@ -1,6 +1,10 @@
 package com.supermartijn642.fusion.entity;
 
 import com.google.gson.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.JsonOps;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Pair;
@@ -42,7 +46,17 @@ public class EntityModelModifierReloadListener {
 
         // Find all overlay files
         Map<ResourceLocation,JsonElement> resources = new HashMap<>();
-        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, LOCATION, GSON, resources);
+        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, LOCATION, JsonOps.INSTANCE, new Codec<>() {
+            @Override
+            public <T> DataResult<com.mojang.datafixers.util.Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
+                return DataResult.success(com.mojang.datafixers.util.Pair.of(ops.convertTo(JsonOps.INSTANCE, input), input));
+            }
+
+            @Override
+            public <T> DataResult<T> encode(JsonElement input, DynamicOps<T> ops, T prefix){
+                return DataResult.success(JsonOps.INSTANCE.convertTo(ops, input));
+            }
+        }, resources);
 
         // Parse all the model overlay files
         for(Map.Entry<ResourceLocation,JsonElement> entry : resources.entrySet()){
@@ -75,11 +89,10 @@ public class EntityModelModifierReloadListener {
             if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                 throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
             ResourceLocation identifier = ResourceLocation.parse(element.getAsString());
-            EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(identifier);
-            //noinspection ConstantValue
-            if(entityType == null)
+            Optional<EntityType<?>> entityType = BuiltInRegistries.ENTITY_TYPE.getOptional(identifier);
+            if(entityType.isEmpty())
                 throw new JsonParseException("Could not find an entity type for '" + identifier + "'!");
-            targets.add(entityType);
+            targets.add(entityType.get());
         }
 
         // Parse all the layers

@@ -2,8 +2,8 @@ package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -35,7 +35,7 @@ import java.util.stream.IntStream;
 public class BlockModelModifierBakedModel implements BakedModel {
 
     private static final Function<SimpleBakedModel,ChunkRenderTypeSet> getBlockRenderTypes;
-    private static final Function<SimpleBakedModel,List<RenderType>> getItemRenderTypes, getFabulousItemRenderTypes;
+    private static final Function<SimpleBakedModel,List<RenderType>> getItemRenderTypes;
 
     static{
         try{
@@ -58,16 +58,6 @@ public class BlockModelModifierBakedModel implements BakedModel {
                     throw new RuntimeException(e);
                 }
             };
-            Field fabulousItemRenderTypes = SimpleBakedModel.class.getDeclaredField("fabulousItemRenderTypes");
-            fabulousItemRenderTypes.setAccessible(true);
-            getFabulousItemRenderTypes = model -> {
-                try{
-                    //noinspection unchecked
-                    return (List<RenderType>)fabulousItemRenderTypes.get(model);
-                }catch(IllegalAccessException e){
-                    throw new RuntimeException(e);
-                }
-            };
         }catch(NoSuchFieldException e){
             throw new RuntimeException("Fusion failed to make vanilla model render types accessible!", e);
         }
@@ -83,8 +73,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
     @SuppressWarnings("unchecked")
     private final List<BakedQuad>[] culledQuads = new List[6];
     private final ChunkRenderTypeSet chunkRenderTypes;
-    private final List<RenderType> itemRenderTypes, fabulousItemRenderTypes;
-    private final boolean addNativeBlockRenderTypes, addNativeItemRenderTypes, addNativeFabulousItemRenderTypes;
+    private final List<RenderType> itemRenderTypes;
+    private final boolean addNativeBlockRenderTypes, addNativeItemRenderTypes;
 
     public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models){
         this.original = original;
@@ -96,8 +86,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
         //noinspection unchecked
         List<BakedQuad>[] culledQuads = IntStream.range(0, 6).mapToObj(i -> new ArrayList<>()).toArray(List[]::new);
         ChunkRenderTypeSet chunkRenderTypes = ChunkRenderTypeSet.none();
-        Set<RenderType> itemRenderTypes = new HashSet<>(), fabulousItemRenderTypes = new HashSet<>();
-        boolean addNativeBlockRenderTypes = false, addNativeItemRenderTypes = false, addNativeFabulousItemRenderTypes = false;
+        Set<RenderType> itemRenderTypes = new HashSet<>();
+        boolean addNativeBlockRenderTypes = false, addNativeItemRenderTypes = false;
         RandomSource random = RandomSource.create();
         for(BakedModel model : this.models){
             if(!model.getClass().equals(SimpleBakedModel.class))
@@ -118,11 +108,6 @@ public class BlockModelModifierBakedModel implements BakedModel {
                     addNativeItemRenderTypes = true;
                 else
                     itemRenderTypes.addAll(modelItemRenderTypes);
-                List<RenderType> modelFabulousItemRenderTypes = getFabulousItemRenderTypes.apply((SimpleBakedModel)model);
-                if(modelFabulousItemRenderTypes == null)
-                    addNativeFabulousItemRenderTypes = true;
-                else
-                    fabulousItemRenderTypes.addAll(modelFabulousItemRenderTypes);
             }
         }
         this.hasNonSimpleModels = !nonSimpleModels.isEmpty();
@@ -132,10 +117,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
             this.culledQuads[side.ordinal()] = List.copyOf(culledQuads[side.ordinal()]);
         this.chunkRenderTypes = chunkRenderTypes;
         this.itemRenderTypes = List.copyOf(itemRenderTypes);
-        this.fabulousItemRenderTypes = List.copyOf(fabulousItemRenderTypes);
         this.addNativeBlockRenderTypes = addNativeBlockRenderTypes;
         this.addNativeItemRenderTypes = addNativeItemRenderTypes;
-        this.addNativeFabulousItemRenderTypes = addNativeFabulousItemRenderTypes;
     }
 
     @Override
@@ -172,27 +155,27 @@ public class BlockModelModifierBakedModel implements BakedModel {
     }
 
     @Override
-    public List<RenderType> getRenderTypes(ItemStack stack, boolean fabulous){
-        if((fabulous ? !this.addNativeFabulousItemRenderTypes : !this.addNativeItemRenderTypes) && !this.hasNonSimpleModels)
-            return fabulous ? this.fabulousItemRenderTypes : this.itemRenderTypes;
+    public List<RenderType> getRenderTypes(ItemStack stack){
+        if(!this.addNativeItemRenderTypes && !this.hasNonSimpleModels)
+            return this.itemRenderTypes;
         Set<RenderType> renderTypes = new HashSet<>(5);
         renderTypes.addAll(this.itemRenderTypes);
-        if(fabulous ? this.addNativeFabulousItemRenderTypes : this.addNativeItemRenderTypes)
-            renderTypes.addAll(BakedModel.super.getRenderTypes(stack, true));
+        if(this.addNativeItemRenderTypes)
+            renderTypes.addAll(BakedModel.super.getRenderTypes(stack));
         if(this.hasNonSimpleModels){
             for(BakedModel model : this.nonSimpleModels)
-                renderTypes.addAll(model.getRenderTypes(stack, true));
+                renderTypes.addAll(model.getRenderTypes(stack));
         }
         return new ArrayList<>(renderTypes);
     }
 
     @Override
-    public List<BakedModel> getRenderPasses(ItemStack stack, boolean fabulous){
+    public List<BakedModel> getRenderPasses(ItemStack stack){
         if(!this.hasNonSimpleModels)
             return this.models;
         List<BakedModel> passes = new ArrayList<>(this.models.size());
         for(BakedModel model : this.models)
-            passes.addAll(model.getRenderPasses(stack, fabulous));
+            passes.addAll(model.getRenderPasses(stack));
         return passes;
     }
 
@@ -237,8 +220,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
     }
 
     @Override
-    public ItemOverrides getOverrides(){
-        return this.original.getOverrides();
+    public BakedOverrides overrides(){
+        return this.original.overrides();
     }
 
     @Override

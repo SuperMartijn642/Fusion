@@ -29,7 +29,7 @@ public class VanillaModelLayerProperties {
     }
 
     @NotNull
-    public static VanillaModelLayerProperties get(ModelLayerLocation location, EntityRenderer<?> renderer){
+    public static VanillaModelLayerProperties get(ModelLayerLocation location, EntityRenderer<?,?> renderer){
         if(PROPERTIES.containsKey(location))
             return PROPERTIES.get(location);
         // Fallback

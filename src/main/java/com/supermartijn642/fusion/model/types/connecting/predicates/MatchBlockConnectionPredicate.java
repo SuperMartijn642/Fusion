@@ -13,6 +13,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Optional;
+
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
@@ -26,10 +28,10 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
-            if(!BuiltInRegistries.BLOCK.containsKey(identifier))
+            Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
+            if(block.isEmpty())
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
-            Block block = BuiltInRegistries.BLOCK.get(identifier);
-            return new MatchBlockConnectionPredicate(block);
+            return new MatchBlockConnectionPredicate(block.get());
         }
 
         @Override

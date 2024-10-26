@@ -9,7 +9,6 @@ import com.supermartijn642.fusion.api.model.data.ConnectingModelData;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
-import com.supermartijn642.fusion.model.types.base.BaseModelElement;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockElement;
@@ -90,12 +89,11 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
                 for(Direction direction : element.faces.keySet()){
                     BlockElementFace face = element.faces.get(direction);
                     TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                    BakedQuad quad = FACE_BAKERY.bakeQuad(element.from, element.to, face, sprite, direction, context.getTransformation(), element.rotation, element.shade);
+                    BakedQuad quad = FACE_BAKERY.bakeQuad(element.from, element.to, face, sprite, direction, context.getTransformation(), element.rotation, element.shade, element.lightEmission);
                     Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().getRotation().getMatrix(), face.cullForDirection()) : null;
-                    Integer lightEmission = element instanceof BaseModelElement ? ((BaseModelElement)element).light_emission : null;
                     String connectionsKey = element instanceof ConnectingModelElement && ((ConnectingModelElement)element).faceConnectionKeys.containsKey(direction) ? ((ConnectingModelElement)element).faceConnectionKeys.get(direction) : face.texture();
                     ConnectionPredicate predicate = this.resolveConnectionKey(context, modelStack, connectionsKey);
-                    output.accept(new ConnectingModelQuad(quad, cullDirection, lightEmission, predicate));
+                    output.accept(new ConnectingModelQuad(quad, cullDirection, predicate));
                 }
             }
             // If the model had elements, ignore parent models' elements

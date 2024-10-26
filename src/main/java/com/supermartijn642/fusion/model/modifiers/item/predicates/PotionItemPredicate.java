@@ -27,7 +27,7 @@ public class PotionItemPredicate implements ItemPredicate {
             if(!IdentifierUtil.isValidIdentifier(json.get("potion").getAsString()))
                 throw new JsonParseException("Property 'enchantment' must be a valid identifier, not '" + json.get("potion").getAsString() + "'!");
             ResourceLocation potionIdentifier = ResourceLocation.parse(json.get("potion").getAsString());
-            Optional<Holder.Reference<Potion>> potion = BuiltInRegistries.POTION.getHolder(potionIdentifier);
+            Optional<Holder.Reference<Potion>> potion = BuiltInRegistries.POTION.get(potionIdentifier);
             if(potion.isEmpty())
                 throw new JsonParseException("Unknown potion '" + potionIdentifier + "'!");
             return new PotionItemPredicate(potion.get());

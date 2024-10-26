@@ -16,13 +16,13 @@ public class EntityRenderTypeHelper {
     private static final Map<String,Function<ResourceLocation,RenderType>> RENDER_TYPES_BY_NAME;
     private static final Map<String,BiFunction<ResourceLocation,Boolean,RenderType>> VAR_OUTLINE_RENDER_TYPES_BY_NAME;
 
-    static {
+    static{
         ImmutableMap.Builder<String,Function<ResourceLocation,RenderType>> renderTypes = ImmutableMap.builder();
         renderTypes.put("armor_cutout_no_cull", RenderType::armorCutoutNoCull);
         renderTypes.put("entity_solid", RenderType::entitySolid);
         renderTypes.put("entity_cutout", RenderType::entityCutout);
         renderTypes.put("item_entity_translucent_cull", RenderType::itemEntityTranslucentCull);
-        renderTypes.put("entity_translucent_cull", RenderType::entityTranslucentCull);
+        renderTypes.put("entity_translucent", RenderType::entityTranslucent);
         renderTypes.put("entity_smooth_cutout", RenderType::entitySmoothCutout);
         renderTypes.put("entity_decal", RenderType::entityDecal);
         renderTypes.put("entity_no_outline", RenderType::entityNoOutline);

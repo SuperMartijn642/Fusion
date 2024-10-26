@@ -70,10 +70,10 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
             return false;
         if(level.registryAccess() != this.registry){
             this.registry = level.registryAccess();
-            Registry<Biome> biomeRegistry = this.registry.registryOrThrow(Registries.BIOME);
+            Registry<Biome> biomeRegistry = this.registry.lookupOrThrow(Registries.BIOME);
             ImmutableSet.Builder<Holder<Biome>> builder = ImmutableSet.builder();
             for(ResourceLocation biome : this.biomes)
-                biomeRegistry.getHolder(biome).ifPresent(builder::add);
+                biomeRegistry.get(biome).ifPresent(builder::add);
             this.holders = builder.build();
         }
         if(this.holders == null || this.holders.isEmpty())

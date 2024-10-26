@@ -1,24 +1,23 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.google.gson.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.JsonOps;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.AndItemPredicate;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateRegistry;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -39,14 +38,14 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
     private ItemModelModifierReloadListener(){
     }
 
-    public void registerPredicateModels(ModelBakery bakery){
+    public void registerPredicateModels(UnbakedModel.Resolver resolver, ModelDiscovery modelDiscovery){
         Set<ResourceLocation> models = new HashSet<>();
         for(ItemModelPredicatesProperties properties : this.models.values())
             models.addAll(properties.dependencies());
         for(ResourceLocation model : models){
-            UnbakedModel unbakedModel = bakery.getModel(model);
-            bakery.registerModelAndLoadDependencies(predicateModelLocation(model), unbakedModel);
-            unbakedModel.resolveParents(bakery::getModel);
+            UnbakedModel unbakedModel = resolver.resolve(model);
+            modelDiscovery.registerTopModel(predicateModelLocation(model), unbakedModel);
+            unbakedModel.resolveDependencies(resolver);
         }
     }
 
@@ -68,9 +67,9 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
     }
 
     @Override
-    public CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier barrier, ResourceManager resourceManager, ProfilerFiller profiler, ProfilerFiller profiler2, Executor executor, Executor executor2){
+    public CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier barrier, ResourceManager resourceManager, Executor executor, Executor executor2){
         ItemPredicateRegistry.finalizeRegistration();
-        return CompletableFuture.runAsync(() -> this.reload(resourceManager))
+        return CompletableFuture.runAsync(() -> this.reload(resourceManager), executor)
             .thenCompose(barrier::wait);
     }
 
@@ -79,7 +78,17 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
 
         // Find all item model predicate files
         Map<ResourceLocation,JsonElement> resources = new HashMap<>();
-        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, LOCATION, GSON, resources);
+        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, LOCATION, JsonOps.INSTANCE, new Codec<>() {
+            @Override
+            public <T> DataResult<com.mojang.datafixers.util.Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
+                return DataResult.success(com.mojang.datafixers.util.Pair.of(ops.convertTo(JsonOps.INSTANCE, input), input));
+            }
+
+            @Override
+            public <T> DataResult<T> encode(JsonElement input, DynamicOps<T> ops, T prefix){
+                return DataResult.success(JsonOps.INSTANCE.convertTo(ops, input));
+            }
+        }, resources);
 
         // Parse all the item model predicate files
         for(Map.Entry<ResourceLocation,JsonElement> entry : resources.entrySet()){
@@ -107,9 +116,8 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
             if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                 throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
             ResourceLocation identifier = ResourceLocation.parse(element.getAsString());
-            Item item = BuiltInRegistries.ITEM.get(identifier);
-            //noinspection ConstantValue
-            if(item == null || item == Items.AIR)
+            Optional<Item> item = BuiltInRegistries.ITEM.getOptional(identifier);
+            if(item.isEmpty())
                 throw new JsonParseException("Could not find an item for target '" + identifier + "'!");
             targets.add(ModelResourceLocation.inventory(identifier));
         }

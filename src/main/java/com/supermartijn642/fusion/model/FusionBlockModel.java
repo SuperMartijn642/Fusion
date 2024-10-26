@@ -9,10 +9,8 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -22,15 +20,9 @@ public class FusionBlockModel extends BlockModel {
 
     public static final UnbakedModel DUMMY_MODEL = new UnbakedModel() {
         @Override
-        public Collection<ResourceLocation> getDependencies(){
-            return Collections.emptyList();
+        public void resolveDependencies(Resolver resolver){
         }
 
-        @Override
-        public void resolveParents(Function<ResourceLocation,UnbakedModel> function){
-        }
-
-        @Nullable
         @Override
         public BakedModel bake(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> function, ModelState modelState){
             return null;
@@ -40,6 +32,7 @@ public class FusionBlockModel extends BlockModel {
     private final ModelInstance<?> model;
     private final BlockModel vanillaModel;
     private Collection<ResourceLocation> dependencies;
+    private Map<ResourceLocation,UnbakedModel> resolvedDependencies;
 
     public FusionBlockModel(ModelInstance<?> model){
         super(null, Collections.emptyList(), Collections.emptyMap(), false, null, ItemTransforms.NO_TRANSFORMS, Collections.emptyList());
@@ -48,31 +41,57 @@ public class FusionBlockModel extends BlockModel {
     }
 
     @Override
-    public BakedModel bake(ModelBaker baker, BlockModel someOtherModel, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, boolean gui3d){
+    public BakedModel bake(ModelBaker baker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform){
+        return this.bake(baker, spriteGetter, modelTransform, true);
+    }
+
+    @Override
+    public BakedModel bake(Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, boolean gui3d){
+        return this.bake(null, spriteGetter, modelTransform, gui3d);
+    }
+
+    public BakedModel bake(ModelBaker baker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, boolean gui3d){
         // Let the custom model handle the actual baking
-        ModelBakingContext context = new ModelBakingContextImpl(baker, spriteGetter, modelTransform, ResourceLocation.parse(this.name));
+        ModelBakingContext context = new ModelBakingContextImpl(baker, spriteGetter, modelTransform, ResourceLocation.parse(this.name), this.resolvedDependencies);
         return this.model.bake(context);
     }
 
     @Override
-    public Collection<ResourceLocation> getDependencies(){
-        if(this.dependencies != null)
-            return this.dependencies;
-        try{
-            this.dependencies = this.model.getModelDependencies();
-        }catch(Exception e){
-            throw new RuntimeException("Encountered an exception whilst requesting dependencies from model type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
+    public void resolveDependencies(Resolver resolver){
+        // Get the direct dependencies from the model
+        if(this.dependencies == null){
+            try{
+                this.dependencies = this.model.getModelDependencies();
+            }catch(Exception e){
+                throw new RuntimeException("Encountered an exception whilst requesting dependencies from model type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
+            }
+            if(this.dependencies == null)
+                throw new RuntimeException("Model type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' returned null when requesting dependencies '" + this.name + "'!");
         }
-        if(this.dependencies == null)
-            throw new RuntimeException("Model type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' returned null when requesting dependencies '" + this.name + "'!");
-        return this.dependencies;
-    }
+        this.resolvedDependencies = new HashMap<>(this.dependencies.size());
+        for(ResourceLocation location : this.dependencies)
+            this.resolvedDependencies.put(location, resolver.resolve(location));
+        // Recursively gather all dependencies for the model
+        Deque<ResourceLocation> unresolved = new LinkedList<>(this.dependencies);
+        Resolver trackingResolver = location -> {
+            UnbakedModel model = resolver.resolve(location);
+            if(!this.resolvedDependencies.containsKey(location)){
+                unresolved.add(location);
+                this.resolvedDependencies.put(location, resolver.resolve(location));
+            }
+            return model;
+        };
+        while(!unresolved.isEmpty()){
+            ResourceLocation location = unresolved.removeFirst();
+            this.resolvedDependencies.get(location).resolveDependencies(trackingResolver);
+        }
+        // Always add missing model
+        this.resolvedDependencies.put(MissingBlockModel.LOCATION, resolver.resolve(MissingBlockModel.LOCATION));
 
-    @Override
-    public void resolveParents(Function<ResourceLocation,UnbakedModel> function){
+        // Apply parent for vanilla model
         BlockModel vanillaModel = this.model.getAsVanillaModel();
         if(vanillaModel != null)
-            vanillaModel.resolveParents(function);
+            vanillaModel.resolveDependencies(resolver);
     }
 
     public boolean hasVanillaModel(){

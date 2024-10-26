@@ -68,7 +68,7 @@ public class EntityLayerProperties {
     }
 
     private long seed(UUID uuid){
-        return uuid.getLeastSignificantBits() ^ uuid.getMostSignificantBits() ^ this.identifier.getLayer().hashCode();
+        return uuid.getLeastSignificantBits() ^ uuid.getMostSignificantBits() ^ this.identifier.layer().hashCode();
     }
 
     public void gatherModels(Consumer<ModelPart> output){

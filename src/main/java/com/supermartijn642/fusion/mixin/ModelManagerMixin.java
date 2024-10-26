@@ -2,9 +2,8 @@ package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
-import net.minecraft.client.resources.model.AtlasSet;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelManager;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,12 +20,14 @@ import java.util.Map;
 public class ModelManagerMixin {
 
     @Inject(
-        method = "loadModels",
-        at = @At("HEAD")
+        method = "discoverModelDependencies",
+        at = @At("RETURN")
     )
-    private void registerBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, CallbackInfoReturnable<?> ci){
-        BlockModelModifierReloadListener.INSTANCE.registerOverlays(modelBakery);
-        ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(modelBakery);
+    private void registerBlockModelOverlays(CallbackInfoReturnable<ModelDiscovery> ci){
+        ModelDiscovery modelDiscovery = ci.getReturnValue();
+        UnbakedModel.Resolver resolver = modelDiscovery.new ResolverImpl();
+        BlockModelModifierReloadListener.INSTANCE.registerOverlays(resolver, modelDiscovery);
+        ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver, modelDiscovery);
     }
 
     @Inject(
@@ -37,7 +38,7 @@ public class ModelManagerMixin {
             shift = At.Shift.AFTER
         )
     )
-    private void applyBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, CallbackInfoReturnable<?> ci){
+    private void applyBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, Object2IntMap<?> map, CallbackInfoReturnable<?> ci){
         BlockModelModifierReloadListener.INSTANCE.applyOverlays(modelBakery);
         ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(modelBakery);
     }

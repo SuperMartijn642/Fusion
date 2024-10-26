@@ -10,6 +10,7 @@ import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
@@ -28,7 +29,7 @@ public class UnknownModelType implements ModelType<UnbakedModel> {
 
     @Override
     public Collection<ResourceLocation> getModelDependencies(UnbakedModel data){
-        return data.getDependencies();
+        return List.of(); // TODO
     }
 
     @Override

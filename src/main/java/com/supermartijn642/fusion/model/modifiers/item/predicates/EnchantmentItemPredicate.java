@@ -86,7 +86,7 @@ public class EnchantmentItemPredicate implements ItemPredicate {
             return this.minLevel == 0;
         if(Minecraft.getInstance().level.registryAccess() != this.registry){
             this.registry = Minecraft.getInstance().level.registryAccess();
-            this.holder = this.registry.registryOrThrow(Registries.ENCHANTMENT).getHolder(this.enchantment).orElse(null);
+            this.holder = this.registry.lookupOrThrow(Registries.ENCHANTMENT).get(this.enchantment).orElse(null);
         }
         if(this.holder == null)
             return this.minLevel == 0;

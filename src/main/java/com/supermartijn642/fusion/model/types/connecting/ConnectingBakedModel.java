@@ -20,9 +20,8 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -116,9 +115,9 @@ public class ConnectingBakedModel implements BakedModel {
     private final boolean usesBlockLight;
     private final TextureAtlasSprite particleIcon;
     private final ItemTransforms transforms;
-    private final ItemOverrides overrides;
+    private final BakedOverrides overrides;
 
-    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, ItemOverrides overrides){
+    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, BakedOverrides overrides){
         this.hasAmbientOcclusion = hasAmbientOcclusion;
         this.isGui3d = isGui3d;
         this.usesBlockLight = usesBlockLight;
@@ -162,13 +161,6 @@ public class ConnectingBakedModel implements BakedModel {
             RenderMaterial material = FusionClient.getRenderTypeMaterial(hasAmbientOcclusion, quad.renderType(), quad.emissive());
             for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
                 emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
-                if(quad.lightEmission() != null){
-                    for(int i = 0; i < 4; i++){
-                        int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
-                        int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
-                        emitter.lightmap(i, LightTexture.pack(sky, block));
-                    }
-                }
                 if(tag != null && quadIndex > 0)
                     emitter.tag(tag | (quadIndex << 20)); // Add the quad index to the tag
                 else if(tag != null)
@@ -197,13 +189,6 @@ public class ConnectingBakedModel implements BakedModel {
             RenderMaterial material = FusionClient.getRenderTypeMaterial(null, null, quad.emissive());
             for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
                 emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
-                if(quad.lightEmission() != null){
-                    for(int i = 0; i < 4; i++){
-                        int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
-                        int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
-                        emitter.lightmap(i, LightTexture.pack(sky, block));
-                    }
-                }
                 // Process the quad if it has a connecting texture
                 // As item mesh does not depend on state, we can run the connecting texture processing immediately
                 if(layoutHandler != null){
@@ -470,7 +455,7 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public ItemOverrides getOverrides(){
+    public BakedOverrides overrides(){
         return this.overrides;
     }
 

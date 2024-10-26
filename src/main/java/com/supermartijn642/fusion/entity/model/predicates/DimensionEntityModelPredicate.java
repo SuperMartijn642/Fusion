@@ -49,7 +49,7 @@ public class DimensionEntityModelPredicate implements EntityModelPredicate {
             return false;
         if(level.registryAccess() != this.registry){
             this.registry = level.registryAccess();
-            this.holder = this.registry.registryOrThrow(Registries.DIMENSION).getHolder(this.dimension).orElse(null);
+            this.holder = this.registry.lookupOrThrow(Registries.DIMENSION).get(this.dimension).orElse(null);
         }
         return this.holder != null && this.holder.equals(level.dimension());
     }

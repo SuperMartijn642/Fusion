@@ -34,7 +34,7 @@ public class EntityRenderersMixin {
     private static void interceptRendererCreation(EntityRendererProvider.Context context, CallbackInfoReturnable<?> ci){
         ImmutableMap.Builder<EntityType<?>,EntityRendererProvider<?>> builder = ImmutableMap.builder();
         //noinspection unchecked
-        PROVIDERS.forEach((entityType, rendererProvider) -> builder.put(entityType, c -> (EntityRenderer<Entity>)EntityModelModifierManager.handleRendererCreation(entityType, rendererProvider, c)));
+        PROVIDERS.forEach((entityType, rendererProvider) -> builder.put(entityType, c -> (EntityRenderer<Entity,?>)EntityModelModifierManager.handleRendererCreation(entityType, rendererProvider, c)));
         providersCopy = PROVIDERS;
         PROVIDERS = builder.build();
     }

@@ -13,9 +13,8 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -52,9 +51,9 @@ public class BaseBakedModel implements BakedModel {
     private final boolean usesBlockLight;
     private final TextureAtlasSprite particleIcon;
     private final ItemTransforms transforms;
-    private final ItemOverrides overrides;
+    private final BakedOverrides overrides;
 
-    public BaseBakedModel(List<BaseModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, ItemOverrides overrides){
+    public BaseBakedModel(List<BaseModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, BakedOverrides overrides){
         this.hasAmbientOcclusion = hasAmbientOcclusion;
         this.isGui3d = isGui3d;
         this.usesBlockLight = usesBlockLight;
@@ -70,13 +69,6 @@ public class BaseBakedModel implements BakedModel {
         for(BaseModelQuad quad : quads){
             RenderMaterial material = FusionClient.getRenderTypeMaterial(hasAmbientOcclusion, quad.renderType(), quad.emissive());
             emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
-            if(quad.lightEmission() != null){
-                for(int i = 0; i < 4; i++){
-                    int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
-                    int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
-                    emitter.lightmap(i, LightTexture.pack(sky, block));
-                }
-            }
             // Tag quads which need additional processing
             if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
                 int type = quad.textureType() == DefaultTextureTypes.RANDOM ? 2 : 3;
@@ -98,13 +90,6 @@ public class BaseBakedModel implements BakedModel {
         for(BaseModelQuad quad : quads){
             RenderMaterial material = FusionClient.getRenderTypeMaterial(null, null, quad.emissive());
             emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
-            if(quad.lightEmission() != null){
-                for(int i = 0; i < 4; i++){
-                    int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
-                    int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
-                    emitter.lightmap(i, LightTexture.pack(sky, block));
-                }
-            }
             emitter.emit();
         }
         this.itemMesh = builder.build();
@@ -211,7 +196,7 @@ public class BaseBakedModel implements BakedModel {
     }
 
     @Override
-    public ItemOverrides getOverrides(){
+    public BakedOverrides overrides(){
         return this.overrides;
     }
 }

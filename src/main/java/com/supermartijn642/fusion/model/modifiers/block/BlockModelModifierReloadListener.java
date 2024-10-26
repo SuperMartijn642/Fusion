@@ -2,21 +2,21 @@ package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.*;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.JsonOps;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.BlockModelShaper;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
@@ -40,14 +40,14 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
     private BlockModelModifierReloadListener(){
     }
 
-    public void registerOverlays(ModelBakery bakery){
+    public void registerOverlays(UnbakedModel.Resolver resolver, ModelDiscovery modelDiscovery){
         Set<ResourceLocation> models = new HashSet<>();
         for(Properties properties : this.models.values())
             models.addAll(properties.appendModels);
         for(ResourceLocation model : models){
-            UnbakedModel unbakedModel = bakery.getModel(model);
-            bakery.registerModelAndLoadDependencies(overlayModelLocation(model), unbakedModel);
-            unbakedModel.resolveParents(bakery::getModel);
+            UnbakedModel unbakedModel = resolver.resolve(model);
+            modelDiscovery.registerTopModel(overlayModelLocation(model), unbakedModel);
+            unbakedModel.resolveDependencies(resolver);
         }
     }
 
@@ -71,8 +71,8 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
     }
 
     @Override
-    public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager resourceManager, ProfilerFiller profiler, ProfilerFiller profiler2, Executor executor, Executor executor2){
-        return CompletableFuture.runAsync(() -> this.reload(resourceManager))
+    public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager resourceManager, Executor executor, Executor executor2){
+        return CompletableFuture.runAsync(() -> this.reload(resourceManager), executor)
             .thenCompose(barrier::wait);
     }
 
@@ -81,7 +81,17 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
 
         // Find all overlay files
         Map<ResourceLocation,JsonElement> resources = new HashMap<>();
-        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, LOCATION, GSON, resources);
+        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, LOCATION, JsonOps.INSTANCE, new Codec<>() {
+            @Override
+            public <T> DataResult<Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
+                return DataResult.success(com.mojang.datafixers.util.Pair.of(ops.convertTo(JsonOps.INSTANCE, input), input));
+            }
+
+            @Override
+            public <T> DataResult<T> encode(JsonElement input, DynamicOps<T> ops, T prefix){
+                return DataResult.success(JsonOps.INSTANCE.convertTo(ops, input));
+            }
+        }, resources);
 
         // Parse all the model overlay files
         for(Map.Entry<ResourceLocation,JsonElement> entry : resources.entrySet()){
@@ -108,11 +118,10 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
                 if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                     throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
                 ResourceLocation identifier = ResourceLocation.parse(element.getAsString());
-                Block block = BuiltInRegistries.BLOCK.get(identifier);
-                //noinspection ConstantValue
-                if(block == null || block == Blocks.AIR)
+                Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
+                if(block.isEmpty())
                     throw new JsonParseException("Could not find a block for model overlay target '" + identifier + "'!");
-                block.getStateDefinition().getPossibleStates().stream()
+                block.get().getStateDefinition().getPossibleStates().stream()
                     .map(BlockModelShaper::stateToModelLocation)
                     .forEach(targets::add);
             }else if(element.isJsonObject()){ // Handle blocks with specific state properties
@@ -163,10 +172,10 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
         if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
             throw new JsonParseException("Target property 'block' must be a valid identifier, not '" + json.get("block").getAsString() + "'!!");
         ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
-        Block block = BuiltInRegistries.BLOCK.get(identifier);
-        //noinspection ConstantValue
-        if(block == null || block == Blocks.AIR)
+        Optional<Block> optional = BuiltInRegistries.BLOCK.getOptional(identifier);
+        if(optional.isEmpty())
             throw new JsonParseException("Could not find a block for model overlay target '" + identifier + "'!");
+        Block block = optional.get();
 
         // Properties
         Map<Property<?>,Set<?>> properties = new HashMap<>();

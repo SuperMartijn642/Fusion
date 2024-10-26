@@ -81,7 +81,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
             return quadDirection == Direction.UP ? stateAbove == null : stateBelow == null;
 
         // Get the side of the pane the quad is on
-        Direction partSide = Direction.getNearest(centerX - 0.5, 0, centerZ - 0.5);
+        Direction partSide = Direction.getApproximateNearest(centerX - 0.5, 0, centerZ - 0.5);
         // If the pane above/below is connected on the quad's side, cull the quad
         return quadDirection == Direction.UP ?
             stateAbove == null || !stateAbove.getValue(SIDE_PROPERTIES[partSide.ordinal()]) :

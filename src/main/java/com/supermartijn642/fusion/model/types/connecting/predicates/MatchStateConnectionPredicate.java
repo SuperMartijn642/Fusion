@@ -35,9 +35,10 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
-            if(!BuiltInRegistries.BLOCK.containsKey(identifier))
+            Optional<Block> optional = BuiltInRegistries.BLOCK.getOptional(identifier);
+            if(optional.isEmpty())
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
-            Block block = BuiltInRegistries.BLOCK.get(identifier);
+            Block block = optional.get();
 
             List<Pair<Property<?>,Set<?>>> properties = new ArrayList<>();
             if(!json.has("properties") || !json.get("properties").isJsonObject())

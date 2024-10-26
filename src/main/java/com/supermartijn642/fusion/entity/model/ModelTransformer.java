@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.core.Direction;
 import org.joml.Vector3f;
 
 import java.util.Arrays;
@@ -32,7 +31,7 @@ public class ModelTransformer {
                 part.yRot *= -1;
                 part.zRot *= -1;
                 PartPose pose = part.initialPose;
-                pose = PartPose.offsetAndRotation(-pose.x, pose.y, pose.z, pose.xRot, -pose.yRot, -pose.zRot);
+                pose = PartPose.offsetAndRotation(-pose.x(), pose.y(), pose.z(), pose.xRot(), -pose.yRot(), -pose.zRot());
                 part.initialPose = pose;
             },
             cube -> {
@@ -40,8 +39,8 @@ public class ModelTransformer {
                 cube.maxX = -cube.minX;
                 cube.minX = -maxX;
             },
-            polygon -> polygon.normal.x *= -1,
-            vertex -> vertex.pos.x *= -1
+            polygon -> polygon.normal().x *= -1,
+            vertex -> vertex.pos().x *= -1
         );
     }
 
@@ -53,7 +52,7 @@ public class ModelTransformer {
                 part.xRot *= -1;
                 part.zRot *= -1;
                 PartPose pose = part.initialPose;
-                pose = PartPose.offsetAndRotation(pose.x, -pose.y, pose.z, -pose.xRot, pose.yRot, -pose.zRot);
+                pose = PartPose.offsetAndRotation(pose.x(), -pose.y(), pose.z(), -pose.xRot(), pose.yRot(), -pose.zRot());
                 part.initialPose = pose;
             },
             cube -> {
@@ -61,8 +60,8 @@ public class ModelTransformer {
                 cube.maxY = -cube.minY;
                 cube.minY = -maxY;
             },
-            polygon -> polygon.normal.y *= -1,
-            vertex -> vertex.pos.y *= -1
+            polygon -> polygon.normal().y *= -1,
+            vertex -> vertex.pos().y *= -1
         );
     }
 
@@ -74,7 +73,7 @@ public class ModelTransformer {
                 part.xRot *= -1;
                 part.yRot *= -1;
                 PartPose pose = part.initialPose;
-                pose = PartPose.offsetAndRotation(pose.x, pose.y, -pose.z, -pose.xRot, -pose.yRot, pose.zRot);
+                pose = PartPose.offsetAndRotation(pose.x(), pose.y(), -pose.z(), -pose.xRot(), -pose.yRot(), pose.zRot());
                 part.initialPose = pose;
             },
             cube -> {
@@ -82,8 +81,8 @@ public class ModelTransformer {
                 cube.maxZ = -cube.minZ;
                 cube.minZ = -maxZ;
             },
-            polygon -> polygon.normal.z *= -1,
-            vertex -> vertex.pos.z *= -1
+            polygon -> polygon.normal().z *= -1,
+            vertex -> vertex.pos().z *= -1
         );
     }
 
@@ -98,7 +97,7 @@ public class ModelTransformer {
         );
         copy.z += translation;
         PartPose pose = copy.initialPose;
-        pose = PartPose.offsetAndRotation(pose.x, pose.y, pose.z + translation, pose.xRot, pose.yRot, pose.zRot);
+        pose = PartPose.offsetAndRotation(pose.x(), pose.y(), pose.z() + translation, pose.xRot(), pose.yRot(), pose.zRot());
         copy.initialPose = pose;
         return copy;
     }
@@ -114,7 +113,7 @@ public class ModelTransformer {
         );
         copy.y += translation;
         PartPose pose = copy.initialPose;
-        pose = PartPose.offsetAndRotation(pose.x, pose.y + translation, pose.z, pose.xRot, pose.yRot, pose.zRot);
+        pose = PartPose.offsetAndRotation(pose.x(), pose.y() + translation, pose.z(), pose.xRot(), pose.yRot(), pose.zRot());
         copy.initialPose = pose;
         return copy;
     }
@@ -130,7 +129,7 @@ public class ModelTransformer {
         );
         copy.x += translation;
         PartPose pose = copy.initialPose;
-        pose = PartPose.offsetAndRotation(pose.x + translation, pose.y, pose.z, pose.xRot, pose.yRot, pose.zRot);
+        pose = PartPose.offsetAndRotation(pose.x() + translation, pose.y(), pose.z(), pose.xRot(), pose.yRot(), pose.zRot());
         copy.initialPose = pose;
         return copy;
     }
@@ -177,14 +176,14 @@ public class ModelTransformer {
     }
 
     private static ModelPart.Polygon transform(ModelPart.Polygon polygon, Consumer<ModelPart.Polygon> polygonTransform, Consumer<ModelPart.Vertex> vertexTransform){
-        ModelPart.Polygon copy = new ModelPart.Polygon(DUMMY_VERTICES, 0, 0, 0, 0, 1, 1, false, Direction.UP);
-        copy.vertices = Arrays.stream(polygon.vertices).map(v -> transform(v, vertexTransform)).toArray(ModelPart.Vertex[]::new);
-        copy.normal = polygon.normal;
-        return copy;
+        return new ModelPart.Polygon(
+            Arrays.stream(polygon.vertices()).map(v -> transform(v, vertexTransform)).toArray(ModelPart.Vertex[]::new),
+            polygon.normal()
+        );
     }
 
     private static ModelPart.Vertex transform(ModelPart.Vertex vertex, Consumer<ModelPart.Vertex> vertexTransform){
-        ModelPart.Vertex copy = new ModelPart.Vertex(new Vector3f(vertex.pos), vertex.u, vertex.v);
+        ModelPart.Vertex copy = new ModelPart.Vertex(new Vector3f(vertex.pos()), vertex.u(), vertex.v());
         vertexTransform.accept(copy);
         return copy;
     }

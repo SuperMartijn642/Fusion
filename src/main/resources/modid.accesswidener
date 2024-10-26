@@ -6,8 +6,6 @@ accessible field net/minecraft/client/resources/metadata/animation/AnimationMeta
 # BakedQuad
 accessible field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
-# Block
-accessible field net/minecraft/world/level/block/Block OCCLUSION_CACHE Ljava/lang/ThreadLocal;
 # BlockModel
 accessible field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
 accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/google/gson/Gson;
@@ -35,9 +33,11 @@ accessible class net/minecraft/client/renderer/block/model/ItemTransform$Deseria
 accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init> (Lnet/minecraft/client/model/geom/builders/MeshDefinition;Lnet/minecraft/client/model/geom/builders/MaterialDefinition;)V
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
-# ModelBakery
-accessible method net/minecraft/client/resources/model/ModelBakery getModel (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/resources/model/UnbakedModel;
-accessible method net/minecraft/client/resources/model/ModelBakery registerModelAndLoadDependencies (Lnet/minecraft/client/resources/model/ModelResourceLocation;Lnet/minecraft/client/resources/model/UnbakedModel;)V
+# ModelDiscovery
+accessible method net/minecraft/client/resources/model/ModelDiscovery registerTopModel (Lnet/minecraft/client/resources/model/ModelResourceLocation;Lnet/minecraft/client/resources/model/UnbakedModel;)V
+# ModelDiscovery$ResolverImpl
+accessible method net/minecraft/client/resources/model/ModelDiscovery$ResolverImpl <init> (Lnet/minecraft/client/resources/model/ModelDiscovery;)V
+accessible class net/minecraft/client/resources/model/ModelDiscovery$ResolverImpl
 # ModelLayers
 accessible field net/minecraft/client/model/geom/ModelLayers ALL_MODELS Ljava/util/Set;
 # ModelPart

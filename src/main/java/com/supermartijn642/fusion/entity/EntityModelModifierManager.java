@@ -175,7 +175,7 @@ public class EntityModelModifierManager {
         return fusionModelPart;
     }
 
-    public static EntityRenderer<?> handleRendererCreation(EntityType<?> entityType, EntityRendererProvider<?> rendererProvider, EntityRendererProvider.Context context){
+    public static EntityRenderer<?,?> handleRendererCreation(EntityType<?> entityType, EntityRendererProvider<?> rendererProvider, EntityRendererProvider.Context context){
         // Gather the layers which should be overwritten from the model modifier
         EntityModelModifier properties = MODEL_PROPERTIES.get(entityType);
         if(properties != null)
@@ -183,7 +183,7 @@ public class EntityModelModifierManager {
 
         // Create the original renderer
         trackingBakedModels.set(true);
-        EntityRenderer<?> renderer;
+        EntityRenderer<?,?> renderer;
         try{
             renderer = rendererProvider.create(context);
         }catch(Exception e){

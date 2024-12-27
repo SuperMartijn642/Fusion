@@ -13,11 +13,12 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineLabel;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 
 import java.util.function.Consumer;
@@ -101,7 +102,7 @@ public class MinimumVersionWarningScreen extends Screen {
         // Title
         int titleLeft = -(this.titleWidth + 17) / 2;
         RenderSystem.enableBlend();
-        graphics.blit(FUSION_LOGO, titleLeft, 0, 0, 0, 12, 12, 12, 12);
+        graphics.blit(RenderType::guiTextured, FUSION_LOGO, titleLeft, 0, 0, 0, 12, 12, 12, 12);
         RenderSystem.disableBlend();
         graphics.drawString(this.font, this.title, titleLeft + 17, 2, -1);
 
@@ -111,12 +112,12 @@ public class MinimumVersionWarningScreen extends Screen {
         int middleHeight = 98 + this.headerMessage.getLineCount() * 10 + this.confirmationMessage.getLineCount() * 10;
         poseStack.translate(this.width / 2f, (this.height - middleHeight) / 2f, 0);
 
-        graphics.fill(-98, 0, 98, 36, FastColor.ARGB32.color(70, 255, 255, 255));
-        graphics.blit(this.pack.getIconTexture(), -96, 2, 0, 0, 32, 32, 32, 32);
+        graphics.fill(-98, 0, 98, 36, ARGB.color(70, 255, 255, 255));
+        graphics.blit(RenderType::guiTextured, this.pack.getIconTexture(), -96, 2, 0, 0, 32, 32, 32, 32);
         graphics.drawString(this.font, this.packName, -62, 3, 16777215);
         this.packDescription.renderLeftAligned(graphics, -62, 14, 10, -8355712);
 
-        graphics.hLine(-115, 115, 44, FastColor.ARGB32.color(255, 255, 255));
+        graphics.hLine(-115, 115, 44, ARGB.color(255, 255, 255));
 
         int textLeft = -Math.max(this.headerMessage.getWidth(), this.confirmationMessage.getWidth()) / 2;
         this.headerMessage.renderLeftAligned(graphics, textLeft, 54, 10, -1);
@@ -124,11 +125,11 @@ public class MinimumVersionWarningScreen extends Screen {
         this.confirmationMessage.renderLeftAligned(graphics, textLeft, 58 + textHeight, 10, -1);
         textHeight += this.confirmationMessage.getLineCount() * 10;
 
-        graphics.hLine(-115, 115, 66 + textHeight, FastColor.ARGB32.color(255, 255, 255));
+        graphics.hLine(-115, 115, 66 + textHeight, ARGB.color(255, 255, 255));
 
         textLeft = -(this.versionLabelTextWidth + 5 + this.versionTextWidth) / 2;
-        graphics.drawString(this.font, this.currentVersionLabel, textLeft, 76 + textHeight, FastColor.ARGB32.color(180, 180, 180));
-        graphics.drawString(this.font, this.requiredVersionLabel, textLeft, 88 + textHeight, FastColor.ARGB32.color(180, 180, 180));
+        graphics.drawString(this.font, this.currentVersionLabel, textLeft, 76 + textHeight, ARGB.color(180, 180, 180));
+        graphics.drawString(this.font, this.requiredVersionLabel, textLeft, 88 + textHeight, ARGB.color(180, 180, 180));
         graphics.drawString(this.font, this.currentVersion, textLeft + this.versionLabelTextWidth + 5, 76 + textHeight, 16777215);
         graphics.drawString(this.font, this.requiredVersion, textLeft + this.versionLabelTextWidth + 5, 88 + textHeight, 16777215);
 

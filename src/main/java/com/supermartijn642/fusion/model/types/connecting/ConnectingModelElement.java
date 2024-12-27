@@ -17,8 +17,8 @@ public class ConnectingModelElement extends BaseModelElement {
 
     public final Map<Direction,String> faceConnectionKeys;
 
-    public ConnectingModelElement(Vector3f from, Vector3f to, Map<Direction,BlockElementFace> faces, @Nullable BlockElementRotation rotation, boolean shade, Integer light_emission, Map<Direction,String> faceConnectionKeys){
-        super(from, to, faces, rotation, shade, light_emission);
+    public ConnectingModelElement(Vector3f from, Vector3f to, Map<Direction,BlockElementFace> faces, @Nullable BlockElementRotation rotation, boolean shade, int lightEmission, Map<Direction,String> faceConnectionKeys){
+        super(from, to, faces, rotation, shade, lightEmission);
         this.faceConnectionKeys = faceConnectionKeys == null ? Collections.emptyMap() : Collections.unmodifiableMap(faceConnectionKeys);
     }
 }

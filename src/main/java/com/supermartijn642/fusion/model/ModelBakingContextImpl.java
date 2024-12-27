@@ -7,8 +7,10 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.Map;
 import java.util.function.Function;
 
 /**
@@ -20,14 +22,15 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     private final Function<Material,TextureAtlasSprite> spriteGetter;
     private final ModelState modelState;
     private final ResourceLocation modelIdentifier;
+    private final Map<ResourceLocation,UnbakedModel> dependencies;
 
-    public ModelBakingContextImpl(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, ResourceLocation modelIdentifier){
+    public ModelBakingContextImpl(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, ResourceLocation modelIdentifier, Map<ResourceLocation,UnbakedModel> dependencies){
         this.modelBaker = modelBaker;
         this.spriteGetter = spriteGetter;
         this.modelState = modelState;
         this.modelIdentifier = modelIdentifier;
+        this.dependencies = dependencies;
     }
-
 
     @Override
     public ModelBaker getModelBaker(){
@@ -56,6 +59,8 @@ public class ModelBakingContextImpl implements ModelBakingContext {
 
     @Override
     public ModelInstance<?> getModel(ResourceLocation identifier){
-        return FusionBlockModel.getModelInstance(this.modelBaker.getModel(identifier));
+        if(!this.dependencies.containsKey(identifier))
+            throw new IllegalStateException("Requesting model that was not given as a dependency!");
+        return FusionBlockModel.getModelInstance(this.dependencies.get(identifier));
     }
 }

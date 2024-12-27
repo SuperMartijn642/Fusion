@@ -17,10 +17,9 @@ import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType
 import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -115,9 +114,9 @@ public class ConnectingBakedModel implements BakedModel {
     private final boolean usesBlockLight;
     private final TextureAtlasSprite particleIcon;
     private final ItemTransforms transforms;
-    private final ItemOverrides overrides;
+    private final BakedOverrides overrides;
 
-    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, ItemOverrides overrides){
+    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, BakedOverrides overrides){
         this.hasAmbientOcclusion = hasAmbientOcclusion;
         this.isGui3d = isGui3d;
         this.usesBlockLight = usesBlockLight;
@@ -162,13 +161,6 @@ public class ConnectingBakedModel implements BakedModel {
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad());
                 mutableQuad.ambientOcclusion(hasAmbientOcclusion);
                 mutableQuad.emissive(quad.emissive());
-                if(quad.lightEmission() != null){
-                    for(int i = 0; i < 4; i++){
-                        int sky = Math.max(quad.lightEmission(), LightTexture.sky(mutableQuad.lightmap(i)));
-                        int block = Math.max(quad.lightEmission(), LightTexture.block(mutableQuad.lightmap(i)));
-                        mutableQuad.lightmap(i, LightTexture.pack(sky, block));
-                    }
-                }
 
                 // Add the block quad
                 TaggedBakedQuad finishedQuad = new TaggedBakedQuad(mutableQuad.toBakedQuad(), textureType, spriteIndex, predicateIndex, quadIndex);
@@ -183,14 +175,14 @@ public class ConnectingBakedModel implements BakedModel {
 
                 // Add the item quad
                 RenderType itemRenderType = renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER ? FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER
-                    : RenderTypeHelper.getEntityRenderType(renderType, false);
+                    : RenderTypeHelper.getEntityRenderType(renderType);
                 itemRenderTypes.add(itemRenderType);
                 List<BakedQuad> itemQuads = itemMesh.get(renderType);
                 if(itemQuads == null){
                     itemQuads = new ArrayList<>();
                     itemMesh.put(itemRenderType, itemQuads);
                     RenderType fabulousRenderType = renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER ? FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER
-                        : RenderTypeHelper.getEntityRenderType(renderType, true);
+                        : RenderTypeHelper.getEntityRenderType(renderType);
                     itemRenderTypesFabulous.add(fabulousRenderType);
                     itemMesh.put(fabulousRenderType, itemQuads);
                 }
@@ -234,7 +226,7 @@ public class ConnectingBakedModel implements BakedModel {
 
                 List<BakedQuad> quads = ConnectingBakedModel.this.itemMesh.get(renderType);
                 //noinspection deprecation
-                if(ConnectingBakedModel.this.shouldCheckOriginalItemRenderTypes && ItemBlockRenderTypes.getRenderType(stack, fabulous) == renderType){
+                if(ConnectingBakedModel.this.shouldCheckOriginalItemRenderTypes && ItemBlockRenderTypes.getRenderType(stack) == renderType){
                     List<BakedQuad> additionalQuads = ConnectingBakedModel.this.itemMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
                     if(additionalQuads != null){
                         if(quads == null)
@@ -471,7 +463,7 @@ public class ConnectingBakedModel implements BakedModel {
     public List<RenderType> getRenderTypes(ItemStack stack, boolean fabulous){
         if(this.shouldCheckOriginalItemRenderTypes){
             // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
-            RenderType renderType = RenderTypeHelper.getFallbackItemRenderType(stack, this, fabulous);
+            RenderType renderType = RenderTypeHelper.getFallbackItemRenderType(stack, this);
             if(!(fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes).contains(renderType)){
                 ArrayList<RenderType> combined = new ArrayList<>((fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes).size() + 1);
                 combined.addAll(fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes);
@@ -536,7 +528,7 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public ItemOverrides getOverrides(){
+    public BakedOverrides overrides(){
         return this.overrides;
     }
 

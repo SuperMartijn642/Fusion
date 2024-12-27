@@ -14,8 +14,8 @@ import com.supermartijn642.fusion.api.predicate.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelElement;
+import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -70,7 +70,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         ItemTransform transformGround = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.GROUND) ? model.transforms.getTransform(ItemDisplayContext.GROUND) : null, ItemTransform.NO_TRANSFORM);
         ItemTransform transformFixed = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.FIXED) ? model.transforms.getTransform(ItemDisplayContext.FIXED) : null, ItemTransform.NO_TRANSFORM);
         ItemTransforms itemTransforms = new ItemTransforms(transformThirdPersonLeftHand, transformThirdPersonRightHand, transformFirstPersonLeftHand, transformFirstPersonRightHand, transformHead, transformGui, transformGround, transformFixed);
-        ItemOverrides itemOverrides = data.getVanillaModel().overrides.isEmpty() ? ItemOverrides.EMPTY : new ItemOverrides(context.getModelBaker(), data.getVanillaModel(), data.getVanillaModel().overrides);
+        BakedOverrides itemOverrides = data.getVanillaModel().overrides.isEmpty() ? BakedOverrides.EMPTY : new BakedOverrides(context.getModelBaker(), data.getVanillaModel().overrides);
         // Finally, create the model
         return new ConnectingBakedModel(
             quads,
@@ -136,7 +136,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
                 baseElement.faces,
                 baseElement.rotation,
                 baseElement.shade,
-                baseElement.light_emission,
+                baseElement.lightEmission,
                 connectionKeys
             ));
         }

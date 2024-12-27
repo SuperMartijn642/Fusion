@@ -8,7 +8,7 @@ import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -34,10 +34,10 @@ public class ItemRendererMixin {
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
                 if(tinting != null){
                     int color = QuadTintingHelper.getColor(tinting, null, null, null);
-                    alpha = FastColor.ARGB32.alpha(color) / 255f;
-                    red = FastColor.ARGB32.red(color) / 255f;
-                    green = FastColor.ARGB32.green(color) / 255f;
-                    blue = FastColor.ARGB32.blue(color) / 255f;
+                    alpha = ARGB.alpha(color) / 255f;
+                    red = ARGB.red(color) / 255f;
+                    green = ARGB.green(color) / 255f;
+                    blue = ARGB.blue(color) / 255f;
                 }
             }
         }

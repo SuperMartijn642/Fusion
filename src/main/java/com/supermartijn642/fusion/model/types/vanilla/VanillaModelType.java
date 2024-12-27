@@ -8,13 +8,14 @@ import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.MissingBlockModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.model.ExtendedBlockModelDeserializer;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -25,7 +26,7 @@ public class VanillaModelType implements ModelType<BlockModel> {
 
     @Override
     public Collection<ResourceLocation> getModelDependencies(BlockModel data){
-        return data.getDependencies();
+        return data.parentLocation == null ? List.of() : List.of(data.parentLocation);
     }
 
     @Override
@@ -67,7 +68,7 @@ public class VanillaModelType implements ModelType<BlockModel> {
                 parent = null;
             }
             if(parent == null){
-                model.parentLocation = ModelBakery.MISSING_MODEL_LOCATION;
+                model.parentLocation = MissingBlockModel.LOCATION;
                 parent = context.getModel(model.parentLocation).getAsVanillaModel();
                 if(parent == null)
                     throw new RuntimeException("Got null for missing model request!");

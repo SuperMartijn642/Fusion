@@ -16,15 +16,13 @@ public class BaseModelQuad {
     private final BakedQuad bakedQuad;
     private final TextureType<?> textureType;
     private final Direction cullDirection;
-    private final Integer lightEmission;
     private final BaseTextureData.RenderType renderType;
     private final boolean emissive;
 
-    public BaseModelQuad(BakedQuad bakedQuad, Direction cullDirection, Integer lightEmission){
+    public BaseModelQuad(BakedQuad bakedQuad, Direction cullDirection){
         this.bakedQuad = bakedQuad;
         this.textureType = SpriteHelper.getTextureType(bakedQuad.getSprite());
         this.cullDirection = cullDirection;
-        this.lightEmission = lightEmission;
         TextureAtlasSprite sprite = bakedQuad.getSprite();
         if(sprite instanceof BaseTextureSprite && ((BaseTextureSprite)sprite).data() != null){
             BaseTextureData data = ((BaseTextureSprite)sprite).data();
@@ -48,10 +46,6 @@ public class BaseModelQuad {
 
     public Direction cullDirection(){
         return this.cullDirection;
-    }
-
-    public Integer lightEmission(){
-        return this.lightEmission;
     }
 
     public BaseTextureData.RenderType renderType(){

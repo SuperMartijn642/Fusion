@@ -35,9 +35,10 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
-            if(!BuiltInRegistries.BLOCK.containsKey(identifier))
+            Optional<Block> optional = BuiltInRegistries.BLOCK.getOptional(identifier);
+            if(optional.isEmpty())
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
-            Block block = BuiltInRegistries.BLOCK.get(identifier);
+            Block block = optional.get();
 
             List<Pair<Property<?>,Set<?>>> properties = new ArrayList<>();
             if(!json.has("properties") || !json.get("properties").isJsonObject())
@@ -177,5 +178,20 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
     @Override
     public Serializer<? extends ConnectionPredicate> getSerializer(){
         return SERIALIZER;
+    }
+
+    @Override
+    public final boolean equals(Object o){
+        if(this == o) return true;
+        if(!(o instanceof MatchStateConnectionPredicate that)) return false;
+
+        return this.block.equals(that.block) && this.properties.equals(that.properties);
+    }
+
+    @Override
+    public int hashCode(){
+        int result = this.block.hashCode();
+        result = 31 * result + this.properties.hashCode();
+        return result;
     }
 }

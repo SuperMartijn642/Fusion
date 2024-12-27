@@ -4,8 +4,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -99,8 +99,8 @@ public class ItemModelModifierBakedModel implements BakedModel {
     }
 
     @Override
-    public ItemOverrides getOverrides(){
-        return this.defaultModel.getOverrides();
+    public BakedOverrides overrides(){
+        return this.defaultModel.overrides();
     }
 
     @Override

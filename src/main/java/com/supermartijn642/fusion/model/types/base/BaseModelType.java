@@ -9,7 +9,10 @@ import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.block.model.*;
+import net.minecraft.client.renderer.block.model.BakedOverrides;
+import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemTransform;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
@@ -60,7 +63,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
         ItemTransform transformGround = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.GROUND) ? model.transforms.getTransform(ItemDisplayContext.GROUND) : null, ItemTransform.NO_TRANSFORM);
         ItemTransform transformFixed = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.FIXED) ? model.transforms.getTransform(ItemDisplayContext.FIXED) : null, ItemTransform.NO_TRANSFORM);
         ItemTransforms itemTransforms = new ItemTransforms(transformThirdPersonLeftHand, transformThirdPersonRightHand, transformFirstPersonLeftHand, transformFirstPersonRightHand, transformHead, transformGui, transformGround, transformFixed);
-        ItemOverrides itemOverrides = data.getVanillaModel().overrides.isEmpty() ? ItemOverrides.EMPTY : new ItemOverrides(context.getModelBaker(), data.getVanillaModel(), data.getVanillaModel().overrides);
+        BakedOverrides itemOverrides = data.getVanillaModel().overrides.isEmpty() ? BakedOverrides.EMPTY : new BakedOverrides(context.getModelBaker(), data.getVanillaModel().overrides);
         // Finally, create the model
         return new BaseBakedModel(
             quads,
@@ -104,22 +107,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
             if(!parents.isEmpty())
                 model.parentLocation = parents.get(0);
         }
-        // Read elements (for 'light_emission' property)
         List<BaseModelElement> elements = new ArrayList<>(model.elements.size());
-        JsonArray elementsJson = json.getAsJsonArray("elements");
-        for(int i = 0; i < model.elements.size(); i++){
-            BlockElement vanillaElement = model.elements.get(i);
-            Integer lightEmission = null;
-            JsonElement lightEmissionJson = elementsJson.get(i).getAsJsonObject().get("light_emission");
-            if(lightEmissionJson != null){
-                if(!lightEmissionJson.isJsonPrimitive() || !lightEmissionJson.getAsJsonPrimitive().isNumber())
-                    throw new JsonParseException("Element property 'light_emission' must be a number!");
-                lightEmission = lightEmissionJson.getAsInt();
-                if(lightEmission < 0 || lightEmission > 15)
-                    throw new JsonParseException("Element property 'light_emission' must be between 0 and 15!");
-            }
-            elements.add(new BaseModelElement(vanillaElement.from, vanillaElement.to, vanillaElement.faces, vanillaElement.rotation, vanillaElement.shade, lightEmission));
-        }
+        model.elements.forEach(element -> elements.add(new BaseModelElement(element.from, element.to, element.faces, element.rotation, element.shade, element.lightEmission)));
         return new BaseModelDataImpl(model, parents, elements);
     }
 
@@ -133,12 +122,6 @@ public class BaseModelType implements ModelType<BaseModelData> {
             JsonArray parents = new JsonArray(value.getParents().size());
             value.getParents().forEach(p -> parents.add(p.toString()));
             json.add("parents", parents);
-        }
-        // Add 'light_emission' property to model elements
-        for(int i = 0; i < ((BaseModelDataImpl)value).getElements().size(); i++){
-            Integer lightEmission = ((BaseModelDataImpl)value).getElements().get(i).light_emission;
-            if(lightEmission != null)
-                json.getAsJsonArray("elements").get(i).getAsJsonObject().addProperty("light_emission", lightEmission);
         }
         return json;
     }

@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.mixin;
 
-import org.embeddedt.vintagefix.core.VintageFixCore;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -21,11 +20,6 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
     public void onLoad(String mixinPackage){
         try{
             MixinService.getService().getBytecodeProvider().getClassNode("org.embeddedt.vintagefix.VintageFix");
-            try{
-                VintageFixCore.class.getDeclaredField("FUSION");
-            }catch(NoSuchFieldException e){
-                this.isVintageFixLoaded = true;
-            }
         }catch(Exception ignored){
             this.isVintageFixLoaded = false;
         }

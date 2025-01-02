@@ -176,12 +176,12 @@ jar {
     }
 
     manifest {
-        attributes "FMLCorePlugin": "com.supermartijn642.movingelevators.core.CoreMod"
+        attributes "FMLCorePlugin": "com.supermartijn642.fusion.core.CoreMod"
         attributes "FMLCorePluginContainsFMLMod": "true"
         attributes "ForceLoadAsMod": "true"
         attributes "TweakClass": "org.spongepowered.asm.launch.MixinTweaker"
         attributes "TweakOrder": "0"
-        attributes "MixinConfigs": "movingelevators.mixins.json"
+        attributes "MixinConfigs": "fusion.mixins.json"
     }
 }
 

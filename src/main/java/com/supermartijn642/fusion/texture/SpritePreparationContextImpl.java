@@ -21,7 +21,7 @@ public class SpritePreparationContextImpl implements SpritePreparationContext {
         this.textureWidth = textureWidth;
         this.textureHeight = textureHeight;
         this.identifier = identifier;
-        this.animationMetadata = animationMetadata == AnimationMetadataSection.EMPTY ? null : animationMetadata;
+        this.animationMetadata = animationMetadata;
     }
 
     @Override

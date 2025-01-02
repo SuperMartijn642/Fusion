@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.api.model;
 import com.supermartijn642.fusion.model.ModelInstanceImpl;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ public interface ModelInstance<T> {
      * @return a representation of the model as a vanilla {@link BlockModel} instance, or {@code null} if such a representation is not available
      */
     @Nullable
-    BlockModel getAsVanillaModel();
+    UnbakedModel getAsVanillaModel();
 
     /**
      * Gets any 'parent' models which the model may inherit properties from.

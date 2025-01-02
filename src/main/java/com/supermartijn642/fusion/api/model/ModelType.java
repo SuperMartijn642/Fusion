@@ -1,13 +1,12 @@
 package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.api.util.Serializer;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -31,23 +30,16 @@ public interface ModelType<T> extends Serializer<T> {
     BakedModel bake(ModelBakingContext context, T data);
 
     /**
-     * Represents the model as a vanilla {@link BlockModel} instance. May be used gather info from other models, such as with the vanilla 'parent' property.
-     * If the model cannot be represented as a {@link BlockModel} instance, this method should return {@code null}.
+     * Represents the model as a vanilla {@link UnbakedModel} instance. May be used gather info from other models, such as with the vanilla 'parent' property.
+     * If the model cannot be represented as a {@link UnbakedModel} instance, this method should return {@code null}.
      * @param data custom model data
-     * @return a representation of the model as a vanilla {@link BlockModel} instance, or {@code null} if such a representation is not available
+     * @return a representation of the model as a vanilla {@link UnbakedModel} instance, or {@code null} if such a representation is not available
      */
     @Nullable
-    default BlockModel getAsVanillaModel(T data){
-        return null;
-    }
+    UnbakedModel getAsVanillaModel(T data);
 
     /**
      * Gets any 'parent' models which the model may inherit properties from.
      */
-    default List<ResourceLocation> getParentModels(T data){
-        BlockModel vanillaModel = this.getAsVanillaModel(data);
-        if(vanillaModel != null && vanillaModel.parentLocation != null)
-            return List.of(vanillaModel.parentLocation);
-        return Collections.emptyList();
-    }
+    List<ResourceLocation> getParentModels(T data);
 }

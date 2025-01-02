@@ -16,13 +16,6 @@ import java.util.function.Consumer;
  */
 public class ModelTransformer {
 
-    private static final ModelPart.Vertex[] DUMMY_VERTICES = {
-        new ModelPart.Vertex(0, 0, 0, 0, 0),
-        new ModelPart.Vertex(0, 0, 0, 0, 0),
-        new ModelPart.Vertex(0, 0, 0, 0, 0),
-        new ModelPart.Vertex(0, 0, 0, 0, 0)
-    };
-
     public static ModelPart flipX(ModelPart model){
         return transform(
             model,

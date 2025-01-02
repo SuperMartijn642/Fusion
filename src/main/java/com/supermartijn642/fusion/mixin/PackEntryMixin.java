@@ -56,7 +56,7 @@ public class PackEntryMixin {
     private void renderBackground(GuiGraphics graphics, int entryIndex, int top, int left, int width, int height, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
         if(this.metadata == null)
             return;
-        if(this.parent.getMaxScroll() > 0)
+        if(this.parent.maxScrollAmount() > 0)
             width -= 7;
         ResourcePackListTipRenderer.renderBackground(this.metadata, this.pack.getCompatibility().isCompatible(), graphics, left, top, width, height);
     }
@@ -72,7 +72,7 @@ public class PackEntryMixin {
     private void renderIcon(GuiGraphics graphics, int entryIndex, int top, int left, int width, int height, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
         if(this.metadata == null)
             return;
-        if(this.parent.getMaxScroll() > 0)
+        if(this.parent.maxScrollAmount() > 0)
             width -= 7;
         ResourcePackListTipRenderer.renderIcon(this.metadata, this.pack.getCompatibility().isCompatible(), graphics, left, top, width, height);
     }

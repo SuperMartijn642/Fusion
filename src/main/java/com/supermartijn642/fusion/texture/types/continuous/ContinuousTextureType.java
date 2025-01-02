@@ -67,14 +67,12 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData>
         if(context.getAnimationMetadata() != null){
             AnimationMetadataSection animation = context.getAnimationMetadata();
             Pair<Integer,Integer> frameSize;
-            if(animation.frameWidth != -1 && animation.frameHeight != -1)
-                //noinspection SuspiciousNameCombination
-                frameSize = Pair.of(animation.frameWidth, animation.frameHeight);
-            else if(animation.frameWidth != -1)
-                frameSize = Pair.of(animation.frameWidth, context.getTextureHeight());
-            else if(animation.frameHeight != -1)
-                //noinspection SuspiciousNameCombination
-                frameSize = Pair.of(context.getTextureWidth(), animation.frameHeight);
+            if(animation.frameWidth().isPresent() && animation.frameHeight().isPresent())
+                frameSize = Pair.of(animation.frameWidth().get(), animation.frameHeight().get());
+            else if(animation.frameWidth().isPresent())
+                frameSize = Pair.of(animation.frameWidth().get(), context.getTextureHeight());
+            else if(animation.frameHeight().isPresent())
+                frameSize = Pair.of(context.getTextureWidth(), animation.frameHeight().get());
             else{
                 // Use the expected aspect ratio for the layout
                 int height = Math.min(context.getTextureWidth() * data.getRows() / data.getColumns(), context.getTextureHeight());
@@ -84,7 +82,7 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData>
             // Do vanilla frame size check
             if(!Mth.isMultipleOf(context.getTextureWidth(), frameSize.left())
                 || !Mth.isMultipleOf(context.getTextureHeight(), frameSize.right()))
-                throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size "+ frameSize.left() + "x" + frameSize.right() + "!");
+                throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size " + frameSize.left() + "x" + frameSize.right() + "!");
             return frameSize;
         }
 

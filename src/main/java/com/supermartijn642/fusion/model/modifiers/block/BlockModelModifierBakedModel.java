@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedOverrides;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -35,7 +35,7 @@ import java.util.stream.IntStream;
 public class BlockModelModifierBakedModel implements BakedModel {
 
     private static final Function<SimpleBakedModel,ChunkRenderTypeSet> getBlockRenderTypes;
-    private static final Function<SimpleBakedModel,List<RenderType>> getItemRenderTypes;
+    private static final Function<SimpleBakedModel,RenderType> getItemRenderType;
 
     static{
         try{
@@ -48,12 +48,11 @@ public class BlockModelModifierBakedModel implements BakedModel {
                     throw new RuntimeException(e);
                 }
             };
-            Field itemRenderTypes = SimpleBakedModel.class.getDeclaredField("itemRenderTypes");
+            Field itemRenderTypes = SimpleBakedModel.class.getDeclaredField("itemRenderType");
             itemRenderTypes.setAccessible(true);
-            getItemRenderTypes = model -> {
+            getItemRenderType = model -> {
                 try{
-                    //noinspection unchecked
-                    return (List<RenderType>)itemRenderTypes.get(model);
+                    return (RenderType)itemRenderTypes.get(model);
                 }catch(IllegalAccessException e){
                     throw new RuntimeException(e);
                 }
@@ -73,8 +72,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
     @SuppressWarnings("unchecked")
     private final List<BakedQuad>[] culledQuads = new List[6];
     private final ChunkRenderTypeSet chunkRenderTypes;
-    private final List<RenderType> itemRenderTypes;
-    private final boolean addNativeBlockRenderTypes, addNativeItemRenderTypes;
+    private final RenderType itemRenderType;
+    private final boolean addNativeBlockRenderTypes, checkNativeItemRenderType;
 
     public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models){
         this.original = original;
@@ -87,7 +86,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
         List<BakedQuad>[] culledQuads = IntStream.range(0, 6).mapToObj(i -> new ArrayList<>()).toArray(List[]::new);
         ChunkRenderTypeSet chunkRenderTypes = ChunkRenderTypeSet.none();
         Set<RenderType> itemRenderTypes = new HashSet<>();
-        boolean addNativeBlockRenderTypes = false, addNativeItemRenderTypes = false;
+        boolean addNativeBlockRenderTypes = false, checkNativeItemRenderType = false;
         RandomSource random = RandomSource.create();
         for(BakedModel model : this.models){
             if(!model.getClass().equals(SimpleBakedModel.class))
@@ -103,11 +102,11 @@ public class BlockModelModifierBakedModel implements BakedModel {
                     addNativeBlockRenderTypes = true;
                 else
                     chunkRenderTypes = ChunkRenderTypeSet.union(modelChunkRenderTypes, chunkRenderTypes);
-                List<RenderType> modelItemRenderTypes = getItemRenderTypes.apply((SimpleBakedModel)model);
-                if(modelItemRenderTypes == null)
-                    addNativeItemRenderTypes = true;
+                RenderType modelItemRenderType = getItemRenderType.apply((SimpleBakedModel)model);
+                if(modelItemRenderType == null)
+                    checkNativeItemRenderType = true;
                 else
-                    itemRenderTypes.addAll(modelItemRenderTypes);
+                    itemRenderTypes.add(modelItemRenderType);
             }
         }
         this.hasNonSimpleModels = !nonSimpleModels.isEmpty();
@@ -116,9 +115,13 @@ public class BlockModelModifierBakedModel implements BakedModel {
         for(Direction side : Direction.values())
             this.culledQuads[side.ordinal()] = List.copyOf(culledQuads[side.ordinal()]);
         this.chunkRenderTypes = chunkRenderTypes;
-        this.itemRenderTypes = List.copyOf(itemRenderTypes);
+        this.itemRenderType = itemRenderTypes.size() == 1 ? itemRenderTypes.iterator().next()
+            : itemRenderTypes.contains(Sheets.translucentItemSheet()) ? Sheets.translucentItemSheet()
+            : itemRenderTypes.contains(Sheets.cutoutBlockSheet()) ? Sheets.cutoutBlockSheet()
+            : itemRenderTypes.contains(Sheets.solidBlockSheet()) ? Sheets.solidBlockSheet()
+            : Sheets.translucentItemSheet();
         this.addNativeBlockRenderTypes = addNativeBlockRenderTypes;
-        this.addNativeItemRenderTypes = addNativeItemRenderTypes;
+        this.checkNativeItemRenderType = checkNativeItemRenderType && this.itemRenderType != Sheets.translucentItemSheet();
     }
 
     @Override
@@ -155,20 +158,21 @@ public class BlockModelModifierBakedModel implements BakedModel {
     }
 
     @Override
-    public List<RenderType> getRenderTypes(ItemStack stack){
-        if(!this.addNativeItemRenderTypes && !this.hasNonSimpleModels)
-            return this.itemRenderTypes;
-        Set<RenderType> renderTypes = new HashSet<>(5);
-        renderTypes.addAll(this.itemRenderTypes);
-        if(this.addNativeItemRenderTypes)
-            renderTypes.addAll(BakedModel.super.getRenderTypes(stack));
+    public RenderType getRenderType(ItemStack stack){
+        if(this.itemRenderType == Sheets.translucentItemSheet())
+            return Sheets.translucentItemSheet();
+        if(this.checkNativeItemRenderType && BakedModel.super.getRenderType(stack) == Sheets.translucentItemSheet())
+            return Sheets.translucentItemSheet();
         if(this.hasNonSimpleModels){
-            for(BakedModel model : this.nonSimpleModels)
-                renderTypes.addAll(model.getRenderTypes(stack));
+            for(BakedModel model : this.nonSimpleModels){
+                if(model.getRenderType(stack) == Sheets.translucentItemSheet())
+                    return Sheets.translucentItemSheet();
+            }
         }
-        return new ArrayList<>(renderTypes);
+        return this.itemRenderType;
     }
 
+    @SuppressWarnings("removal")
     @Override
     public List<BakedModel> getRenderPasses(ItemStack stack){
         if(!this.hasNonSimpleModels)
@@ -210,18 +214,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
     }
 
     @Override
-    public boolean isCustomRenderer(){
-        return this.original.isCustomRenderer();
-    }
-
-    @Override
     public TextureAtlasSprite getParticleIcon(){
         return this.original.getParticleIcon();
-    }
-
-    @Override
-    public BakedOverrides overrides(){
-        return this.original.overrides();
     }
 
     @Override
@@ -230,8 +224,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
     }
 
     @Override
-    public BakedModel applyTransform(ItemDisplayContext transformType, PoseStack poseStack, boolean applyLeftHandTransform){
-        return this.original.applyTransform(transformType, poseStack, applyLeftHandTransform);
+    public void applyTransform(ItemDisplayContext transformType, PoseStack poseStack, boolean applyLeftHandTransform){
+        this.original.applyTransform(transformType, poseStack, applyLeftHandTransform);
     }
 
     @Override

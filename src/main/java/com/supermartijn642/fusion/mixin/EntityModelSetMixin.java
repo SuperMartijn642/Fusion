@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.entity.EntityModelModifierReloadListener;
 import com.supermartijn642.fusion.entity.model.FusionModelPart;
 import com.supermartijn642.fusion.entity.model.loader.FusionEntityModelLoader;
 import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicateRegistry;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -12,10 +13,8 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.*;
@@ -25,9 +24,6 @@ import java.util.*;
  */
 @Mixin(EntityModelSet.class)
 public class EntityModelSetMixin {
-
-    @Shadow
-    private Map<ModelLayerLocation,LayerDefinition> roots;
 
     @Inject(
         method = "bakeLayer",
@@ -41,10 +37,15 @@ public class EntityModelSetMixin {
     }
 
     @Inject(
-        method = "onResourceManagerReload",
-        at = @At("TAIL")
+        method = "vanilla",
+        at = @At("RETURN")
     )
-    private void loadFusionEntityModels(ResourceManager resourceManager, CallbackInfo ci){
+    private static void loadFusionEntityModels(CallbackInfoReturnable<EntityModelSet> ci){
+        EntityModelSet set = ci.getReturnValue();
+        if(set == null) return;
+        Map<ModelLayerLocation,LayerDefinition> roots = set.roots;
+        ResourceManager resourceManager = Minecraft.getInstance().getResourceManager();
+
         EntityModelPredicateRegistry.finalizeRegistration();
         // Gather all model locations which should be considered for loading
         Set<ResourceLocation> locations = new HashSet<>();
@@ -52,7 +53,7 @@ public class EntityModelSetMixin {
         EntityModelModifierReloadListener.reload(resourceManager);
         EntityModelModifierReloadListener.getModelLocations(locations::add);
         // Add the identifiers of existing models
-        for(ModelLayerLocation layer : this.roots.keySet())
+        for(ModelLayerLocation layer : roots.keySet())
             locations.add(FusionEntityModelLoader.locationForLayer(layer));
 
         // Try to load models from resource packs
@@ -60,6 +61,6 @@ public class EntityModelSetMixin {
         FusionEntityModelLoader.loadModels(locationsSorted, resourceManager);
 
         // Finalize the models/layers
-        EntityModelModifierManager.bakeModels(this.roots);
+        EntityModelModifierManager.bakeModels(roots);
     }
 }

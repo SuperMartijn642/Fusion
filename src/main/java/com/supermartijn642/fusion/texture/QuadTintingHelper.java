@@ -25,7 +25,7 @@ public class QuadTintingHelper {
         },
         (state, level, pos, tintIndex) -> {
             if(level == null || pos == null)
-                return FoliageColor.getDefaultColor();
+                return FoliageColor.FOLIAGE_DEFAULT;
             return BiomeColors.getAverageFoliageColor(level, pos);
         },
         (state, level, pos, tintIndex) -> {

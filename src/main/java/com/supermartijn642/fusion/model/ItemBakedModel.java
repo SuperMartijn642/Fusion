@@ -18,7 +18,6 @@ import java.util.List;
  */
 public abstract class ItemBakedModel extends WrappedBakedModel {
 
-    private final List<BakedModel> asList = List.of(this);
     private ItemStack stack;
 
     public ItemBakedModel(BakedModel original){
@@ -39,9 +38,5 @@ public abstract class ItemBakedModel extends WrappedBakedModel {
 
     public void set(ItemStack stack){
         this.stack = stack;
-    }
-
-    public List<BakedModel> asList(){
-        return this.asList;
     }
 }

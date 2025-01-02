@@ -9,12 +9,11 @@ import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +34,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
 
     @Nullable
     @Override
-    public BlockModel getAsVanillaModel(BaseModelData data){
+    public UnbakedModel getAsVanillaModel(BaseModelData data){
         return data.getVanillaModel();
     }
 
@@ -51,19 +50,19 @@ public class BaseModelType implements ModelType<BaseModelData> {
         // Bake the quads
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, model -> model.hasAmbientOcclusion, true);
-        boolean gui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model.guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getAmbientOcclusion, true);
+        boolean gui3d = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getGuiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
-        ItemTransform transformThirdPersonLeftHand = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND) ? model.transforms.getTransform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND) : null, ItemTransform.NO_TRANSFORM);
-        ItemTransform transformThirdPersonRightHand = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) ? model.transforms.getTransform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) : null, ItemTransform.NO_TRANSFORM);
-        ItemTransform transformFirstPersonLeftHand = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND) ? model.transforms.getTransform(ItemDisplayContext.FIRST_PERSON_LEFT_HAND) : null, ItemTransform.NO_TRANSFORM);
-        ItemTransform transformFirstPersonRightHand = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) ? model.transforms.getTransform(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) : null, ItemTransform.NO_TRANSFORM);
-        ItemTransform transformHead = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.HEAD) ? model.transforms.getTransform(ItemDisplayContext.HEAD) : null, ItemTransform.NO_TRANSFORM);
-        ItemTransform transformGui = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.GUI) ? model.transforms.getTransform(ItemDisplayContext.GUI) : null, ItemTransform.NO_TRANSFORM);
-        ItemTransform transformGround = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.GROUND) ? model.transforms.getTransform(ItemDisplayContext.GROUND) : null, ItemTransform.NO_TRANSFORM);
-        ItemTransform transformFixed = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.FIXED) ? model.transforms.getTransform(ItemDisplayContext.FIXED) : null, ItemTransform.NO_TRANSFORM);
-        ItemTransforms itemTransforms = new ItemTransforms(transformThirdPersonLeftHand, transformThirdPersonRightHand, transformFirstPersonLeftHand, transformFirstPersonRightHand, transformHead, transformGui, transformGround, transformFixed);
-        BakedOverrides itemOverrides = data.getVanillaModel().overrides.isEmpty() ? BakedOverrides.EMPTY : new BakedOverrides(context.getModelBaker(), data.getVanillaModel().overrides);
+        ItemTransforms itemTransforms = new ItemTransforms(
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIRST_PERSON_LEFT_HAND),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.HEAD),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GUI),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GROUND),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED)
+        );
         // Finally, create the model
         return new BaseBakedModel(
             quads,
@@ -71,8 +70,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
             gui3d,
             true,
             particleSprite,
-            itemTransforms,
-            itemOverrides
+            itemTransforms
         );
     }
 

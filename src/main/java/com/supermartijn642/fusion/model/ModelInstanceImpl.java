@@ -3,8 +3,8 @@ package com.supermartijn642.fusion.model;
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public @Nullable BlockModel getAsVanillaModel(){
+    public @Nullable UnbakedModel getAsVanillaModel(){
         return this.modelType.getAsVanillaModel(this.modelData);
     }
 

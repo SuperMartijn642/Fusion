@@ -35,7 +35,7 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
     }
 
     @Inject(
-        method = "<init>(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Lnet/minecraft/server/packs/resources/ResourceMetadata;)V",
+        method = "<init>",
         at = @At(
             value = "INVOKE",
             target = "Ljava/lang/Object;<init>()V",
@@ -44,6 +44,6 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
     )
     private void initMetadata(ResourceLocation identifier, FrameSize frameSize, NativeImage image, ResourceMetadata resourceMetadata, CallbackInfo ci){
         // Get the fusion metadata
-        resourceMetadata.getSection(FusionTextureMetadataSection.INSTANCE).ifPresent(metadata -> this.fusionTextureMetadata = metadata);
+        resourceMetadata.getSection(FusionTextureMetadataSection.TYPE).ifPresent(metadata -> this.fusionTextureMetadata = metadata);
     }
 }

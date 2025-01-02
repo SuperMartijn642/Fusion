@@ -12,6 +12,7 @@ import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -32,6 +33,7 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/model_modifiers/blocks";
+    private static final FileToIdConverter ID_CONVERTER = FileToIdConverter.json(LOCATION);
 
     public static final BlockModelModifierReloadListener INSTANCE = new BlockModelModifierReloadListener();
 
@@ -40,34 +42,26 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
     private BlockModelModifierReloadListener(){
     }
 
-    public void registerOverlays(UnbakedModel.Resolver resolver, ModelDiscovery modelDiscovery){
+    public void registerOverlays(UnbakedModel.Resolver resolver){
         Set<ResourceLocation> models = new HashSet<>();
         for(Properties properties : this.models.values())
             models.addAll(properties.appendModels);
-        for(ResourceLocation model : models){
-            UnbakedModel unbakedModel = resolver.resolve(model);
-            modelDiscovery.registerTopModel(overlayModelLocation(model), unbakedModel);
-            unbakedModel.resolveDependencies(resolver);
-        }
+        models.forEach(resolver::resolve);
     }
 
-    public void applyOverlays(ModelBakery bakery){
-        Map<ModelResourceLocation,BakedModel> bakedModels = bakery.getBakedTopLevelModels();
+    public void applyOverlays(ModelBakery.BakingResult results, ModelBakery.ModelBakerImpl resolver){
+        Map<ModelResourceLocation,BakedModel> bakedModels = results.blockStateModels();
         for(Map.Entry<ModelResourceLocation,Properties> entry : this.models.entrySet()){
             ModelResourceLocation target = entry.getKey();
             BakedModel targetModel = bakedModels.get(target);
             Properties properties = entry.getValue();
             List<ResourceLocation> overlays = properties.appendModels;
-            List<BakedModel> overlayModels = overlays.stream().map(BlockModelModifierReloadListener::overlayModelLocation).map(bakedModels::get).toList();
+            List<BakedModel> overlayModels = overlays.stream().map(l -> resolver.bake(l, BlockModelRotation.X0_Y0)).toList();
             BakedModel model = new BlockModelModifierBakedModel(targetModel, overlayModels);
             if(properties.paneCullingFix)
                 model = new PaneCullingBakedModel(model);
             bakedModels.put(target, model);
         }
-    }
-
-    private static ModelResourceLocation overlayModelLocation(ResourceLocation modelLocation){
-        return new ModelResourceLocation(modelLocation, "fusion_overlay_model");
     }
 
     @Override
@@ -81,7 +75,7 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
 
         // Find all overlay files
         Map<ResourceLocation,JsonElement> resources = new HashMap<>();
-        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, LOCATION, JsonOps.INSTANCE, new Codec<>() {
+        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, ID_CONVERTER, JsonOps.INSTANCE, new Codec<>() {
             @Override
             public <T> DataResult<Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
                 return DataResult.success(com.mojang.datafixers.util.Pair.of(ops.convertTo(JsonOps.INSTANCE, input), input));

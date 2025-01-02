@@ -2,7 +2,6 @@ package com.supermartijn642.fusion.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -59,11 +58,6 @@ public class WrappedBakedModel implements BakedModel {
     }
 
     @Override
-    public boolean isCustomRenderer(){
-        return this.original.isCustomRenderer();
-    }
-
-    @Override
     public TextureAtlasSprite getParticleIcon(){
         return this.original.getParticleIcon();
     }
@@ -74,18 +68,13 @@ public class WrappedBakedModel implements BakedModel {
     }
 
     @Override
-    public BakedOverrides overrides(){
-        return this.original.overrides();
-    }
-
-    @Override
     public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
         return this.original.getRenderTypes(state, rand, data);
     }
 
     @Override
-    public List<RenderType> getRenderTypes(ItemStack itemStack){
-        return this.original.getRenderTypes(itemStack);
+    public RenderType getRenderType(ItemStack itemStack){
+        return this.original.getRenderType(itemStack);
     }
 
     @Override
@@ -94,8 +83,8 @@ public class WrappedBakedModel implements BakedModel {
     }
 
     @Override
-    public BakedModel applyTransform(ItemDisplayContext transformType, PoseStack poseStack, boolean applyLeftHandTransform){
-        return this.original.applyTransform(transformType, poseStack, applyLeftHandTransform);
+    public void applyTransform(ItemDisplayContext transformType, PoseStack poseStack, boolean applyLeftHandTransform){
+        this.original.applyTransform(transformType, poseStack, applyLeftHandTransform);
     }
 
     @Override
@@ -108,6 +97,7 @@ public class WrappedBakedModel implements BakedModel {
         return this.original.getParticleIcon(data);
     }
 
+    @SuppressWarnings("removal")
     @Override
     public List<BakedModel> getRenderPasses(ItemStack stack){
         return this.original.getRenderPasses(stack);

@@ -4,10 +4,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
-import com.supermartijn642.fusion.api.model.SpriteIdentifier;
+import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,6 +35,24 @@ public class UnknownModelType implements ModelType<UnbakedModel> {
 
     @Override
     public BakedModel bake(ModelBakingContext context, UnbakedModel data){
-        return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation());
+        return data.bake(
+            new TextureSlots(context.getTopLevelTextureReferences()),
+            context.getModelBaker(),
+            context.getTransformation(),
+            context.getTopLevelAmbientOcclusion(),
+            context.getTopLevelUseBlockLighting(),
+            context.getTopLevelItemTransforms(),
+            context.getNeoForgeAdditionalProperties()
+        );
+    }
+
+    @Override
+    public @Nullable UnbakedModel getAsVanillaModel(UnbakedModel data){
+        return data;
+    }
+
+    @Override
+    public List<ResourceLocation> getParentModels(UnbakedModel data){
+        return List.of();
     }
 }

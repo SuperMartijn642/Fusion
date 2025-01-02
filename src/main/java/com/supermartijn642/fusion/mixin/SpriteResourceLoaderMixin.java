@@ -23,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Created 08/10/2024 by SuperMartijn642
@@ -32,22 +33,30 @@ public interface SpriteResourceLoaderMixin {
 
     @Inject(
         method = "lambda$create$0(Ljava/util/Collection;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/server/packs/resources/Resource;Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
-        at = @At(
-            value = "INVOKE_ASSIGN",
-            target = "Lnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;calculateFrameSize(II)Lnet/minecraft/client/resources/metadata/animation/FrameSize;",
-            shift = At.Shift.AFTER
-        ),
+        at = {
+            @At(
+                value = "INVOKE_ASSIGN",
+                target = "Lnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;calculateFrameSize(II)Lnet/minecraft/client/resources/metadata/animation/FrameSize;",
+                shift = At.Shift.AFTER
+            ),
+            @At(
+                value = "INVOKE",
+                target = "Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;create(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Lnet/minecraft/server/packs/resources/ResourceMetadata;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
+                shift = At.Shift.BEFORE
+            )
+        },
+        require = 2,
         cancellable = true,
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private static void modifyFrameSize(Collection<?> metadataSerializers, ResourceLocation identifier, Resource resource, SpriteContentsConstructor constructor, CallbackInfoReturnable<SpriteContents> ci, ResourceMetadata resourceMetadata, NativeImage image, AnimationMetadataSection animationMetadata, FrameSize originalSize){
+    private static void modifyFrameSize(Collection<?> metadataSerializers, ResourceLocation identifier, Resource resource, SpriteContentsConstructor constructor, CallbackInfoReturnable<SpriteContents> ci, ResourceMetadata resourceMetadata, NativeImage image, Optional<AnimationMetadataSection> animationMetadata, FrameSize originalSize){
         // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
+        Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionTextureMetadataSection.TYPE).orElse(null);
         if(metadata != null){
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier, animationMetadata), metadata.right());
+                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier, animationMetadata.orElse(null)), metadata.right());
             }catch(TextureErrorException e){
                 FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
                 image.close();

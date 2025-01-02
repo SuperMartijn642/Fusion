@@ -1,18 +1,16 @@
 package com.supermartijn642.fusion.model.types.vanilla;
 
-import com.mojang.datafixers.util.Either;
 import com.supermartijn642.fusion.api.model.data.VanillaModelDataBuilder;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Created 01/05/2023 by SuperMartijn642
@@ -56,10 +54,13 @@ public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<Vani
 
     @Override
     public BlockModel build(){
-        Map<String,Either<Material,String>> textures = this.textures.entrySet().stream()
-            .map(entry -> Pair.of(entry.getKey(), entry.getValue()))
-            .map(pair -> pair.<Either<Material,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new Material(TextureAtlases.getBlocks(), ResourceLocation.parse(s)))))
-            .collect(Collectors.toMap(Pair::left, Pair::right));
-        return new BlockModel(this.parent, Collections.emptyList(), textures, null, null, ItemTransforms.NO_TRANSFORMS, Collections.emptyList());
+        TextureSlots.Data.Builder textures = new TextureSlots.Data.Builder();
+        this.textures.forEach((key, value) -> {
+            if(value.charAt(0) == '#')
+                textures.addReference(key, value);
+            else
+                textures.addTexture(key, new Material(TextureAtlases.getBlocks(), ResourceLocation.parse(value)));
+        });
+        return new BlockModel(this.parent, Collections.emptyList(), textures.build(), null, null, ItemTransforms.NO_TRANSFORMS);
     }
 }

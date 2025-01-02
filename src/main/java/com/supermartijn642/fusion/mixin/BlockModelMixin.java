@@ -20,7 +20,7 @@ public class BlockModelMixin implements BlockModelExtension {
     private ModelInstance<?> fusionModel;
 
     @ModifyVariable(
-        method = "resolveDependencies(Lnet/minecraft/client/resources/model/UnbakedModel$Resolver;)V",
+        method = "resolveDependencies(Lnet/minecraft/client/resources/model/ResolvableModel$Resolver;)V",
         at = @At("HEAD"),
         ordinal = 0
     )

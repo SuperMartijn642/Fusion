@@ -14,13 +14,11 @@ import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSpri
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
-import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -28,7 +26,6 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +34,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -115,19 +113,17 @@ public class ConnectingBakedModel implements BakedModel {
     private final boolean usesBlockLight;
     private final TextureAtlasSprite particleIcon;
     private final ItemTransforms transforms;
-    private final BakedOverrides overrides;
 
-    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, BakedOverrides overrides){
+    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms){
         this.hasAmbientOcclusion = hasAmbientOcclusion;
         this.isGui3d = isGui3d;
         this.usesBlockLight = usesBlockLight;
         this.particleIcon = particleIcon;
         this.transforms = transforms;
-        this.overrides = overrides;
 
         // Create block mesh from the quads
-        MeshBuilder builder = RendererAccess.INSTANCE.getRenderer().meshBuilder();
-        QuadEmitter emitter = builder.getEmitter();
+        MutableMesh builder = Renderer.get().mutableMesh();
+        QuadEmitter emitter = builder.emitter();
         HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
         HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
@@ -168,13 +164,14 @@ public class ConnectingBakedModel implements BakedModel {
                 emitter.emit();
             }
         }
-        this.blockMesh = builder.build();
+        this.blockMesh = builder.immutableCopy();
         this.predicates = predicates.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
         this.sprites = sprites.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
         this.hasSpecialQuads = hasSpecialQuads;
 
         // Create the item mesh
-        emitter = builder.getEmitter();
+        builder.clear();
+        emitter = builder.emitter();
         OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
         for(ConnectingModelQuad quad : quads){
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times
@@ -201,7 +198,7 @@ public class ConnectingBakedModel implements BakedModel {
                 emitter.emit();
             }
         }
-        this.itemMesh = builder.build();
+        this.itemMesh = builder.immutableCopy();
     }
 
     private static TextureOrientation findOrientation(BakedQuad quad){
@@ -275,28 +272,28 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
+    public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest){
         // If either level or position is not given, the connected textures cannot be updated, so don't process them
         boolean processConnectingTextures = blockView != null && pos != null && !this.predicates.isEmpty();
         if(!processConnectingTextures && !this.hasSpecialQuads){
-            this.blockMesh.outputTo(context.getEmitter());
+            this.blockMesh.outputTo(emitter);
             return;
         }
 
         // If a quad is going to get culled anyway, don't bother processing it
         boolean[] culledFaces = {
-            context.isFaceCulled(Direction.DOWN),
-            context.isFaceCulled(Direction.UP),
-            context.isFaceCulled(Direction.NORTH),
-            context.isFaceCulled(Direction.SOUTH),
-            context.isFaceCulled(Direction.WEST),
-            context.isFaceCulled(Direction.EAST)
+            cullTest.test(Direction.DOWN),
+            cullTest.test(Direction.UP),
+            cullTest.test(Direction.NORTH),
+            cullTest.test(Direction.SOUTH),
+            cullTest.test(Direction.WEST),
+            cullTest.test(Direction.EAST)
         };
         OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
 
         // Process special texture type quads
         if(this.hasSpecialQuads){
-            context.pushTransform(
+            emitter.pushTransform(
                 quad -> {
                     if(quad.tag() != 0){
                         // Ignore the quad if it will be culled anyway
@@ -338,7 +335,7 @@ public class ConnectingBakedModel implements BakedModel {
             // Store a cache of the surrounding blocks
             SurroundingBlockCache blockCache = new SurroundingBlockCache(blockView, pos, state);
             // Push a transform which maps any connecting texture quads to the correct uv
-            context.pushTransform(quad -> {
+            emitter.pushTransform(quad -> {
                 if(quad.tag() != 0){
                     // Ignore the quad if it will be culled anyway
                     Direction cullFace = quad.cullFace();
@@ -377,13 +374,13 @@ public class ConnectingBakedModel implements BakedModel {
             });
         }
 
-        this.blockMesh.outputTo(context.getEmitter());
+        this.blockMesh.outputTo(emitter);
 
         // Pop the transforms
         if(this.hasSpecialQuads)
-            context.popTransform();
+            emitter.popTransform();
         if(processConnectingTextures)
-            context.popTransform();
+            emitter.popTransform();
     }
 
     private static TextureConnections computeConnections(QuadPredicates predicates, SurroundingBlockCache blocks){
@@ -420,8 +417,8 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
-        this.itemMesh.outputTo(context.getEmitter());
+    public void emitItemQuads(QuadEmitter emitter, Supplier<RandomSource> randomSupplier){
+        this.itemMesh.outputTo(emitter);
     }
 
     @Override
@@ -440,11 +437,6 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public boolean isCustomRenderer(){
-        return false;
-    }
-
-    @Override
     public TextureAtlasSprite getParticleIcon(){
         return this.particleIcon;
     }
@@ -452,11 +444,6 @@ public class ConnectingBakedModel implements BakedModel {
     @Override
     public ItemTransforms getTransforms(){
         return this.transforms;
-    }
-
-    @Override
-    public BakedOverrides overrides(){
-        return this.overrides;
     }
 
     private static class QuadPredicates {

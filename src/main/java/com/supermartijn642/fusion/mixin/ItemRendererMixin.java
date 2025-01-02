@@ -24,11 +24,11 @@ public class ItemRendererMixin {
         method = "renderQuadList",
         at = @At(
             value = "INVOKE_ASSIGN",
-            target = "Lnet/minecraft/client/color/item/ItemColors;getColor(Lnet/minecraft/world/item/ItemStack;I)I",
+            target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;getLayerColorSafe([II)I",
             shift = At.Shift.AFTER
         )
     )
-    private void renderQuadList(CallbackInfo ci, @Local LocalRef<BakedQuad> quad, @Local(ordinal = 2) LocalIntRef color){
+    private static void renderQuadList(CallbackInfo ci, @Local LocalRef<BakedQuad> quad, @Local(ordinal = 2) LocalIntRef color){
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.get().tintIndex == 39216){
             TextureAtlasSprite sprite = quad.get().getSprite();

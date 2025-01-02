@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.model;
 
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 /**
  * Created 11/09/2024 by SuperMartijn642
@@ -42,7 +42,7 @@ public class MutableQuad {
         this.quadView.pos(vertexIndex, x, y, z);
     }
 
-    public Vector3f faceNormal(){
+    public Vector3fc faceNormal(){
         return this.quadView.faceNormal();
     }
 }

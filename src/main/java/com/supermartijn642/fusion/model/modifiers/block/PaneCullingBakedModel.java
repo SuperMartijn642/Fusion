@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.supermartijn642.fusion.model.WrappedBakedModel;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,7 +11,9 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -38,10 +40,10 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
     }
 
     @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
+    public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest){
         // If state has no side properties, then there's nothing to be culled
         if(!state.hasProperty(BlockStateProperties.NORTH) && !state.hasProperty(BlockStateProperties.SOUTH) && !state.hasProperty(BlockStateProperties.WEST) && !state.hasProperty(BlockStateProperties.EAST)){
-            super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+            super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
             return;
         }
 
@@ -54,16 +56,16 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
             stateBelow = null;
 
         if(stateAbove == null && stateBelow == null){
-            super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+            super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
             return;
         }
 
         // Filter out certain quads
         BlockState finalStateAbove = stateAbove;
         BlockState finalStateBelow = stateBelow;
-        context.pushTransform(quad -> filterQuad(quad, finalStateAbove, finalStateBelow));
-        super.emitBlockQuads(blockView, state, pos, randomSupplier, context);
-        context.popTransform();
+        emitter.pushTransform(quad -> filterQuad(quad, finalStateAbove, finalStateBelow));
+        super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
+        emitter.popTransform();
     }
 
     private static boolean filterQuad(QuadView quad, BlockState stateAbove, BlockState stateBelow){

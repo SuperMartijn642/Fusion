@@ -2,13 +2,15 @@ package com.supermartijn642.fusion.model.types.vanilla;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
-import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.MissingBlockModel;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,13 +35,25 @@ public class VanillaModelType implements ModelType<BlockModel> {
         // Resolve parent models
         resolveParents(context, data);
         // Bake the model
-        return data.bake(context.getModelBaker(), material -> context.getTexture(SpriteIdentifier.of(material)), context.getTransformation());
+        return data.bake(
+            new TextureSlots(context.getTopLevelTextureReferences()),
+            context.getModelBaker(),
+            context.getTransformation(),
+            context.getTopLevelAmbientOcclusion(),
+            context.getTopLevelUseBlockLighting(),
+            context.getTopLevelItemTransforms()
+        );
     }
 
     @Nullable
     @Override
     public BlockModel getAsVanillaModel(BlockModel data){
         return data;
+    }
+
+    @Override
+    public List<ResourceLocation> getParentModels(BlockModel data){
+        return data.parentLocation == null ? List.of() : List.of(data.parentLocation);
     }
 
     @Override
@@ -53,17 +67,17 @@ public class VanillaModelType implements ModelType<BlockModel> {
     }
 
     private static void resolveParents(ModelBakingContext context, BlockModel model){
-        Set<BlockModel> passedModels = new LinkedHashSet<>();
+        Set<UnbakedModel> passedModels = new LinkedHashSet<>();
         while(model.parentLocation != null && model.parent == null){
             passedModels.add(model);
             ModelInstance<?> modelInstance = context.getModel(model.parentLocation);
             if(modelInstance == null)
                 return;
-            BlockModel parent = modelInstance.getAsVanillaModel();
+            UnbakedModel parent = modelInstance.getAsVanillaModel();
             if(parent == null)
-                BlockModel.LOGGER.warn("Vanilla model {} cannot have parent with model type {} for {}!", model, modelInstance.getModelType(), model.parentLocation);
+                FusionClient.LOGGER.warn("Vanilla model {} cannot have parent with model type {} for {}!", model, modelInstance.getModelType(), model.parentLocation);
             if(passedModels.contains(parent)){
-                BlockModel.LOGGER.warn("Found 'parent' loop while loading model '{}' in chain: {} -> {}", model, passedModels.stream().map(Object::toString).collect(Collectors.joining(" -> ")), model.parentLocation);
+                FusionClient.LOGGER.warn("Found 'parent' loop while loading model '{}' in chain: {} -> {}", model, passedModels.stream().map(Object::toString).collect(Collectors.joining(" -> ")), model.parentLocation);
                 parent = null;
             }
             if(parent == null){
@@ -73,7 +87,9 @@ public class VanillaModelType implements ModelType<BlockModel> {
                     throw new RuntimeException("Got null for missing model request!");
             }
             model.parent = parent;
-            model = parent;
+            if(!(parent instanceof BlockModel))
+                break;
+            model = (BlockModel)parent;
         }
     }
 }

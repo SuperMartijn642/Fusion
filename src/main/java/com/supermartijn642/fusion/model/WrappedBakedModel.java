@@ -1,8 +1,6 @@
 package com.supermartijn642.fusion.model;
 
-import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.minecraft.client.renderer.block.model.BakedOverrides;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -10,18 +8,18 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class WrappedBakedModel implements BakedModel, FabricBakedModel {
+public class WrappedBakedModel implements BakedModel {
 
     protected final BakedModel original;
 
@@ -35,13 +33,13 @@ public class WrappedBakedModel implements BakedModel, FabricBakedModel {
     }
 
     @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
-        this.original.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+    public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest){
+        this.original.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
     }
 
     @Override
-    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
-        this.original.emitItemQuads(stack, randomSupplier, context);
+    public void emitItemQuads(QuadEmitter emitter, Supplier<RandomSource> randomSupplier){
+        this.original.emitItemQuads(emitter, randomSupplier);
     }
 
     @Override
@@ -65,11 +63,6 @@ public class WrappedBakedModel implements BakedModel, FabricBakedModel {
     }
 
     @Override
-    public boolean isCustomRenderer(){
-        return this.original.isCustomRenderer();
-    }
-
-    @Override
     public TextureAtlasSprite getParticleIcon(){
         return this.original.getParticleIcon();
     }
@@ -77,10 +70,5 @@ public class WrappedBakedModel implements BakedModel, FabricBakedModel {
     @Override
     public ItemTransforms getTransforms(){
         return this.original.getTransforms();
-    }
-
-    @Override
-    public BakedOverrides overrides(){
-        return this.original.overrides();
     }
 }

@@ -15,7 +15,7 @@ import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
 import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
@@ -24,7 +24,7 @@ import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import net.minecraft.server.packs.metadata.MetadataSectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,9 +80,9 @@ public class FusionClient implements ClientModInitializer {
         EntityModelPredicateRegistry.registerEntityModelPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "dimension"), DimensionEntityModelPredicate.SERIALIZER);
 
         // Add Fusion's metadata section
-        SpriteLoader.DEFAULT_METADATA_SECTIONS = ImmutableSet.<MetadataSectionSerializer<?>>builder()
+        SpriteLoader.DEFAULT_METADATA_SECTIONS = ImmutableSet.<MetadataSectionType<?>>builder()
             .addAll(SpriteLoader.DEFAULT_METADATA_SECTIONS)
-            .add(FusionTextureMetadataSection.INSTANCE)
+            .add(FusionTextureMetadataSection.TYPE)
             .build();
 
         // Finalize registration
@@ -97,7 +97,7 @@ public class FusionClient implements ClientModInitializer {
             | (renderType == null ? 0 : renderType.ordinal() + 1) << 3;
         RenderMaterial material = RENDER_MATERIALS[index];
         if(material == null){
-            MaterialFinder materialFinder = RendererAccess.INSTANCE.getRenderer().materialFinder();
+            MaterialFinder materialFinder = Renderer.get().materialFinder();
             materialFinder.shadeMode(ShadeMode.VANILLA);
             if(ambientOcclusion != null)
                 materialFinder.ambientOcclusion(ambientOcclusion ? TriState.TRUE : TriState.FALSE);

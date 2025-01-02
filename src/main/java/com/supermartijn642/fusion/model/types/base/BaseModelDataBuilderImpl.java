@@ -1,17 +1,15 @@
 package com.supermartijn642.fusion.model.types.base;
 
-import com.mojang.datafixers.util.Either;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.api.model.data.BaseModelDataBuilder;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created 06/09/2024 by SuperMartijn642
@@ -63,11 +61,14 @@ public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelD
         List<ResourceLocation> parents = new ArrayList<>(this.parents);
         // Create a vanilla model representation of the properties
         ResourceLocation parent = parents.isEmpty() ? null : parents.get(0);
-        Map<String,Either<Material,String>> textures = this.textures.entrySet().stream()
-            .map(entry -> Pair.of(entry.getKey(), entry.getValue()))
-            .map(pair -> pair.<Either<Material,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new Material(TextureAtlases.getBlocks(), ResourceLocation.parse(s)))))
-            .collect(Collectors.toMap(Pair::left, Pair::right));
-        BlockModel vanillaModel = new BlockModel(parent, Collections.emptyList(), textures, null, null, ItemTransforms.NO_TRANSFORMS, Collections.emptyList());
+        TextureSlots.Data.Builder textures = new TextureSlots.Data.Builder();
+        this.textures.forEach((key, value) -> {
+            if(value.charAt(0) == '#')
+                textures.addReference(key, value);
+            else
+                textures.addTexture(key, new Material(TextureAtlases.getBlocks(), ResourceLocation.parse(value)));
+        });
+        BlockModel vanillaModel = new BlockModel(parent, Collections.emptyList(), textures.build(), null, null, ItemTransforms.NO_TRANSFORMS);
         return new BaseModelDataImpl(vanillaModel, parents, Collections.emptyList());
     }
 }

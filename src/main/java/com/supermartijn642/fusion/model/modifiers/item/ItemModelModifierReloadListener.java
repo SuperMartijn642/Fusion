@@ -11,8 +11,14 @@ import com.supermartijn642.fusion.model.modifiers.item.predicates.AndItemPredica
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateRegistry;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.resources.model.*;
+import net.minecraft.client.renderer.item.BlockModelWrapper;
+import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.BlockModelRotation;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -30,40 +36,33 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/model_modifiers/items";
+    private static final FileToIdConverter ID_CONVERTER = FileToIdConverter.json(LOCATION);
 
     public static final ItemModelModifierReloadListener INSTANCE = new ItemModelModifierReloadListener();
 
-    private final Map<ModelResourceLocation,ItemModelPredicatesProperties> models = new HashMap<>();
+    private final Map<ResourceLocation,ItemModelPredicatesProperties> models = new HashMap<>();
 
     private ItemModelModifierReloadListener(){
     }
 
-    public void registerPredicateModels(UnbakedModel.Resolver resolver, ModelDiscovery modelDiscovery){
+    public void registerPredicateModels(UnbakedModel.Resolver resolver){
         Set<ResourceLocation> models = new HashSet<>();
         for(ItemModelPredicatesProperties properties : this.models.values())
             models.addAll(properties.dependencies());
-        for(ResourceLocation model : models){
-            UnbakedModel unbakedModel = resolver.resolve(model);
-            modelDiscovery.registerTopModel(predicateModelLocation(model), unbakedModel);
-            unbakedModel.resolveDependencies(resolver);
-        }
+        models.forEach(resolver::resolve);
     }
 
-    public void applyPredicateModels(ModelBakery bakery){
-        Map<ModelResourceLocation,BakedModel> bakedModels = bakery.getBakedTopLevelModels();
-        for(Map.Entry<ModelResourceLocation,ItemModelPredicatesProperties> entry : this.models.entrySet()){
-            ModelResourceLocation target = entry.getKey();
+    public void applyPredicateModels(ModelBakery.BakingResult results, ModelBakery.ModelBakerImpl resolver){
+        Map<ResourceLocation,ItemModel> bakedModels = results.itemStackModels();
+        for(Map.Entry<ResourceLocation,ItemModelPredicatesProperties> entry : this.models.entrySet()){
+            ResourceLocation target = entry.getKey();
             ItemModelPredicatesProperties properties = entry.getValue();
-            BakedModel defaultModel = properties.defaultModel == null ? bakedModels.get(target) : bakedModels.get(predicateModelLocation(properties.defaultModel));
+            ItemModel defaultModel = properties.defaultModel == null ? bakedModels.get(target) : new BlockModelWrapper(resolver.bake(properties.defaultModel, BlockModelRotation.X0_Y0), List.of());
             List<Pair<ItemPredicate,BakedModel>> models = properties.models.stream()
-                .map(pair -> pair.mapRight(location -> bakedModels.get(predicateModelLocation(location))))
+                .map(pair -> pair.mapRight(location -> resolver.bake(location, BlockModelRotation.X0_Y0)))
                 .toList();
-            bakedModels.put(target, new ItemModelModifierBakedModel(defaultModel, models));
+            bakedModels.put(target, new ItemModelModifierItemModel(defaultModel, models));
         }
-    }
-
-    private static ModelResourceLocation predicateModelLocation(ResourceLocation modelLocation){
-        return new ModelResourceLocation(modelLocation, "fusion_predicate_model");
     }
 
     @Override
@@ -78,7 +77,7 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
 
         // Find all item model predicate files
         Map<ResourceLocation,JsonElement> resources = new HashMap<>();
-        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, LOCATION, JsonOps.INSTANCE, new Codec<>() {
+        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, ID_CONVERTER, JsonOps.INSTANCE, new Codec<>() {
             @Override
             public <T> DataResult<com.mojang.datafixers.util.Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
                 return DataResult.success(com.mojang.datafixers.util.Pair.of(ops.convertTo(JsonOps.INSTANCE, input), input));
@@ -109,7 +108,7 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
         if(!json.has("targets") || !json.get("targets").isJsonArray())
             throw new JsonParseException("Item model predicates file must have array property 'targets'!");
         JsonArray targetsJson = json.getAsJsonArray("targets");
-        Set<ModelResourceLocation> targets = new HashSet<>();
+        Set<ResourceLocation> targets = new HashSet<>();
         for(JsonElement element : targetsJson){
             if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
                 throw new JsonParseException("Array property 'targets' must only contain strings!");
@@ -119,7 +118,7 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
             Optional<Item> item = BuiltInRegistries.ITEM.getOptional(identifier);
             if(item.isEmpty())
                 throw new JsonParseException("Could not find an item for target '" + identifier + "'!");
-            targets.add(ModelResourceLocation.inventory(identifier));
+            targets.add(identifier);
         }
         if(targets.isEmpty())
             return;
@@ -149,7 +148,7 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
 
         // Put everything into the map
         ItemModelPredicatesProperties properties = new ItemModelPredicatesProperties(defaultModel, models);
-        for(ModelResourceLocation target : targets)
+        for(ResourceLocation target : targets)
             this.models.put(target, properties);
     }
 

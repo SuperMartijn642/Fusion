@@ -32,7 +32,7 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
         this.images = original.contents().byMipLevel;
         this.atlasWidth = preparations.width();
         this.atlasHeight = preparations.height();
-        this.atlas = (TextureAtlas)Minecraft.getInstance().getTextureManager().getTexture(atlas, null);
+        this.atlas = Minecraft.getInstance().getModelManager().getAtlas(atlas);
         this.spriteX = original.getX();
         this.spriteY = original.getY();
         this.spriteWidth = original.contents().width();

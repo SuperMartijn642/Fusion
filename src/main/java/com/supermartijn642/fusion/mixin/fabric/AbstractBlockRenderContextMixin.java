@@ -24,11 +24,11 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class AbstractBlockRenderContextMixin {
 
     @Final
-    @Shadow
+    @Shadow(remap = false)
     private BlockRenderInfo blockInfo;
 
     @ModifyVariable(
-        method = "colorizeQuad",
+        method = "tintQuad",
         at = @At(
             value = "INVOKE_ASSIGN",
             target = "Lnet/fabricmc/fabric/impl/client/indigo/renderer/render/BlockRenderInfo;blockColor(I)I",
@@ -37,9 +37,9 @@ public class AbstractBlockRenderContextMixin {
         ordinal = 1,
         remap = false
     )
-    private int colorizeQuad(int blockColor, MutableQuadViewImpl quad, int colorIndex){
+    private int tintQuad(int blockColor, MutableQuadViewImpl quad){
         // In case texture has a custom tinting set, replace the original tinting
-        if(colorIndex == 39216){
+        if(quad.tintIndex() == 39216){
             TextureAtlasSprite sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();

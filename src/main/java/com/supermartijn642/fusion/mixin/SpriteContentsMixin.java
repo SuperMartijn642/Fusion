@@ -44,6 +44,6 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
     )
     private void initMetadata(ResourceLocation identifier, FrameSize frameSize, NativeImage image, ResourceMetadata resourceMetadata, CallbackInfo ci){
         // Get the fusion metadata
-        resourceMetadata.getSection(FusionTextureMetadataSection.INSTANCE).ifPresent(metadata -> this.fusionTextureMetadata = metadata);
+        resourceMetadata.getSection(FusionTextureMetadataSection.TYPE).ifPresent(metadata -> this.fusionTextureMetadata = metadata);
     }
 }

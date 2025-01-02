@@ -23,13 +23,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ItemRenderContextMixin {
 
     @Inject(
-        method = "colorizeQuad",
+        method = "tintQuad",
         at = @At("TAIL"),
         remap = false
     )
-    private void colorizeQuad(MutableQuadViewImpl quad, int colorIndex, CallbackInfo ci){
+    private void tintQuad(MutableQuadViewImpl quad, CallbackInfo ci){
         // In case texture has a custom tinting set, replace the original tinting
-        if(colorIndex == 39216){
+        if(quad.tintIndex() == 39216){
             TextureAtlasSprite sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();

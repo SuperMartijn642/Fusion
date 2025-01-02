@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.types.vanilla;
 
 import com.google.gson.*;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.TextureSlots;
 
 import java.lang.reflect.Type;
 import java.util.Locale;
@@ -21,9 +22,9 @@ public class VanillaModelSerializer implements JsonSerializer<BlockModel> {
         JsonObject json = new JsonObject();
         if(src.parentLocation != null)
             json.addProperty("parent", src.parentLocation.toString());
-        if(!src.textureMap.isEmpty()){
+        if(!src.getTextureSlots().values().isEmpty()){
             JsonObject textures = new JsonObject();
-            src.textureMap.forEach((key, texture) -> textures.addProperty(key, texture.<String>map(m -> m.texture().toString(), s -> s)));
+            src.getTextureSlots().values().forEach((key, texture) -> textures.addProperty(key, texture instanceof TextureSlots.Value ? ((TextureSlots.Value)texture).material().texture().toString() : '#' + ((TextureSlots.Reference)texture).target()));
             json.add("textures", textures);
         }
         if(src.parentLocation == null && !src.hasAmbientOcclusion)

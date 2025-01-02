@@ -7,13 +7,11 @@ import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSpri
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
-import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
+import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
+import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -21,7 +19,6 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -51,19 +49,17 @@ public class BaseBakedModel implements BakedModel {
     private final boolean usesBlockLight;
     private final TextureAtlasSprite particleIcon;
     private final ItemTransforms transforms;
-    private final BakedOverrides overrides;
 
-    public BaseBakedModel(List<BaseModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, BakedOverrides overrides){
+    public BaseBakedModel(List<BaseModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms){
         this.hasAmbientOcclusion = hasAmbientOcclusion;
         this.isGui3d = isGui3d;
         this.usesBlockLight = usesBlockLight;
         this.particleIcon = particleIcon;
         this.transforms = transforms;
-        this.overrides = overrides;
 
         // Create the block mesh
-        MeshBuilder builder = RendererAccess.INSTANCE.getRenderer().meshBuilder();
-        QuadEmitter emitter = builder.getEmitter();
+        MutableMesh builder = Renderer.get().mutableMesh();
+        QuadEmitter emitter = builder.emitter();
         HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
         for(BaseModelQuad quad : quads){
@@ -80,19 +76,19 @@ public class BaseBakedModel implements BakedModel {
             }
             emitter.emit();
         }
-        this.blockMesh = builder.build();
+        this.blockMesh = builder.immutableCopy();
         this.sprites = sprites.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
         this.hasSpecialQuads = hasSpecialQuads;
 
         // Create the item mesh
-        builder = RendererAccess.INSTANCE.getRenderer().meshBuilder();
-        emitter = builder.getEmitter();
+        builder.clear();
+        emitter = builder.emitter();
         for(BaseModelQuad quad : quads){
             RenderMaterial material = FusionClient.getRenderTypeMaterial(null, null, quad.emissive());
             emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
             emitter.emit();
         }
-        this.itemMesh = builder.build();
+        this.itemMesh = builder.immutableCopy();
     }
 
     @Override
@@ -106,25 +102,25 @@ public class BaseBakedModel implements BakedModel {
     }
 
     @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
+    public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest){
         if(!this.hasSpecialQuads){
-            this.blockMesh.outputTo(context.getEmitter());
+            this.blockMesh.outputTo(emitter);
             return;
         }
 
         // If a quad is going to get culled anyway, don't bother processing it
         boolean[] culledFaces = {
-            context.isFaceCulled(Direction.DOWN),
-            context.isFaceCulled(Direction.UP),
-            context.isFaceCulled(Direction.NORTH),
-            context.isFaceCulled(Direction.SOUTH),
-            context.isFaceCulled(Direction.WEST),
-            context.isFaceCulled(Direction.EAST)
+            cullTest.test(Direction.DOWN),
+            cullTest.test(Direction.UP),
+            cullTest.test(Direction.NORTH),
+            cullTest.test(Direction.SOUTH),
+            cullTest.test(Direction.WEST),
+            cullTest.test(Direction.EAST)
         };
 
         // Process special texture type quads
         MutableQuad mutableQuad = new MutableQuad();
-        context.pushTransform(
+        emitter.pushTransform(
             quad -> {
                 if(quad.tag() != 0){
                     // Ignore the quad if it will be culled anyway
@@ -156,13 +152,13 @@ public class BaseBakedModel implements BakedModel {
                 return true;
             }
         );
-        this.blockMesh.outputTo(context.getEmitter());
-        context.popTransform();
+        this.blockMesh.outputTo(emitter);
+        emitter.popTransform();
     }
 
     @Override
-    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
-        this.itemMesh.outputTo(context.getEmitter());
+    public void emitItemQuads(QuadEmitter emitter, Supplier<RandomSource> randomSupplier){
+        this.itemMesh.outputTo(emitter);
     }
 
     @Override
@@ -181,11 +177,6 @@ public class BaseBakedModel implements BakedModel {
     }
 
     @Override
-    public boolean isCustomRenderer(){
-        return false;
-    }
-
-    @Override
     public TextureAtlasSprite getParticleIcon(){
         return this.particleIcon;
     }
@@ -193,10 +184,5 @@ public class BaseBakedModel implements BakedModel {
     @Override
     public ItemTransforms getTransforms(){
         return this.transforms;
-    }
-
-    @Override
-    public BakedOverrides overrides(){
-        return this.overrides;
     }
 }

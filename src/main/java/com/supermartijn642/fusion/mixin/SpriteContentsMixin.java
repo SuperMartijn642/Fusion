@@ -51,13 +51,13 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
     )
     private FrameSize initMetadata(FrameSize originalSize, ResourceLocation identifier, FrameSize ignore, NativeImage image, ResourceMetadata resourceMetadata, ForgeTextureMetadata forgeTextureMetadata){
         // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
+        Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionTextureMetadataSection.TYPE).orElse(null);
         if(metadata != null){
             this.fusionTextureMetadata = metadata;
             // Get the animation metadata
             if(resourceMetadata instanceof ResourceMetadataExtension)
                 ((ResourceMetadataExtension)resourceMetadata).disableFusionOverwrite();
-            AnimationMetadataSection animationMetadata = resourceMetadata.getSection(AnimationMetadataSection.SERIALIZER).orElse(null);
+            AnimationMetadataSection animationMetadata = resourceMetadata.getSection(AnimationMetadataSection.TYPE).orElse(null);
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{

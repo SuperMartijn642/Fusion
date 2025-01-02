@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.extensions.ResourceMetadataExtension;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
-import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import net.minecraft.server.packs.metadata.MetadataSectionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -24,7 +23,7 @@ public class ResourceMetadata$BuilderMixin implements ResourceMetadataExtension 
     @Unique
     private boolean intervene = true;
     @Unique
-    private ImmutableMap<MetadataSectionSerializer<?>,Object> map;
+    private ImmutableMap<MetadataSectionType<?>,Object> map;
 
     @Override
     public void disableFusionOverwrite(){
@@ -36,7 +35,7 @@ public class ResourceMetadata$BuilderMixin implements ResourceMetadataExtension 
         at = @At("TAIL"),
         ordinal = 0
     )
-    private ImmutableMap<MetadataSectionSerializer<?>,?> captureMap(ImmutableMap<MetadataSectionSerializer<?>,Object> map){
+    private ImmutableMap<MetadataSectionType<?>,?> captureMap(ImmutableMap<MetadataSectionType<?>,Object> map){
         this.map = map;
         return map;
     }
@@ -46,19 +45,12 @@ public class ResourceMetadata$BuilderMixin implements ResourceMetadataExtension 
         at = @At("HEAD"),
         cancellable = true
     )
-    public void getSection(MetadataSectionSerializer<?> serializer, CallbackInfoReturnable<Optional<?>> ci){
+    public void getSection(MetadataSectionType<?> serializer, CallbackInfoReturnable<Optional<?>> ci){
         // The entire sprite contents loading happens in SpriteResourceLoader, which is an interface
         // Forge's version of Mixin doesn't allow for mixins into static interface methods, so this is the best we can do
 
         // Make sure we always pass vanilla's frame size checks
-        if(this.intervene && serializer == AnimationMetadataSection.SERIALIZER && this.map.containsKey(FusionTextureMetadataSection.INSTANCE)){
-            ci.setReturnValue(Optional.of(new AnimationMetadataSection(
-                List.of(),
-                16,
-                16,
-                1,
-                false
-            )));
-        }
+        if(this.intervene && serializer == AnimationMetadataSection.TYPE && this.map.containsKey(FusionTextureMetadataSection.TYPE))
+            ci.setReturnValue(Optional.empty());
     }
 }

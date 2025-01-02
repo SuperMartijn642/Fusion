@@ -2,7 +2,6 @@ package com.supermartijn642.fusion.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -11,7 +10,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
@@ -58,11 +56,6 @@ public class WrappedBakedModel implements BakedModel {
     }
 
     @Override
-    public boolean isCustomRenderer(){
-        return this.original.isCustomRenderer();
-    }
-
-    @Override
     public TextureAtlasSprite getParticleIcon(){
         return this.original.getParticleIcon();
     }
@@ -73,18 +66,8 @@ public class WrappedBakedModel implements BakedModel {
     }
 
     @Override
-    public BakedOverrides overrides(){
-        return this.original.overrides();
-    }
-
-    @Override
     public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
         return this.original.getRenderTypes(state, rand, data);
-    }
-
-    @Override
-    public List<RenderType> getRenderTypes(ItemStack itemStack, boolean fabulous){
-        return this.original.getRenderTypes(itemStack, fabulous);
     }
 
     @Override
@@ -110,10 +93,5 @@ public class WrappedBakedModel implements BakedModel {
     @Override
     public TextureAtlasSprite getParticleIcon(ModelData data){
         return this.original.getParticleIcon(data);
-    }
-
-    @Override
-    public List<BakedModel> getRenderPasses(ItemStack stack, boolean fabulous){
-        return this.original.getRenderPasses(stack, fabulous);
     }
 }

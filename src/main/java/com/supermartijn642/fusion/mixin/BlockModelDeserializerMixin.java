@@ -10,7 +10,6 @@ import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateReg
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.model.ExtendedBlockModelDeserializer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,7 +21,7 @@ import java.lang.reflect.Type;
 /**
  * Created 31/03/2023 by SuperMartijn642
  */
-@Mixin(value = ExtendedBlockModelDeserializer.class, priority = 900)
+@Mixin(value = BlockModel.Deserializer.class, priority = 900)
 public class BlockModelDeserializerMixin {
 
     @Unique

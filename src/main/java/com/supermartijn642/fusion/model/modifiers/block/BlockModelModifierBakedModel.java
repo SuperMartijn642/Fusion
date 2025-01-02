@@ -2,7 +2,6 @@ package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -12,7 +11,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
@@ -20,11 +18,8 @@ import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -34,42 +29,45 @@ import java.util.stream.IntStream;
 public class BlockModelModifierBakedModel implements BakedModel {
 
     private static final Function<SimpleBakedModel,ChunkRenderTypeSet> getBlockRenderTypes;
-    private static final Function<SimpleBakedModel,List<RenderType>> getItemRenderTypes, getFabulousItemRenderTypes;
+    private static final Function<SimpleBakedModel,RenderType> getItemRenderType;
 
     static{
-        try{
-            Field blockRenderTypes = SimpleBakedModel.class.getDeclaredField("blockRenderTypes");
-            blockRenderTypes.setAccessible(true);
-            getBlockRenderTypes = model -> {
-                try{
-                    return (ChunkRenderTypeSet)blockRenderTypes.get(model);
-                }catch(IllegalAccessException e){
-                    throw new RuntimeException(e);
-                }
-            };
-            Field itemRenderTypes = SimpleBakedModel.class.getDeclaredField("itemRenderTypes");
-            itemRenderTypes.setAccessible(true);
-            getItemRenderTypes = model -> {
-                try{
-                    //noinspection unchecked
-                    return (List<RenderType>)itemRenderTypes.get(model);
-                }catch(IllegalAccessException e){
-                    throw new RuntimeException(e);
-                }
-            };
-            Field fabulousItemRenderTypes = SimpleBakedModel.class.getDeclaredField("fabulousItemRenderTypes");
-            fabulousItemRenderTypes.setAccessible(true);
-            getFabulousItemRenderTypes = model -> {
-                try{
-                    //noinspection unchecked
-                    return (List<RenderType>)fabulousItemRenderTypes.get(model);
-                }catch(IllegalAccessException e){
-                    throw new RuntimeException(e);
-                }
-            };
-        }catch(NoSuchFieldException e){
-            throw new RuntimeException("Fusion failed to make vanilla model render types accessible!", e);
-        }
+        // TODO Forge has commented out all their API implementation in SimpleBakedModel, so shrug
+        getBlockRenderTypes = model -> null;
+        getItemRenderType = model -> null;
+//        try{
+//            Field blockRenderTypes = SimpleBakedModel.class.getDeclaredField("blockRenderTypes");
+//            blockRenderTypes.setAccessible(true);
+//            getBlockRenderTypes = model -> {
+//                try{
+//                    return (ChunkRenderTypeSet)blockRenderTypes.get(model);
+//                }catch(IllegalAccessException e){
+//                    throw new RuntimeException(e);
+//                }
+//            };
+//            Field itemRenderTypes = SimpleBakedModel.class.getDeclaredField("itemRenderTypes");
+//            itemRenderTypes.setAccessible(true);
+//            getItemRenderTypes = model -> {
+//                try{
+//                    //noinspection unchecked
+//                    return (List<RenderType>)itemRenderTypes.get(model);
+//                }catch(IllegalAccessException e){
+//                    throw new RuntimeException(e);
+//                }
+//            };
+//            Field fabulousItemRenderTypes = SimpleBakedModel.class.getDeclaredField("fabulousItemRenderTypes");
+//            fabulousItemRenderTypes.setAccessible(true);
+//            getFabulousItemRenderTypes = model -> {
+//                try{
+//                    //noinspection unchecked
+//                    return (List<RenderType>)fabulousItemRenderTypes.get(model);
+//                }catch(IllegalAccessException e){
+//                    throw new RuntimeException(e);
+//                }
+//            };
+//        }catch(NoSuchFieldException e){
+//            throw new RuntimeException("Fusion failed to make vanilla model render types accessible!", e);
+//        }
     }
 
     private static final ModelProperty<ModelData[]> DATA_PROPERTY = new ModelProperty<>();
@@ -82,8 +80,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
     @SuppressWarnings("unchecked")
     private final List<BakedQuad>[] culledQuads = new List[6];
     private final ChunkRenderTypeSet chunkRenderTypes;
-    private final List<RenderType> itemRenderTypes, fabulousItemRenderTypes;
-    private final boolean addNativeBlockRenderTypes, addNativeItemRenderTypes, addNativeFabulousItemRenderTypes;
+    private final boolean addNativeBlockRenderTypes;
 
     public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models){
         this.original = original;
@@ -95,8 +92,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
         //noinspection unchecked
         List<BakedQuad>[] culledQuads = IntStream.range(0, 6).mapToObj(i -> new ArrayList<>()).toArray(List[]::new);
         ChunkRenderTypeSet chunkRenderTypes = ChunkRenderTypeSet.none();
-        Set<RenderType> itemRenderTypes = new HashSet<>(), fabulousItemRenderTypes = new HashSet<>();
-        boolean addNativeBlockRenderTypes = false, addNativeItemRenderTypes = false, addNativeFabulousItemRenderTypes = false;
+        boolean addNativeBlockRenderTypes = false;
         RandomSource random = RandomSource.create();
         for(BakedModel model : this.models){
             if(!model.getClass().equals(SimpleBakedModel.class))
@@ -112,16 +108,6 @@ public class BlockModelModifierBakedModel implements BakedModel {
                     addNativeBlockRenderTypes = true;
                 else
                     chunkRenderTypes = ChunkRenderTypeSet.union(modelChunkRenderTypes, chunkRenderTypes);
-                List<RenderType> modelItemRenderTypes = getItemRenderTypes.apply((SimpleBakedModel)model);
-                if(modelItemRenderTypes == null)
-                    addNativeItemRenderTypes = true;
-                else
-                    itemRenderTypes.addAll(modelItemRenderTypes);
-                List<RenderType> modelFabulousItemRenderTypes = getFabulousItemRenderTypes.apply((SimpleBakedModel)model);
-                if(modelFabulousItemRenderTypes == null)
-                    addNativeFabulousItemRenderTypes = true;
-                else
-                    fabulousItemRenderTypes.addAll(modelFabulousItemRenderTypes);
             }
         }
         this.hasNonSimpleModels = !nonSimpleModels.isEmpty();
@@ -130,11 +116,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
         for(Direction side : Direction.values())
             this.culledQuads[side.ordinal()] = List.copyOf(culledQuads[side.ordinal()]);
         this.chunkRenderTypes = chunkRenderTypes;
-        this.itemRenderTypes = List.copyOf(itemRenderTypes);
-        this.fabulousItemRenderTypes = List.copyOf(fabulousItemRenderTypes);
         this.addNativeBlockRenderTypes = addNativeBlockRenderTypes;
-        this.addNativeItemRenderTypes = addNativeItemRenderTypes;
-        this.addNativeFabulousItemRenderTypes = addNativeFabulousItemRenderTypes;
     }
 
     @Override
@@ -171,31 +153,6 @@ public class BlockModelModifierBakedModel implements BakedModel {
     }
 
     @Override
-    public List<RenderType> getRenderTypes(ItemStack stack, boolean fabulous){
-        if((fabulous ? !this.addNativeFabulousItemRenderTypes : !this.addNativeItemRenderTypes) && !this.hasNonSimpleModels)
-            return fabulous ? this.fabulousItemRenderTypes : this.itemRenderTypes;
-        Set<RenderType> renderTypes = new HashSet<>(5);
-        renderTypes.addAll(this.itemRenderTypes);
-        if(fabulous ? this.addNativeFabulousItemRenderTypes : this.addNativeItemRenderTypes)
-            renderTypes.addAll(BakedModel.super.getRenderTypes(stack, true));
-        if(this.hasNonSimpleModels){
-            for(BakedModel model : this.nonSimpleModels)
-                renderTypes.addAll(model.getRenderTypes(stack, true));
-        }
-        return new ArrayList<>(renderTypes);
-    }
-
-    @Override
-    public List<BakedModel> getRenderPasses(ItemStack stack, boolean fabulous){
-        if(!this.hasNonSimpleModels)
-            return this.models;
-        List<BakedModel> passes = new ArrayList<>(this.models.size());
-        for(BakedModel model : this.models)
-            passes.addAll(model.getRenderPasses(stack, fabulous));
-        return passes;
-    }
-
-    @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
         if(!this.hasNonSimpleModels)
             return data;
@@ -226,18 +183,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
     }
 
     @Override
-    public boolean isCustomRenderer(){
-        return this.original.isCustomRenderer();
-    }
-
-    @Override
     public TextureAtlasSprite getParticleIcon(){
         return this.original.getParticleIcon();
-    }
-
-    @Override
-    public BakedOverrides overrides(){
-        return this.original.overrides();
     }
 
     @Override

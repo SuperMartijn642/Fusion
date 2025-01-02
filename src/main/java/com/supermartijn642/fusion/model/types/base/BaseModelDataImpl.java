@@ -1,7 +1,6 @@
 package com.supermartijn642.fusion.model.types.base;
 
 import com.google.common.collect.ImmutableList;
-import com.mojang.datafixers.util.Either;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
@@ -10,9 +9,10 @@ import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -26,8 +26,6 @@ import java.util.stream.Collectors;
  * Created 06/09/2024 by SuperMartijn642
  */
 public class BaseModelDataImpl implements BaseModelData {
-
-    protected static final FaceBakery FACE_BAKERY = new FaceBakery();
 
     protected final BlockModel model;
     protected final List<ResourceLocation> parents;
@@ -73,13 +71,13 @@ public class BaseModelDataImpl implements BaseModelData {
         encounteredModels.remove(encounteredModels.size() - 1);
     }
 
-    public <T> T findProperty(ModelBakingContext context, Function<BlockModel,T> property, T defaultValue){
+    public <T> T findProperty(ModelBakingContext context, Function<UnbakedModel,T> property, T defaultValue){
         T value = this.findProperty(context, ModelInstance.of(DefaultModelTypes.BASE, this), property);
         return value == null ? defaultValue : value;
     }
 
-    private <T> T findProperty(ModelBakingContext context, ModelInstance<?> model, Function<BlockModel,T> property){
-        BlockModel vanillaModel = model.getAsVanillaModel();
+    private <T> T findProperty(ModelBakingContext context, ModelInstance<?> model, Function<UnbakedModel,T> property){
+        UnbakedModel vanillaModel = model.getAsVanillaModel();
         if(vanillaModel != null){
             T value = property.apply(vanillaModel);
             if(value != null)
@@ -97,6 +95,19 @@ public class BaseModelDataImpl implements BaseModelData {
         return null;
     }
 
+    public ItemTransform findItemTransform(ModelBakingContext context, ItemDisplayContext transformType){
+        return this.findProperty(
+            context,
+            model -> {
+                ItemTransforms transforms = model.getTransforms();
+                if(transforms == null || transforms.getTransform(transformType) == ItemTransform.NO_TRANSFORM)
+                    return null;
+                return transforms.getTransform(transformType);
+            },
+            ItemTransform.NO_TRANSFORM
+        );
+    }
+
     public SpriteIdentifier findParticleSprite(ModelBakingContext context){
         ModelInstance<?> model = ModelInstance.of(DefaultModelTypes.BASE, this);
 
@@ -106,17 +117,17 @@ public class BaseModelDataImpl implements BaseModelData {
         String currentKey = "particle";
         while(true){
             String finalCurrentKey = currentKey;
-            Either<Material,String> either = this.findProperty(context, model, m -> m.textureMap.get(finalCurrentKey));
+            TextureSlots.SlotContents contents = this.findProperty(context, model, m -> m.getTextureSlots().values().get(finalCurrentKey));
             // If a key could not be found, return the missing texture
-            if(either == null)
+            if(contents == null)
                 return SpriteIdentifier.missing();
 
             // If a texture is found return it
-            if(either.left().isPresent())
-                return SpriteIdentifier.of(either.left().get());
+            if(contents instanceof TextureSlots.Value)
+                return SpriteIdentifier.of(((TextureSlots.Value)contents).material());
 
             // Check if a key has already been encountered
-            currentKey = either.right().get();
+            currentKey = ((TextureSlots.Reference)contents).target();
             if(encounteredKeys.contains(currentKey)){
                 FusionClient.LOGGER.warn("Unable to resolve texture due to circular references {}->'{}' in '{}'!", encounteredKeys.stream().map(o -> "'" + o + "'").collect(Collectors.joining("->")), currentKey, context.getModelIdentifier());
                 return SpriteIdentifier.missing();
@@ -139,9 +150,9 @@ public class BaseModelDataImpl implements BaseModelData {
         if(model.getModelType() == DefaultModelTypes.BASE || model.getModelType() == DefaultModelTypes.CONNECTING){
             elements = ((BaseModelDataImpl)model.getModelData()).elements;
         }else{
-            BlockModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel != null)
-                elements = vanillaModel.elements;
+            UnbakedModel vanillaModel = model.getAsVanillaModel();
+            if(vanillaModel instanceof BlockModel)
+                elements = ((BlockModel)vanillaModel).elements;
         }
         if(elements != null && !elements.isEmpty()){
             // Bake the faces of each element
@@ -149,7 +160,7 @@ public class BaseModelDataImpl implements BaseModelData {
                 for(Direction direction : element.faces.keySet()){
                     BlockElementFace face = element.faces.get(direction);
                     TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                    BakedQuad quad = FACE_BAKERY.bakeQuad(element.from, element.to, face, sprite, direction, context.getTransformation(), element.rotation, element.shade, element.lightEmission);
+                    BakedQuad quad = FaceBakery.bakeQuad(element.from, element.to, face, sprite, direction, context.getTransformation(), element.rotation, element.shade, element.lightEmission);
                     Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().getRotation().getMatrix(), face.cullForDirection()) : null;
                     output.accept(new BaseModelQuad(quad, cullDirection));
                 }
@@ -178,31 +189,31 @@ public class BaseModelDataImpl implements BaseModelData {
         encounteredKeys.add(key);
         String currentKey = key;
         while(true){
-            Either<Material,String> either = null;
+            TextureSlots.SlotContents contents = null;
             // Check models in the model stack
             for(ModelInstance<?> model : modelStack){
-                BlockModel vanillaModel = model.getAsVanillaModel();
+                UnbakedModel vanillaModel = model.getAsVanillaModel();
                 if(vanillaModel == null)
                     continue;
-                either = vanillaModel.textureMap.get(currentKey);
-                if(either != null)
+                contents = vanillaModel.getTextureSlots().values().get(currentKey);
+                if(contents != null)
                     break;
             }
             // If no value is found, check the parents of the last model
-            if(either == null){
+            if(contents == null){
                 String finalCurrentKey = currentKey;
-                either = this.findProperty(context, modelStack.getLast(), model -> model.textureMap.get(finalCurrentKey));
+                contents = this.findProperty(context, modelStack.getLast(), model -> model.getTextureSlots().values().get(finalCurrentKey));
             }
             // If a key could not be found, return the missing texture
-            if(either == null)
+            if(contents == null)
                 return SpriteIdentifier.missing();
 
             // If a texture is found return it
-            if(either.left().isPresent())
-                return SpriteIdentifier.of(either.left().get());
+            if(contents instanceof TextureSlots.Value)
+                return SpriteIdentifier.of(((TextureSlots.Value)contents).material());
 
             // Check if a key has already been encountered
-            currentKey = either.right().get();
+            currentKey = ((TextureSlots.Reference)contents).target();
             if(encounteredKeys.contains(currentKey)){
                 FusionClient.LOGGER.warn("Unable to resolve texture due to circular references {}->'{}' in '{}'!", encounteredKeys.stream().map(o -> "'" + o + "'").collect(Collectors.joining("->")), currentKey, context.getModelIdentifier());
                 return SpriteIdentifier.missing();

@@ -19,7 +19,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import net.minecraft.server.packs.metadata.MetadataSectionType;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.fml.InterModComms;
@@ -83,9 +83,9 @@ public class FusionClient {
         EntityModelPredicateRegistry.registerEntityModelPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "dimension"), DimensionEntityModelPredicate.SERIALIZER);
 
         // Add Fusion's metadata section
-        SpriteLoader.DEFAULT_METADATA_SECTIONS = ImmutableSet.<MetadataSectionSerializer<?>>builder()
+        SpriteLoader.DEFAULT_METADATA_SECTIONS = ImmutableSet.<MetadataSectionType<?>>builder()
             .addAll(SpriteLoader.DEFAULT_METADATA_SECTIONS)
-            .add(FusionTextureMetadataSection.INSTANCE)
+            .add(FusionTextureMetadataSection.TYPE)
             .build();
 
         // Finalize registration

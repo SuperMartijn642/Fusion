@@ -10,18 +10,14 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BlockElement;
-import net.minecraft.client.renderer.block.model.BlockElementFace;
-import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -79,9 +75,9 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
         if(model.getModelType() == DefaultModelTypes.BASE || model.getModelType() == DefaultModelTypes.CONNECTING){
             elements = ((BaseModelDataImpl)model.getModelData()).getElements();
         }else{
-            BlockModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel != null)
-                elements = vanillaModel.elements;
+            UnbakedModel vanillaModel = model.getAsVanillaModel();
+            if(vanillaModel instanceof BlockModel)
+                elements = ((BlockModel)vanillaModel).elements;
         }
         if(elements != null && !elements.isEmpty()){
             // Bake the faces of each element
@@ -89,7 +85,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
                 for(Direction direction : element.faces.keySet()){
                     BlockElementFace face = element.faces.get(direction);
                     TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                    BakedQuad quad = FACE_BAKERY.bakeQuad(element.from, element.to, face, sprite, direction, context.getTransformation(), element.rotation, element.shade, element.lightEmission);
+                    BakedQuad quad = FaceBakery.bakeQuad(element.from, element.to, face, sprite, direction, context.getTransformation(), element.rotation, element.shade, element.lightEmission);
                     Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().getRotation().getMatrix(), face.cullForDirection()) : null;
                     String connectionsKey = element instanceof ConnectingModelElement && ((ConnectingModelElement)element).faceConnectionKeys.containsKey(direction) ? ((ConnectingModelElement)element).faceConnectionKeys.get(direction) : face.texture();
                     ConnectionPredicate predicate = this.resolveConnectionKey(context, modelStack, connectionsKey);
@@ -138,12 +134,16 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
             }
             // If no connections map contains the key, use the texture references
             for(ModelInstance<?> model : modelStack){
-                BlockModel vanillaModel = model.getAsVanillaModel();
+                UnbakedModel vanillaModel = model.getAsVanillaModel();
                 if(vanillaModel == null)
                     continue;
-                com.mojang.datafixers.util.Either<Material,String> materialEither = vanillaModel.textureMap.get(currentKey);
-                if(materialEither != null){
-                    either = Either.right(materialEither.map(m -> m.texture().toString(), Function.identity()));
+                TextureSlots.SlotContents material = vanillaModel.getTextureSlots().values().get(currentKey);
+                if(material != null){
+                    either = Either.right(
+                        material instanceof TextureSlots.Value ?
+                            ((TextureSlots.Value)material).material().texture().toString() :
+                            ((TextureSlots.Reference)material).target()
+                    );
                     break;
                 }
             }

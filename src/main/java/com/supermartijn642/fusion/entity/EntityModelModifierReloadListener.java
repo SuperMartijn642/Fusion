@@ -14,6 +14,7 @@ import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicateRe
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -29,6 +30,7 @@ public class EntityModelModifierReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/model_modifiers/entities";
+    private static final FileToIdConverter ID_CONVERTER = FileToIdConverter.json(LOCATION);
 
     private static final Map<EntityType<?>,Modifier> MODIFIERS = new HashMap<>();
 
@@ -46,7 +48,7 @@ public class EntityModelModifierReloadListener {
 
         // Find all overlay files
         Map<ResourceLocation,JsonElement> resources = new HashMap<>();
-        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, LOCATION, JsonOps.INSTANCE, new Codec<>() {
+        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, ID_CONVERTER, JsonOps.INSTANCE, new Codec<>() {
             @Override
             public <T> DataResult<com.mojang.datafixers.util.Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
                 return DataResult.success(com.mojang.datafixers.util.Pair.of(ops.convertTo(JsonOps.INSTANCE, input), input));

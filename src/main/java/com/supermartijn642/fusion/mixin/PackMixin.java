@@ -37,7 +37,7 @@ public class PackMixin implements PackExtension {
     )
     private void init(PackLocationInfo locationInfo, Pack.ResourcesSupplier resourcesSupplier, Pack.Metadata metadata, PackSelectionConfig config, CallbackInfo ci){
         try(PackResources resources = resourcesSupplier.openPrimary(locationInfo)){
-            this.metadata = resources.getMetadataSection(FusionPackMetadataSection.INSTANCE);
+            this.metadata = resources.getMetadataSection(FusionPackMetadataSection.TYPE);
         }catch(Exception e){
             FusionClient.LOGGER.error("Encountered an exception whilst reading fusion metadata for pack '" + locationInfo.id() + "':", e);
         }

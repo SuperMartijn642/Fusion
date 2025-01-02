@@ -3,22 +3,33 @@ package com.supermartijn642.fusion.resources;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import com.mojang.serialization.Codec;
+import com.supermartijn642.fusion.util.CodecHelper;
+import net.minecraft.server.packs.metadata.MetadataSectionType;
 
 /**
  * Created 19/10/2023 by SuperMartijn642
  */
-public class FusionPackMetadataSection implements MetadataSectionSerializer<FusionPackMetadata> {
+public class FusionPackMetadataSection {
 
-    public static final FusionPackMetadataSection INSTANCE = new FusionPackMetadataSection();
+    private static final Codec<FusionPackMetadata> CODEC = CodecHelper.jsonSerializerToCodec(
+        FusionPackMetadataSection::toJson,
+        FusionPackMetadataSection::fromJson
+    );
+    public static final MetadataSectionType<FusionPackMetadata> TYPE = new MetadataSectionType<>("fusion", CODEC);
 
-    @Override
-    public String getMetadataSectionName(){
-        return "fusion";
+    private static JsonObject toJson(FusionPackMetadata metadata){
+        JsonObject json = new JsonObject();
+        json.addProperty("minimum_version", metadata.getMinimumVersion());
+        json.addProperty("overrides_folder", metadata.getOverridesFolder());
+        return json;
     }
 
-    @Override
-    public FusionPackMetadata fromJson(JsonObject json){
+    private static FusionPackMetadata fromJson(JsonElement e){
+        if(!e.isJsonObject())
+            throw new JsonParseException("Fusion metadata section must be an object!");
+        JsonObject json = e.getAsJsonObject();
+
         // Minimum version
         String minimumVersion = "1.0.0";
         if(json.has("minimum_version")){

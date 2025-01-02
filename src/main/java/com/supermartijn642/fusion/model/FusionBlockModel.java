@@ -4,55 +4,50 @@ import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
+import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
 public class FusionBlockModel extends BlockModel {
 
+    public static final ThreadLocal<ResourceLocation> CURRENT_MODEL = new ThreadLocal<>();
     public static final UnbakedModel DUMMY_MODEL = new UnbakedModel() {
         @Override
         public void resolveDependencies(Resolver resolver){
         }
 
         @Override
-        public BakedModel bake(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> function, ModelState modelState){
+        public BakedModel bake(TextureSlots textures, ModelBaker baker, ModelState modelTransform, boolean ambientOcclusion, boolean useBlockLighting, ItemTransforms itemTransforms){
             return null;
         }
     };
 
+    private final ResourceLocation name;
     private final ModelInstance<?> model;
-    private final BlockModel vanillaModel;
+    private final UnbakedModel vanillaModel;
     private Collection<ResourceLocation> dependencies;
     private Map<ResourceLocation,UnbakedModel> resolvedDependencies;
 
     public FusionBlockModel(ModelInstance<?> model){
-        super(null, Collections.emptyList(), Collections.emptyMap(), false, null, ItemTransforms.NO_TRANSFORMS, Collections.emptyList());
+        super(null, Collections.emptyList(), new TextureSlots.Data(Collections.emptyMap()), false, null, ItemTransforms.NO_TRANSFORMS);
+        ResourceLocation name = CURRENT_MODEL.get();
+        this.name = name == null ? IdentifierUtil.withFusionNamespace("unknown") : name;
         this.model = model;
         this.vanillaModel = model.getAsVanillaModel();
     }
 
     @Override
-    public BakedModel bake(ModelBaker baker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform){
-        return this.bake(baker, spriteGetter, modelTransform, true);
-    }
-
-    @Override
-    public BakedModel bake(Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, boolean gui3d){
-        return this.bake(null, spriteGetter, modelTransform, gui3d);
-    }
-
-    public BakedModel bake(ModelBaker baker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelTransform, boolean gui3d){
+    public BakedModel bake(TextureSlots textures, ModelBaker baker, ModelState modelTransform, boolean ambientOcclusion, boolean useBlockLighting, ItemTransforms itemTransforms){
         // Let the custom model handle the actual baking
-        ModelBakingContext context = new ModelBakingContextImpl(baker, spriteGetter, modelTransform, ResourceLocation.parse(this.name), this.resolvedDependencies);
+        ModelBakingContext context = new ModelBakingContextImpl(baker, baker.sprites()::get, modelTransform, this.name, this.resolvedDependencies, textures.resolvedValues, ambientOcclusion, useBlockLighting, itemTransforms);
         return this.model.bake(context);
     }
 
@@ -89,7 +84,7 @@ public class FusionBlockModel extends BlockModel {
         this.resolvedDependencies.put(MissingBlockModel.LOCATION, resolver.resolve(MissingBlockModel.LOCATION));
 
         // Apply parent for vanilla model
-        BlockModel vanillaModel = this.model.getAsVanillaModel();
+        UnbakedModel vanillaModel = this.model.getAsVanillaModel();
         if(vanillaModel != null)
             vanillaModel.resolveDependencies(resolver);
     }
@@ -98,7 +93,7 @@ public class FusionBlockModel extends BlockModel {
         return this.vanillaModel != null;
     }
 
-    public BlockModel getVanillaModel(){
+    public UnbakedModel getVanillaModel(){
         return this.vanillaModel;
     }
 

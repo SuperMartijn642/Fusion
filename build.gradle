@@ -27,11 +27,18 @@ repositories {
         filter { includeGroup "maven.modrinth" }
     }
     maven { url = "https://repo.spongepowered.org/maven" }
+    maven { url = "https://maven.su5ed.dev/releases" }
 }
 
 dependencies {
     // NeoForge
     implementation "net.neoforged:neoforge:${neoforge_version}"
+
+    // Sodium
+    implementation "maven.modrinth:sodium:mc1.21.3-0.6.5-neoforge"
+    compileOnly "org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:3.4.0+acb05a3919"
+    // Iris
+    runtimeOnly "maven.modrinth:iris:1.8.1+1.21.3-neoforge"
 
     // Just Enough Items
 //    runtimeOnly "curse.maven:jei-238222:${just_enough_items_file}"

@@ -23,7 +23,8 @@ public class ItemRendererMixin {
         method = "renderQuadList",
         at = @At(
             value = "INVOKE",
-            target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;FFFFIIZ)V"
+            target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;FFFFIIZ)V",
+            remap = false
         )
     )
     private void renderQuadList(VertexConsumer vertexConsumer, PoseStack.Pose pose, BakedQuad quad, float red, float green, float blue, float alpha, int lightmap, int overlay, boolean readExistingColor){

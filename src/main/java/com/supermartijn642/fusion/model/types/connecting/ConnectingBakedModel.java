@@ -321,7 +321,7 @@ public class ConnectingBakedModel implements BakedModel {
         else{
             List<TaggedBakedQuad>[] mesh = this.blockMesh.get(renderType);
             quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
-            //noinspection deprecation
+            //noinspection removal
             if(this.shouldCheckOriginalBlockRenderTypes && state != null && ItemBlockRenderTypes.getRenderLayers(state).contains(renderType)){
                 mesh = this.blockMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
                 List<TaggedBakedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
@@ -459,7 +459,7 @@ public class ConnectingBakedModel implements BakedModel {
     public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData data){
         if(this.shouldCheckOriginalBlockRenderTypes){
             // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
-            //noinspection deprecation
+            //noinspection removal
             return ChunkRenderTypeSet.union(
                 ItemBlockRenderTypes.getRenderLayers(state),
                 this.blockRenderTypes

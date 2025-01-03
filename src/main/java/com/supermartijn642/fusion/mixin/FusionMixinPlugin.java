@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.MixinService;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -16,20 +16,23 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isModernFixLoaded;
     private boolean isOptiFineLoaded;
+    private boolean isEmbeddiumLoaded;
+    private boolean isRubidiumLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
+        this.isModernFixLoaded = isClassAvailable("org.embeddedt.modernfix.ModernFix");
+        this.isOptiFineLoaded = isClassAvailable("optifine.Installer");
+        this.isEmbeddiumLoaded = isClassAvailable("org.embeddedt.embeddium.api.eventbus.EmbeddiumEvent");
+        this.isRubidiumLoaded = !this.isEmbeddiumLoaded && isClassAvailable("me.jellysquid.mods.sodium.client.SodiumClientMod");
+    }
+
+    private static boolean isClassAvailable(String className){
         try{
-            MixinService.getService().getBytecodeProvider().getClassNode("org.embeddedt.modernfix.ModernFix");
-            this.isModernFixLoaded = true;
+            MixinService.getService().getBytecodeProvider().getClassNode(className);
+            return true;
         }catch(Exception ignored){
-            this.isModernFixLoaded = false;
-        }
-        try{
-            MixinService.getService().getBytecodeProvider().getClassNode("optifine.Installer");
-            this.isOptiFineLoaded = true;
-        }catch(Exception ignored){
-            this.isOptiFineLoaded = false;
+            return false;
         }
     }
 
@@ -40,7 +43,13 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName){
-        return !((this.isModernFixLoaded || this.isOptiFineLoaded) && mixinClassName.endsWith(".TextureAtlasMixin"));
+        if((this.isModernFixLoaded || this.isOptiFineLoaded) && mixinClassName.endsWith(".TextureAtlasMixin"))
+            return false;
+        if(this.isEmbeddiumLoaded && mixinClassName.endsWith(".ItemRendererMixin"))
+            return false;
+        if(this.isRubidiumLoaded && mixinClassName.endsWith(".ItemRendererMixin"))
+            return false;
+        return true;
     }
 
     @Override
@@ -49,9 +58,20 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins(){
-        return this.isModernFixLoaded || this.isOptiFineLoaded ?
-            Collections.singletonList("modernfix.TextureAtlasMixinModernFix")
-            : null;
+        List<String> mixins = new ArrayList<>();
+        if(this.isModernFixLoaded || this.isOptiFineLoaded){
+            mixins.add("modernfix.ResourceMetadataMixin");
+            mixins.add("modernfix.TextureAtlasMixinModernFix");
+        }
+        if(this.isEmbeddiumLoaded){
+            mixins.add("embeddium.BlockRendererMixinEmbeddium");
+            mixins.add("embeddium.ItemRendererMixinEmbeddium");
+        }
+        if(this.isRubidiumLoaded){
+            mixins.add("rubidium.BlockRendererMixinRubidium");
+            mixins.add("rubidium.ItemRendererMixinRubidium");
+        }
+        return mixins;
     }
 
     @Override

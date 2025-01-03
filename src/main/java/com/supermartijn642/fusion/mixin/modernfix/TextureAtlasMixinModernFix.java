@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.mixin.modernfix;
 import com.google.common.collect.Lists;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.extensions.ResourceMetadataExtension;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
@@ -55,6 +56,7 @@ public class TextureAtlasMixinModernFix {
                 ResourceLocation location = this.getResourceLocation(info.name());
                 try(Resource resource = resourceManager.getResource(location)){
                     if(resource != null){
+                        ((ResourceMetadataExtension)resource).disableFusionOverwrite();
                         // Get the fusion metadata
                         Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionTextureMetadataSection.INSTANCE);
                         if(metadata != null){
@@ -73,11 +75,14 @@ public class TextureAtlasMixinModernFix {
                             if(newSize == null)
                                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!");
                             // Replace the current size
+                            info.metadata = animationMetadata == null ? AnimationMetadataSection.EMPTY : animationMetadata;
                             info.width = newSize.left();
                             info.height = newSize.right();
                         }
                     }
-                }catch(IOException e){throw new RuntimeException(e);}
+                }catch(IOException e){
+                    throw new RuntimeException(e);
+                }
             }, Util.backgroundExecutor()));
         }
         CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();

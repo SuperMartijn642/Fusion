@@ -3,6 +3,7 @@
   "minVersion": "${mixin_minimum_version}",
   "package": "${mod_package}.${mixin_package}",
   "compatibilityLevel": "${mixin_compatibility_level}",
+  "plugin": "${mod_package}.${mixin_package}.${mixin_plugin}",
   "mixins": [],
   "client": [
     "neoforge.DatagenModLoaderMixin",

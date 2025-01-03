@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.geom.ModelPart;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
@@ -22,8 +23,10 @@ public class SubModelPart extends ModelPart {
     private SubModelPart dummyChild;
 
     public SubModelPart(FusionModelPart mainPart){
-        super(null, new HashMap<>());
+        super(List.of(), Map.of());
         this.mainPart = mainPart;
+        // It seems Embeddium replaces the map with an immutable one, hence re-set the children map here
+        this.children = new HashMap<>();
     }
 
     public void validateModelHasImportantChildren(ModelPart model, Consumer<String> missingPartOutput){

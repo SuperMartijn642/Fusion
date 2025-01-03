@@ -40,6 +40,10 @@ dependencies {
     compileOnly fg.deobf("curse.maven:embeddium-908741:5322311")
     // ModernFix
 //    runtimeOnly fg.deobf("curse.maven:modernfix-790626:5399356")
+    // Oculus
+//    runtimeOnly fg.deobf("curse.maven:oculus-581495:5194273")
+    // Rubidium
+    compileOnly fg.deobf("curse.maven:rubidium-574856:4743730")
 
     // Just Enough Items
 //    runtimeOnly fg.deobf("curse.maven:jei-238222:${just_enough_items_file}")

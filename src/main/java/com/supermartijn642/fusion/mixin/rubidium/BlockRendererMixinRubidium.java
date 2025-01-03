@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.mixin.embeddium;
+package com.supermartijn642.fusion.mixin.rubidium;
 
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
  * Created 02/01/2025 by SuperMartijn642
  */
 @Mixin(BlockRenderer.class)
-public class BlockRendererMixin {
+public class BlockRendererMixinRubidium {
 
     @ModifyVariable(
         method = "renderQuad",

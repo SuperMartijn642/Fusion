@@ -17,12 +17,14 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
     private boolean isModernFixLoaded;
     private boolean isOptiFineLoaded;
     private boolean isEmbeddiumLoaded;
+    private boolean isRubidiumLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
         this.isModernFixLoaded = isClassAvailable("org.embeddedt.modernfix.ModernFix");
         this.isOptiFineLoaded = isClassAvailable("optifine.Installer");
         this.isEmbeddiumLoaded = isClassAvailable("org.embeddedt.embeddium.api.eventbus.EmbeddiumEvent");
+        this.isRubidiumLoaded = !this.isEmbeddiumLoaded && isClassAvailable("me.jellysquid.mods.sodium.client.SodiumClientMod");
     }
 
     private static boolean isClassAvailable(String className){
@@ -45,6 +47,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             return false;
         if(this.isEmbeddiumLoaded && mixinClassName.endsWith(".ItemRendererMixin"))
             return false;
+        if(this.isRubidiumLoaded && mixinClassName.endsWith(".ItemRendererMixin"))
+            return false;
         return true;
     }
 
@@ -60,8 +64,12 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             mixins.add("modernfix.TextureAtlasMixinModernFix");
         }
         if(this.isEmbeddiumLoaded){
-            mixins.add("embeddium.BlockRendererMixin");
+            mixins.add("embeddium.BlockRendererMixinEmbeddium");
             mixins.add("embeddium.ItemRendererMixinEmbeddium");
+        }
+        if(this.isRubidiumLoaded){
+            mixins.add("rubidium.BlockRendererMixinRubidium");
+            mixins.add("rubidium.ItemRendererMixinRubidium");
         }
         return mixins;
     }

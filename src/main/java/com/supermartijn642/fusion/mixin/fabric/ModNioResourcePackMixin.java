@@ -24,7 +24,7 @@ import java.util.List;
 @Mixin(ModNioResourcePack.class)
 public class ModNioResourcePackMixin {
 
-    @Shadow
+    @Shadow(remap = false)
     private static boolean exists(Path path){
         throw new AssertionError();
     }

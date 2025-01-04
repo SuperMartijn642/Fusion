@@ -38,6 +38,15 @@ dependencies {
     // Fabric API
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 
+    // ModernFix
+//    modRuntimeOnly "curse.maven:modernfix-790626:5288159"
+    // Sodium
+    modCompileOnly "maven.modrinth:sodium:mc1.20.4-0.5.8"
+    // Indium
+    modCompileOnly "curse.maven:indium-459496:5416034"
+    // Iris
+//    runtimeOnly "maven.modrinth:iris:1.7.2+1.20.4"
+
     // Just Enough Items
 //    modRuntimeOnly "curse.maven:jei-238222:${just_enough_items_file}"
 }

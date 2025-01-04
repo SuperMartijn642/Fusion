@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.mixin.modernfix;
 import com.google.common.collect.Lists;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.extensions.ResourceMetadataExtension;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
@@ -16,6 +17,7 @@ import net.minecraft.client.resources.metadata.animation.AnimationMetadataSectio
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceMetadata;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -38,7 +40,7 @@ public class TextureAtlasMixinModernFix {
     private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> fusionTextureMetadata = new HashMap<>();
 
     @Shadow
-    private ResourceLocation getResourceLocation(ResourceLocation p_118325_){
+    private ResourceLocation getResourceLocation(ResourceLocation location){
         throw new AssertionError();
     }
 
@@ -59,14 +61,20 @@ public class TextureAtlasMixinModernFix {
                     // Get the fusion metadata
                     Pair<TextureType<Object>,Object> metadata;
                     try{
-                        metadata = resource.metadata().getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
+                        ResourceMetadata resourceMetadata = resource.metadata();
+                        if(resourceMetadata instanceof ResourceMetadataExtension)
+                            ((ResourceMetadataExtension)resourceMetadata).disableFusionOverwrite();
+                        metadata = resourceMetadata.getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
                     }catch(IOException e){
                         throw new RuntimeException("Encountered an exception whilst reading metadata for '" + location + "'!", e);
                     }
                     // Get animation metadata
                     AnimationMetadataSection animationMetadata = null;
                     try{
-                        metadata = resource.metadata().getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
+                        ResourceMetadata resourceMetadata = resource.metadata();
+                        if(resourceMetadata instanceof ResourceMetadataExtension)
+                            ((ResourceMetadataExtension)resourceMetadata).disableFusionOverwrite();
+                        animationMetadata = resourceMetadata.getSection(AnimationMetadataSection.SERIALIZER).orElse(null);
                     }catch(IOException ignored){ /* Exceptions here will have already been logged by vanilla */ }
                     if(metadata != null){
                         synchronized(this.fusionTextureMetadata){
@@ -82,6 +90,7 @@ public class TextureAtlasMixinModernFix {
                         if(newSize == null)
                             throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!");
                         // Replace the current size
+                        info.metadata = animationMetadata == null ? AnimationMetadataSection.EMPTY : animationMetadata;
                         info.width = newSize.left();
                         info.height = newSize.right();
                     }

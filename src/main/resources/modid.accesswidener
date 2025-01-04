@@ -110,8 +110,10 @@ accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite$Frame
 # TextureAtlasSprite$Info
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info width I
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info height I
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info metadata Lnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info width I
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info height I
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info metadata Lnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;
 # TextureAtlasSprite$InterpolationData
 accessible class net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData
 accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData <init> (Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;I)V

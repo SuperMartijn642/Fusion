@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class AbstractBlockRenderContextMixin {
 
     @Final
-    @Shadow
+    @Shadow(remap = false)
     private BlockRenderInfo blockInfo;
 
     @ModifyVariable(

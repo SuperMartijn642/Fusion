@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.MixinService;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -15,14 +15,22 @@ import java.util.Set;
 public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isModernFixLoaded;
+    private boolean isSodiumLoaded;
+    private boolean isIndiumLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
+        this.isModernFixLoaded = isClassAvailable("org.embeddedt.modernfix.ModernFix");
+        this.isSodiumLoaded = isClassAvailable("me.jellysquid.mods.sodium.client.SodiumClientMod");
+        this.isIndiumLoaded = isClassAvailable("link.infra.indium.Indium");
+    }
+
+    private static boolean isClassAvailable(String className){
         try{
-            MixinService.getService().getBytecodeProvider().getClassNode("org.embeddedt.modernfix.ModernFix");
-            this.isModernFixLoaded = true;
+            MixinService.getService().getBytecodeProvider().getClassNode(className);
+            return true;
         }catch(Exception ignored){
-            this.isModernFixLoaded = false;
+            return false;
         }
     }
 
@@ -33,7 +41,11 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName){
-        return !(this.isModernFixLoaded && mixinClassName.endsWith(".TextureAtlasMixin"));
+        if(this.isModernFixLoaded && mixinClassName.endsWith(".TextureAtlasMixin"))
+            return false;
+        if(this.isSodiumLoaded && mixinClassName.endsWith(".ItemRendererMixin"))
+            return false;
+        return true;
     }
 
     @Override
@@ -42,9 +54,20 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins(){
-        return this.isModernFixLoaded ?
-            Collections.singletonList("modernfix.TextureAtlasMixinModernFix")
-            : null;
+        List<String> mixins = new ArrayList<>();
+        if(this.isModernFixLoaded){
+            mixins.add("modernfix.SimpleResourceMixin");
+            mixins.add("modernfix.TextureAtlasMixinModernFix");
+        }
+        if(this.isSodiumLoaded){
+            mixins.add("sodium.BlockRendererMixinSodium");
+            mixins.add("sodium.ItemRendererMixinSodium");
+        }
+        if(this.isIndiumLoaded){
+            mixins.add("indium.BaseQuadRendererMixin");
+            mixins.add("indium.ItemRenderContextMixinIndium");
+        }
+        return mixins;
     }
 
     @Override

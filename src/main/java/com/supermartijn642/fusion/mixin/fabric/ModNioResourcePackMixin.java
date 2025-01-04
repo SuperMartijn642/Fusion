@@ -18,11 +18,10 @@ import java.util.List;
 /**
  * Created 19/10/2023 by SuperMartijn642
  */
-@SuppressWarnings("UnstableApiUsage")
 @Mixin(ModNioResourcePack.class)
 public class ModNioResourcePackMixin {
 
-    @Shadow
+    @Shadow(remap = false)
     private static boolean exists(Path path){
         throw new AssertionError();
     }

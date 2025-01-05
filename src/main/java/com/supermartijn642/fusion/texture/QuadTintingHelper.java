@@ -42,6 +42,6 @@ public class QuadTintingHelper {
 
     public static int getColor(BaseTextureData.QuadTinting tinting, BlockState state, BlockAndTintGetter level, BlockPos pos){
         BlockColor tintFunction = TINT_FUNCTIONS[tinting.ordinal()];
-        return tintFunction.getColor(state, level, pos, 0);
+        return tintFunction.getColor(state, level, pos, 0) | 0xff000000;
     }
 }

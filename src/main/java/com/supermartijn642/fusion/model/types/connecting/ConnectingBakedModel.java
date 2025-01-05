@@ -312,6 +312,9 @@ public class ConnectingBakedModel implements BakedModel {
                         // Get the sprite
                         TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
 
+                        // TODO fix this workaround
+                        quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 65535) | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 65535) << 16);
+
                         // Handle random texture type
                         if(type == 2){
                             mutableQuad.set(quad);
@@ -367,6 +370,9 @@ public class ConnectingBakedModel implements BakedModel {
                     // Get the sprite and the texture layout
                     TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
                     ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).data().getLayout();
+
+                    // TODO fix this workaround
+                    quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 65535) | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 65535) << 16);
 
                     // Remap the quad's uv
                     mutableQuad.set(quad);

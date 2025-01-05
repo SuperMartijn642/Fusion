@@ -4,6 +4,7 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
@@ -41,7 +42,15 @@ public class ItemModelModifierItemModel implements ItemModel {
         BakedModel model = this.forStack(stack);
         if(model == null)
             this.defaultModel.update(renderState, stack, modelResolver, displayContext, level, entity, i);
-        else
-            renderState.newLayer().setupBlockModel(model, ItemBlockRenderTypes.getRenderType(stack));
+        else{
+            ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
+            if(stack.hasFoil())
+                layer.setFoilType(
+                    BlockModelWrapper.hasSpecialAnimatedTexture(stack) ?
+                        ItemStackRenderState.FoilType.SPECIAL
+                        : ItemStackRenderState.FoilType.STANDARD
+                );
+            layer.setupBlockModel(model, ItemBlockRenderTypes.getRenderType(stack));
+        }
     }
 }

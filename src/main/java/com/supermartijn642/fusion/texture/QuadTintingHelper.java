@@ -42,6 +42,6 @@ public class QuadTintingHelper {
 
     public static int getColor(BaseTextureData.QuadTinting tinting, IBlockState state, IBlockAccess level, BlockPos pos){
         IBlockColor tintFunction = TINT_FUNCTIONS[tinting.ordinal()];
-        return tintFunction.colorMultiplier(state, level, pos, 0);
+        return tintFunction.colorMultiplier(state, level, pos, 0) | 0xff000000;
     }
 }

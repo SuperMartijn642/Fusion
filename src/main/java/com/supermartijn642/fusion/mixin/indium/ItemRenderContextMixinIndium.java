@@ -33,6 +33,11 @@ public class ItemRenderContextMixinIndium {
             TextureAtlasSprite sprite = quad.cachedSprite();
             if(sprite == null){
                 sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
+                if(!(sprite instanceof BaseTextureSprite)){
+                    float u = (quad.tag() & 65535) / 65535f;
+                    float v = (quad.tag() >> 16) / 65535f;
+                    sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(u, v);
+                }
                 quad.cachedSprite(sprite);
             }
             if(sprite instanceof BaseTextureSprite){

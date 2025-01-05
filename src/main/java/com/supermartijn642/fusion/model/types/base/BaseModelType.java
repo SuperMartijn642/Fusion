@@ -82,7 +82,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
         // Read parents
         if(json.has("parent") && json.has("parents"))
             throw new JsonParseException("Model can only have either 'parent' or 'parents', not both!");
-        List<ResourceLocation> parents;
+        List<ResourceLocation> parents = List.of();
         if(json.has("parent")){
             if(!json.get("parent").isJsonPrimitive() || !json.get("parent").getAsJsonPrimitive().isString())
                 throw new JsonParseException("Property 'parent' must be a string!");
@@ -90,7 +90,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
             if(!IdentifierUtil.isValidIdentifier(parent))
                 throw new JsonParseException("Property 'parent' must be a valid identifier!");
             parents = List.of(ResourceLocation.parse(parent));
-        }else{
+        }else if(json.has("parents")){
             if(!json.get("parents").isJsonArray())
                 throw new JsonParseException("Property 'parents' must be an array!");
             JsonArray parentArray = json.getAsJsonArray("parents");

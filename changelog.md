@@ -1,2 +1,39 @@
+### Fusion 1.2.0
+- Added base model type
+  - Allows for processing random and continuous textures
+  - Base models can have multiple parent models
+  - Connecting model type inherits all properties from the base model type
+- Added base texture type
+  - Allows specifying emissiveness, custom render type, and custom tinting function
+  - Added `biome_grass`, `biome_foliage`, and `biome_water` tinting functions
+  - All texture types inherit properties from base texture type
+- Added block model modifiers
+  - Allows overlaying additional models onto blocks
+  - Added `pane_culling_fix` to cull the top/bottom quads of glass panes
+- Added item model modifiers
+  - Allows for conditionally changing item models
+  - Added `count`, `durability`, `enchantment`, and `potion` item predicates
+- Added custom entity models
+- Added entity model modifiers
+  - Allows for random or conditional entity models and textures
+  - Added `altitude`, `is_baby`, `biome`, and `dimension` entity predicates
+- Added a warning screen when a resource pack requires a newer Fusion version than the one installed
+- Added `pieced` connecting texture layout allowing bordered textures from only a few tiles
+- Added `overlay` connecting texture layout intended for block overlays
+- All Fusion texture types can now be animated
+- Added continuous texture type for textures which span multiple blocks
+- Added random texture type for randomly choosing from a number of variations
+- Connecting models now allow specifying a `connections` key similar to the `texture` key
+- Added `match_block_in_front`, `match_state_in_front`, and `is_direction` connection predicates
+- Improved error messages for `match_state` connection predicate
+- Drastically improved performance of connecting models
+- Added compatibility for Embeddium, Iris, ModernFix, Oculus, Rubidium, Sodium, and VintageFix
+- Removed empty space from the `full` connecting texture layout
+- Fixed `match_state` predicate not working correctly when not all block state properties are specified
+- Fixed incorrect connections for connected textures when using UV lock or texture rotations
+- Fixed specifying connections per texture in connecting models not working correctly
+- Fixed connecting model sometimes using the wrong render type
+- Fixed caching states in connecting model sometimes leading to incorrect connections
+
 ### Fusion 1.1.1
 - Initial release of Fusion for Minecraft 1.21 & 1.21.1

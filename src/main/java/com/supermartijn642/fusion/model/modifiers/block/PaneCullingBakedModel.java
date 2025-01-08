@@ -77,7 +77,10 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
     @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
         return super.getModelData(level, pos, state, data).derive()
-            .with(NEIGHBOR_PROPERTY, Pair.of(level.getBlockState(pos.above()), level.getBlockState(pos.below())))
+            .with(NEIGHBOR_PROPERTY, Pair.of(
+                level.getBlockState(pos.above()).getAppearance(level, pos.above(), Direction.DOWN, state, pos),
+                level.getBlockState(pos.below()).getAppearance(level, pos.below(), Direction.UP, state, pos)
+            ))
             .build();
     }
 

@@ -92,12 +92,14 @@ public class EntityLayerProperties {
 
     public static class ModelOption {
         private final ModelPart model;
+        private final boolean isVanillaModel;
         private final List<ResourceLocation> textures;
         private final double weight;
         private final Float scaling;
 
-        public ModelOption(ModelPart model, List<ResourceLocation> textures, double weight, Float scaling){
+        public ModelOption(ModelPart model, boolean isVanillaModel, List<ResourceLocation> textures, double weight, Float scaling){
             this.model = model;
+            this.isVanillaModel = isVanillaModel;
             this.textures = textures;
             this.weight = weight;
             this.scaling = scaling;
@@ -111,6 +113,10 @@ public class EntityLayerProperties {
             return this.model;
         }
 
+        public boolean isVanillaModel(){
+            return this.isVanillaModel;
+        }
+
         public List<ResourceLocation> textures(){
             return this.textures;
         }
@@ -120,6 +126,8 @@ public class EntityLayerProperties {
         }
 
         private ModelOption transformed(VanillaModelLayerProperties properties){
+            if(this.isVanillaModel)
+                return this;
             ModelPart model = this.model;
             if(properties.getOffsetX() != 0)
                 model = ModelTransformer.translateX(model, properties.getOffsetX());
@@ -135,6 +143,7 @@ public class EntityLayerProperties {
                 model = ModelTransformer.flipZ(model);
             return new ModelOption(
                 model,
+                false,
                 this.textures,
                 this.weight,
                 this.scaling

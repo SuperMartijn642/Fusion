@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created 26/10/2023 by SuperMartijn642
@@ -34,10 +35,14 @@ public class WeightedBakedModelMixin implements IForgeBakedModel, CustomRenderTy
     @Final
     @Shadow
     private List<WeightedEntry.Wrapper<BakedModel>> list;
+
     @Unique
-    private final ThreadLocal<Random> RANDOM = ThreadLocal.withInitial(Random::new);
+    private static final ConcurrentHashMap<Class<? extends IForgeBakedModel>, Boolean> MODELS_PRODUCING_DATA = new ConcurrentHashMap<>();
+
     @Unique
     private Set<RenderType> customBlockRenderTypes;
+    @Unique
+    private boolean fusion$innerModelProducesData;
 
     @Inject(
         method = "<init>",
@@ -52,16 +57,26 @@ public class WeightedBakedModelMixin implements IForgeBakedModel, CustomRenderTy
             .map(CustomRenderTypeBakedModel::getBlockRenderTypes)
             .forEach(customBlockRenderTypes::addAll);
         this.customBlockRenderTypes = Set.copyOf(customBlockRenderTypes);
+
+        this.fusion$innerModelProducesData = this.list.stream().anyMatch(w -> w.getData() != null && MODELS_PRODUCING_DATA.computeIfAbsent(w.getData().getClass(), clz -> {
+            try {
+                var method = clz.getMethod("getModelData", BlockAndTintGetter.class, BlockPos.class, BlockState.class, IModelData.class);
+                return method.getDeclaringClass() != IForgeBakedModel.class;
+            } catch(NoSuchMethodException e) {
+                // This should not happen, but if so, assume it does produce data
+                return true;
+            }
+        }));
     }
 
     @Override
     public @NotNull IModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull IModelData modelData){
-        if(state == null)
+        // Skip expensive computations below if none of the inner models need model data
+        if(state == null || !this.fusion$innerModelProducesData)
             return modelData;
 
         // Get the seed for the given block position
-        Random randomSource = this.RANDOM.get();
-        randomSource.setSeed(state.getSeed(pos));
+        Random randomSource = new Random(state.getSeed(pos));
         // Update the model data for the selected sub model
         BakedModel model = WeightedRandom.getWeightedItem(this.list, Math.abs((int)randomSource.nextLong()) % this.totalWeight)
             .map(WeightedEntry.Wrapper::getData).orElse(null);

@@ -111,12 +111,13 @@ public class EntityModelModifierManager {
                 for(EntityLayerProperties.ModelOption defaultModel : models){
                     List<ResourceLocation> textures = option.textures == null ? defaultModel.textures() == null ? defaults.textures : defaultModel.textures() : option.textures;
                     Float scale = option.scale == null ? defaultModel.scaling() == null ? defaults.scale : defaultModel.scaling() : option.scale;
-                    options.add(new EntityLayerProperties.ModelOption(defaultModel.model(), textures, defaultModel.weight() / totalWeight * option.weight, scale));
+                    options.add(new EntityLayerProperties.ModelOption(defaultModel.model(), defaultModel.isVanillaModel(), textures, defaultModel.weight() / totalWeight * option.weight, scale));
                 }
             }else{
-                ModelPart model = bakeModel(layer, option.model.left(), vanillaModels, missingModels);
-                if(model == null)
+                Pair<ModelPart,Boolean> baked = bakeModel(layer, option.model.left(), vanillaModels, missingModels);
+                if(baked == null)
                     return null;
+                ModelPart model = baked.left();
                 float offset = option.offsetX == null ? defaults.offsetX == null ? 0 : defaults.offsetX : option.offsetX;
                 if(offset != 0)
                     model = ModelTransformer.translateX(model, offset);
@@ -134,7 +135,7 @@ public class EntityModelModifierManager {
                     model = ModelTransformer.flipZ(model);
                 List<ResourceLocation> textures = option.textures == null ? defaults.textures : option.textures;
                 Float scale = option.scale == null ? defaults.scale : option.scale;
-                options.add(new EntityLayerProperties.ModelOption(model, textures, option.weight, scale));
+                options.add(new EntityLayerProperties.ModelOption(model, baked.right(), textures, option.weight, scale));
             }
         }
         // Scale the weights so they add up to 1
@@ -142,7 +143,7 @@ public class EntityModelModifierManager {
         if(totalWeight != 1){
             for(int i = 0; i < options.size(); i++){
                 EntityLayerProperties.ModelOption option = options.get(i);
-                options.set(i, new EntityLayerProperties.ModelOption(option.model(), option.textures(), option.weight() / totalWeight, option.scaling()));
+                options.set(i, new EntityLayerProperties.ModelOption(option.model(), option.isVanillaModel(), option.textures(), option.weight() / totalWeight, option.scaling()));
             }
         }
         // Sort the options by weight, so when picking random option, it is most likely to be near the front of the list
@@ -150,19 +151,22 @@ public class EntityModelModifierManager {
         return options;
     }
 
-    private static ModelPart bakeModel(ModelLayerLocation layer, ResourceLocation modelLocation, Map<ResourceLocation,Supplier<ModelPart>> vanillaModels, Set<ResourceLocation> missingModels){
+    private static Pair<ModelPart,Boolean> bakeModel(ModelLayerLocation layer, ResourceLocation modelLocation, Map<ResourceLocation,Supplier<ModelPart>> vanillaModels, Set<ResourceLocation> missingModels){
         ModelPart model = FusionEntityModelLoader.MODELS.get(modelLocation);
+        boolean isVanillaModel = false;
         if(model == null){
             Supplier<ModelPart> vanillaSupplier = vanillaModels.get(modelLocation);
-            if(vanillaSupplier != null)
+            if(vanillaSupplier != null){
                 model = vanillaSupplier.get();
+                isVanillaModel = true;
+            }
         }
         if(model == null){
             if(!missingModels.add(modelLocation))
                 FusionClient.LOGGER.error("Missing model '{}' for layer '{}'!", modelLocation, layer);
             return null;
         }
-        return model;
+        return Pair.of(model, isVanillaModel);
     }
 
     public static FusionModelPart handleModelBake(ModelLayerLocation location, ModelPart original){
@@ -219,7 +223,7 @@ public class EntityModelModifierManager {
                     ModelPart model = FusionEntityModelLoader.MODELS.get(FusionEntityModelLoader.locationForLayer(layer));
                     layerProperties = new EntityLayerProperties(
                         layer,
-                        List.of(new EntityLayerProperties.ModelOption(model, null, 1, null)),
+                        List.of(new EntityLayerProperties.ModelOption(model, false, null, 1, null)),
                         List.of()
                     );
                 }

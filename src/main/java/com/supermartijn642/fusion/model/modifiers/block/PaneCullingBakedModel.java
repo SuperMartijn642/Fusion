@@ -48,10 +48,10 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         }
 
         // Gather the states above and below
-        BlockState stateAbove = blockView.getBlockState(pos.above());
+        BlockState stateAbove = blockView.getBlockState(pos.above()).getAppearance(blockView, pos.above(), Direction.DOWN, state, pos);
         if(stateAbove.getBlock() != state.getBlock())
             stateAbove = null;
-        BlockState stateBelow = blockView.getBlockState(pos.below());
+        BlockState stateBelow = blockView.getBlockState(pos.below()).getAppearance(blockView, pos.below(), Direction.UP, state, pos);
         if(stateBelow.getBlock() != state.getBlock())
             stateBelow = null;
 

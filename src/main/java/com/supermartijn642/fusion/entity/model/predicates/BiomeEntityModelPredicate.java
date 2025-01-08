@@ -66,7 +66,7 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
         if(this.biomes.isEmpty())
             return false;
         Level level = entity.level();
-        if(level == null || !level.hasBiomes())
+        if(level == null)
             return false;
         if(level.registryAccess() != this.registry){
             this.registry = level.registryAccess();

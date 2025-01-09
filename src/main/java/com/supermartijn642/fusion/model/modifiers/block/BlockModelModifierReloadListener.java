@@ -142,7 +142,7 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
 
         // Get the models
         Set<ResourceLocation> models = new LinkedHashSet<>(); // This should maintain order
-        if(json.has("pane_culling_fix")){
+        if(json.has("append")){
             if(!json.get("append").isJsonArray())
                 throw new JsonParseException("Property 'append' must be an array!");
             JsonArray appendJson = json.getAsJsonArray("append");

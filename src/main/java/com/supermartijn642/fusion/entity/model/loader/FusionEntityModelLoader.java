@@ -31,7 +31,7 @@ public class FusionEntityModelLoader {
     public static Map<ResourceLocation,ModelPart> MODELS = Map.of();
 
     public static ResourceLocation locationForLayer(ModelLayerLocation layer){
-        return layer.model().withSuffix("/" + layer.layer());
+        return layer.model().withSuffix("/" + layer.layer().replace(':', '/'));
     }
 
     public static void loadModels(List<ResourceLocation> identifiers, ResourceManager resourceManager){

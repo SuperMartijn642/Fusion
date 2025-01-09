@@ -129,28 +129,35 @@ public class BlockModelModifierReloadListener {
         if(targets.isEmpty())
             return;
 
+        // Give warning when json is empty as user likely misspelled something
+        if(!json.has("append") && !json.has("pane_culling_fix"))
+            throw new JsonParseException("Must have either 'append' or 'pane_culling_fix' property!");
+
         // Get the models
-        if(!json.has("append") || !json.get("append").isJsonArray())
-            throw new JsonParseException("Model overlay must have array property 'append'!");
-        JsonArray appendJson = json.getAsJsonArray("append");
         Set<ResourceLocation> models = new LinkedHashSet<>(); // This should maintain order
-        for(JsonElement element : appendJson){
-            if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
-                throw new JsonParseException("Array property 'append' must only contain strings!");
-            if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
-                throw new JsonParseException("Model must be a valid identifier, not '" + element.getAsString() + "'!!");
-            models.add(new ResourceLocation(element.getAsString()));
+        if(json.has("pane_culling_fix")){
+            if(!json.get("append").isJsonArray())
+                throw new JsonParseException("Property 'append' must be an array!");
+            JsonArray appendJson = json.getAsJsonArray("append");
+            for(JsonElement element : appendJson){
+                if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                    throw new JsonParseException("Array property 'append' must only contain strings!");
+                if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                    throw new JsonParseException("Model must be a valid identifier, not '" + element.getAsString() + "'!!");
+                models.add(new ResourceLocation(element.getAsString()));
+            }
         }
-        if(models.isEmpty())
-            return;
 
         // Pane culling option
         boolean paneCullingFix = false;
         if(json.has("pane_culling_fix")){
-            if(json.get("pane_culling_fix").isJsonPrimitive() || !json.getAsJsonPrimitive("pane_culling_fix").isBoolean())
+            if(!json.get("pane_culling_fix").isJsonPrimitive() || !json.getAsJsonPrimitive("pane_culling_fix").isBoolean())
                 throw new JsonParseException("Property 'pane_culling_fix' must be a boolean!");
             paneCullingFix = json.get("pane_culling_fix").getAsBoolean();
         }
+
+        if(models.isEmpty() && !paneCullingFix)
+            return;
 
         // Put the properties into the map
         for(ModelResourceLocation target : targets){

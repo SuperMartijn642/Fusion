@@ -1,3 +1,7 @@
+### Fusion 1.2.1
+- Fixed texture references overwriting model references in connecting models
+- Fixed block model modifiers with only `pane_culling_fix` option getting ignored
+
 ### Fusion 1.2.0
 - Added base model type
   - Allows for processing random and continuous textures

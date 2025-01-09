@@ -122,47 +122,51 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
         encounteredKeys.add(key);
         String currentKey = key;
         while(true){
-            Either<ConnectionPredicate,String> either = null;
+            String newKey = null;
             // First check for the connections map
             for(ModelInstance<?> model : modelStack){
                 if(model.getModelType() != DefaultModelTypes.CONNECTING)
                     continue;
                 ConnectionPredicate predicate = ((ConnectingModelDataImpl)model.getModelData()).predicates.get(currentKey);
-                if(predicate != null){
-                    either = Either.left(predicate);
-                    break;
-                }
+                // If a predicate is found return it
+                if(predicate != null)
+                    return predicate;
                 String reference = ((ConnectingModelDataImpl)model.getModelData()).connectionReferences.get(currentKey);
                 if(reference != null){
-                    either = Either.right(reference);
+                    newKey = reference;
                     break;
                 }
             }
             // If no connections map contains the key, use the texture references
-            for(ModelInstance<?> model : modelStack){
-                BlockModel vanillaModel = model.getAsVanillaModel();
-                if(vanillaModel == null)
-                    continue;
-                String value = vanillaModel.textureMap.get(currentKey);
-                if(value != null){
-                    either = Either.right(value);
-                    break;
+            if(newKey != null){
+                for(ModelInstance<?> model : modelStack){
+                    BlockModel vanillaModel = model.getAsVanillaModel();
+                    if(vanillaModel == null)
+                        continue;
+                    String value = vanillaModel.textureMap.get(currentKey);
+                    if(value != null){
+                        newKey = value;
+                        break;
+                    }
                 }
             }
-            findConnectionsEntry(context, modelStack.getLast(), currentKey);
+            // Check parent models for connection keys
+            if(newKey == null){
+                Either<ConnectionPredicate,String> entry = findConnectionsEntry(context, modelStack.getLast(), currentKey);
+                if(entry != null && entry.isLeft())
+                    return entry.left();
+                else if(entry != null && entry.isRight())
+                    newKey = entry.right();
+            }
             // If a key could not be found, try the default key
-            if(either == null && !currentKey.equals(ConnectingModelType.DEFAULT_CONNECTION_KEY))
-                either = Either.right(ConnectingModelType.DEFAULT_CONNECTION_KEY);
+            if(newKey == null && !currentKey.equals(ConnectingModelType.DEFAULT_CONNECTION_KEY))
+                newKey = ConnectingModelType.DEFAULT_CONNECTION_KEY;
             // If the default key also cannot be found, return null
-            if(either == null)
+            if(newKey == null)
                 return null;
 
-            // If a predicate is found return it
-            if(either.isLeft())
-                return either.left();
-
             // Check if a key has already been encountered
-            currentKey = either.right();
+            currentKey = newKey;
             if(currentKey.charAt(0) == '#')
                 currentKey = currentKey.substring(1);
             if(encounteredKeys.contains(currentKey)){

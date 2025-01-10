@@ -70,7 +70,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
 
     private static boolean filterQuad(QuadView quad, BlockState stateAbove, BlockState stateBelow){
         // Check that the quad is part of the top or bottom face of the pane
-        Direction quadDirection = quad.cullFace();
+        Direction quadDirection = quad.nominalFace();
         if(quadDirection != Direction.UP && quadDirection != Direction.DOWN)
             return true;
 

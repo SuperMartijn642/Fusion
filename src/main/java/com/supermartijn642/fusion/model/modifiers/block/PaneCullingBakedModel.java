@@ -65,7 +65,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         List<BakedQuad> quads = super.getQuads(state, cullDirection, seed);
         List<BakedQuad> culledQuads = new ArrayList<>(quads.size());
         for(BakedQuad quad : quads){
-            if(!this.filterQuad(quad, stateAbove, stateBelow))
+            if(this.filterQuad(quad, stateAbove, stateBelow))
                 culledQuads.add(quad);
         }
         return culledQuads;

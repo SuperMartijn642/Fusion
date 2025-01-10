@@ -1,3 +1,6 @@
+### Fusion 1.2.2
+- Fixed `pane_culling_fix` culling being inverted, culling only quads which should not be
+
 ### Fusion 1.2.1
 - Fixed texture references overwriting model references in connecting models
 - Fixed block model modifiers with only `pane_culling_fix` option getting ignored

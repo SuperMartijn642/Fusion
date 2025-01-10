@@ -17,10 +17,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created 17/09/2024 by SuperMartijn642
@@ -36,7 +33,8 @@ public class FusionEntityModelLoader {
     public static Map<ResourceLocation,ModelPart> MODELS = Map.of();
 
     public static ResourceLocation locationForLayer(ModelLayerLocation layer){
-        return new ResourceLocation(layer.getModel().getNamespace(), layer.getModel().getPath() + "/" + layer.getLayer().replace(':', '/'));
+        String layerFormatted = layer.getLayer().toLowerCase(Locale.ROOT).replace(':', '/').replaceAll("[a-z0-9/._-]","");
+        return new ResourceLocation(layer.getModel().getNamespace(), layer.getModel().getPath() + "/" + layerFormatted);
     }
 
     public static void loadModels(List<ResourceLocation> identifiers, ResourceManager resourceManager){

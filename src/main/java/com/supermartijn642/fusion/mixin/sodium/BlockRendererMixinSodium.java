@@ -29,8 +29,7 @@ public class BlockRendererMixinSodium {
         at = @At(
             value = "INVOKE",
             target = "Lme/jellysquid/mods/sodium/client/render/chunk/format/ModelVertexSink;getVertexCount()I"
-        ),
-        remap = false
+        )
     )
     private int[] getBlockTint(int[] colors, BlockAndTintGetter level, BlockState state, BlockPos pos, BlockPos origin, ModelVertexSink vertices, IndexBufferBuilder indices, Vec3 blockOffset, ColorSampler<BlockState> colorSampler, BakedQuad quad){
         // In case texture has a custom tinting set, replace the original tinting

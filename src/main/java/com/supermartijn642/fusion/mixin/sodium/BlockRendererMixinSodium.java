@@ -32,8 +32,7 @@ public class BlockRendererMixinSodium {
         at = @At(
             value = "INVOKE",
             target = "Lme/jellysquid/mods/sodium/client/model/quad/blender/ColorBlender;getColors(Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;Lme/jellysquid/mods/sodium/client/model/quad/ModelQuadView;Lme/jellysquid/mods/sodium/client/model/quad/blender/ColorSampler;Ljava/lang/Object;)[I"
-        ),
-        remap = false
+        )
     )
     private void getBlockTint(BlockRenderContext ctx, LightPipeline lighter, Vec3 offset, ChunkModelBuilder builder, List<BakedQuad> quads, Direction cullFace, CallbackInfo ci, @Local BakedQuad quad, @Local LocalRef<int[]> colors){
         // In case texture has a custom tinting set, replace the original tinting

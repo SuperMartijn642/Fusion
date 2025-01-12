@@ -192,7 +192,7 @@ public class ConnectingBakedModel implements BakedModel, FabricBakedModel {
                 auxiliaryQuadCount = ConnectingTextureLayoutHandler.get(quad.getLayout()).getAuxiliaryQuadCount();
             }
             // Process and submit the quads
-            RenderMaterial material = FusionClient.getRenderTypeMaterial(null, null, quad.emissive());
+            RenderMaterial material = FusionClient.getRenderTypeMaterial(null, quad.renderType(), quad.emissive());
             for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
                 emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
                 if(quad.lightEmission() != null){

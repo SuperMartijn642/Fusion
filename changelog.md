@@ -1,3 +1,7 @@
+### Fusion 1.2.2a
+- Fixed custom texture render types not working for items
+- Fixed custom texture tinting not working properly for connecting textures when Sodium is installed
+
 ### Fusion 1.2.2
 - Fixed `pane_culling_fix` culling being inverted, culling only quads which should not be
 - Fixed crash when mods use non-resource characters in model layer names

@@ -88,7 +88,7 @@ public class BaseBakedModel implements BakedModel {
         builder = RendererAccess.INSTANCE.getRenderer().meshBuilder();
         emitter = builder.getEmitter();
         for(BaseModelQuad quad : quads){
-            RenderMaterial material = FusionClient.getRenderTypeMaterial(null, null, quad.emissive());
+            RenderMaterial material = FusionClient.getRenderTypeMaterial(null, quad.renderType(), quad.emissive());
             emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
             emitter.emit();
         }

@@ -145,7 +145,7 @@ public class BaseModelDataImpl implements BaseModelData {
                     BlockPartFace face = element.mapFaces.get(direction);
                     TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context::getModel, modelStack, face.texture, context.getModelIdentifier()));
                     BakedQuad quad = FACE_BAKERY.makeBakedQuad(element.positionFrom, element.positionTo, face, sprite, direction, context.getTransformation().apply(Optional.empty()).orElse(TRSRTransformation.identity()), element.partRotation, false, element.shade);
-                    EnumFacing cullDirection = context.getTransformation().apply(Optional.empty()).map(t -> t.rotate(face.cullFace)).orElse(face.cullFace);
+                    EnumFacing cullDirection = face.cullFace == null ? null : context.getTransformation().apply(Optional.empty()).map(t -> t.rotate(face.cullFace)).orElse(face.cullFace);
                     Integer lightEmission = element instanceof BaseModelElement ? ((BaseModelElement)element).light_emission : null;
                     output.accept(new BaseModelQuad(quad, cullDirection, lightEmission));
                 }

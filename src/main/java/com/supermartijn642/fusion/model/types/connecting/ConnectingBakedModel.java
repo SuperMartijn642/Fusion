@@ -281,7 +281,7 @@ public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedM
             List<TaggedBakedQuad>[] mesh = this.blockMesh.get(renderType);
             quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
             //noinspection deprecation
-            if(this.shouldCheckOriginalBlockRenderTypes && RenderTypeLookup.getChunkRenderType(state) == renderType){
+            if(this.shouldCheckOriginalBlockRenderTypes && state != null && RenderTypeLookup.getChunkRenderType(state) == renderType){
                 mesh = this.blockMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
                 List<TaggedBakedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
                 if(additionalQuads != null){

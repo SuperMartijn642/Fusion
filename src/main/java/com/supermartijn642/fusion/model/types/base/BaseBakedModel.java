@@ -6,6 +6,7 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.model.MutableQuad;
+import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSprite;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
@@ -13,7 +14,6 @@ import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
@@ -126,8 +126,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         else{
             List<TaggedBakedQuad>[] mesh = this.blockMesh.get(renderType);
             quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
-            //noinspection deprecation
-            if(this.shouldCheckOriginalBlockRenderTypes && state != null && RenderTypeLookup.getChunkRenderType(state) == renderType){
+            if(this.shouldCheckOriginalBlockRenderTypes && state != null && OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType)){
                 mesh = this.blockMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
                 List<TaggedBakedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
                 if(additionalQuads != null){

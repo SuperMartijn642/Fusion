@@ -40,7 +40,7 @@ public class AbstractQuadRendererMixin {
         // In case texture has a custom tinting set, replace the original tinting
         if(colorIndex == 39216){
             TextureAtlasSprite sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad, 0);
-            if(!(sprite instanceof BaseTextureSprite)){
+            if(!(sprite instanceof BaseTextureSprite) && quad.tag() != 0){
                 float u = (quad.tag() & 65535) / 65535f;
                 float v = (quad.tag() >> 16) / 65535f;
                 sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(u, v);

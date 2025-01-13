@@ -275,7 +275,7 @@ public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedM
         else{
             List<TaggedBakedQuad>[] mesh = this.blockMesh[renderType.ordinal() + 1];
             quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
-            if(this.shouldCheckOriginalBlockRenderTypes && state.getBlock().getRenderLayer() == renderType){
+            if(this.shouldCheckOriginalBlockRenderTypes && state.getBlock().canRenderInLayer(state, renderType)){
                 mesh = this.blockMesh[0];
                 List<TaggedBakedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
                 if(additionalQuads != null){

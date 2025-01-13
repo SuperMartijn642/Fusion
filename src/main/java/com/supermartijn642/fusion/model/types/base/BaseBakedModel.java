@@ -126,8 +126,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         else{
             List<TaggedBakedQuad>[] mesh = this.blockMesh[renderType.ordinal() + 1];
             quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
-            //noinspection deprecation
-            if(this.shouldCheckOriginalBlockRenderTypes && state != null && state.getBlock().getRenderLayer() == renderType){
+            if(this.shouldCheckOriginalBlockRenderTypes && state != null && state.getBlock().canRenderInLayer(state, renderType)){
                 mesh = this.blockMesh[0];
                 List<TaggedBakedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
                 if(additionalQuads != null){

@@ -31,8 +31,12 @@ public abstract class BlockRendererMixin extends AbstractBlockRenderContext {
     private void tintQuad(MutableQuadViewImpl quad, CallbackInfo ci){
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.tintIndex() == 39216){
-            TextureAtlasSprite sprite = quad.sprite(SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())));
-            if(!(sprite instanceof BaseTextureSprite)){
+            TextureAtlasSprite sprite = quad.cachedSprite();
+            if(sprite == null){
+                sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
+                quad.cachedSprite(sprite);
+            }
+            if(!(sprite instanceof BaseTextureSprite) && quad.tag() != 0){
                 float u = (quad.tag() & 65535) / 65535f;
                 float v = (quad.tag() >> 16) / 65535f;
                 sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(u, v);

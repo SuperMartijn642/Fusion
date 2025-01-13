@@ -1,3 +1,6 @@
+### Fusion 1.2.2a
+- Fixed error for `base` and `connecting` models when they have quads with no cull direction
+
 ### Fusion 1.2.2
 - Fixed `pane_culling_fix` culling being inverted, culling only quads which should not be
 

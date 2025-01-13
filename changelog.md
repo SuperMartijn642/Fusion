@@ -1,3 +1,6 @@
+### Fusion 1.2.2a
+- Fixed `base` and `connecting` models sometimes not showing all quads for modded blocks with a custom render type
+
 ### Fusion 1.2.2
 - Fixed `pane_culling_fix` culling being inverted, culling only quads which should not be
 

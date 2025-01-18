@@ -1,3 +1,6 @@
+### Fusion 1.2.2a
+- Fixed crash when obtaining model data for a multipart model
+
 ### Fusion 1.2.2
 - Fixed `pane_culling_fix` culling being inverted, culling only quads which should not be
 - Fixed crash when mods use non-resource characters in model layer names

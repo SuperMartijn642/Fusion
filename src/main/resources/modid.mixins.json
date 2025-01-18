@@ -23,7 +23,6 @@
     "MinecraftMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
-    "MultiPartBakedModelMixin",
     "OutlineBufferSourceMixin",
     "PackEntryMixin",
     "PackMixin",

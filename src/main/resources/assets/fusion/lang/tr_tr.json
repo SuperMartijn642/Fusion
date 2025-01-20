@@ -1,0 +1,10 @@
+{
+  "fusion.resource_packs.requires_newer_version": "(Fusion'ın daha yeni bir sürümü için hazırlandı)",
+  "fusion.resource_packs.warning_screen.title": "Fusion sürüm uyarısı",
+  "fusion.resource_packs.warning_screen.message": "Bu kaynak paketi Fusion'ın daha yeni bir sürümü için hazırlanmıştır ve şu anda yüklü olan Fusion sürümüyle düzgün çalışmayabilir.",
+  "fusion.resource_packs.warning_screen.confirmation": "Kaynak paketini yine de etkinleştirmek istiyor musun?",
+  "fusion.resource_packs.warning_screen.current_version": "Yüklü sürüm:",
+  "fusion.resource_packs.warning_screen.required_version": "Gerekli sürüm:",
+  "fusion.resource_packs.warning_screen.cancel": "Hayır",
+  "fusion.resource_packs.warning_screen.confirm": "Evet"
+}

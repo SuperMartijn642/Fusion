@@ -9,8 +9,11 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import net.minecraft.client.renderer.block.model.*;
+import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.SpecialModels;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 
@@ -140,8 +143,12 @@ public class BaseModelDataImpl implements BaseModelData {
             elements = ((BaseModelDataImpl)model.getModelData()).elements;
         }else{
             BlockModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel != null)
-                elements = vanillaModel.elements;
+            if(vanillaModel != null){
+                if(vanillaModel == SpecialModels.GENERATED_MARKER)
+                    elements = this.generateItemModel(context, modelStack);
+                else
+                    elements = vanillaModel.elements;
+            }
         }
         if(elements != null && !elements.isEmpty()){
             // Bake the faces of each element
@@ -184,14 +191,23 @@ public class BaseModelDataImpl implements BaseModelData {
                 BlockModel vanillaModel = model.getAsVanillaModel();
                 if(vanillaModel == null)
                     continue;
-                either = vanillaModel.textureMap.get(currentKey);
-                if(either != null)
+                if(vanillaModel == SpecialModels.GENERATED_MARKER && currentKey.equals("particle")){
+                    either = Either.right("layer0");
                     break;
+                }else{
+                    either = vanillaModel.textureMap.get(currentKey);
+                    if(either != null)
+                        break;
+                }
             }
             // If no value is found, check the parents of the last model
             if(either == null){
                 String finalCurrentKey = currentKey;
-                either = this.findProperty(context, modelStack.getLast(), model -> model.textureMap.get(finalCurrentKey));
+                either = this.findProperty(context, modelStack.getLast(), model -> {
+                    if(model == SpecialModels.GENERATED_MARKER && finalCurrentKey.equals("particle"))
+                        return Either.right("layer0");
+                    return model.textureMap.get(finalCurrentKey);
+                });
             }
             // If a key could not be found, return the missing texture
             if(either == null)
@@ -209,5 +225,19 @@ public class BaseModelDataImpl implements BaseModelData {
             }
             encounteredKeys.add(currentKey);
         }
+    }
+
+    protected List<BlockElement> generateItemModel(ModelBakingContext context, Deque<ModelInstance<?>> modelStack){
+        List<BlockElement> elements = new ArrayList<>();
+        for(int layer = 0; layer < ItemModelGenerator.LAYERS.size(); layer++){
+            String layerName = ItemModelGenerator.LAYERS.get(layer);
+            SpriteIdentifier sprite = this.resolveMaterial(context, modelStack, layerName);
+            if(SpriteIdentifier.missing().equals(sprite))
+                break;
+
+            SpriteContents spriteContents = context.getTexture(sprite).contents();
+            elements.addAll(ModelBakery.ITEM_MODEL_GENERATOR.processFrames(layer, layerName, spriteContents));
+        }
+        return elements;
     }
 }

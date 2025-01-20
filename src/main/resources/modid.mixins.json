@@ -24,6 +24,7 @@
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
+    "MultiPartBakedModelMixin",
     "PackEntryMixin",
     "PackMixin",
     "TextureAtlasMixin",

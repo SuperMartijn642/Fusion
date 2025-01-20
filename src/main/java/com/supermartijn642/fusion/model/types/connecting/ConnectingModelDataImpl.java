@@ -11,10 +11,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelElement;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
-import net.minecraft.client.renderer.model.BakedQuad;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.BlockPart;
-import net.minecraft.client.renderer.model.BlockPartFace;
+import net.minecraft.client.renderer.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
@@ -81,8 +78,12 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
             elements = ((BaseModelDataImpl)model.getModelData()).getElements();
         }else{
             BlockModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel != null)
-                elements = vanillaModel.elements;
+            if(vanillaModel != null){
+                if(vanillaModel == ModelBakery.GENERATION_MARKER)
+                    elements = this.generateItemModel(context, modelStack);
+                else
+                    elements = vanillaModel.elements;
+            }
         }
         if(elements != null && !elements.isEmpty()){
             // Bake the faces of each element

@@ -136,8 +136,12 @@ public class BaseModelDataImpl implements BaseModelData {
             elements = ((BaseModelDataImpl)model.getModelData()).elements;
         }else{
             BlockModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel != null)
-                elements = vanillaModel.elements;
+            if(vanillaModel != null){
+                if(vanillaModel == ModelBakery.GENERATION_MARKER)
+                    elements = this.generateItemModel(context, modelStack);
+                else
+                    elements = vanillaModel.elements;
+            }
         }
         if(elements != null && !elements.isEmpty()){
             // Bake the faces of each element
@@ -224,14 +228,23 @@ public class BaseModelDataImpl implements BaseModelData {
                 BlockModel vanillaModel = model.getAsVanillaModel();
                 if(vanillaModel == null)
                     continue;
-                value = vanillaModel.textureMap.get(currentKey);
-                if(value != null)
+                if(vanillaModel == ModelBakery.GENERATION_MARKER && currentKey.equals("particle")){
+                    value = "#layer0";
                     break;
+                }else{
+                    value = vanillaModel.textureMap.get(currentKey);
+                    if(value != null)
+                        break;
+                }
             }
             // If no value is found, check the parents of the last model
             if(value == null){
                 String finalCurrentKey = currentKey;
-                value = this.findProperty(modelResolver, modelStack.getLast(), model -> model.textureMap.get(finalCurrentKey));
+                value = this.findProperty(modelResolver, modelStack.getLast(), model -> {
+                    if(model == ModelBakery.GENERATION_MARKER && finalCurrentKey.equals("particle"))
+                        return "#layer0";
+                    return model.textureMap.get(finalCurrentKey);
+                });
             }
             // If a key could not be found, return the missing texture
             if(value == null)
@@ -249,5 +262,19 @@ public class BaseModelDataImpl implements BaseModelData {
             }
             encounteredKeys.add(currentKey);
         }
+    }
+
+    protected List<BlockPart> generateItemModel(ModelBakingContext context, Deque<ModelInstance<?>> modelStack){
+        List<BlockPart> elements = new ArrayList<>();
+        for(int layer = 0; layer < ItemModelGenerator.LAYERS.size(); layer++){
+            String layerName = ItemModelGenerator.LAYERS.get(layer);
+            SpriteIdentifier sprite = this.resolveMaterial(context::getModel, modelStack, layerName, context.getModelIdentifier());
+            if(SpriteIdentifier.missing().equals(sprite))
+                break;
+
+            TextureAtlasSprite texture = context.getTexture(sprite);
+            elements.addAll(ModelBakery.ITEM_MODEL_GENERATOR.processFrames(layer, layerName, texture));
+        }
+        return elements;
     }
 }

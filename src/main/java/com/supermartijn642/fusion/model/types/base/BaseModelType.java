@@ -55,7 +55,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
         boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, model -> model.hasAmbientOcclusion, true);
-        boolean gui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model.guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        boolean isGui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model == ModelBakery.GENERATION_MARKER ? false : null, true);
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, model -> model.guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
         ItemTransformVec3f transformThirdPersonLeftHand = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND) : null, ItemTransformVec3f.NO_TRANSFORM);
         ItemTransformVec3f transformThirdPersonRightHand = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND) : null, ItemTransformVec3f.NO_TRANSFORM);
@@ -71,8 +72,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
         return new BaseBakedModel(
             quads,
             ambientOcclusion,
-            gui3d,
-            true,
+            isGui3d,
+            usesBlockLight,
             particleSprite,
             itemTransforms,
             itemOverrides

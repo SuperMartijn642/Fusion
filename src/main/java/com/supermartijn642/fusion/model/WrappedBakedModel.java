@@ -94,7 +94,7 @@ public class WrappedBakedModel implements BakedModel {
     @Nonnull
     @Override
     public IModelData getModelData(@Nonnull BlockAndTintGetter level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData data){
-        return BakedModel.super.getModelData(level, pos, state, data);
+        return this.original.getModelData(level, pos, state, data);
     }
 
     @Override

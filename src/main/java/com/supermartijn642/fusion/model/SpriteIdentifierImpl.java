@@ -1,6 +1,8 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
+import com.supermartijn642.fusion.util.TextureAtlases;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 
@@ -9,15 +11,25 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class SpriteIdentifierImpl implements SpriteIdentifier {
 
+    public static final SpriteIdentifier MISSING = of(TextureAtlases.getBlocks(), MissingTextureAtlasSprite.getLocation());
+
+    public static SpriteIdentifier of(ResourceLocation atlas, ResourceLocation texture){
+        return new SpriteIdentifierImpl(atlas, texture);
+    }
+
+    public static SpriteIdentifier of(Material material){
+        return new SpriteIdentifierImpl(material);
+    }
+
     private final ResourceLocation atlas, texture;
     private Material material;
 
-    public SpriteIdentifierImpl(ResourceLocation atlas, ResourceLocation texture){
+    private SpriteIdentifierImpl(ResourceLocation atlas, ResourceLocation texture){
         this.atlas = atlas;
         this.texture = texture;
     }
 
-    public SpriteIdentifierImpl(Material material){
+    private SpriteIdentifierImpl(Material material){
         this(material.atlasLocation(), material.texture());
         this.material = material;
     }
@@ -35,5 +47,19 @@ public class SpriteIdentifierImpl implements SpriteIdentifier {
     @Override
     public Material toMaterial(){
         return this.material == null ? (this.material = SpriteIdentifier.super.toMaterial()) : this.material;
+    }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof SpriteIdentifierImpl that)) return false;
+
+        return this.atlas.equals(that.atlas) && this.texture.equals(that.texture);
+    }
+
+    @Override
+    public int hashCode(){
+        int result = this.atlas.hashCode();
+        result = 31 * result + this.texture.hashCode();
+        return result;
     }
 }

@@ -1,3 +1,8 @@
+### Fusion 1.2.3
+- Added special casing for `builtin/generated` parent model to make it work properly
+- Fixed custom texture render types not working with multipart models and the `pane_culling_fix` option
+- Added Turkish translations (thanks to RuyaSavascisi!)
+
 ### Fusion 1.2.2a
 - Fixed `base` and `connecting` models sometimes not showing all quads for modded blocks with a custom render type
 - Fixed error for `base` and `connecting` models when they have quads with no cull direction

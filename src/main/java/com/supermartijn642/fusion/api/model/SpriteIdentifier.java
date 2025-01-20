@@ -10,11 +10,11 @@ import net.minecraft.resources.ResourceLocation;
 public interface SpriteIdentifier {
 
     static SpriteIdentifier of(ResourceLocation atlas, ResourceLocation texture){
-        return new SpriteIdentifierImpl(atlas, texture);
+        return SpriteIdentifierImpl.of(atlas, texture);
     }
 
     static SpriteIdentifier of(Material material){
-        return new SpriteIdentifierImpl(material);
+        return SpriteIdentifierImpl.of(material);
     }
 
     /**

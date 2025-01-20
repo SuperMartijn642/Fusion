@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -59,7 +60,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
         boolean ambientOcclusion = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.hasAmbientOcclusion, true);
-        boolean gui3d = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        boolean isGui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model == ModelBakery.GENERATION_MARKER ? false : null, true);
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, model -> model.guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
         TextureAtlasSprite particleSprite = context.getTexture(((ConnectingModelDataImpl)data).findParticleSprite(context));
         ItemTransform transformThirdPersonLeftHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND) ? model.transforms.getTransform(ItemDisplayContext.THIRD_PERSON_LEFT_HAND) : null, ItemTransform.NO_TRANSFORM);
         ItemTransform transformThirdPersonRightHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) ? model.transforms.getTransform(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND) : null, ItemTransform.NO_TRANSFORM);
@@ -75,8 +77,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         return new ConnectingBakedModel(
             quads,
             ambientOcclusion,
-            gui3d,
-            true,
+            isGui3d,
+            usesBlockLight,
             particleSprite,
             itemTransforms,
             itemOverrides

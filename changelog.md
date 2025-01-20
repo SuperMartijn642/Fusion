@@ -1,3 +1,7 @@
+### Fusion 1.2.3
+- Added special casing for `builtin/generated` parent model to make it work properly
+- Added Turkish translations (thanks to RuyaSavascisi!)
+
 ### Fusion 1.2.2a
 - Fixed custom texture render types not working for items
 - Fixed custom texture tinting not working properly for connecting textures when Sodium is installed

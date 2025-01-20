@@ -23,6 +23,8 @@ accessible field net/minecraft/server/packs/FilePackResources LOGGER Lorg/slf4j/
 accessible field net/minecraft/server/packs/FilePackResources$SharedZipFileAccess file Ljava/io/File;
 accessible method net/minecraft/server/packs/FilePackResources$SharedZipFileAccess getOrCreateZipFile ()Ljava/util/zip/ZipFile;
 accessible class net/minecraft/server/packs/FilePackResources$SharedZipFileAccess
+# ItemModelGenerator
+accessible method net/minecraft/client/renderer/block/model/ItemModelGenerator processFrames (ILjava/lang/String;Lnet/minecraft/client/renderer/texture/SpriteContents;)Ljava/util/List;
 # ItemTransform$Deserializer
 accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_ROTATION Lorg/joml/Vector3f; # DEFAULT_ROTATION
 accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_TRANSLATION Lorg/joml/Vector3f; # DEFAULT_TRANSLATION

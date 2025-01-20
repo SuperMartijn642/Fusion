@@ -23,6 +23,7 @@
     "LegacyResourcePackWrapperMixin",
     "ModelLoaderMixin",
     "ModelManagerMixin",
+    "MultiPartBakedModelMixin",
     "PackEntryMixin",
     "ParticleDiggingMixin",
     "RenderItemMixin",

@@ -77,8 +77,12 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
             elements = ((BaseModelDataImpl)model.getModelData()).getElements();
         }else{
             BlockModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel != null)
-                elements = vanillaModel.elements;
+            if(vanillaModel != null){
+                if(vanillaModel == ModelBakery.GENERATION_MARKER)
+                    elements = this.generateItemModel(context, modelStack);
+                else
+                    elements = vanillaModel.elements;
+            }
         }
         if(elements != null && !elements.isEmpty()){
             // Bake the faces of each element

@@ -58,7 +58,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
         boolean ambientOcclusion = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.hasAmbientOcclusion, true);
-        boolean gui3d = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        boolean isGui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model == ModelBakery.GENERATION_MARKER ? false : null, true);
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, model -> model.guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
         TextureAtlasSprite particleSprite = context.getTexture(((ConnectingModelDataImpl)data).findParticleSprite(context));
         ItemTransformVec3f transformThirdPersonLeftHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND) : null, ItemTransformVec3f.NO_TRANSFORM);
         ItemTransformVec3f transformThirdPersonRightHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND) : null, ItemTransformVec3f.NO_TRANSFORM);
@@ -74,8 +75,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         return new ConnectingBakedModel(
             quads,
             ambientOcclusion,
-            gui3d,
-            true,
+            isGui3d,
+            usesBlockLight,
             particleSprite,
             itemTransforms,
             itemOverrides

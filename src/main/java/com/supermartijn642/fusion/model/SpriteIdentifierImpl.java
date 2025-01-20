@@ -11,17 +11,25 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class SpriteIdentifierImpl implements SpriteIdentifier {
 
-    public static final SpriteIdentifier MISSING = SpriteIdentifier.of(TextureAtlases.getBlocks(), MissingTextureAtlasSprite.getLocation());
+    public static final SpriteIdentifier MISSING = of(TextureAtlases.getBlocks(), MissingTextureAtlasSprite.getLocation());
+
+    public static SpriteIdentifier of(ResourceLocation atlas, ResourceLocation texture){
+        return new SpriteIdentifierImpl(atlas, texture);
+    }
+
+    public static SpriteIdentifier of(Material material){
+        return new SpriteIdentifierImpl(material);
+    }
 
     private final ResourceLocation atlas, texture;
     private Material material;
 
-    public SpriteIdentifierImpl(ResourceLocation atlas, ResourceLocation texture){
+    private SpriteIdentifierImpl(ResourceLocation atlas, ResourceLocation texture){
         this.atlas = atlas;
         this.texture = texture;
     }
 
-    public SpriteIdentifierImpl(Material material){
+    private SpriteIdentifierImpl(Material material){
         this(material.atlasLocation(), material.texture());
         this.material = material;
     }
@@ -43,7 +51,6 @@ public class SpriteIdentifierImpl implements SpriteIdentifier {
 
     @Override
     public final boolean equals(Object o){
-        if(this == o) return true;
         if(!(o instanceof SpriteIdentifierImpl that)) return false;
 
         return this.atlas.equals(that.atlas) && this.texture.equals(that.texture);

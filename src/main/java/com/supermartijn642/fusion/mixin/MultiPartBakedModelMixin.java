@@ -1,7 +1,10 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.MultipartBakedModel;
@@ -18,6 +21,9 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,7 +37,7 @@ import java.util.stream.IntStream;
  * Created 04/07/2023 by SuperMartijn642
  */
 @Mixin(value = MultipartBakedModel.class, priority = 900)
-public class MultiPartBakedModelMixin implements IForgeBakedModel {
+public class MultiPartBakedModelMixin implements IForgeBakedModel, CustomRenderTypeBakedModel {
 
     @Unique
     private static final ModelProperty<Map<IBakedModel,IModelData>> SUB_MODEL_DATA = new ModelProperty<>();
@@ -42,6 +48,28 @@ public class MultiPartBakedModelMixin implements IForgeBakedModel {
     @Final
     @Shadow
     private Map<BlockState,BitSet> selectorCache;
+
+    @Unique
+    private Set<RenderType> customBlockRenderTypes;
+
+    @Inject(
+        method = "<init>",
+        at = @At("TAIL")
+    )
+    private void init(List<Pair<Predicate<BlockState>,IBakedModel>> models, CallbackInfo ci){
+        Set<RenderType> customBlockRenderTypes = null;
+        for(Pair<Predicate<BlockState>,IBakedModel> model : models){
+            if(model.getRight() instanceof CustomRenderTypeBakedModel){
+                Collection<RenderType> renderTypes = ((CustomRenderTypeBakedModel)model.getRight()).getBlockRenderTypes();
+                if(!renderTypes.isEmpty()){
+                    if(customBlockRenderTypes == null)
+                        customBlockRenderTypes = new HashSet<>();
+                    customBlockRenderTypes.addAll(renderTypes);
+                }
+            }
+        }
+        this.customBlockRenderTypes = customBlockRenderTypes == null ? Collections.emptySet() : ImmutableSet.copyOf(customBlockRenderTypes);
+    }
 
     @Nonnull
     @Override
@@ -105,5 +133,10 @@ public class MultiPartBakedModelMixin implements IForgeBakedModel {
         }
 
         return list;
+    }
+
+    @Override
+    public Collection<RenderType> getBlockRenderTypes(){
+        return this.customBlockRenderTypes;
     }
 }

@@ -178,4 +178,19 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
     public Serializer<? extends ConnectionPredicate> getSerializer(){
         return SERIALIZER;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof MatchStateConnectionPredicate)) return false;
+
+        MatchStateConnectionPredicate that = (MatchStateConnectionPredicate)o;
+        return this.block.equals(that.block) && this.properties.equals(that.properties);
+    }
+
+    @Override
+    public int hashCode(){
+        int result = this.block.hashCode();
+        result = 31 * result + this.properties.hashCode();
+        return result;
+    }
 }

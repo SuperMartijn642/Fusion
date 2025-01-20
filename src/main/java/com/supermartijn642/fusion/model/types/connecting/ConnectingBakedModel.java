@@ -468,6 +468,7 @@ public class ConnectingBakedModel implements BakedModel, CustomRenderTypeBakedMo
 
     @Override
     public List<Pair<BakedModel,RenderType>> getLayerModels(ItemStack stack, boolean fabulous){
+        this.itemModel.set(stack, fabulous);
         if(this.shouldCheckOriginalItemRenderTypes){
             // There's no way to know the render types beforehand through Forge's API, so just merge them here with the fixed render types
             RenderType renderType = ItemBlockRenderTypes.getRenderType(stack, fabulous);

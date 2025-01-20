@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
+import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -17,13 +18,15 @@ import net.minecraftforge.client.model.data.IModelData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class WrappedBakedModel implements BakedModel {
+public class WrappedBakedModel implements BakedModel, CustomRenderTypeBakedModel {
 
     protected final BakedModel original;
 
@@ -110,5 +113,10 @@ public class WrappedBakedModel implements BakedModel {
     @Override
     public List<Pair<BakedModel,RenderType>> getLayerModels(ItemStack stack, boolean fabulous){
         return this.original.getLayerModels(stack, fabulous);
+    }
+
+    @Override
+    public Collection<RenderType> getBlockRenderTypes(){
+        return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).getBlockRenderTypes() : Collections.emptyList();
     }
 }

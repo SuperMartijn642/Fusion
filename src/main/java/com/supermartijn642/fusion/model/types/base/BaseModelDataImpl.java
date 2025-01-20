@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import net.minecraft.client.renderer.block.model.*;
+import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
@@ -151,7 +152,9 @@ public class BaseModelDataImpl implements BaseModelData {
             elements = ((BaseModelDataImpl)model.getModelData()).elements;
         }else{
             UnbakedModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel instanceof BlockModel)
+            if(vanillaModel instanceof ItemModelGenerator)
+                elements = this.generateItemModel(context, modelStack, (ItemModelGenerator)vanillaModel);
+            else if(vanillaModel instanceof BlockModel)
                 elements = ((BlockModel)vanillaModel).elements;
         }
         if(elements != null && !elements.isEmpty()){
@@ -220,5 +223,19 @@ public class BaseModelDataImpl implements BaseModelData {
             }
             encounteredKeys.add(currentKey);
         }
+    }
+
+    protected List<BlockElement> generateItemModel(ModelBakingContext context, Deque<ModelInstance<?>> modelStack, ItemModelGenerator generator){
+        List<BlockElement> elements = new ArrayList<>();
+        for(int layer = 0; layer < ItemModelGenerator.LAYERS.size(); layer++){
+            String layerName = ItemModelGenerator.LAYERS.get(layer);
+            SpriteIdentifier sprite = this.resolveMaterial(context, modelStack, layerName);
+            if(SpriteIdentifier.missing().equals(sprite))
+                break;
+
+            SpriteContents spriteContents = context.getTexture(sprite).contents();
+            elements.addAll(generator.processFrames(layer, layerName, spriteContents));
+        }
+        return elements;
     }
 }

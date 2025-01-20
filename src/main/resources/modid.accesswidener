@@ -27,6 +27,8 @@ accessible field net/minecraft/client/renderer/block/model/BlockModel textureMap
 accessible field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
 accessible method net/minecraft/client/renderer/block/model/BlockModel bakeFace (Lnet/minecraft/client/renderer/block/model/BlockElement;Lnet/minecraft/client/renderer/block/model/BlockElementFace;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/core/Direction;Lnet/minecraft/client/resources/model/ModelState;Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/block/model/BakedQuad;
 accessible method net/minecraft/client/renderer/block/model/BlockModel findTextureEntry (Ljava/lang/String;)Lcom/mojang/datafixers/util/Either;
+# ItemModelGenerator
+accessible method net/minecraft/client/renderer/block/model/ItemModelGenerator processFrames (ILjava/lang/String;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)Ljava/util/List;
 # ItemTransform$Deserializer
 accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_ROTATION Lcom/mojang/math/Vector3f; # DEFAULT_ROTATION
 accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_TRANSLATION Lcom/mojang/math/Vector3f; # DEFAULT_TRANSLATION
@@ -37,6 +39,7 @@ accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
 # ModelBakery
+accessible field net/minecraft/client/resources/model/ModelBakery ITEM_MODEL_GENERATOR Lnet/minecraft/client/renderer/block/model/ItemModelGenerator;
 accessible field net/minecraft/client/resources/model/ModelBakery unbakedCache Ljava/util/Map;
 accessible field net/minecraft/client/resources/model/ModelBakery topLevelModels Ljava/util/Map;
 accessible method net/minecraft/client/resources/model/ModelBakery getModel (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/resources/model/UnbakedModel;

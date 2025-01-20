@@ -9,7 +9,7 @@ import net.minecraft.util.ResourceLocation;
 public interface SpriteIdentifier {
 
     static SpriteIdentifier of(ResourceLocation atlas, ResourceLocation texture){
-        return new SpriteIdentifierImpl(atlas, texture);
+        return SpriteIdentifierImpl.of(atlas, texture);
     }
 
     /**

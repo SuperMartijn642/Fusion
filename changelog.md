@@ -1,3 +1,7 @@
+### Fusion 1.2.3
+- Added special casing for `builtin/generated` parent model to make it work properly
+- Added Turkish translations (thanks to RuyaSavascisi!)
+
 ### Fusion 1.2.2
 - Fixed `pane_culling_fix` culling being inverted, culling only quads which should not be
 - Fixed crash when mods use non-resource characters in model layer names

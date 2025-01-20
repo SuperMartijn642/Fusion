@@ -15,6 +15,7 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelElement;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -58,7 +59,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
         boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getAmbientOcclusion, true);
-        boolean gui3d = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getGuiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        boolean isGui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model instanceof ItemModelGenerator ? false : null, true);
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getGuiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
         ItemTransforms itemTransforms = new ItemTransforms(
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
@@ -74,8 +76,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         return new ConnectingBakedModel(
             quads,
             ambientOcclusion,
-            gui3d,
-            true,
+            isGui3d,
+            usesBlockLight,
             particleSprite,
             itemTransforms
         );

@@ -76,7 +76,9 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
             elements = ((BaseModelDataImpl)model.getModelData()).getElements();
         }else{
             UnbakedModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel instanceof BlockModel)
+            if(vanillaModel instanceof ItemModelGenerator)
+                elements = this.generateItemModel(context, modelStack, (ItemModelGenerator)vanillaModel);
+            else if(vanillaModel instanceof BlockModel)
                 elements = ((BlockModel)vanillaModel).elements;
         }
         if(elements != null && !elements.isEmpty()){

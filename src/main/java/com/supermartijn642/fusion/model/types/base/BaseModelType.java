@@ -10,6 +10,7 @@ import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -51,7 +52,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
         boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getAmbientOcclusion, true);
-        boolean gui3d = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getGuiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        boolean isGui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model instanceof ItemModelGenerator ? false : null, true);
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getGuiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
         ItemTransforms itemTransforms = new ItemTransforms(
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
@@ -67,8 +69,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
         return new BaseBakedModel(
             quads,
             ambientOcclusion,
-            gui3d,
-            true,
+            isGui3d,
+            usesBlockLight,
             particleSprite,
             itemTransforms
         );

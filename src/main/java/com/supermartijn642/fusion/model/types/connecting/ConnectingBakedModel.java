@@ -612,7 +612,7 @@ public class ConnectingBakedModel implements BakedModel {
                     this.worldToTexture[i] = old[(i - rotations * 2 + 8) % 8];
                 int[] old2 = Arrays.copyOf(this.vertexIndexPermutation, this.vertexIndexPermutation.length);
                 for(int i = 0; i < 4; i++)
-                    this.vertexIndexPermutation[i] = old2[(i - rotations + 4) % 4];
+                    this.vertexIndexPermutation[i] = old2[(i + rotations + 4) % 4];
             }
         }
 

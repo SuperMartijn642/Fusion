@@ -1,3 +1,6 @@
+### Fusion 1.2.4
+- Fixed vertex permutations for rotated textures being wrong and hence `pieced` layout not looking correct when rotated
+
 ### Fusion 1.2.3
 - Added special casing for `builtin/generated` parent model to make it work properly
 - Added Turkish translations (thanks to RuyaSavascisi!)

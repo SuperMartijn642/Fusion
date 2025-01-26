@@ -230,7 +230,7 @@ public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedM
             int cullIndex = i;
             this.completeBlockMesh[i] = this.blockMesh.values().stream().map(arr -> arr[cullIndex]).filter(Objects::nonNull).flatMap(List::stream).collect(Collectors.toList());
         }
-        this.completeItemMesh = this.itemRenderTypes.stream().map(this.itemMesh::get).flatMap(List::stream).collect(Collectors.toList());
+        this.completeItemMesh = itemRenderTypes.stream().map(this.itemMesh::get).flatMap(List::stream).collect(Collectors.toList());
 
         // Create a model to return the item quads
         this.itemModel = new ItemBakedModel(this) {

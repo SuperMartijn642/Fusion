@@ -1,3 +1,8 @@
+### Fusion 1.2.4
+- Fixed vertex permutations for rotated textures being wrong and hence `pieced` layout not looking correct when rotated
+- Fixed non-custom render type quads not being rendered in item models for `base` and `connecting` models
+- Files generated through `FusionModelProvider` are now tracked in the existing file helper
+
 ### Fusion 1.2.3
 - Added special casing for `builtin/generated` parent model to make it work properly
 - Fixed custom texture render types not working with multipart models and the `pane_culling_fix` option

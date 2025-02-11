@@ -6,6 +6,8 @@ import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DataProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
+import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.fml.ModContainer;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModInfo;
@@ -27,13 +29,24 @@ public abstract class FusionModelProvider implements DataProvider {
     private final Map<ResourceLocation,ModelInstance<?>> models = new HashMap<>();
     private final String modName;
     private final DataGenerator generator;
+    private final ExistingFileHelper existingFileHelper;
 
     /**
      * @param modid modid of the mod which creates the generator
      */
-    public FusionModelProvider(String modid, DataGenerator generator){
+    public FusionModelProvider(String modid, DataGenerator generator, ExistingFileHelper existingFileHelper){
         this.modName = ModList.get().getModContainerById(modid).map(ModContainer::getModInfo).map(IModInfo::getDisplayName).orElse(modid);
         this.generator = generator;
+        this.existingFileHelper = existingFileHelper;
+    }
+
+    /**
+     * @param modid modid of the mod which creates the generator
+     * @deprecated Use {@link #FusionModelProvider(String, DataGenerator, ExistingFileHelper)} which includes the existing file helper
+     */
+    @Deprecated
+    public FusionModelProvider(String modid, DataGenerator generator){
+        this(modid, generator, null);
     }
 
     @Override
@@ -64,6 +77,8 @@ public abstract class FusionModelProvider implements DataProvider {
         ModelInstance<?> previousValue = this.models.put(location, model);
         if(previousValue != null)
             throw new RuntimeException("Duplicate model for '" + location + "'!");
+        if(this.existingFileHelper != null)
+            this.existingFileHelper.trackGenerated(location, PackType.CLIENT_RESOURCES, ".json", "models");
     }
 
     @Override

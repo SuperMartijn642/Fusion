@@ -113,7 +113,7 @@ public class MutableQuad {
             for(int i = 0; i < 4; i++)
                 this.lightmap(i, FULL_BRIGHT_LIGHTMAP);
         }
-        return new BakedQuad(Arrays.copyOf(this.vertices, this.vertexFormat.getIntegerSize() * 4), this.tintIndex, this.lightFace, this.sprite, this.shade, this.vertexFormat);
+        return new BakedQuad(Arrays.copyOf(this.vertices, this.vertexFormat.getIntegerSize() * 4), this.tintIndex, this.lightFace, this.sprite, !this.emissive && this.shade, this.vertexFormat);
     }
 
     private void addVertexFormatElement(VertexFormatElement element){

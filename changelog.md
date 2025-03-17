@@ -1,3 +1,6 @@
+### Fusion 1.2.5
+- Fixed emissive quads not being quite as bright as they should be
+
 ### Fusion 1.2.4
 - Fixed vertex permutations for rotated textures being wrong and hence `pieced` layout not looking correct when rotated
 - Fixed non-custom render type quads not being rendered in item models for `base` and `connecting` models

@@ -106,7 +106,7 @@ public class FusionClient implements ClientModInitializer {
                 materialFinder.blendMode(0, mode);
             }
             if(emissive)
-                materialFinder.emissive(0, true);
+                materialFinder.emissive(0, true).disableDiffuse(0, true);
             material = materialFinder.find();
             RENDER_MATERIALS[index] = material;
         }

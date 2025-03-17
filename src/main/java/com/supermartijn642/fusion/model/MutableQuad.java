@@ -110,6 +110,6 @@ public class MutableQuad {
             for(int i = 0; i < 4; i++)
                 this.lightmap(i, FULL_BRIGHT_LIGHTMAP);
         }
-        return new BakedQuad(Arrays.copyOf(this.vertices, this.vertices.length), this.tintIndex, this.lightFace, this.sprite, this.shade);
+        return new BakedQuad(Arrays.copyOf(this.vertices, this.vertices.length), this.tintIndex, this.lightFace, this.sprite, !this.emissive && this.shade);
     }
 }

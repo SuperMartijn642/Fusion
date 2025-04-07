@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
+import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;

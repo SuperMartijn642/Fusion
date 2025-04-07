@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.modifiers.item.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.enchantment.Enchantment;
@@ -37,7 +38,7 @@ public class EnchantmentItemPredicate implements ItemPredicate {
             int maxLevel = 255;
             if(json.has("max_level")){
                 if(!json.get("max_level").isJsonPrimitive() || !json.getAsJsonPrimitive("max_level").isNumber())
-                    throw new JsonParseException("Property 'max_level' must have be a number!");
+                    throw new JsonParseException("Property 'max_level' must be a number!");
                 maxLevel = json.getAsJsonPrimitive("max_level").getAsInt();
                 if(maxLevel < 0 || maxLevel > 255)
                     throw new JsonParseException("Property 'max_level' must be between 0 and 255!");
@@ -47,7 +48,7 @@ public class EnchantmentItemPredicate implements ItemPredicate {
             int minLevel = maxLevel == 0 ? 0 : 1;
             if(json.has("min_level")){
                 if(!json.get("min_level").isJsonPrimitive() || !json.getAsJsonPrimitive("min_level").isNumber())
-                    throw new JsonParseException("Property 'min_level' must have a number!");
+                    throw new JsonParseException("Property 'min_level' must be a number!");
                 minLevel = json.getAsJsonPrimitive("min_level").getAsInt();
                 if(minLevel < 0 || minLevel > 255)
                     throw new JsonParseException("Property 'min_level' must be between 0 and 255!");
@@ -75,6 +76,14 @@ public class EnchantmentItemPredicate implements ItemPredicate {
     private final int minLevel, maxLevel;
 
     public EnchantmentItemPredicate(int enchantment, int minLevel, int maxLevel){
+        if(Enchantment.getEnchantmentByID(enchantment) == null)
+            throw new IllegalArgumentException("No enchantment with id '" + enchantment + "'!");
+        if(minLevel < 0 || minLevel > 255)
+            throw new IllegalArgumentException("Min level must be between 0 and 255!");
+        if(maxLevel < 0 || maxLevel > 255)
+            throw new IllegalArgumentException("Max level must be between 0 and 255!");
+        if(minLevel > maxLevel)
+            throw new IllegalArgumentException("Minimum level must be less than or equal to maximum level!");
         this.enchantment = enchantment;
         this.minLevel = minLevel;
         this.maxLevel = maxLevel;

@@ -105,7 +105,7 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
         }
         // Pane culling fix
         if(modifier.paneCullingFix)
-            json.addProperty("pane_culling_fix", "true");
+            json.addProperty("pane_culling_fix", true);
         return json;
     }
 

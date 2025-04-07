@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.modifiers.item.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.Registry;
@@ -41,6 +42,8 @@ public class PotionItemPredicate implements ItemPredicate {
     private final Potion potion;
 
     public PotionItemPredicate(Potion potion){
+        if(potion == null)
+            throw new NullPointerException("Potion must not be null!");
         this.potion = potion;
     }
 

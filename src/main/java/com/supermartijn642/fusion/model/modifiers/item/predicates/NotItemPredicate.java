@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.modifiers.item.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.world.item.ItemStack;
 

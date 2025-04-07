@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
+import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.item.BlockModelWrapper;

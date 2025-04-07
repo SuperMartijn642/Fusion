@@ -49,8 +49,10 @@ public class SurroundingBlockCache {
     public IBlockState getState(int x, int y, int z){
         int index = (x + 1) + (y + 1) * 3 + (z + 1) * 9;
         IBlockState state = this.states[index];
-        if(state == null)
-            state = this.states[index] = this.level.getBlockState(this.pos.add(x, y, z));
+        if(state == null){
+            BlockPos pos = this.pos.add(x, y, z);
+            state = this.states[index] = this.level.getBlockState(pos).getActualState(this.level, pos);
+        }
         return state;
     }
 }

@@ -1,3 +1,6 @@
+### Fusion 1.2.6
+- Added data providers for block model modifiers and item model modifiers
+
 ### Fusion 1.2.5
 - Fixed emissive quads not being quite as bright as they should be
 

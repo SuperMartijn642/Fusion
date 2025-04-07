@@ -4,10 +4,12 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.item.ItemStack;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -48,6 +50,10 @@ public class AndItemPredicate implements ItemPredicate {
 
     public AndItemPredicate(List<ItemPredicate> predicates){
         this.predicates = predicates;
+    }
+
+    public List<ItemPredicate> getPredicates(){
+        return Collections.unmodifiableList(this.predicates);
     }
 
     @Override

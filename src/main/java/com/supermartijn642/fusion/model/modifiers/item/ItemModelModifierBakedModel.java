@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicate;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.model.BakedQuad;

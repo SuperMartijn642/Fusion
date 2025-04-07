@@ -1,3 +1,6 @@
+### Fusion 1.2.6a
+- Fixed model showing no quads when using `pane_culling_fix`
+
 ### Fusion 1.2.6
 - Added data providers for block model modifiers and item model modifiers
 

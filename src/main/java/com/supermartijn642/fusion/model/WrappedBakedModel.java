@@ -30,7 +30,7 @@ public class WrappedBakedModel implements IBakedModel, CustomRenderTypeBakedMode
 
     @Override
     public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing cullDirection, long seed){
-        return Collections.emptyList();
+        return this.original.getQuads(state, cullDirection, seed);
     }
 
     @Override

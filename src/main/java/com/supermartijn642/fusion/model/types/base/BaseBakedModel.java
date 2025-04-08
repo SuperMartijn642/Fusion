@@ -125,8 +125,7 @@ public class BaseBakedModel implements BakedModel {
                     return BaseBakedModel.this.completeItemMesh;
 
                 List<BakedQuad> quads = BaseBakedModel.this.itemMesh.get(renderType);
-                //noinspection deprecation
-                if(BaseBakedModel.this.shouldCheckOriginalItemRenderTypes && ItemBlockRenderTypes.getRenderType(stack) == renderType){
+                if(BaseBakedModel.this.shouldCheckOriginalItemRenderTypes && getNonModelRenderType(stack) == renderType){
                     List<BakedQuad> additionalQuads = BaseBakedModel.this.itemMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
                     if(additionalQuads != null){
                         if(quads == null)
@@ -234,7 +233,7 @@ public class BaseBakedModel implements BakedModel {
     public List<RenderType> getRenderTypes(ItemStack stack){
         if(this.shouldCheckOriginalItemRenderTypes){
             // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
-            RenderType renderType = RenderTypeHelper.getFallbackItemRenderType(stack, this);
+            RenderType renderType = ItemBakedModel.getNonModelRenderType(stack);
             if(!this.itemRenderTypes.contains(renderType)){
                 ArrayList<RenderType> combined = new ArrayList<>(this.itemRenderTypes.size() + 1);
                 combined.addAll(this.itemRenderTypes);

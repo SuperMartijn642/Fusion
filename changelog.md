@@ -1,3 +1,6 @@
+### Fusion 1.2.6a
+- Fixed `connecting` and `base` models not always using correct render type when rendered as items
+
 ### Fusion 1.2.6
 - Added data providers for block model modifiers and item model modifiers
 

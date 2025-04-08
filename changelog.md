@@ -1,3 +1,6 @@
+### Fusion 1.2.6b
+- Fixed `connecting` and `base` models not always using correct render type when rendered as items
+
 ### Fusion 1.2.6a
 - Fixed multipart models not passing model [MinecraftForge#10523](https://github.com/MinecraftForge/MinecraftForge/issues/10523)
 

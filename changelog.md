@@ -1,3 +1,6 @@
+### Fusion 1.2.6a
+- Fixed multipart models not passing model [MinecraftForge#10523](https://github.com/MinecraftForge/MinecraftForge/issues/10523)
+
 ### Fusion 1.2.6
 - Added data providers for block model modifiers and item model modifiers
 

@@ -3,7 +3,6 @@ package com.supermartijn642.fusion.model.modifiers.item;
 import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ItemModelResolver;
@@ -12,6 +11,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.client.RenderTypeHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -50,7 +50,7 @@ public class ItemModelModifierItemModel implements ItemModel {
                         ItemStackRenderState.FoilType.SPECIAL
                         : ItemStackRenderState.FoilType.STANDARD
                 );
-            layer.setupBlockModel(model, ItemBlockRenderTypes.getRenderType(stack));
+            layer.setupBlockModel(model, RenderTypeHelper.getFallbackItemRenderType(stack, model));
         }
     }
 }

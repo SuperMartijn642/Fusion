@@ -234,8 +234,7 @@ public class ConnectingBakedModel implements BakedModel {
                     return ConnectingBakedModel.this.completeItemMesh;
 
                 List<BakedQuad> quads = ConnectingBakedModel.this.itemMesh.get(renderType);
-                //noinspection deprecation
-                if(ConnectingBakedModel.this.shouldCheckOriginalItemRenderTypes && ItemBlockRenderTypes.getRenderType(stack, fabulous) == renderType){
+                if(ConnectingBakedModel.this.shouldCheckOriginalItemRenderTypes && getNonModelRenderType(stack, fabulous) == renderType){
                     List<BakedQuad> additionalQuads = ConnectingBakedModel.this.itemMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
                     if(additionalQuads != null){
                         if(quads == null)
@@ -472,7 +471,7 @@ public class ConnectingBakedModel implements BakedModel {
     public List<RenderType> getRenderTypes(ItemStack stack, boolean fabulous){
         if(this.shouldCheckOriginalItemRenderTypes){
             // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
-            RenderType renderType = RenderTypeHelper.getFallbackItemRenderType(stack, this, fabulous);
+            RenderType renderType = ItemBakedModel.getNonModelRenderType(stack, fabulous);
             if(!(fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes).contains(renderType)){
                 ArrayList<RenderType> combined = new ArrayList<>((fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes).size() + 1);
                 combined.addAll(fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes);

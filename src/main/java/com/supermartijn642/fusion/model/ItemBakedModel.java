@@ -1,10 +1,13 @@
 package com.supermartijn642.fusion.model;
 
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.data.ModelData;
@@ -38,5 +41,19 @@ public abstract class ItemBakedModel extends WrappedBakedModel {
 
     public void set(ItemStack stack){
         this.stack = stack;
+    }
+
+    /**
+     * Copies the behaviour of {@link net.neoforged.neoforge.client.RenderTypeHelper#getFallbackItemRenderType(ItemStack, BakedModel)}, but ignores the model.
+     */
+    public static RenderType getNonModelRenderType(ItemStack stack){
+        if(stack.getItem() instanceof BlockItem blockItem){
+            //noinspection deprecation
+            var renderTypes = ItemBlockRenderTypes.getRenderLayers(blockItem.getBlock().defaultBlockState());
+            if(renderTypes.contains(RenderType.translucent()))
+                return Sheets.translucentItemSheet();
+            return Sheets.cutoutBlockSheet();
+        }
+        return Sheets.translucentItemSheet();
     }
 }

@@ -115,8 +115,8 @@ public class BaseBakedModel implements BakedModel {
         // Create a model to return the item quads
         this.itemModels = itemRenderTypes.stream().<BakedModel>map(renderType -> new ItemBakedModel(this) {
             @Override
-            protected List<BakedQuad> getQuads(ItemStack stack, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType){
-                if(renderType == null)
+            protected List<BakedQuad> getQuads(ItemStack stack, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType rt){
+                if(rt == null)
                     return BaseBakedModel.this.completeItemMesh;
 
                 List<BakedQuad> quads = BaseBakedModel.this.itemMesh.get(renderType);
@@ -125,9 +125,7 @@ public class BaseBakedModel implements BakedModel {
 
             @Override
             public RenderType getRenderType(ItemStack stack){
-                //noinspection deprecation
-                return renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER ?
-                    ItemBlockRenderTypes.getRenderType(stack) : renderType;
+                return renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER ? getNonModelRenderType(stack) : renderType;
             }
         }).toList();
     }

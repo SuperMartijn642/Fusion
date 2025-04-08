@@ -3,7 +3,6 @@ package com.supermartijn642.fusion.model.modifiers.item;
 import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ItemModelResolver;
@@ -43,14 +42,16 @@ public class ItemModelModifierItemModel implements ItemModel {
         if(model == null)
             this.defaultModel.update(renderState, stack, modelResolver, displayContext, level, entity, i);
         else{
-            ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
-            if(stack.hasFoil())
-                layer.setFoilType(
-                    BlockModelWrapper.hasSpecialAnimatedTexture(stack) ?
-                        ItemStackRenderState.FoilType.SPECIAL
-                        : ItemStackRenderState.FoilType.STANDARD
-                );
-            layer.setupBlockModel(model, ItemBlockRenderTypes.getRenderType(stack));
+            ItemStackRenderState.FoilType foilType = stack.hasFoil() ?
+                BlockModelWrapper.hasSpecialAnimatedTexture(stack) ? ItemStackRenderState.FoilType.SPECIAL : ItemStackRenderState.FoilType.STANDARD
+                : null;
+            //noinspection removal
+            model.getRenderPasses(stack).forEach(pass -> {
+                ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
+                if(foilType != null)
+                    layer.setFoilType(foilType);
+                layer.setupBlockModel(pass, pass.getRenderType(stack));
+            });
         }
     }
 }

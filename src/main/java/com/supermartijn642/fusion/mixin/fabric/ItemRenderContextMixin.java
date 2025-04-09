@@ -5,11 +5,11 @@ import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
-import net.fabricmc.fabric.impl.client.indigo.renderer.helper.ColorHelper;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
 import net.fabricmc.fabric.impl.client.indigo.renderer.render.ItemRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.util.ARGB;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -41,7 +41,7 @@ public class ItemRenderContextMixin {
                 if(tinting != null){
                     int color = QuadTintingHelper.getColor(tinting, null, null, null);
                     for(int i = 0; i < 4; i++)
-                        quad.color(i, ColorHelper.multiplyColor(color, quad.color(i)));
+                        quad.color(i, ARGB.multiply(color, quad.color(i)));
                 }
             }
         }

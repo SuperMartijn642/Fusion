@@ -1,7 +1,8 @@
 package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.api.util.Serializer;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -25,9 +26,11 @@ public interface ModelType<T> extends Serializer<T> {
      * @param context context for baking the model
      * @param data    custom model data
      * @return a baked model
-     * @see ModelBakingContext
+     * @see BlockModelBakingContext
      */
-    BakedModel bake(ModelBakingContext context, T data);
+    BlockStateModel bakeBlockModel(BlockModelBakingContext context, T data);
+
+    ItemModel bakeItemModel(ItemModelBakingContext context, T data);
 
     /**
      * Represents the model as a vanilla {@link UnbakedModel} instance. May be used gather info from other models, such as with the vanilla 'parent' property.

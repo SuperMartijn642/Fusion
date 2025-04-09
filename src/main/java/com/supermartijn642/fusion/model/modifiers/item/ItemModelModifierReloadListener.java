@@ -13,10 +13,8 @@ import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateR
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
@@ -45,24 +43,28 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
     private ItemModelModifierReloadListener(){
     }
 
-    public void registerPredicateModels(UnbakedModel.Resolver resolver){
+    public void registerPredicateModels(ResolvableModel.Resolver resolver){
         Set<ResourceLocation> models = new HashSet<>();
         for(ItemModelPredicatesProperties properties : this.models.values())
             models.addAll(properties.dependencies());
-        models.forEach(resolver::resolve);
+        models.forEach(resolver::markDependency);
     }
 
-    public void applyPredicateModels(ModelBakery.BakingResult results, ModelBakery.ModelBakerImpl resolver){
+    public void applyPredicateModels(ModelBakery.BakingResult results, ItemModel.BakingContext bakingContext){
         Map<ResourceLocation,ItemModel> bakedModels = results.itemStackModels();
         for(Map.Entry<ResourceLocation,ItemModelPredicatesProperties> entry : this.models.entrySet()){
             ResourceLocation target = entry.getKey();
             ItemModelPredicatesProperties properties = entry.getValue();
-            ItemModel defaultModel = properties.defaultModel == null ? bakedModels.get(target) : new BlockModelWrapper(resolver.bake(properties.defaultModel, BlockModelRotation.X0_Y0), List.of());
-            List<Pair<ItemPredicate,BakedModel>> models = properties.models.stream()
-                .map(pair -> pair.mapRight(location -> resolver.bake(location, BlockModelRotation.X0_Y0)))
+            ItemModel defaultModel = this.getOrBakeModel(properties.defaultModel == null ? target : properties.defaultModel, bakedModels, bakingContext);
+            List<Pair<ItemPredicate,ItemModel>> models = properties.models.stream()
+                .map(pair -> pair.mapRight(location -> this.getOrBakeModel(location, bakedModels, bakingContext)))
                 .toList();
             bakedModels.put(target, new ItemModelModifierItemModel(defaultModel, models));
         }
+    }
+
+    private ItemModel getOrBakeModel(ResourceLocation location, Map<ResourceLocation,ItemModel> bakedModels, ItemModel.BakingContext bakingContext){
+        return bakedModels.computeIfAbsent(location, l -> new BlockModelWrapper.Unbaked(l, List.of()).bake(bakingContext));
     }
 
     @Override

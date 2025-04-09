@@ -4,7 +4,6 @@ import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.api.model.data.BaseModelDataBuilder;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
@@ -68,7 +67,7 @@ public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelD
             else
                 textures.addTexture(key, new Material(TextureAtlases.getBlocks(), ResourceLocation.parse(value)));
         });
-        BlockModel vanillaModel = new BlockModel(parent, Collections.emptyList(), textures.build(), null, null, ItemTransforms.NO_TRANSFORMS);
+        BlockModel vanillaModel = new BlockModel(null, null, null, null, textures.build(), parent);
         return new BaseModelDataImpl(vanillaModel, parents, Collections.emptyList());
     }
 }

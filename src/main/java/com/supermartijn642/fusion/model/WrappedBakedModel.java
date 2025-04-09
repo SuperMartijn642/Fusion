@@ -1,10 +1,9 @@
 package com.supermartijn642.fusion.model;
 
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -14,61 +13,45 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class WrappedBakedModel implements BakedModel {
+public class WrappedBakedModel implements BlockStateModel {
 
-    protected final BakedModel original;
+    protected final BlockStateModel original;
 
-    public WrappedBakedModel(BakedModel original){
+    public WrappedBakedModel(BlockStateModel original){
         this.original = original;
     }
 
     @Override
-    public boolean isVanillaAdapter(){
-        return this.original.isVanillaAdapter();
+    public void emitQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest){
+        this.original.emitQuads(emitter, blockView, pos, state, random, cullTest);
     }
 
     @Override
-    public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest){
-        this.original.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
+    public @Nullable Object createGeometryKey(BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random){
+        return this.original.createGeometryKey(blockView, pos, state, random);
     }
 
     @Override
-    public void emitItemQuads(QuadEmitter emitter, Supplier<RandomSource> randomSupplier){
-        this.original.emitItemQuads(emitter, randomSupplier);
+    public List<BlockModelPart> collectParts(RandomSource random){
+        return this.original.collectParts(random);
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random){
-        return this.original.getQuads(state, direction, random);
+    public void collectParts(RandomSource random, List<BlockModelPart> list){
+        this.original.collectParts(random, list);
     }
 
     @Override
-    public boolean useAmbientOcclusion(){
-        return this.original.useAmbientOcclusion();
+    public TextureAtlasSprite particleIcon(){
+        return this.original.particleIcon();
     }
 
     @Override
-    public boolean isGui3d(){
-        return this.original.isGui3d();
-    }
-
-    @Override
-    public boolean usesBlockLight(){
-        return this.original.usesBlockLight();
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon(){
-        return this.original.getParticleIcon();
-    }
-
-    @Override
-    public ItemTransforms getTransforms(){
-        return this.original.getTransforms();
+    public TextureAtlasSprite particleSprite(BlockAndTintGetter blockView, BlockPos pos, BlockState state){
+        return this.original.particleSprite(blockView, pos, state);
     }
 }

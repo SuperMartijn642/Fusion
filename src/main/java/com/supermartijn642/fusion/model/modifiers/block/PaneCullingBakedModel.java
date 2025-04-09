@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.model.modifiers.block;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -14,7 +14,6 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 /**
  * Created 5/11/2020 by SuperMartijn642
@@ -30,20 +29,15 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         BlockStateProperties.EAST
     };
 
-    public PaneCullingBakedModel(BakedModel original){
+    public PaneCullingBakedModel(BlockStateModel original){
         super(original);
     }
 
     @Override
-    public boolean isVanillaAdapter(){
-        return false;
-    }
-
-    @Override
-    public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest){
+    public void emitQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest){
         // If state has no side properties, then there's nothing to be culled
         if(!state.hasProperty(BlockStateProperties.NORTH) && !state.hasProperty(BlockStateProperties.SOUTH) && !state.hasProperty(BlockStateProperties.WEST) && !state.hasProperty(BlockStateProperties.EAST)){
-            super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
+            super.emitQuads(emitter, blockView, pos, state, random, cullTest);
             return;
         }
 
@@ -56,7 +50,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
             stateBelow = null;
 
         if(stateAbove == null && stateBelow == null){
-            super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
+            super.emitQuads(emitter, blockView, pos, state, random, cullTest);
             return;
         }
 
@@ -64,7 +58,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         BlockState finalStateAbove = stateAbove;
         BlockState finalStateBelow = stateBelow;
         emitter.pushTransform(quad -> filterQuad(quad, finalStateAbove, finalStateBelow));
-        super.emitBlockQuads(emitter, blockView, state, pos, randomSupplier, cullTest);
+        super.emitQuads(emitter, blockView, pos, state, random, cullTest);
         emitter.popTransform();
     }
 

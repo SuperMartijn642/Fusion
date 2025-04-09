@@ -21,9 +21,9 @@ public class BaseModelQuad {
 
     public BaseModelQuad(BakedQuad bakedQuad, Direction cullDirection){
         this.bakedQuad = bakedQuad;
-        this.textureType = SpriteHelper.getTextureType(bakedQuad.getSprite());
+        this.textureType = SpriteHelper.getTextureType(bakedQuad.sprite());
         this.cullDirection = cullDirection;
-        TextureAtlasSprite sprite = bakedQuad.getSprite();
+        TextureAtlasSprite sprite = bakedQuad.sprite();
         if(sprite instanceof BaseTextureSprite && ((BaseTextureSprite)sprite).data() != null){
             BaseTextureData data = ((BaseTextureSprite)sprite).data();
             this.renderType = data.getRenderType();

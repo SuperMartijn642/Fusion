@@ -14,8 +14,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 
-import java.util.function.Supplier;
-
 /**
  * Created 22/10/2024 by SuperMartijn642
  */
@@ -131,12 +129,11 @@ public class RandomTextureType implements TextureType<RandomTextureData> {
         return new RandomTextureSprite(sprite, data);
     }
 
-    public static void processQuad(MutableQuad quad, BlockPos pos, Direction side, Supplier<RandomSource> randomSupplier, RandomTextureSprite sprite){
+    public static void processQuad(MutableQuad quad, BlockPos pos, Direction side, RandomSource random, RandomTextureSprite sprite){
         if(side == null)
             return;
         RandomTextureData data = sprite.data();
         // Determine which tile to use based on position and side
-        RandomSource random = randomSupplier.get();
         if(data.getSeed() != null)
             random.setSeed(data.getSeed() ^ ((pos.asLong() + 1) * side.ordinal()));
         else

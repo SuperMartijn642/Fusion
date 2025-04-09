@@ -3,17 +3,12 @@ accessWidener v1 named
 # BakedQuad
 accessible field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
+# BlockElement
+extendable class net/minecraft/client/renderer/block/model/BlockElement
 # BlockModel
-accessible field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
 accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/google/gson/Gson;
-accessible field net/minecraft/client/renderer/block/model/BlockModel guiLight Lnet/minecraft/client/resources/model/UnbakedModel$GuiLight;
-accessible field net/minecraft/client/renderer/block/model/BlockModel hasAmbientOcclusion Ljava/lang/Boolean;
-accessible field net/minecraft/client/renderer/block/model/BlockModel parent Lnet/minecraft/client/resources/model/UnbakedModel;
-accessible field net/minecraft/client/renderer/block/model/BlockModel parentLocation Lnet/minecraft/resources/ResourceLocation;
-accessible field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
-mutable field net/minecraft/client/renderer/block/model/BlockModel parentLocation Lnet/minecraft/resources/ResourceLocation;
+extendable class net/minecraft/client/renderer/block/model/BlockModel
 # BlockModelWrapper
-accessible method net/minecraft/client/renderer/item/BlockModelWrapper <init> (Lnet/minecraft/client/resources/model/BakedModel;Ljava/util/List;)V
 accessible method net/minecraft/client/renderer/item/BlockModelWrapper hasSpecialAnimatedTexture (Lnet/minecraft/world/item/ItemStack;)Z
 # EntityModelSet
 accessible field net/minecraft/client/model/geom/EntityModelSet roots Ljava/util/Map;
@@ -35,11 +30,11 @@ accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
 # ModelBakery$ModelBakerImpl
-accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/ModelBakery$TextureGetter;Lnet/minecraft/client/resources/model/ModelDebugName;)V
+accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/SpriteGetter;)V
 accessible class net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl
-# ModelDiscovery$ResolverImpl
-accessible method net/minecraft/client/resources/model/ModelDiscovery$ResolverImpl <init> (Lnet/minecraft/client/resources/model/ModelDiscovery;)V
-accessible class net/minecraft/client/resources/model/ModelDiscovery$ResolverImpl
+# ModelDiscovery$ModelWrapper
+accessible method net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper <init> (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/model/UnbakedModel;Z)V
+accessible class net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper
 # ModelLayers
 accessible field net/minecraft/client/model/geom/ModelLayers ALL_MODELS Ljava/util/Set;
 # ModelPart
@@ -87,7 +82,7 @@ accessible field net/minecraft/client/renderer/RenderType$CompositeState texture
 accessible field net/minecraft/client/renderer/texture/SpriteContents originalImage Lcom/mojang/blaze3d/platform/NativeImage;
 accessible field net/minecraft/client/renderer/texture/SpriteContents byMipLevel [Lcom/mojang/blaze3d/platform/NativeImage;
 accessible field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
-accessible method net/minecraft/client/renderer/texture/SpriteContents upload (IIII[Lcom/mojang/blaze3d/platform/NativeImage;)V
+accessible method net/minecraft/client/renderer/texture/SpriteContents upload (IIII[Lcom/mojang/blaze3d/platform/NativeImage;Lcom/mojang/blaze3d/textures/GpuTexture;)V
 mutable field net/minecraft/client/renderer/texture/SpriteContents byMipLevel [Lcom/mojang/blaze3d/platform/NativeImage;
 mutable field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
 # SpriteContents$AnimatedTexture

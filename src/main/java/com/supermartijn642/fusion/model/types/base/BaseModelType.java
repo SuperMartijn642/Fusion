@@ -4,16 +4,16 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemModelGenerator;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.*;
+import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.item.ModelRenderProperties;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -45,17 +45,32 @@ public class BaseModelType implements ModelType<BaseModelData> {
     }
 
     @Override
-    public BakedModel bake(ModelBakingContext context, BaseModelData data){
+    public BlockStateModel bakeBlockModel(BlockModelBakingContext context, BaseModelData data){
         // Check for circular dependencies
         ((BaseModelDataImpl)data).validateParents(context);
         // Bake the quads
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getAmbientOcclusion, true);
-        boolean isGui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model instanceof ItemModelGenerator ? false : null, true);
-        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getGuiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, true);
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
-        ItemTransforms itemTransforms = new ItemTransforms(
+        // Finally, create the model
+        return new BaseBakedModel(
+            quads,
+            ambientOcclusion,
+            particleSprite
+        );
+    }
+
+    @Override
+    public ItemModel bakeItemModel(ItemModelBakingContext context, BaseModelData data){
+        // Check for circular dependencies
+        ((BaseModelDataImpl)data).validateParents(context);
+        // Bake the quads
+        List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
+        // Gather remaining model properties
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
+        ItemTransforms transforms = new ItemTransforms(
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIRST_PERSON_LEFT_HAND),
@@ -66,13 +81,10 @@ public class BaseModelType implements ModelType<BaseModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED)
         );
         // Finally, create the model
-        return new BaseBakedModel(
+        return new BaseItemModel(
+            context.getTintSources(),
             quads,
-            ambientOcclusion,
-            isGui3d,
-            usesBlockLight,
-            particleSprite,
-            itemTransforms
+            new ModelRenderProperties(usesBlockLight, particleSprite, transforms)
         );
     }
 
@@ -105,10 +117,16 @@ public class BaseModelType implements ModelType<BaseModelData> {
                 parents.add(ResourceLocation.parse(parent));
             }
             if(!parents.isEmpty())
-                model.parentLocation = parents.get(0);
+                model = new BlockModel(model.geometry(), model.guiLight(), model.ambientOcclusion(), model.transforms(), model.textureSlots(), parents.get(0));
         }
-        List<BaseModelElement> elements = new ArrayList<>(model.elements.size());
-        model.elements.forEach(element -> elements.add(new BaseModelElement(element.from, element.to, element.faces, element.rotation, element.shade, element.lightEmission)));
+        List<BaseModelElement> elements = List.of();
+        if(model.geometry() instanceof SimpleUnbakedGeometry(
+            List<net.minecraft.client.renderer.block.model.BlockElement> vanillaElements
+        )){
+            elements = new ArrayList<>(vanillaElements.size());
+            for(BlockElement element : vanillaElements)
+                elements.add(new BaseModelElement(element.from(), element.to(), element.faces(), element.rotation(), element.shade(), element.lightEmission()));
+        }
         return new BaseModelDataImpl(model, parents, elements);
     }
 

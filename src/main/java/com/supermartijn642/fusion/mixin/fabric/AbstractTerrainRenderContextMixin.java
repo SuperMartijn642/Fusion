@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
-import net.fabricmc.fabric.impl.client.indigo.renderer.render.AbstractBlockRenderContext;
+import net.fabricmc.fabric.impl.client.indigo.renderer.render.AbstractTerrainRenderContext;
 import net.fabricmc.fabric.impl.client.indigo.renderer.render.BlockRenderInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -14,30 +14,26 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Created 07/09/2024 by SuperMartijn642
  */
 @SuppressWarnings("UnstableApiUsage")
-@Mixin(AbstractBlockRenderContext.class)
-public class AbstractBlockRenderContextMixin {
+@Mixin(AbstractTerrainRenderContext.class)
+public class AbstractTerrainRenderContextMixin {
 
     @Final
     @Shadow(remap = false)
     private BlockRenderInfo blockInfo;
 
-    @ModifyVariable(
+    @Inject(
         method = "tintQuad",
-        at = @At(
-            value = "INVOKE_ASSIGN",
-            target = "Lnet/fabricmc/fabric/impl/client/indigo/renderer/render/BlockRenderInfo;blockColor(I)I",
-            shift = At.Shift.AFTER
-        ),
-        ordinal = 1,
+        at = @At("RETURN"),
         remap = false
     )
-    private int tintQuad(int blockColor, MutableQuadViewImpl quad){
+    private void tintQuad(MutableQuadViewImpl quad, CallbackInfo ci){
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.tintIndex() == 39216){
             TextureAtlasSprite sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
@@ -48,10 +44,12 @@ public class AbstractBlockRenderContextMixin {
             }
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
-                if(tinting != null)
-                    return QuadTintingHelper.getColor(tinting, this.blockInfo.blockState, this.blockInfo.blockView, this.blockInfo.blockPos);
+                if(tinting != null){
+                    int tint = QuadTintingHelper.getColor(tinting, this.blockInfo.blockState, this.blockInfo.blockView, this.blockInfo.blockPos);
+                    for(int i = 0; i < 4; i++)
+                        quad.color(i, net.minecraft.util.ARGB.multiply(quad.color(i), tint));
+                }
             }
         }
-        return blockColor;
     }
 }

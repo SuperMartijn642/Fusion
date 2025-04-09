@@ -31,7 +31,7 @@ public class ItemRendererMixin {
     private static void renderQuadList(CallbackInfo ci, @Local LocalRef<BakedQuad> quad, @Local(ordinal = 2) LocalIntRef color){
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.get().tintIndex == 39216){
-            TextureAtlasSprite sprite = quad.get().getSprite();
+            TextureAtlasSprite sprite = quad.get().sprite();
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
                 if(tinting != null)

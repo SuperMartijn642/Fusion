@@ -25,7 +25,7 @@ public class DefaultModelTypes {
     /**
      * Model type used for any unknown models added by other mods.
      */
-    public static final ModelType<UnbakedModel> UNKNOWN = new UnknownModelType();
+    public static final ModelType<UnbakedModel> UNKNOWN = new UnknownModelType<>();
     /**
      * Model type which extends the vanilla model with some common properties.
      */

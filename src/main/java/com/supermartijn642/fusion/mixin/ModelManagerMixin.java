@@ -1,11 +1,11 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.supermartijn642.fusion.model.FusionBlockModel;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.resources.model.ModelDiscovery;
 import net.minecraft.client.resources.model.ModelManager;
-import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,13 +23,17 @@ public class ModelManagerMixin {
 
     @Inject(
         method = "discoverModelDependencies",
-        at = @At("RETURN")
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/resources/model/ModelManager$ResolvedModels;<init>(Lnet/minecraft/client/resources/model/ResolvedModel;Ljava/util/Map;)V",
+            shift = At.Shift.BEFORE
+        )
     )
-    private static void registerBlockModelOverlays(CallbackInfoReturnable<ModelDiscovery> ci){
-        ModelDiscovery modelDiscovery = ci.getReturnValue();
-        UnbakedModel.Resolver resolver = modelDiscovery.new ResolverImpl();
-        BlockModelModifierReloadListener.INSTANCE.registerOverlays(resolver);
-        ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver);
+    private static void registerBlockModelOverlays(CallbackInfoReturnable<ModelDiscovery> ci, @Local ModelDiscovery modelDiscovery){
+        modelDiscovery.addRoot(resolver -> {
+            BlockModelModifierReloadListener.INSTANCE.registerOverlays(resolver);
+            ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver);
+        });
     }
 
     @Inject(

@@ -1,14 +1,14 @@
 package com.supermartijn642.fusion.mixin;
 
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.WeightedBakedModel;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.resources.model.WeightedVariants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
-import net.minecraft.util.random.SimpleWeightedRandomList;
+import net.minecraft.util.random.WeightedList;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
-import net.minecraftforge.client.extensions.IForgeBakedModel;
+import net.minecraftforge.client.extensions.IForgeBlockStateModel;
 import net.minecraftforge.client.model.data.ModelData;
 import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
@@ -24,24 +24,24 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created 26/10/2023 by SuperMartijn642
  */
-@Mixin(WeightedBakedModel.class)
-public class WeightedBakedModelMixin implements IForgeBakedModel {
+@Mixin(WeightedVariants.class)
+public class WeightedVariantsMixin implements IForgeBlockStateModel {
     @Final
     @Shadow
-    private SimpleWeightedRandomList<BakedModel> list;
+    private WeightedList<BlockStateModel> list;
 
     @Unique
-    private static final ConcurrentHashMap<Class<? extends IForgeBakedModel>,Boolean> MODELS_PRODUCING_DATA = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Class<? extends IForgeBlockStateModel>,Boolean> MODELS_PRODUCING_DATA = new ConcurrentHashMap<>();
 
     @Unique
     private boolean fusion$innerModelProducesData;
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo ci){
-        this.fusion$innerModelProducesData = this.list.unwrap().stream().anyMatch(w -> w.data() != null && MODELS_PRODUCING_DATA.computeIfAbsent(w.data().getClass(), clz -> {
+        this.fusion$innerModelProducesData = this.list.unwrap().stream().anyMatch(w -> w.value() != null && MODELS_PRODUCING_DATA.computeIfAbsent(w.value().getClass(), clz -> {
             try{
                 var method = clz.getMethod("getModelData", BlockAndTintGetter.class, BlockPos.class, BlockState.class, ModelData.class);
-                return method.getDeclaringClass() != IForgeBakedModel.class;
+                return method.getDeclaringClass() != IForgeBlockStateModel.class;
             }catch(NoSuchMethodException e){
                 // This should not happen, but if so, assume it does produce data
                 return true;
@@ -58,7 +58,7 @@ public class WeightedBakedModelMixin implements IForgeBakedModel {
         // Get the seed for the given block position
         RandomSource randomSource = new SingleThreadedRandomSource(state.getSeed(pos));
         // Update the model data for the selected sub model
-        BakedModel model = this.list.getRandomValue(randomSource).orElse(null);
+        BlockStateModel model = this.list.getRandom(randomSource).orElse(null);
         return model == null ? modelData : model.getModelData(level, pos, state, modelData);
     }
 }

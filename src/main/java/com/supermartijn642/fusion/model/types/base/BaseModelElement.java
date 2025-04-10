@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.block.model.BlockElementFace;
 import net.minecraft.client.renderer.block.model.BlockElementRotation;
 import net.minecraft.core.Direction;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.Map;
 
@@ -14,7 +14,7 @@ import java.util.Map;
  */
 public class BaseModelElement extends BlockElement {
 
-    public BaseModelElement(Vector3f from, Vector3f to, Map<Direction,BlockElementFace> faces, @Nullable BlockElementRotation rotation, boolean shade, int lightEmission){
+    public BaseModelElement(Vector3fc from, Vector3fc to, Map<Direction,BlockElementFace> faces, @Nullable BlockElementRotation rotation, boolean shade, int lightEmission){
         super(from, to, faces, rotation, shade, lightEmission);
     }
 }

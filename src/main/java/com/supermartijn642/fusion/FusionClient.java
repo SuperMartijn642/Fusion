@@ -38,9 +38,10 @@ public class FusionClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
 
-    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", null, null, 0, false, false, RenderType.CompositeState.builder().createCompositeState(false));
+    @SuppressWarnings("DataFlowIssue")
+    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", 0, null, RenderType.CompositeState.builder().createCompositeState(false));
 
-    public static void init(){
+    public static void init(FMLJavaModLoadingContext context){
         // Register default texture types
         FusionTextureTypeRegistry.registerTextureType(ResourceLocation.fromNamespaceAndPath("fusion", "vanilla"), DefaultTextureTypes.VANILLA);
         FusionTextureTypeRegistry.registerTextureType(ResourceLocation.fromNamespaceAndPath("fusion", "base"), DefaultTextureTypes.BASE);
@@ -95,7 +96,7 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
 
         // Register block model overlay reload listener
-        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<RegisterClientReloadListenersEvent>)event -> {
+        context.getModEventBus().addListener((Consumer<RegisterClientReloadListenersEvent>)event -> {
             // Forge's Mixin version doesn't allow for proper constructor mixins, so rather than registering our reload listener
             // before the model manager in the Minecraft constructor, use the resource manager internals to add it at a specific index
             ReloadableResourceManager resourceManager = (ReloadableResourceManager)Minecraft.getInstance().getResourceManager();
@@ -116,7 +117,7 @@ public class FusionClient {
         });
 
         // Integration with FramedBlocks
-        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.BLOCK_CACHE_PROPERTY));
+        context.getModEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.BLOCK_CACHE_PROPERTY));
     }
 
     public static RenderType getRenderTypeMaterial(BaseTextureData.RenderType renderType){

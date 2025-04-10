@@ -2,14 +2,16 @@ package com.supermartijn642.fusion.model.types.base;
 
 import com.google.common.collect.ImmutableList;
 import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.QuadCollection;
+import net.minecraft.client.resources.model.UnbakedGeometry;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -52,13 +54,13 @@ public class BaseModelDataImpl implements BaseModelData {
         return this.elements;
     }
 
-    public void validateParents(ModelBakingContext context){
+    public void validateParents(BlockModelBakingContext context){
         List<ResourceLocation> encounteredModels = new ArrayList<>();
         for(ResourceLocation parent : this.parents)
             this.validateParents(context, parent, encounteredModels);
     }
 
-    private void validateParents(ModelBakingContext context, ResourceLocation modelLocation, List<ResourceLocation> encounteredModels){
+    private void validateParents(BlockModelBakingContext context, ResourceLocation modelLocation, List<ResourceLocation> encounteredModels){
         if(encounteredModels.contains(modelLocation))
             throw new IllegalStateException("Unable to bake model '" + context.getModelIdentifier() + "' due to circular dependency " + encounteredModels.stream().map(o -> "'" + o + "'").collect(Collectors.joining("->")) + "->'" + modelLocation + "'!");
         encounteredModels.add(modelLocation);
@@ -72,12 +74,12 @@ public class BaseModelDataImpl implements BaseModelData {
         encounteredModels.remove(encounteredModels.size() - 1);
     }
 
-    public <T> T findProperty(ModelBakingContext context, Function<UnbakedModel,T> property, T defaultValue){
+    public <T> T findProperty(BlockModelBakingContext context, Function<UnbakedModel,T> property, T defaultValue){
         T value = this.findProperty(context, ModelInstance.of(DefaultModelTypes.BASE, this), property);
         return value == null ? defaultValue : value;
     }
 
-    private <T> T findProperty(ModelBakingContext context, ModelInstance<?> model, Function<UnbakedModel,T> property){
+    private <T> T findProperty(BlockModelBakingContext context, ModelInstance<?> model, Function<UnbakedModel,T> property){
         UnbakedModel vanillaModel = model.getAsVanillaModel();
         if(vanillaModel != null){
             T value = property.apply(vanillaModel);
@@ -96,11 +98,11 @@ public class BaseModelDataImpl implements BaseModelData {
         return null;
     }
 
-    public ItemTransform findItemTransform(ModelBakingContext context, ItemDisplayContext transformType){
+    public ItemTransform findItemTransform(BlockModelBakingContext context, ItemDisplayContext transformType){
         return this.findProperty(
             context,
             model -> {
-                ItemTransforms transforms = model.getTransforms();
+                ItemTransforms transforms = model.transforms();
                 if(transforms == null || transforms.getTransform(transformType) == ItemTransform.NO_TRANSFORM)
                     return null;
                 return transforms.getTransform(transformType);
@@ -109,7 +111,7 @@ public class BaseModelDataImpl implements BaseModelData {
         );
     }
 
-    public SpriteIdentifier findParticleSprite(ModelBakingContext context){
+    public SpriteIdentifier findParticleSprite(BlockModelBakingContext context){
         ModelInstance<?> model = ModelInstance.of(DefaultModelTypes.BASE, this);
 
         // Repeatedly resolve key references until we get to a texture
@@ -118,7 +120,7 @@ public class BaseModelDataImpl implements BaseModelData {
         String currentKey = "particle";
         while(true){
             String finalCurrentKey = currentKey;
-            TextureSlots.SlotContents contents = this.findProperty(context, model, m -> m.getTextureSlots().values().get(finalCurrentKey));
+            TextureSlots.SlotContents contents = this.findProperty(context, model, m -> m.textureSlots().values().get(finalCurrentKey));
             // If a key could not be found, return the missing texture
             if(contents == null)
                 return SpriteIdentifier.missing();
@@ -137,53 +139,60 @@ public class BaseModelDataImpl implements BaseModelData {
         }
     }
 
-    public List<BaseModelQuad> bakeQuads(ModelBakingContext context){
+    public List<BaseModelQuad> bakeQuads(BlockModelBakingContext context){
         List<BaseModelQuad> quads = new ArrayList<>();
-        this.bakeQuads(context, ModelInstance.of(DefaultModelTypes.BASE, this), new LinkedList<>(), quads::add);
+        this.bakeQuads(context, ModelInstance.of(DefaultModelTypes.BASE, this), context.getModelIdentifier(), new LinkedList<>(), quads::add);
         return quads;
     }
 
-    private void bakeQuads(ModelBakingContext context, ModelInstance<?> model, Deque<ModelInstance<?>> modelStack, Consumer<BaseModelQuad> output){
+    private void bakeQuads(BlockModelBakingContext context, ModelInstance<?> model, ResourceLocation modelLocation, Deque<ModelInstance<?>> modelStack, Consumer<BaseModelQuad> output){
         modelStack.addLast(model);
 
         // If the model has elements, bake them
-        List<? extends BlockElement> elements = null;
         if(model.getModelType() == DefaultModelTypes.BASE || model.getModelType() == DefaultModelTypes.CONNECTING){
-            elements = ((BaseModelDataImpl)model.getModelData()).elements;
-        }else{
-            UnbakedModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel instanceof ItemModelGenerator)
-                elements = this.generateItemModel(context, modelStack, (ItemModelGenerator)vanillaModel);
-            else if(vanillaModel instanceof BlockModel)
-                elements = ((BlockModel)vanillaModel).elements;
-        }
-        if(elements != null && !elements.isEmpty()){
-            // Bake the faces of each element
-            for(BlockElement element : elements){
-                for(Direction direction : element.faces.keySet()){
-                    BlockElementFace face = element.faces.get(direction);
-                    TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                    BakedQuad quad = FaceBakery.bakeQuad(element.from, element.to, face, sprite, direction, context.getTransformation(), element.rotation, element.shade, element.lightEmission);
-                    Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().getRotation().getMatrix(), face.cullForDirection()) : null;
-                    output.accept(new BaseModelQuad(quad, cullDirection));
+            List<? extends BlockElement> elements = ((BaseModelDataImpl)model.getModelData()).elements;
+            if(elements != null && !elements.isEmpty()){
+                // Bake the faces of each element
+                for(BlockElement element : elements){
+                    for(Direction direction : element.faces().keySet()){
+                        BlockElementFace face = element.faces().get(direction);
+                        TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
+                        BakedQuad quad = FaceBakery.bakeQuad(element.from(), element.to(), face, sprite, direction, context.getTransformation(), element.rotation(), element.shade(), element.lightEmission());
+                        Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().transformation().getMatrix(), face.cullForDirection()) : null;
+                        output.accept(new BaseModelQuad(quad, cullDirection));
+                    }
                 }
+                // If the model had elements, ignore parent models' elements
+                modelStack.pop();
+                return;
             }
-            // If the model had elements, ignore parent models' elements
-            modelStack.pop();
-            return;
+        }
+
+        // Try and bake the model as a vanilla model
+        UnbakedModel vanillaModel = model.getAsVanillaModel();
+        if(vanillaModel != null){
+            UnbakedGeometry geometry = vanillaModel.geometry();
+            if(geometry != null){
+                QuadCollection quads = geometry.bake(new TextureSlots(context.getTopLevelTextureReferences()), context.getModelBaker(), context.getTransformation(), modelLocation::toString);
+                quads.getQuads(null).forEach(quad -> output.accept(new BaseModelQuad(quad, null)));
+                for(Direction cullDirection : Direction.values())
+                    quads.getQuads(cullDirection).forEach(quad -> output.accept(new BaseModelQuad(quad, cullDirection)));
+                modelStack.pop();
+                return;
+            }
         }
 
         // If the model has no elements, check for parents
         for(ResourceLocation location : model.getParentModels()){
             ModelInstance<?> dependency = context.getModel(location);
             if(dependency != null)
-                this.bakeQuads(context, dependency, modelStack, output);
+                this.bakeQuads(context, dependency, location, modelStack, output);
         }
 
         modelStack.removeLast();
     }
 
-    protected SpriteIdentifier resolveMaterial(ModelBakingContext context, Deque<ModelInstance<?>> modelStack, String key){
+    protected SpriteIdentifier resolveMaterial(BlockModelBakingContext context, Deque<ModelInstance<?>> modelStack, String key){
         if(key.charAt(0) == '#')
             key = key.substring(1);
 
@@ -198,14 +207,14 @@ public class BaseModelDataImpl implements BaseModelData {
                 UnbakedModel vanillaModel = model.getAsVanillaModel();
                 if(vanillaModel == null)
                     continue;
-                contents = vanillaModel.getTextureSlots().values().get(currentKey);
+                contents = vanillaModel.textureSlots().values().get(currentKey);
                 if(contents != null)
                     break;
             }
             // If no value is found, check the parents of the last model
             if(contents == null){
                 String finalCurrentKey = currentKey;
-                contents = this.findProperty(context, modelStack.getLast(), model -> model.getTextureSlots().values().get(finalCurrentKey));
+                contents = this.findProperty(context, modelStack.getLast(), model -> model.textureSlots().values().get(finalCurrentKey));
             }
             // If a key could not be found, return the missing texture
             if(contents == null)
@@ -225,7 +234,7 @@ public class BaseModelDataImpl implements BaseModelData {
         }
     }
 
-    protected List<BlockElement> generateItemModel(ModelBakingContext context, Deque<ModelInstance<?>> modelStack, ItemModelGenerator generator){
+    protected List<BlockElement> generateItemModel(BlockModelBakingContext context, Deque<ModelInstance<?>> modelStack){
         List<BlockElement> elements = new ArrayList<>();
         for(int layer = 0; layer < ItemModelGenerator.LAYERS.size(); layer++){
             String layerName = ItemModelGenerator.LAYERS.get(layer);
@@ -234,7 +243,7 @@ public class BaseModelDataImpl implements BaseModelData {
                 break;
 
             SpriteContents spriteContents = context.getTexture(sprite).contents();
-            elements.addAll(generator.processFrames(layer, layerName, spriteContents));
+            elements.addAll(ItemModelGenerator.processFrames(layer, layerName, spriteContents));
         }
         return elements;
     }

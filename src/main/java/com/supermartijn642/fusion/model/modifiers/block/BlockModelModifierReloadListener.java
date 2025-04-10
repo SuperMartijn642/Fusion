@@ -9,8 +9,11 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.block.BlockModelShaper;
-import net.minecraft.client.resources.model.*;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.block.model.SingleVariant;
+import net.minecraft.client.renderer.block.model.Variant;
+import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
@@ -37,27 +40,27 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
 
     public static final BlockModelModifierReloadListener INSTANCE = new BlockModelModifierReloadListener();
 
-    private final Map<ModelResourceLocation,Properties> models = new HashMap<>();
+    private final Map<BlockState,Properties> models = new HashMap<>();
 
     private BlockModelModifierReloadListener(){
     }
 
-    public void registerOverlays(UnbakedModel.Resolver resolver){
+    public void registerOverlays(ResolvableModel.Resolver resolver){
         Set<ResourceLocation> models = new HashSet<>();
         for(Properties properties : this.models.values())
             models.addAll(properties.appendModels);
-        models.forEach(resolver::resolve);
+        models.forEach(resolver::markDependency);
     }
 
     public void applyOverlays(ModelBakery.BakingResult results, ModelBakery.ModelBakerImpl resolver){
-        Map<ModelResourceLocation,BakedModel> bakedModels = results.blockStateModels();
-        for(Map.Entry<ModelResourceLocation,Properties> entry : this.models.entrySet()){
-            ModelResourceLocation target = entry.getKey();
-            BakedModel targetModel = bakedModels.get(target);
+        Map<BlockState,BlockStateModel> bakedModels = results.blockStateModels();
+        for(Map.Entry<BlockState,Properties> entry : this.models.entrySet()){
+            BlockState target = entry.getKey();
+            BlockStateModel targetModel = bakedModels.get(target);
             Properties properties = entry.getValue();
             List<ResourceLocation> overlays = properties.appendModels;
-            List<BakedModel> overlayModels = overlays.stream().map(l -> resolver.bake(l, BlockModelRotation.X0_Y0)).toList();
-            BakedModel model = new BlockModelModifierBakedModel(targetModel, overlayModels);
+            List<BlockStateModel> overlayModels = overlays.stream().map(l -> new SingleVariant.Unbaked(new Variant(l, Variant.SimpleModelState.DEFAULT)).bake(resolver)).toList();
+            BlockStateModel model = new BlockModelModifierBakedModel(targetModel, overlayModels);
             if(properties.paneCullingFix)
                 model = new PaneCullingBakedModel(model);
             bakedModels.put(target, model);
@@ -106,7 +109,7 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
         if(!json.has("targets") || !json.get("targets").isJsonArray())
             throw new JsonParseException("Model overlay must have array property 'targets'!");
         JsonArray targetsJson = json.getAsJsonArray("targets");
-        Set<ModelResourceLocation> targets = new HashSet<>();
+        Set<BlockState> targets = new HashSet<>();
         for(JsonElement element : targetsJson){
             if(element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()){ // Handle simple strings
                 if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
@@ -115,14 +118,10 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
                 Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
                 if(block.isEmpty())
                     throw new JsonParseException("Could not find a block for model overlay target '" + identifier + "'!");
-                block.get().getStateDefinition().getPossibleStates().stream()
-                    .map(BlockModelShaper::stateToModelLocation)
-                    .forEach(targets::add);
-            }else if(element.isJsonObject()){ // Handle blocks with specific state properties
-                this.parseTarget(element.getAsJsonObject())
-                    .map(BlockModelShaper::stateToModelLocation)
-                    .forEach(targets::add);
-            }else
+                targets.addAll(block.get().getStateDefinition().getPossibleStates());
+            }else if(element.isJsonObject()) // Handle blocks with specific state properties
+                this.parseTarget(element.getAsJsonObject()).forEach(targets::add);
+            else
                 throw new JsonParseException("Model overlay 'targets' array must only contain objects and strings!");
         }
         if(targets.isEmpty())
@@ -136,7 +135,7 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
         Set<ResourceLocation> models = new LinkedHashSet<>(); // This should maintain order
         if(json.has("append")){
             if(!json.get("append").isJsonArray())
-                throw new JsonParseException("Model overlay must have array property 'append'!");
+                throw new JsonParseException("Property 'append' must be an array!");
             JsonArray appendJson = json.getAsJsonArray("append");
             for(JsonElement element : appendJson){
                 if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
@@ -159,7 +158,7 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
             return;
 
         // Put the properties into the map
-        for(ModelResourceLocation target : targets){
+        for(BlockState target : targets){
             Properties properties = this.models.computeIfAbsent(target, t -> new Properties());
             properties.appendModels.addAll(models);
             properties.paneCullingFix = paneCullingFix;

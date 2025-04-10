@@ -18,9 +18,9 @@ import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -36,10 +36,11 @@ import java.util.*;
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class ConnectingBakedModel implements BakedModel {
+public class ConnectingBakedModel implements BlockStateModel {
 
     public static final ModelProperty<SurroundingBlockCache> BLOCK_CACHE_PROPERTY = new ModelProperty<>();
     public static final ModelProperty<BlockPos> POSITION_PROPERTY = new ModelProperty<>();
+    public static final ModelProperty<BlockState> STATE_PROPERTY = new ModelProperty<>();
     private static final int VERTEX_SIZE, VERTEX_UV_OFFSET, VERTEX_POSITION_OFFSET;
     /**
      * Stores world space vector point in the up and right direction of the default texture orientation for each face
@@ -81,15 +82,15 @@ public class ConnectingBakedModel implements BakedModel {
 
     private static float[] getUV(BakedQuad quad, int vertexIndex){
         int offset = vertexIndex * VERTEX_SIZE + VERTEX_UV_OFFSET;
-        return new float[]{Float.intBitsToFloat(quad.getVertices()[offset]), Float.intBitsToFloat(quad.getVertices()[offset + 1])};
+        return new float[]{Float.intBitsToFloat(quad.vertices()[offset]), Float.intBitsToFloat(quad.vertices()[offset + 1])};
     }
 
     private static float[] getPosition(BakedQuad quad, int vertexIndex){
         int offset = vertexIndex * VERTEX_SIZE + VERTEX_POSITION_OFFSET;
         return new float[]{
-            Float.intBitsToFloat(quad.getVertices()[offset]),
-            Float.intBitsToFloat(quad.getVertices()[offset + 1]),
-            Float.intBitsToFloat(quad.getVertices()[offset + 2])
+            Float.intBitsToFloat(quad.vertices()[offset]),
+            Float.intBitsToFloat(quad.vertices()[offset + 1]),
+            Float.intBitsToFloat(quad.vertices()[offset + 2])
         };
     }
 
@@ -101,17 +102,11 @@ public class ConnectingBakedModel implements BakedModel {
     private final List<TextureAtlasSprite> sprites;
     private final boolean hasSpecialQuads;
     private final boolean hasAmbientOcclusion;
-    private final boolean isGui3d;
-    private final boolean usesBlockLight;
     private final TextureAtlasSprite particleIcon;
-    private final ItemTransforms transforms;
 
-    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms){
+    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, TextureAtlasSprite particleIcon, RenderType forgeRenderType){
         this.hasAmbientOcclusion = hasAmbientOcclusion;
-        this.isGui3d = isGui3d;
-        this.usesBlockLight = usesBlockLight;
         this.particleIcon = particleIcon;
-        this.transforms = transforms;
 
         // Create block and item meshes from the quads
         Map<RenderType,List<TaggedBakedQuad>[]> blockMesh = new HashMap<>();
@@ -127,7 +122,7 @@ public class ConnectingBakedModel implements BakedModel {
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times
             int auxiliaryQuadCount = 0;
             if(quad.hasConnectingTexture()){
-                Direction direction = quad.bakedQuad().getDirection();
+                Direction direction = quad.bakedQuad().direction();
                 TextureOrientation orientation = findOrientation(quad.bakedQuad());
                 ConnectionPredicate predicate = quad.connectionPredicate();
                 // Get the number of auxiliary quads needed
@@ -135,12 +130,12 @@ public class ConnectingBakedModel implements BakedModel {
                 // Give each combination of direction, orientation, and predicate a unique index
                 predicateIndex = predicates.computeIfAbsent(new QuadPredicates(direction, orientation, predicate), o -> predicates.size());
                 // Give each sprite a unique index
-                spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
+                spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().sprite(), o -> sprites.size());
             }
             // Tag quads which need additional processing
             if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
                 // Give each sprite a unique index
-                spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
+                spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().sprite(), o -> sprites.size());
                 hasSpecialQuads = true;
             }
             // Submit the quads
@@ -152,6 +147,8 @@ public class ConnectingBakedModel implements BakedModel {
                 // Add the block quad
                 TaggedBakedQuad finishedQuad = new TaggedBakedQuad(mutableQuad.toBakedQuad(), textureType, spriteIndex, predicateIndex, quadIndex);
                 RenderType renderType = FusionClient.getRenderTypeMaterial(quad.renderType());
+                if(renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER && forgeRenderType != null)
+                    renderType = forgeRenderType;
                 blockRenderTypes.add(renderType);
                 int cullIndex = cullIndex(quad.cullDirection());
                 //noinspection unchecked
@@ -195,7 +192,7 @@ public class ConnectingBakedModel implements BakedModel {
         float[][] positions3d = {getPosition(quad, 0), getPosition(quad, 1), getPosition(quad, 2), getPosition(quad, 3)};
         // Project the 3d positions onto the plane perpendicular to the facing of the quad
         float[][] pos = new float[4][2];
-        Direction direction = quad.getDirection();
+        Direction direction = quad.direction();
         for(int i = 0; i < 4; i++){
             if(direction == Direction.DOWN){
                 pos[i][0] = positions3d[i][0];
@@ -237,14 +234,43 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random, ModelData data, @Nullable RenderType renderType){
+    public List<BlockModelPart> collectParts(RandomSource random, ModelData data, @Nullable RenderType renderType){
+        return List.of(new BlockModelPart() {
+            @Override
+            public List<BakedQuad> getQuads(@Nullable Direction cullDirection){
+                return ConnectingBakedModel.this.getQuads(data.get(STATE_PROPERTY), cullDirection, random, data, renderType);
+            }
+
+            @Override
+            public boolean useAmbientOcclusion(){
+                return ConnectingBakedModel.this.hasAmbientOcclusion;
+            }
+
+            @Override
+            public TextureAtlasSprite particleIcon(){
+                return ConnectingBakedModel.this.particleIcon;
+            }
+        });
+    }
+
+    @Override
+    public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData data, @Nullable RenderType renderType){
+        parts.addAll(this.collectParts(random, data, renderType));
+    }
+
+    @Override
+    public void collectParts(RandomSource random, List<BlockModelPart> parts){
+        parts.addAll(this.collectParts(random, ModelData.EMPTY, null));
+    }
+
+    private List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random, ModelData data, @Nullable RenderType renderType){
         List<TaggedBakedQuad> quads;
         if(renderType == null)
             quads = this.completeBlockMesh[cullIndex(cullDirection)];
         else{
             List<TaggedBakedQuad>[] mesh = this.blockMesh.get(renderType);
             quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
-            //noinspection deprecation
+            //noinspection removal
             if(this.shouldCheckOriginalBlockRenderTypes && state != null && ItemBlockRenderTypes.getRenderLayers(state).contains(renderType)){
                 mesh = this.blockMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
                 List<TaggedBakedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
@@ -302,10 +328,10 @@ public class ConnectingBakedModel implements BakedModel {
                 mutableQuad.resetPermutation();
                 if(quad.textureType == DefaultTextureTypes.RANDOM)
                     // Handle random texture type
-                    RandomTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getDirection(), random, (RandomTextureSprite)sprite);
+                    RandomTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.direction(), random, (RandomTextureSprite)sprite);
                 else
                     // Handle continuous texture type
-                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getDirection(), (ContinuousTextureSprite)sprite);
+                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.direction(), (ContinuousTextureSprite)sprite);
                 bakedQuads.add(mutableQuad.toBakedQuad());
             }
             // Process connecting textures
@@ -374,15 +400,10 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random){
-        return this.getQuads(state, side, random, ModelData.EMPTY, null);
-    }
-
-    @Override
     public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData data){
         if(this.shouldCheckOriginalBlockRenderTypes){
             // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
-            //noinspection deprecation
+            //noinspection removal
             return ChunkRenderTypeSet.union(
                 ItemBlockRenderTypes.getRenderLayers(state),
                 this.blockRenderTypes
@@ -393,7 +414,7 @@ public class ConnectingBakedModel implements BakedModel {
 
     @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
-        if(this.predicates.isEmpty() && !this.hasSpecialQuads)
+        if(this.predicates.isEmpty() && !this.hasSpecialQuads && !this.shouldCheckOriginalBlockRenderTypes)
             return ModelData.EMPTY;
         ModelData.Builder builder = ModelData.builder();
         // Add position of the block
@@ -405,32 +426,12 @@ public class ConnectingBakedModel implements BakedModel {
             blockCache.fillAll();
             builder.with(BLOCK_CACHE_PROPERTY, blockCache);
         }
-        return builder.build();
+        return builder.with(STATE_PROPERTY, state).build();
     }
 
     @Override
-    public boolean useAmbientOcclusion(){
-        return this.hasAmbientOcclusion;
-    }
-
-    @Override
-    public boolean isGui3d(){
-        return this.isGui3d;
-    }
-
-    @Override
-    public boolean usesBlockLight(){
-        return this.usesBlockLight;
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon(){
+    public TextureAtlasSprite particleIcon(){
         return this.particleIcon;
-    }
-
-    @Override
-    public ItemTransforms getTransforms(){
-        return this.transforms;
     }
 
     private static int cullIndex(Direction cullDirection){
@@ -465,7 +466,7 @@ public class ConnectingBakedModel implements BakedModel {
         }
     }
 
-    private enum TextureOrientation {
+    enum TextureOrientation {
         NORMAL_0(false, 0), NORMAL_90(false, 1), NORMAL_180(false, 2), NORMAL_270(false, 3),
         FLIPPED_0(true, 0), FLIPPED_90(false, 1), FLIPPED_180(true, 2), FLIPPED_270(true, 3);
 

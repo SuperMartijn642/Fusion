@@ -1,7 +1,6 @@
 package com.supermartijn642.fusion.resources;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.extensions.PackExtension;
@@ -101,9 +100,7 @@ public class MinimumVersionWarningScreen extends Screen {
 
         // Title
         int titleLeft = -(this.titleWidth + 17) / 2;
-        RenderSystem.enableBlend();
         graphics.blit(RenderType::guiTextured, FUSION_LOGO, titleLeft, 0, 0, 0, 12, 12, 12, 12);
-        RenderSystem.disableBlend();
         graphics.drawString(this.font, this.title, titleLeft + 17, 2, -1);
 
         // Content

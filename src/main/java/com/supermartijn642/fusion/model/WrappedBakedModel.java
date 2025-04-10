@@ -1,15 +1,11 @@
 package com.supermartijn642.fusion.model;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
@@ -22,76 +18,51 @@ import java.util.List;
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class WrappedBakedModel implements BakedModel {
+public class WrappedBakedModel implements BlockStateModel {
 
-    protected final BakedModel original;
+    protected final BlockStateModel original;
 
-    public WrappedBakedModel(BakedModel original){
+    public WrappedBakedModel(BlockStateModel original){
         this.original = original;
     }
 
     @Override
-    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType){
-        return this.original.getQuads(state, cullDirection, random, data, renderType);
+    public List<BlockModelPart> collectParts(RandomSource random){
+        return this.original.collectParts(random);
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random){
-        return this.original.getQuads(state, cullDirection, random);
+    public void collectParts(RandomSource random, List<BlockModelPart> parts){
+        this.original.collectParts(random, parts);
     }
 
     @Override
-    public boolean useAmbientOcclusion(){
-        return this.original.useAmbientOcclusion();
+    public TextureAtlasSprite particleIcon(){
+        return this.original.particleIcon();
     }
 
     @Override
-    public boolean isGui3d(){
-        return this.original.isGui3d();
+    public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
+        return this.original.getModelData(level, pos, state, modelData);
     }
 
     @Override
-    public boolean usesBlockLight(){
-        return this.original.usesBlockLight();
+    public TextureAtlasSprite particleIcon(@NotNull ModelData data){
+        return this.original.particleIcon(data);
     }
 
     @Override
-    public TextureAtlasSprite getParticleIcon(){
-        return this.original.getParticleIcon();
+    public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource random, @NotNull ModelData data){
+        return this.original.getRenderTypes(state, random, data);
     }
 
     @Override
-    public ItemTransforms getTransforms(){
-        return this.original.getTransforms();
+    public List<BlockModelPart> collectParts(RandomSource random, ModelData data, @Nullable RenderType renderType){
+        return this.original.collectParts(random, data, renderType);
     }
 
     @Override
-    public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
-        return this.original.getRenderTypes(state, rand, data);
-    }
-
-    @Override
-    public boolean useAmbientOcclusion(BlockState state){
-        return this.original.useAmbientOcclusion(state);
-    }
-
-    @Override
-    public boolean useAmbientOcclusion(BlockState state, RenderType renderType){
-        return this.original.useAmbientOcclusion(state, renderType);
-    }
-
-    @Override
-    public BakedModel applyTransform(ItemDisplayContext transformType, PoseStack poseStack, boolean applyLeftHandTransform){
-        return this.original.applyTransform(transformType, poseStack, applyLeftHandTransform);
-    }
-
-    @Override
-    public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
-        return this.original.getModelData(level, pos, state, data);
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon(ModelData data){
-        return this.original.getParticleIcon(data);
+    public void collectParts(RandomSource random, List<BlockModelPart> dest, ModelData data, @Nullable RenderType renderType){
+        this.original.collectParts(random, dest, data, renderType);
     }
 }

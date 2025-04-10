@@ -1,15 +1,22 @@
 package com.supermartijn642.fusion.model;
 
+import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import net.minecraft.client.color.item.ItemTintSource;
+import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.block.model.TextureSlots;
+import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.client.model.ForgeBlockModelData;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -19,16 +26,6 @@ import java.util.*;
 public class FusionBlockModel extends BlockModel {
 
     public static final ThreadLocal<ResourceLocation> CURRENT_MODEL = new ThreadLocal<>();
-    public static final UnbakedModel DUMMY_MODEL = new UnbakedModel() {
-        @Override
-        public void resolveDependencies(Resolver resolver){
-        }
-
-        @Override
-        public BakedModel bake(TextureSlots textures, ModelBaker baker, ModelState modelTransform, boolean ambientOcclusion, boolean useBlockLighting, ItemTransforms itemTransforms){
-            return null;
-        }
-    };
 
     private final ResourceLocation name;
     private final ModelInstance<?> model;
@@ -37,22 +34,65 @@ public class FusionBlockModel extends BlockModel {
     private Map<ResourceLocation,UnbakedModel> resolvedDependencies;
 
     public FusionBlockModel(ModelInstance<?> model){
-        super(null, Collections.emptyList(), new TextureSlots.Data(Collections.emptyMap()), false, null, ItemTransforms.NO_TRANSFORMS);
+        super(null, null, null, null, new TextureSlots.Data(Map.of()), null);
         ResourceLocation name = CURRENT_MODEL.get();
         this.name = name == null ? IdentifierUtil.withFusionNamespace("unknown") : name;
         this.model = model;
         this.vanillaModel = model.getAsVanillaModel();
     }
 
-    @Override
-    public BakedModel bake(TextureSlots textures, ModelBaker baker, ModelState modelTransform, boolean ambientOcclusion, boolean useBlockLighting, ItemTransforms itemTransforms){
+    public BlockStateModel bakeBlockModel(ResolvedModel wrapper, ModelBaker modelBakery, ModelState modelState){
+        this.resolveDependencies(modelBakery);
+        // Create baking context
+        BlockModelBakingContext context = new BlockModelBakingContextImpl(
+            modelBakery,
+            material -> modelBakery.sprites().get(material, wrapper),
+            modelState,
+            this.name,
+            this.resolvedDependencies,
+            wrapper.getTopTextureSlots().resolvedValues,
+            wrapper.getTopAmbientOcclusion(),
+            wrapper.getTopGuiLight().lightLikeBlock(),
+            wrapper.getTopTransforms(),
+            wrapper.getTopGeometry(),
+            wrapper.getContext()
+        );
         // Let the custom model handle the actual baking
-        ModelBakingContext context = new ModelBakingContextImpl(baker, baker.sprites()::get, modelTransform, this.name, this.resolvedDependencies, textures.resolvedValues, ambientOcclusion, useBlockLighting, itemTransforms);
-        return this.model.bake(context);
+        try{
+            return this.model.bakeBlockModel(context);
+        }catch(Exception e){
+            throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
+        }
     }
 
-    @Override
-    public void resolveDependencies(Resolver resolver){
+    public ItemModel bakeItemModel(ResolvedModel wrapper, ModelBaker modelBakery, List<ItemTintSource> tintSources, EntityModelSet entityModelSet){
+        this.resolveDependencies(modelBakery);
+        // Create baking context
+        ItemModelBakingContext context = new ItemModelBakingContextImpl(
+            modelBakery,
+            material -> modelBakery.sprites().get(material, wrapper),
+            this.name,
+            this.resolvedDependencies,
+            wrapper.getTopTextureSlots().resolvedValues,
+            wrapper.getTopAmbientOcclusion(),
+            wrapper.getTopGuiLight().lightLikeBlock(),
+            wrapper.getTopTransforms(),
+            wrapper.getTopGeometry(),
+            wrapper.getContext(),
+            tintSources,
+            entityModelSet
+        );
+        // Let the custom model handle the actual baking
+        try{
+            return this.model.bakeItemModel(context);
+        }catch(Exception e){
+            throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
+        }
+    }
+
+    private Map<ResourceLocation,UnbakedModel> resolveDependencies(ModelBaker modelBaker){
+        if(this.resolvedDependencies != null)
+            return this.resolvedDependencies;
         // Get the direct dependencies from the model
         if(this.dependencies == null){
             try{
@@ -65,28 +105,25 @@ public class FusionBlockModel extends BlockModel {
         }
         this.resolvedDependencies = new HashMap<>(this.dependencies.size());
         for(ResourceLocation location : this.dependencies)
-            this.resolvedDependencies.put(location, resolver.resolve(location));
+            this.resolvedDependencies.put(location, modelBaker.getModel(location).wrapped());
         // Recursively gather all dependencies for the model
         Deque<ResourceLocation> unresolved = new LinkedList<>(this.dependencies);
-        Resolver trackingResolver = location -> {
-            UnbakedModel model = resolver.resolve(location);
-            if(!this.resolvedDependencies.containsKey(location)){
-                unresolved.add(location);
-                this.resolvedDependencies.put(location, resolver.resolve(location));
-            }
-            return model;
-        };
         while(!unresolved.isEmpty()){
             ResourceLocation location = unresolved.removeFirst();
-            this.resolvedDependencies.get(location).resolveDependencies(trackingResolver);
+            UnbakedModel unbakedModel = this.resolvedDependencies.get(location);
+            if(unbakedModel instanceof FusionBlockModel fusionBlockModel)
+                this.resolvedDependencies.putAll(fusionBlockModel.resolveDependencies(modelBaker));
+            else{
+                ResourceLocation parent = unbakedModel.parent();
+                if(parent != null){
+                    this.resolvedDependencies.put(parent, modelBaker.getModel(parent).wrapped());
+                    unresolved.add(parent);
+                }
+            }
         }
         // Always add missing model
-        this.resolvedDependencies.put(MissingBlockModel.LOCATION, resolver.resolve(MissingBlockModel.LOCATION));
-
-        // Apply parent for vanilla model
-        UnbakedModel vanillaModel = this.model.getAsVanillaModel();
-        if(vanillaModel != null)
-            vanillaModel.resolveDependencies(resolver);
+        this.resolvedDependencies.put(MissingBlockModel.LOCATION, modelBaker.getModel(MissingBlockModel.LOCATION).wrapped());
+        return this.resolvedDependencies;
     }
 
     public boolean hasVanillaModel(){
@@ -95,6 +132,41 @@ public class FusionBlockModel extends BlockModel {
 
     public UnbakedModel getVanillaModel(){
         return this.vanillaModel;
+    }
+
+    @Override
+    public @Nullable UnbakedGeometry geometry(){
+        return this.vanillaModel == null ? null : this.vanillaModel.geometry();
+    }
+
+    @Override
+    public @Nullable GuiLight guiLight(){
+        return this.vanillaModel == null ? null : this.vanillaModel.guiLight();
+    }
+
+    @Override
+    public @Nullable Boolean ambientOcclusion(){
+        return this.vanillaModel == null ? null : this.vanillaModel.ambientOcclusion();
+    }
+
+    @Override
+    public @Nullable ItemTransforms transforms(){
+        return this.vanillaModel == null ? null : this.vanillaModel.transforms();
+    }
+
+    @Override
+    public TextureSlots.Data textureSlots(){
+        return this.vanillaModel == null ? new TextureSlots.Data(Map.of()) : this.vanillaModel.textureSlots();
+    }
+
+    @Override
+    public @Nullable ResourceLocation parent(){
+        return this.vanillaModel == null ? null : this.vanillaModel.parent();
+    }
+
+    @Override
+    public @Nullable ForgeBlockModelData forgeData(){
+        return this.vanillaModel instanceof BlockModel ? ((BlockModel)this.vanillaModel).forgeData() : null;
     }
 
     public static ModelInstance<?> getModelInstance(UnbakedModel model){

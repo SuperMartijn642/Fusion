@@ -1,153 +1,94 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
-import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.BlockModelPart;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.block.model.SingleVariant;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.SimpleBakedModel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.client.model.data.ModelProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.IntStream;
 
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelModifierBakedModel implements BakedModel {
-
-    private static final Function<SimpleBakedModel,ChunkRenderTypeSet> getBlockRenderTypes;
-    private static final Function<SimpleBakedModel,RenderType> getItemRenderType;
-
-    static{
-        // TODO Forge has commented out all their API implementation in SimpleBakedModel, so shrug
-        getBlockRenderTypes = model -> null;
-        getItemRenderType = model -> null;
-//        try{
-//            Field blockRenderTypes = SimpleBakedModel.class.getDeclaredField("blockRenderTypes");
-//            blockRenderTypes.setAccessible(true);
-//            getBlockRenderTypes = model -> {
-//                try{
-//                    return (ChunkRenderTypeSet)blockRenderTypes.get(model);
-//                }catch(IllegalAccessException e){
-//                    throw new RuntimeException(e);
-//                }
-//            };
-//            Field itemRenderTypes = SimpleBakedModel.class.getDeclaredField("itemRenderTypes");
-//            itemRenderTypes.setAccessible(true);
-//            getItemRenderTypes = model -> {
-//                try{
-//                    //noinspection unchecked
-//                    return (List<RenderType>)itemRenderTypes.get(model);
-//                }catch(IllegalAccessException e){
-//                    throw new RuntimeException(e);
-//                }
-//            };
-//            Field fabulousItemRenderTypes = SimpleBakedModel.class.getDeclaredField("fabulousItemRenderTypes");
-//            fabulousItemRenderTypes.setAccessible(true);
-//            getFabulousItemRenderTypes = model -> {
-//                try{
-//                    //noinspection unchecked
-//                    return (List<RenderType>)fabulousItemRenderTypes.get(model);
-//                }catch(IllegalAccessException e){
-//                    throw new RuntimeException(e);
-//                }
-//            };
-//        }catch(NoSuchFieldException e){
-//            throw new RuntimeException("Fusion failed to make vanilla model render types accessible!", e);
-//        }
-    }
+public class BlockModelModifierBakedModel implements BlockStateModel {
 
     private static final ModelProperty<ModelData[]> DATA_PROPERTY = new ModelProperty<>();
+    private static final ModelProperty<BlockState> STATE_PROPERTY = new ModelProperty<>();
 
-    private final BakedModel original;
-    private final List<BakedModel> models;
-    private final boolean hasNonSimpleModels;
-    private final List<BakedModel> nonSimpleModels;
-    private final List<BakedQuad> quads;
-    @SuppressWarnings("unchecked")
-    private final List<BakedQuad>[] culledQuads = new List[6];
-    private final ChunkRenderTypeSet chunkRenderTypes;
-    private final boolean addNativeBlockRenderTypes;
+    private final BlockStateModel original;
+    private final List<BlockStateModel> models;
+    private final boolean hasSimpleModels, hasNonSimpleModels;
+    private final List<BlockStateModel> nonSimpleModels;
 
-    public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models){
+    public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models){
         this.original = original;
         this.models = new ArrayList<>(models.size() + 1);
         this.models.add(original);
         this.models.addAll(models);
-        List<BakedModel> nonSimpleModels = new ArrayList<>();
-        List<BakedQuad> quads = new ArrayList<>();
-        //noinspection unchecked
-        List<BakedQuad>[] culledQuads = IntStream.range(0, 6).mapToObj(i -> new ArrayList<>()).toArray(List[]::new);
-        ChunkRenderTypeSet chunkRenderTypes = ChunkRenderTypeSet.none();
-        boolean addNativeBlockRenderTypes = false;
-        RandomSource random = RandomSource.create();
-        for(BakedModel model : this.models){
-            if(!model.getClass().equals(SimpleBakedModel.class))
+        List<BlockStateModel> nonSimpleModels = new ArrayList<>();
+        for(BlockStateModel model : this.models){
+            if(!model.getClass().equals(SingleVariant.class))
                 nonSimpleModels.add(model);
-            else{
-                //noinspection deprecation
-                quads.addAll(model.getQuads(null, null, random));
-                for(Direction side : Direction.values())
-                    //noinspection deprecation
-                    culledQuads[side.ordinal()].addAll(model.getQuads(null, side, random));
-                ChunkRenderTypeSet modelChunkRenderTypes = getBlockRenderTypes.apply((SimpleBakedModel)model);
-                if(modelChunkRenderTypes == null)
-                    addNativeBlockRenderTypes = true;
-                else
-                    chunkRenderTypes = ChunkRenderTypeSet.union(modelChunkRenderTypes, chunkRenderTypes);
-            }
         }
+        this.hasSimpleModels = nonSimpleModels.size() < this.models.size();
         this.hasNonSimpleModels = !nonSimpleModels.isEmpty();
         this.nonSimpleModels = nonSimpleModels.isEmpty() ? null : List.copyOf(nonSimpleModels);
-        this.quads = List.copyOf(quads);
-        for(Direction side : Direction.values())
-            this.culledQuads[side.ordinal()] = List.copyOf(culledQuads[side.ordinal()]);
-        this.chunkRenderTypes = chunkRenderTypes;
-        this.addNativeBlockRenderTypes = addNativeBlockRenderTypes;
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random, ModelData data, @Nullable RenderType renderType){
-        if(!this.hasNonSimpleModels)
-            return side == null ? this.quads : this.culledQuads[side.ordinal()];
+    public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData data, @Nullable RenderType renderType){
+        if(!this.hasNonSimpleModels){
+            this.models.forEach(model -> model.collectParts(random, parts, data, renderType));
+            return;
+        }
+
         ModelData[] arr = data.get(DATA_PROPERTY);
-        List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
-        for(int i = 0; i < this.nonSimpleModels.size(); i++)
-            quads.addAll(this.nonSimpleModels.get(i).getQuads(state, side, random, arr == null || arr[i] == null ? ModelData.EMPTY : arr[i], renderType));
-        return quads;
+        BlockState state = data.get(STATE_PROPERTY);
+        Boolean isDefaultRenderType = null;
+        int i = 0;
+        for(BlockStateModel model : this.models){
+            if(model.getClass().equals(SingleVariant.class)){
+                if(isDefaultRenderType == null)
+                    //noinspection removal
+                    isDefaultRenderType = renderType == null || state == null || ItemBlockRenderTypes.getRenderLayers(state).contains(renderType);
+                if(isDefaultRenderType)
+                    //noinspection deprecation
+                    model.collectParts(random, parts);
+            }else{
+                ModelData subData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
+                if(state == null || model.getRenderTypes(state, random, subData).contains(renderType))
+                    model.collectParts(random, parts, subData, renderType);
+                i++;
+            }
+        }
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random){
+    public void collectParts(RandomSource random, List<BlockModelPart> parts){
+        this.models.forEach(model -> model.collectParts(random, parts, ModelData.EMPTY, null));
+    }
+
+    @Override
+    public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
         if(!this.hasNonSimpleModels)
-            return side == null ? this.quads : this.culledQuads[side.ordinal()];
-        List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
-        for(BakedModel model : this.nonSimpleModels)
-            quads.addAll(model.getQuads(state, side, random));
-        return quads;
-    }
-
-    @Override
-    public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource random, ModelData data){
-        ChunkRenderTypeSet renderTypes = this.chunkRenderTypes;
-        if(this.addNativeBlockRenderTypes)
-            renderTypes = ChunkRenderTypeSet.union(renderTypes, BakedModel.super.getRenderTypes(state, random, data));
-        if(this.hasNonSimpleModels){
-            for(BakedModel model : this.nonSimpleModels)
-                renderTypes = ChunkRenderTypeSet.union(renderTypes, model.getRenderTypes(state, random, data));
+            return BlockStateModel.super.getRenderTypes(state, rand, data);
+        ChunkRenderTypeSet renderTypes = this.hasSimpleModels ? BlockStateModel.super.getRenderTypes(state, rand, data) : ChunkRenderTypeSet.none();
+        ModelData[] arr = data.get(DATA_PROPERTY);
+        for(int i = 0; i < this.nonSimpleModels.size(); i++){
+            ModelData subData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
+            renderTypes = ChunkRenderTypeSet.union(this.nonSimpleModels.get(i).getRenderTypes(state, rand, subData), renderTypes);
         }
         return renderTypes;
     }
@@ -159,51 +100,17 @@ public class BlockModelModifierBakedModel implements BakedModel {
         ModelData[] arr = new ModelData[this.nonSimpleModels.size()];
         for(int i = 0; i < this.nonSimpleModels.size(); i++)
             arr[i] = this.nonSimpleModels.get(i).getModelData(level, pos, state, data);
-        return ModelData.builder().with(DATA_PROPERTY, arr).build();
+        return ModelData.builder().with(DATA_PROPERTY, arr).with(STATE_PROPERTY, state).build();
     }
 
     @Override
-    public ItemTransforms getTransforms(){
-        return this.original.getTransforms();
+    public TextureAtlasSprite particleIcon(ModelData data){
+        return this.original.particleIcon(data);
     }
 
     @Override
-    public boolean useAmbientOcclusion(){
-        return this.original.useAmbientOcclusion();
-    }
-
-    @Override
-    public boolean isGui3d(){
-        return this.original.isGui3d();
-    }
-
-    @Override
-    public boolean usesBlockLight(){
-        return this.original.usesBlockLight();
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon(){
-        return this.original.getParticleIcon();
-    }
-
-    @Override
-    public boolean useAmbientOcclusion(BlockState state){
-        return this.original.useAmbientOcclusion(state);
-    }
-
-    @Override
-    public boolean useAmbientOcclusion(BlockState state, RenderType renderType){
-        return this.original.useAmbientOcclusion(state, renderType);
-    }
-
-    @Override
-    public BakedModel applyTransform(ItemDisplayContext transformType, PoseStack poseStack, boolean applyLeftHandTransform){
-        return this.original.applyTransform(transformType, poseStack, applyLeftHandTransform);
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon(ModelData data){
-        return this.original.getParticleIcon(data);
+    public TextureAtlasSprite particleIcon(){
+        //noinspection deprecation
+        return this.original.particleIcon();
     }
 }

@@ -8,10 +8,10 @@
     "forge.DatagenModLoaderMixin"
   ],
   "client": [
-    "forge.QuadLighterMixin",
     "AgeableMobMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "BlockModelWrapperMixin",
     "BufferSourceMixin",
     "EntityMixin",
     "EntityModelSetMixin",
@@ -23,17 +23,18 @@
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
-    "MultiPartBakedModelMixin",
+    "MultiPartModelMixin",
     "OutlineBufferSourceMixin",
     "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
     "ResourceMetadata\$BuilderMixin",
+    "SingleVariantMixin",
     "SpriteContentsMixin",
     "SpriteLoaderMixin",
     "TerrainParticleMixin",
     "TextureAtlasSpriteMixin",
-    "WeightedBakedModelMixin"
+    "WeightedVariantsMixin"
   ],
   "server": [],
   "injectors": {

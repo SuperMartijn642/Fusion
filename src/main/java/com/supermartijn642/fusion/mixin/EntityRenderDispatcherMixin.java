@@ -20,11 +20,7 @@ public class EntityRenderDispatcherMixin {
 
     @Inject(
         method = "render(Lnet/minecraft/world/entity/Entity;DDDFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/renderer/entity/EntityRenderer;)V",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;render(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            shift = At.Shift.BEFORE
-        )
+        at = @At("HEAD")
     )
     private void renderHead(Entity entity, double relativeEntityX, double relativeEntityY, double relativeEntityZ, float partialTicks, PoseStack poseStack, MultiBufferSource bufferSource, int lighting, EntityRenderer<?,?> renderer, CallbackInfo ci){
         if(((EntityRendererExtension)renderer).getFusionModelParts() != null){

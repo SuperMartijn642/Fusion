@@ -12,7 +12,6 @@ import com.supermartijn642.fusion.model.FusionModelLoader;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
-import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.util.IdentifierUtil;
@@ -20,10 +19,8 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
-import net.neoforged.fml.InterModComms;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.fml.event.lifecycle.InterModEnqueueEvent;
 import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import net.neoforged.neoforge.client.resources.VanillaClientListeners;
@@ -39,7 +36,8 @@ public class FusionClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
 
-    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", null, null, 0, RenderType.CompositeState.builder().createCompositeState(false));
+    @SuppressWarnings("DataFlowIssue")
+    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", 0, null, RenderType.CompositeState.builder().createCompositeState(false));
 
     public static void init(){
         // Register default texture types
@@ -109,9 +107,6 @@ public class FusionClient {
                 event.addDependency(VanillaClientListeners.MODELS, ResourceLocation.fromNamespaceAndPath("fusion", "item_model_modifiers"));
             }
         );
-
-        // Integration with FramedBlocks
-        ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.BLOCK_CACHE_PROPERTY));
     }
 
     public static RenderType getRenderTypeMaterial(BaseTextureData.RenderType renderType){

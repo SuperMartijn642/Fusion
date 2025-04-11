@@ -3,12 +3,10 @@ package com.supermartijn642.fusion.model.types.vanilla;
 import com.supermartijn642.fusion.api.model.data.VanillaModelDataBuilder;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,6 +59,6 @@ public class VanillaModelDataBuilderImpl implements VanillaModelDataBuilder<Vani
             else
                 textures.addTexture(key, new Material(TextureAtlases.getBlocks(), ResourceLocation.parse(value)));
         });
-        return new BlockModel(this.parent, Collections.emptyList(), textures.build(), null, null, ItemTransforms.NO_TRANSFORMS);
+        return new BlockModel(null, null, null, null, textures.build(), this.parent);
     }
 }

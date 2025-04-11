@@ -6,6 +6,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelState;
+import net.minecraft.client.resources.model.UnbakedGeometry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.context.ContextMap;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,7 @@ import java.util.Map;
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public interface ModelBakingContext {
+public interface BlockModelBakingContext {
 
     /**
      * @return the model baker
@@ -83,6 +84,11 @@ public interface ModelBakingContext {
      * Gets the resolved item transforms for the model stack.
      */
     ItemTransforms getTopLevelItemTransforms();
+
+    /**
+     * Get the resolved geometry for the model stack.
+     */
+    UnbakedGeometry getTopLevelGeometry();
 
     ContextMap getNeoForgeAdditionalProperties();
 }

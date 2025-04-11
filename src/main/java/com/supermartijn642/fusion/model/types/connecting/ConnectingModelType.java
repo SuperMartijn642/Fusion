@@ -4,8 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.api.model.data.ConnectingModelData;
@@ -14,15 +15,19 @@ import com.supermartijn642.fusion.api.predicate.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelElement;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemModelGenerator;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.item.ModelRenderProperties;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.RenderTypeGroup;
+import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -51,18 +56,38 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
     }
 
     @Override
-    public BakedModel bake(ModelBakingContext context, ConnectingModelData data){
+    public BlockStateModel bakeBlockModel(BlockModelBakingContext context, ConnectingModelData data){
         // Check for circular dependencies
         ((ConnectingModelDataImpl)data).validateParents(context);
         // Bake the quads
         //noinspection unchecked,rawtypes
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getAmbientOcclusion, true);
-        boolean isGui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model instanceof ItemModelGenerator ? false : null, true);
-        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::getGuiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, true);
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
-        ItemTransforms itemTransforms = new ItemTransforms(
+        RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
+        RenderType neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.block();
+        // Finally, create the model
+        return new ConnectingBakedModel(
+            quads,
+            ambientOcclusion,
+            particleSprite,
+            neoforgeRenderType
+        );
+    }
+
+    @Override
+    public ItemModel bakeItemModel(ItemModelBakingContext context, ConnectingModelData data){
+        // Check for circular dependencies
+        ((ConnectingModelDataImpl)data).validateParents(context);
+        // Bake the quads
+        //noinspection unchecked,rawtypes
+        List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
+        // Gather remaining model properties
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
+        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
+        //noinspection deprecation
+        ItemTransforms transforms = new ItemTransforms(
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIRST_PERSON_LEFT_HAND),
@@ -72,14 +97,14 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GROUND),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED)
         );
+        RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
+        RenderType neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entity();
         // Finally, create the model
-        return new ConnectingBakedModel(
+        return new ConnectingItemModel(
+            context.getTintSources(),
             quads,
-            ambientOcclusion,
-            isGui3d,
-            usesBlockLight,
-            particleSprite,
-            itemTransforms
+            new ModelRenderProperties(usesBlockLight, particleSprite, transforms),
+            neoforgeRenderType
         );
     }
 
@@ -131,12 +156,12 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
                 }
             }
             elements.add(new ConnectingModelElement(
-                baseElement.from,
-                baseElement.to,
-                baseElement.faces,
-                baseElement.rotation,
-                baseElement.shade,
-                baseElement.lightEmission,
+                baseElement.original.from(),
+                baseElement.original.to(),
+                baseElement.original.faces(),
+                baseElement.original.rotation(),
+                baseElement.original.shade(),
+                baseElement.original.lightEmission(),
                 connectionKeys
             ));
         }

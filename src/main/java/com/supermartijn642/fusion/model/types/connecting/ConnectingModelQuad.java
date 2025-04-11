@@ -19,7 +19,7 @@ public class ConnectingModelQuad extends BaseModelQuad {
 
     public ConnectingModelQuad(BakedQuad bakedQuad, Direction cullDirection, ConnectionPredicate connectionPredicate){
         super(bakedQuad, cullDirection);
-        TextureAtlasSprite sprite = bakedQuad.getSprite();
+        TextureAtlasSprite sprite = bakedQuad.sprite();
         if(sprite instanceof ConnectingTextureSprite && ((ConnectingTextureSprite)sprite).data() != null){
             ConnectingTextureData data = ((ConnectingTextureSprite)sprite).data();
             this.predicate = connectionPredicate;

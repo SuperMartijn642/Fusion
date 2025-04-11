@@ -20,20 +20,20 @@ public class BaseModelQuad {
     private final boolean emissive;
 
     public BaseModelQuad(BakedQuad bakedQuad, Direction cullDirection){
-        this.bakedQuad = bakedQuad;
-        this.textureType = SpriteHelper.getTextureType(bakedQuad.getSprite());
+        this.textureType = SpriteHelper.getTextureType(bakedQuad.sprite());
         this.cullDirection = cullDirection;
-        TextureAtlasSprite sprite = bakedQuad.getSprite();
+        TextureAtlasSprite sprite = bakedQuad.sprite();
         if(sprite instanceof BaseTextureSprite && ((BaseTextureSprite)sprite).data() != null){
             BaseTextureData data = ((BaseTextureSprite)sprite).data();
             this.renderType = data.getRenderType();
             this.emissive = data.isEmissive();
             if(data.getTinting() != null)
-                bakedQuad.tintIndex = 39216;
+                bakedQuad = new BakedQuad(bakedQuad.vertices(), 39216, bakedQuad.direction(), bakedQuad.sprite(), bakedQuad.shade(), bakedQuad.lightEmission(), bakedQuad.hasAmbientOcclusion());
         }else{
             this.renderType = null;
             this.emissive = false;
         }
+        this.bakedQuad = bakedQuad;
     }
 
     public BakedQuad bakedQuad(){

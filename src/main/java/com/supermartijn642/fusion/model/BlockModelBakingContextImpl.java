@@ -1,14 +1,11 @@
 package com.supermartijn642.fusion.model;
 
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.client.resources.model.ModelBaker;
-import net.minecraft.client.resources.model.ModelState;
-import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.context.ContextMap;
 
@@ -18,7 +15,7 @@ import java.util.function.Function;
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class ModelBakingContextImpl implements ModelBakingContext {
+public class BlockModelBakingContextImpl implements BlockModelBakingContext {
 
     private final ModelBaker modelBaker;
     private final Function<Material,TextureAtlasSprite> spriteGetter;
@@ -29,9 +26,10 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     private final boolean topLevelAmbientOcclusion;
     private final boolean topLevelUseBlockLighting;
     private final ItemTransforms topLevelItemTransforms;
-    private final ContextMap additionalProperties;
+    private final UnbakedGeometry topLevelGeometry;
+    private final ContextMap neoforgeAdditionalProperties;
 
-    public ModelBakingContextImpl(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, ResourceLocation modelIdentifier, Map<ResourceLocation,UnbakedModel> dependencies, Map<String,Material> topLevelTextureReferences, boolean topLevelAmbientOcclusion, boolean topLevelUseBlockLighting, ItemTransforms topLevelItemTransforms, ContextMap additionalProperties){
+    public BlockModelBakingContextImpl(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, ResourceLocation modelIdentifier, Map<ResourceLocation,UnbakedModel> dependencies, Map<String,Material> topLevelTextureReferences, boolean topLevelAmbientOcclusion, boolean topLevelUseBlockLighting, ItemTransforms topLevelItemTransforms, UnbakedGeometry topLevelGeometry, ContextMap neoforgeAdditionalProperties){
         this.modelBaker = modelBaker;
         this.spriteGetter = spriteGetter;
         this.modelState = modelState;
@@ -41,7 +39,8 @@ public class ModelBakingContextImpl implements ModelBakingContext {
         this.topLevelAmbientOcclusion = topLevelAmbientOcclusion;
         this.topLevelUseBlockLighting = topLevelUseBlockLighting;
         this.topLevelItemTransforms = topLevelItemTransforms;
-        this.additionalProperties = additionalProperties;
+        this.topLevelGeometry = topLevelGeometry;
+        this.neoforgeAdditionalProperties = neoforgeAdditionalProperties;
     }
 
     @Override
@@ -97,7 +96,12 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     }
 
     @Override
+    public UnbakedGeometry getTopLevelGeometry(){
+        return this.topLevelGeometry;
+    }
+
+    @Override
     public ContextMap getNeoForgeAdditionalProperties(){
-        return this.additionalProperties;
+        return this.neoforgeAdditionalProperties;
     }
 }

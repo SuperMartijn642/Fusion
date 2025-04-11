@@ -7,9 +7,9 @@
   "mixins": [],
   "client": [
     "neoforge.DatagenModLoaderMixin",
-    "neoforge.QuadLighterMixin",
     "AgeableMobMixin",
     "BlockModelMixin",
+    "BlockModelWrapperMixin",
     "BufferSourceMixin",
     "EntityMixin",
     "EntityModelSetMixin",
@@ -25,12 +25,12 @@
     "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
+    "SingleVariantMixin",
     "SpriteContentsMixin",
     "SpriteLoaderMixin",
     "SpriteResourceLoaderMixin",
     "TerrainParticleMixin",
-    "TextureAtlasSpriteMixin",
-    "WeightedBakedModelMixin"
+    "TextureAtlasSpriteMixin"
   ],
   "server": [],
   "injectors": {

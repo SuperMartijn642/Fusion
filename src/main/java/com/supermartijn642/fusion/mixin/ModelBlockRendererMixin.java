@@ -24,16 +24,38 @@ public class ModelBlockRendererMixin {
     @ModifyVariable(
         method = "putQuadData",
         at = @At(
+            value = "FIELD",
+            target = "Lnet/minecraft/client/renderer/block/ModelBlockRenderer$CommonRenderStorage;tintCacheValue:I",
+            shift = At.Shift.AFTER
+        ),
+        ordinal = 2
+    )
+    private int tintQuadCached(int blockColor, BlockAndTintGetter level, BlockState state, BlockPos pos, VertexConsumer vertexConsumer, PoseStack.Pose pose, BakedQuad quad){
+        // In case texture has a custom tinting set, replace the original tinting
+        if(quad.tintIndex() == 39216){
+            TextureAtlasSprite sprite = quad.sprite();
+            if(sprite instanceof BaseTextureSprite){
+                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+                if(tinting != null)
+                    return QuadTintingHelper.getColor(tinting, state, level, pos);
+            }
+        }
+        return blockColor;
+    }
+
+    @ModifyVariable(
+        method = "putQuadData",
+        at = @At(
             value = "INVOKE_ASSIGN",
             target = "Lnet/minecraft/client/color/block/BlockColors;getColor(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/core/BlockPos;I)I",
             shift = At.Shift.AFTER
         ),
-        ordinal = 5
+        ordinal = 2
     )
-    private int tintQuad(int blockColor, BlockAndTintGetter level, BlockState state, BlockPos pos, VertexConsumer vertexConsumer, PoseStack.Pose pose, BakedQuad quad, float red, float green, float blue, float alpha, int lighting1, int lighting2, int lighting3, int lighting4, int overlay){
+    private int tintQuad(int blockColor, BlockAndTintGetter level, BlockState state, BlockPos pos, VertexConsumer vertexConsumer, PoseStack.Pose pose, BakedQuad quad){
         // In case texture has a custom tinting set, replace the original tinting
-        if(quad.tintIndex == 39216){
-            TextureAtlasSprite sprite = quad.getSprite();
+        if(quad.tintIndex() == 39216){
+            TextureAtlasSprite sprite = quad.sprite();
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
                 if(tinting != null)

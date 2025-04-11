@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.resources;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -25,9 +24,7 @@ public class ResourcePackListTipRenderer {
     }
 
     public static void renderIcon(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphics graphics, int x, int y, int width, int height){
-        RenderSystem.enableBlend();
         graphics.blit(RenderType::guiTextured, FUSION_LOGO, x, y, 0, 0, 12, 12, 12, 12);
-        RenderSystem.disableBlend();
     }
 
     public static Component getWarningMessage(FusionPackMetadata metadata, boolean isVanillaCompatible){

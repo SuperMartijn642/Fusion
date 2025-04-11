@@ -1,9 +1,11 @@
 package com.supermartijn642.fusion.model;
 
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
+import com.supermartijn642.fusion.api.model.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
-import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -45,8 +47,13 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public BakedModel bake(ModelBakingContext context){
-        return this.modelType.bake(context, this.modelData);
+    public BlockStateModel bakeBlockModel(BlockModelBakingContext context){
+        return this.modelType.bakeBlockModel(context, this.modelData);
+    }
+
+    @Override
+    public ItemModel bakeItemModel(ItemModelBakingContext context){
+        return this.modelType.bakeItemModel(context, this.modelData);
     }
 
     @Override

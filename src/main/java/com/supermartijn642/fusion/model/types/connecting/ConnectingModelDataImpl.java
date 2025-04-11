@@ -2,13 +2,14 @@ package com.supermartijn642.fusion.model.types.connecting;
 
 import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.data.ConnectingModelData;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
+import com.supermartijn642.fusion.model.types.base.BaseModelElement;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -61,35 +62,52 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
     }
 
     @Override
-    public List<BaseModelQuad> bakeQuads(ModelBakingContext context){
+    public List<BaseModelQuad> bakeQuads(BlockModelBakingContext context){
         List<BaseModelQuad> quads = new ArrayList<>();
         this.bakeQuads(context, ModelInstance.of(DefaultModelTypes.CONNECTING, this), new LinkedList<>(), quads::add);
         return quads;
     }
 
-    private void bakeQuads(ModelBakingContext context, ModelInstance<?> model, Deque<ModelInstance<?>> modelStack, Consumer<BaseModelQuad> output){
+    private void bakeQuads(BlockModelBakingContext context, ModelInstance<?> model, Deque<ModelInstance<?>> modelStack, Consumer<BaseModelQuad> output){
         modelStack.addLast(model);
 
         // If the model has elements, bake them
-        List<? extends BlockElement> elements = null;
         if(model.getModelType() == DefaultModelTypes.BASE || model.getModelType() == DefaultModelTypes.CONNECTING){
-            elements = ((BaseModelDataImpl)model.getModelData()).getElements();
-        }else{
-            UnbakedModel vanillaModel = model.getAsVanillaModel();
-            if(vanillaModel instanceof ItemModelGenerator)
-                elements = this.generateItemModel(context, modelStack, (ItemModelGenerator)vanillaModel);
-            else if(vanillaModel instanceof BlockModel)
-                elements = ((BlockModel)vanillaModel).elements;
+            List<? extends BaseModelElement> elements = ((BaseModelDataImpl)model.getModelData()).getElements();
+            if(elements != null && !elements.isEmpty()){
+                // Bake the faces of each element
+                for(BaseModelElement element : elements){
+                    for(Direction direction : element.original.faces().keySet()){
+                        BlockElementFace face = element.original.faces().get(direction);
+                        TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
+                        BakedQuad quad = FaceBakery.bakeQuad(element.original.from(), element.original.to(), face, sprite, direction, context.getTransformation(), element.original.rotation(), element.original.shade(), element.original.lightEmission());
+                        Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().transformation().getMatrix(), face.cullForDirection()) : null;
+                        String connectionsKey = element instanceof ConnectingModelElement && ((ConnectingModelElement)element).faceConnectionKeys.containsKey(direction) ? ((ConnectingModelElement)element).faceConnectionKeys.get(direction) : face.texture();
+                        ConnectionPredicate predicate = this.resolveConnectionKey(context, modelStack, connectionsKey);
+                        output.accept(new ConnectingModelQuad(quad, cullDirection, predicate));
+                    }
+                }
+                // If the model had elements, ignore parent models' elements
+                modelStack.pop();
+                return;
+            }
         }
+
+        List<? extends BlockElement> elements = null;
+        UnbakedModel vanillaModel = model.getAsVanillaModel();
+        if(vanillaModel instanceof ItemModelGenerator)
+            elements = this.generateItemModel(context, modelStack);
+        else if(vanillaModel != null && vanillaModel.geometry() instanceof SimpleUnbakedGeometry geometry)
+            elements = geometry.elements();
         if(elements != null && !elements.isEmpty()){
             // Bake the faces of each element
             for(BlockElement element : elements){
-                for(Direction direction : element.faces.keySet()){
-                    BlockElementFace face = element.faces.get(direction);
+                for(Direction direction : element.faces().keySet()){
+                    BlockElementFace face = element.faces().get(direction);
                     TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                    BakedQuad quad = FaceBakery.bakeQuad(element.from, element.to, face, sprite, direction, context.getTransformation(), element.rotation, element.shade, element.lightEmission);
-                    Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().getRotation().getMatrix(), face.cullForDirection()) : null;
-                    String connectionsKey = element instanceof ConnectingModelElement && ((ConnectingModelElement)element).faceConnectionKeys.containsKey(direction) ? ((ConnectingModelElement)element).faceConnectionKeys.get(direction) : face.texture();
+                    BakedQuad quad = FaceBakery.bakeQuad(element.from(), element.to(), face, sprite, direction, context.getTransformation(), element.rotation(), element.shade(), element.lightEmission());
+                    Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().transformation().getMatrix(), face.cullForDirection()) : null;
+                    String connectionsKey = face.texture();
                     ConnectionPredicate predicate = this.resolveConnectionKey(context, modelStack, connectionsKey);
                     output.accept(new ConnectingModelQuad(quad, cullDirection, predicate));
                 }
@@ -109,7 +127,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
         modelStack.removeLast();
     }
 
-    private ConnectionPredicate resolveConnectionKey(ModelBakingContext context, Deque<ModelInstance<?>> modelStack, String key){
+    private ConnectionPredicate resolveConnectionKey(BlockModelBakingContext context, Deque<ModelInstance<?>> modelStack, String key){
         if(key.charAt(0) == '#')
             key = key.substring(1);
 
@@ -139,11 +157,11 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
                     UnbakedModel vanillaModel = model.getAsVanillaModel();
                     if(vanillaModel == null)
                         continue;
-                    TextureSlots.SlotContents material = vanillaModel.getTextureSlots().values().get(currentKey);
+                    TextureSlots.SlotContents material = vanillaModel.textureSlots().values().get(currentKey);
                     if(material != null){
                         newKey = material instanceof TextureSlots.Value ?
-                                ((TextureSlots.Value)material).material().texture().toString() :
-                                ((TextureSlots.Reference)material).target();
+                            ((TextureSlots.Value)material).material().texture().toString() :
+                            ((TextureSlots.Reference)material).target();
                         break;
                     }
                 }
@@ -175,7 +193,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
         }
     }
 
-    private static Either<ConnectionPredicate,String> findConnectionsEntry(ModelBakingContext context, ModelInstance<?> model, String key){
+    private static Either<ConnectionPredicate,String> findConnectionsEntry(BlockModelBakingContext context, ModelInstance<?> model, String key){
         // Check the model itself
         if(model.getModelType() == DefaultModelTypes.CONNECTING){
             ConnectionPredicate predicate = ((ConnectingModelDataImpl)model.getModelData()).predicates.get(key);

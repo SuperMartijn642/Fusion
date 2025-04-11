@@ -45,11 +45,11 @@ public class MutableQuad {
     }
 
     public void fillFromBakedQuad(BakedQuad quad){
-        System.arraycopy(quad.getVertices(), 0, this.vertices, 0, this.vertices.length);
-        this.tintIndex = quad.getTintIndex();
-        this.lightFace = quad.getDirection();
-        this.sprite = quad.getSprite();
-        this.shade = quad.isShade();
+        System.arraycopy(quad.vertices(), 0, this.vertices, 0, this.vertices.length);
+        this.tintIndex = quad.tintIndex();
+        this.lightFace = quad.direction();
+        this.sprite = quad.sprite();
+        this.shade = quad.shade();
         this.hasAmbientOcclusion = quad.hasAmbientOcclusion();
         this.emissive = false;
     }

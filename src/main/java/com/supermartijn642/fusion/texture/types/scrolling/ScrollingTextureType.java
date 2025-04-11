@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.texture.types.scrolling;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
 import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
@@ -185,16 +186,16 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
             this.animatedTexture = new ScrollingAnimatedTexture();
         }
 
-        private void tick(int x, int y){
+        private void tick(int x, int y, GpuTexture gpuTexture){
             if(++this.tickCounter >= this.frameTimes[this.frame]){
                 this.frame = (this.frame + 1) % this.xPositions.length;
                 this.tickCounter = 0;
-                this.uploadFrame(x, y, this.frame);
+                this.uploadFrame(x, y, this.frame, gpuTexture);
             }
         }
 
-        private void uploadFrame(int x, int y, int frame){
-            this.upload(x, y, this.xPositions[frame], this.yPositions[frame], this.byMipLevel);
+        private void uploadFrame(int x, int y, int frame, GpuTexture gpuTexture){
+            this.upload(x, y, this.xPositions[frame], this.yPositions[frame], this.byMipLevel, gpuTexture);
         }
 
         @Override
@@ -212,8 +213,8 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
             public SpriteTicker createTicker(){
                 return new SpriteTicker() {
                     @Override
-                    public void tickAndUpload(int x, int y){
-                        ScrollingSpriteContents.this.tick(x, y);
+                    public void tickAndUpload(int x, int y, GpuTexture gpuTexture){
+                        ScrollingSpriteContents.this.tick(x, y, gpuTexture);
                     }
 
                     @Override
@@ -223,8 +224,8 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
             }
 
             @Override
-            public void uploadFirstFrame(int x, int y){
-                ScrollingSpriteContents.this.uploadFrame(x, y, 0);
+            public void uploadFirstFrame(int x, int y, GpuTexture gpuTexture){
+                ScrollingSpriteContents.this.uploadFrame(x, y, 0, gpuTexture);
             }
 
             @Override

@@ -3,11 +3,9 @@ package com.supermartijn642.fusion.model.modifiers.item;
 import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -21,15 +19,15 @@ import java.util.List;
 public class ItemModelModifierItemModel implements ItemModel {
 
     private final ItemModel defaultModel;
-    private final List<Pair<ItemPredicate,BakedModel>> models;
+    private final List<Pair<ItemPredicate,ItemModel>> models;
 
-    public ItemModelModifierItemModel(ItemModel defaultModel, List<Pair<ItemPredicate,BakedModel>> models){
+    public ItemModelModifierItemModel(ItemModel defaultModel, List<Pair<ItemPredicate,ItemModel>> models){
         this.defaultModel = defaultModel;
         this.models = models;
     }
 
-    private BakedModel forStack(ItemStack stack){
-        for(Pair<ItemPredicate,BakedModel> entry : this.models){
+    private ItemModel forStack(ItemStack stack){
+        for(Pair<ItemPredicate,ItemModel> entry : this.models){
             if(entry.left().test(stack))
                 return entry.right();
         }
@@ -38,20 +36,10 @@ public class ItemModelModifierItemModel implements ItemModel {
 
     @Override
     public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable LivingEntity entity, int i){
-        BakedModel model = this.forStack(stack);
+        ItemModel model = this.forStack(stack);
         if(model == null)
             this.defaultModel.update(renderState, stack, modelResolver, displayContext, level, entity, i);
-        else{
-            ItemStackRenderState.FoilType foilType = stack.hasFoil() ?
-                BlockModelWrapper.hasSpecialAnimatedTexture(stack) ? ItemStackRenderState.FoilType.SPECIAL : ItemStackRenderState.FoilType.STANDARD
-                : null;
-            //noinspection removal
-            model.getRenderPasses(stack).forEach(pass -> {
-                ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
-                if(foilType != null)
-                    layer.setFoilType(foilType);
-                layer.setupBlockModel(pass, pass.getRenderType(stack));
-            });
-        }
+        else
+            model.update(renderState, stack, modelResolver, displayContext, level, entity, i);
     }
 }

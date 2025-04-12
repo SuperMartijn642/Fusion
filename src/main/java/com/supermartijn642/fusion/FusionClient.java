@@ -15,6 +15,7 @@ import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.ResourceLocation;
@@ -36,8 +37,7 @@ public class FusionClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
 
-    @SuppressWarnings("DataFlowIssue")
-    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", 0, null, RenderType.CompositeState.builder().createCompositeState(false));
+    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", 0, RenderPipelines.GLINT, RenderType.CompositeState.builder().createCompositeState(false));
 
     public static void init(){
         // Register default texture types

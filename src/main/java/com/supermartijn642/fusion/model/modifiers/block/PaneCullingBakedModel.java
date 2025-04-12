@@ -52,10 +52,17 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         }
 
         // Gather the states above and below
-        Pair<BlockState,BlockState> neighbors = Pair.of(
-            level.getBlockState(pos.above()).getAppearance(level, pos.above(), Direction.DOWN, state, pos),
-            level.getBlockState(pos.below()).getAppearance(level, pos.below(), Direction.UP, state, pos)
-        );
+        BlockState above = level.getBlockState(pos.above()).getAppearance(level, pos.above(), Direction.DOWN, state, pos);
+        if(above.getBlock() != state.getBlock())
+            above = null;
+        BlockState below = level.getBlockState(pos.below()).getAppearance(level, pos.below(), Direction.UP, state, pos);
+        if(below.getBlock() != state.getBlock())
+            below = null;
+        if(above == null && below == null){
+            parts.addAll(super.collectParts(level, pos, state, random));
+            return;
+        }
+        Pair<BlockState,BlockState> neighbors = Pair.of(above, below);
 
         // Wrap the parts with a quad filter
         for(BlockModelPart part : super.collectParts(level, pos, state, random))

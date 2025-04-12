@@ -74,6 +74,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
             super.collectParts(random, parts, data, renderType);
             return;
         }
+        neighbors = Pair.of(stateAbove, stateBelow);
 
         // Wrap the parts with a quad filter
         for(BlockModelPart part : super.collectParts(random, data, renderType))

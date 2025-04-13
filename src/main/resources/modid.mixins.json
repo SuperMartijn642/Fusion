@@ -23,7 +23,6 @@
     "FilePackResourcesMixin",
     "ItemModelShaperMixin",
     "ItemRendererMixin",
-    "MinecraftMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
     "OutlineBufferSourceMixin",

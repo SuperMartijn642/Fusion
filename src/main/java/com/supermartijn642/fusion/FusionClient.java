@@ -9,8 +9,6 @@ import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.FusionModelLoader;
-import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
-import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
@@ -22,9 +20,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
-import net.neoforged.neoforge.client.resources.VanillaClientListeners;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,16 +93,6 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> TextureTypeRegistryImpl.finalizeRegistration()); TODO
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModelTypeRegistryImpl.finalizeRegistration());
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
-
-        // Register model modifier reload listeners
-        ModLoadingContext.get().getActiveContainer().getEventBus().addListener(
-            (Consumer<AddClientReloadListenersEvent>)event -> {
-                event.addListener(ResourceLocation.fromNamespaceAndPath("fusion", "block_model_modifiers"), BlockModelModifierReloadListener.INSTANCE);
-                event.addDependency(VanillaClientListeners.MODELS, ResourceLocation.fromNamespaceAndPath("fusion", "block_model_modifiers"));
-                event.addListener(ResourceLocation.fromNamespaceAndPath("fusion", "item_model_modifiers"), ItemModelModifierReloadListener.INSTANCE);
-                event.addDependency(VanillaClientListeners.MODELS, ResourceLocation.fromNamespaceAndPath("fusion", "item_model_modifiers"));
-            }
-        );
     }
 
     public static RenderType getRenderTypeMaterial(BaseTextureData.RenderType renderType){

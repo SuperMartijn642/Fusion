@@ -87,15 +87,15 @@ public class CountItemPredicate implements ItemPredicate {
 
     public CountItemPredicate(Either<Integer,Float> min, Either<Integer,Float> max){
         if(min.isLeft() && min.left() < 0)
-            throw new JsonParseException("Minimum count must be a positive number!");
+            throw new IllegalArgumentException("Minimum count must be a positive number!");
         if(min.isRight() && (min.right() < 0 || min.right() > 1))
-            throw new JsonParseException("Minimum percentage must be between 0 and 1!");
+            throw new IllegalArgumentException("Minimum percentage must be between 0 and 1!");
         if(max.isLeft() && max.left() < 0)
-            throw new JsonParseException("Maximum count must be a positive number!");
+            throw new IllegalArgumentException("Maximum count must be a positive number!");
         if(max.isRight() && (max.right() < 0 || max.right() > 1))
-            throw new JsonParseException("Maximum percentage must be between 0 and 1!");
+            throw new IllegalArgumentException("Maximum percentage must be between 0 and 1!");
         if((min.isLeft() && max.isLeft() && min.left() > max.left()) || (min.isRight() && max.isRight() && min.right() > max.right()))
-            throw new JsonParseException("Minimum count must be less than or equal to maximum count!");
+            throw new IllegalArgumentException("Minimum count must be less than or equal to maximum count!");
         this.min = min.isLeft() ? min.left() : -1;
         this.max = max.isLeft() ? max.left() : -1;
         this.minPercentage = min.isRight() ? min.right() : -1;

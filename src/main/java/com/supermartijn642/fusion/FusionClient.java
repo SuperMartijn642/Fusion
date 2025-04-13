@@ -7,17 +7,11 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.entity.model.predicates.*;
-import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
-import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ReloadableResourceManager;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
@@ -83,27 +77,6 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> TextureTypeRegistryImpl.finalizeRegistration()); TODO
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModelTypeRegistryImpl.finalizeRegistration());
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
-
-        // Register block model overlay reload listener
-        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<RegisterClientReloadListenersEvent>)event -> {
-            // Forge's Mixin version doesn't allow for proper constructor mixins, so rather than registering our reload listener
-            // before the model manager in the Minecraft constructor, use the resource manager internals to add it at a specific index
-            ReloadableResourceManager resourceManager = (ReloadableResourceManager)Minecraft.getInstance().getResourceManager();
-            ModelManager modelManager = Minecraft.getInstance().getModelManager();
-            int index = resourceManager.listeners.indexOf(modelManager);
-            if(index == -1){
-                for(int i = 0; i < resourceManager.listeners.size(); i++){
-                    if(resourceManager.listeners.get(i) instanceof ModelManager){
-                        index = i;
-                        break;
-                    }
-                }
-            }
-            if(index == -1)
-                throw new RuntimeException("Fusion could not find model manager in resource manager reload listeners!");
-            resourceManager.listeners.add(index, BlockModelModifierReloadListener.INSTANCE);
-            resourceManager.listeners.add(index, ItemModelModifierReloadListener.INSTANCE);
-        });
 
         // Integration with FramedBlocks
         FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.BLOCK_CACHE_PROPERTY));

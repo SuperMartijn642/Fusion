@@ -1,3 +1,6 @@
+### Fusion 1.2.7
+- Fixed argument validation for `count` and `durability` item predicates
+
 ### Fusion 1.2.6
 - Added data providers for block model modifiers and item model modifiers
 

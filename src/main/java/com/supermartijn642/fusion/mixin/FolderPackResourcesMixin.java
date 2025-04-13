@@ -102,7 +102,7 @@ public class FolderPackResourcesMixin implements PackResourcesExtension {
         Set<ResourceLocation> locationSet = new HashSet<>(locations);
         // Add all the resources in the overrides folder
         File folder = new File(new File(new File(this.overridesFolder, type.getDirectory()), namespace), folderName);
-        this.listResources(folder, namespace, locations, folderName, location -> !locationSet.contains(location) && predicate.test(location));
+        this.listResources(folder, namespace, locations, folderName + "/", location -> !locationSet.contains(location) && predicate.test(location));
         ci.setReturnValue(locations);
     }
 }

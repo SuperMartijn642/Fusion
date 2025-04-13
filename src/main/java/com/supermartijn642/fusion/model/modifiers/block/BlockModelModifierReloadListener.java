@@ -11,24 +11,20 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.stream.Stream;
 
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelModifierReloadListener implements PreparableReloadListener {
+public class BlockModelModifierReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/model_modifiers/blocks";
@@ -70,13 +66,7 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
         return new ModelResourceLocation(modelLocation, "fusion_overlay_model");
     }
 
-    @Override
-    public CompletableFuture<Void> reload(PreparationBarrier barrier, ResourceManager resourceManager, ProfilerFiller profiler, ProfilerFiller profiler2, Executor executor, Executor executor2){
-        return CompletableFuture.runAsync(() -> this.reload(resourceManager))
-            .thenCompose(barrier::wait);
-    }
-
-    private void reload(ResourceManager resourceManager){
+    public void reload(ResourceManager resourceManager){
         this.models.clear();
 
         // Find all overlay files
@@ -224,11 +214,6 @@ public class BlockModelModifierReloadListener implements PreparableReloadListene
     private static <T extends Comparable<T>> BlockState stateWithValue(BlockState state, Property<?> property, Object value){
         //noinspection unchecked
         return state.setValue((Property<T>)property, (T)value);
-    }
-
-    @Override
-    public String getName(){
-        return "Fusion Block Model Overlay Reload Listener";
     }
 
     private static class Properties {

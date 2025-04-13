@@ -6,6 +6,7 @@ import net.minecraft.client.resources.model.AtlasSet;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,6 +20,15 @@ import java.util.Map;
  */
 @Mixin(ModelManager.class)
 public class ModelManagerMixin {
+
+    @Inject(
+        method = "method_45895(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",
+        at = @At("HEAD")
+    )
+    private static void reloadModelModifiers(ResourceManager resourceManager, CallbackInfoReturnable<Map<?,?>> ci){
+        BlockModelModifierReloadListener.INSTANCE.reload(resourceManager);
+        ItemModelModifierReloadListener.INSTANCE.reload(resourceManager);
+    }
 
     @Inject(
         method = "loadModels",

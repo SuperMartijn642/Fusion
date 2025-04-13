@@ -13,21 +13,17 @@ import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class ItemModelModifierReloadListener implements PreparableReloadListener {
+public class ItemModelModifierReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/model_modifiers/items";
@@ -64,14 +60,8 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
         }
     }
 
-    @Override
-    public CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier barrier, ResourceManager resourceManager, ProfilerFiller profiler, ProfilerFiller profiler2, Executor executor, Executor executor2){
+    public void reload(ResourceManager resourceManager){
         ItemPredicateRegistry.finalizeRegistration();
-        return CompletableFuture.runAsync(() -> this.reload(resourceManager))
-            .thenCompose(barrier::wait);
-    }
-
-    private void reload(ResourceManager resourceManager){
         this.models.clear();
 
         // Find all item model predicate files
@@ -165,11 +155,6 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
         ItemPredicate predicate = predicates.size() == 1 ? predicates.getFirst() : new AndItemPredicate(predicates);
 
         return Pair.of(predicate, model);
-    }
-
-    @Override
-    public String getName(){
-        return "Fusion Item Model Predicates Reload Listener";
     }
 
     private static class ItemModelPredicatesProperties {

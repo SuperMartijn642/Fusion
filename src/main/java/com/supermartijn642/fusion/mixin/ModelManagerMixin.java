@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadLi
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,6 +19,15 @@ import java.util.Map;
  */
 @Mixin(ModelManager.class)
 public class ModelManagerMixin {
+
+    @Inject(
+        method = "lambda$loadBlockModels$8(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",
+        at = @At("HEAD")
+    )
+    private static void reloadModelModifiers(ResourceManager resourceManager, CallbackInfoReturnable<Map<?,?>> ci){
+        BlockModelModifierReloadListener.INSTANCE.reload(resourceManager);
+        ItemModelModifierReloadListener.INSTANCE.reload(resourceManager);
+    }
 
     @Inject(
         method = "discoverModelDependencies",

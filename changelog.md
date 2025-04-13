@@ -1,3 +1,6 @@
+### Fusion 1.2.7
+- Fixed argument validation for `count` and `durability` item predicates
+
 ### Fusion 1.2.6b
 - Fixed `connecting` and `base` models not always using correct render type when rendered as items
 

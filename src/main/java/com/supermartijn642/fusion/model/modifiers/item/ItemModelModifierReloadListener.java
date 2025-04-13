@@ -1,6 +1,9 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
@@ -14,21 +17,17 @@ import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.world.item.Item;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class ItemModelModifierReloadListener implements PreparableReloadListener {
+public class ItemModelModifierReloadListener {
 
-    private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/model_modifiers/items";
 
     public static final ItemModelModifierReloadListener INSTANCE = new ItemModelModifierReloadListener();
@@ -66,14 +65,8 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
         return new ModelResourceLocation(modelLocation, "fusion_predicate_model");
     }
 
-    @Override
-    public CompletableFuture<Void> reload(PreparableReloadListener.PreparationBarrier barrier, ResourceManager resourceManager, Executor executor, Executor executor2){
+    public void reload(ResourceManager resourceManager){
         ItemPredicateRegistry.finalizeRegistration();
-        return CompletableFuture.runAsync(() -> this.reload(resourceManager), executor)
-            .thenCompose(barrier::wait);
-    }
-
-    private void reload(ResourceManager resourceManager){
         this.models.clear();
 
         // Find all item model predicate files
@@ -176,11 +169,6 @@ public class ItemModelModifierReloadListener implements PreparableReloadListener
         ItemPredicate predicate = predicates.size() == 1 ? predicates.getFirst() : new AndItemPredicate(predicates);
 
         return Pair.of(predicate, model);
-    }
-
-    @Override
-    public String getName(){
-        return "Fusion Item Model Predicates Reload Listener";
     }
 
     private static class ItemModelPredicatesProperties {

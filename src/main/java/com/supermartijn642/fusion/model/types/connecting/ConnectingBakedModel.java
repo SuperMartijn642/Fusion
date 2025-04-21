@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
 import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
 public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     public static final ModelProperty<List<TextureConnections>> PREDICATES_EVALUATION_PROPERTY = new ModelProperty<>();
-    public static final ModelProperty<BlockPos> POSITION_PROPERTY = new ModelProperty<>();
+    public static final ModelProperty<BlockPos> POSITION_PROPERTY = BaseBakedModel.POSITION_PROPERTY;
     private static final int VERTEX_SIZE, VERTEX_UV_OFFSET, VERTEX_POSITION_OFFSET;
     /**
      * Stores world space vector point in the up and right direction of the default texture orientation for each face

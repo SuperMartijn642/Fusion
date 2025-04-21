@@ -6,7 +6,7 @@ import java.util.Iterator;
 /**
  * Created 08/09/2024 by SuperMartijn642
  */
-public class TextureConnections {
+public final class TextureConnections {
 
     public static Iterable<TextureConnections> iterateAll(){
         return new Iterable<TextureConnections>() {
@@ -59,5 +59,26 @@ public class TextureConnections {
         this.bottomLeft = bottomLeft;
         this.left = left;
         this.topLeft = topLeft;
+    }
+
+    @Override
+    public boolean equals(Object o){
+        if(!(o instanceof TextureConnections)) return false;
+
+        TextureConnections that = (TextureConnections)o;
+        return this.top == that.top && this.topRight == that.topRight && this.right == that.right && this.bottomRight == that.bottomRight && this.bottom == that.bottom && this.bottomLeft == that.bottomLeft && this.left == that.left && this.topLeft == that.topLeft;
+    }
+
+    @Override
+    public int hashCode(){
+        int result = Boolean.hashCode(this.top);
+        result = 31 * result + Boolean.hashCode(this.topRight);
+        result = 31 * result + Boolean.hashCode(this.right);
+        result = 31 * result + Boolean.hashCode(this.bottomRight);
+        result = 31 * result + Boolean.hashCode(this.bottom);
+        result = 31 * result + Boolean.hashCode(this.bottomLeft);
+        result = 31 * result + Boolean.hashCode(this.left);
+        result = 31 * result + Boolean.hashCode(this.topLeft);
+        return result;
     }
 }

@@ -30,10 +30,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -379,6 +376,25 @@ public class ConnectingBakedModel implements BlockStateModel {
         BlockState otherStateAppearance = neighborState.getAppearance(level, mutablePos, face, self, position);
         BlockState stateInFront = blocks.getState(neighborX + face.getStepX(), neighborY + face.getStepY(), neighborZ + face.getStepZ());
         return predicate.shouldConnect(level, position, face, selfAppearance, otherStateAppearance, stateInFront, direction);
+    }
+
+    @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
+        if(this.predicates.isEmpty() && !this.hasSpecialQuads)
+            return 0;
+        List<Object> modelData = new ArrayList<>(2);
+        // Add position of the block
+        if(this.hasSpecialQuads)
+            modelData.add(pos);
+        // Evaluate predicates for connecting textures
+        if(!this.predicates.isEmpty()){
+            SurroundingBlockCache blockCache = new SurroundingBlockCache(level, pos, state);
+            TextureConnections[] evaluations = new TextureConnections[this.predicates.size()];
+            for(int i = 0; i < this.predicates.size(); i++)
+                evaluations[i] = computeConnections(this.predicates.get(i), blockCache);
+            modelData.add(Arrays.asList(evaluations));
+        }
+        return modelData;
     }
 
     @Override

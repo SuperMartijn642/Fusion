@@ -89,7 +89,10 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
 
         // Integration with FramedBlocks
-        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.BLOCK_CACHE_PROPERTY));
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
+            InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.PREDICATES_EVALUATION_PROPERTY);
+            InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.POSITION_PROPERTY);
+        });
     }
 
     public static RenderType getRenderTypeMaterial(BaseTextureData.RenderType renderType){

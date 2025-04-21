@@ -44,7 +44,7 @@ import java.util.*;
  */
 public class ConnectingBakedModel implements BakedModel {
 
-    public static final ModelProperty<SurroundingBlockCache> BLOCK_CACHE_PROPERTY = new ModelProperty<>();
+    public static final ModelProperty<List<TextureConnections>> PREDICATES_EVALUATION_PROPERTY = new ModelProperty<>();
     public static final ModelProperty<BlockPos> POSITION_PROPERTY = new ModelProperty<>();
     private static final int VERTEX_SIZE, VERTEX_UV_OFFSET, VERTEX_POSITION_OFFSET;
     /**
@@ -349,21 +349,15 @@ public class ConnectingBakedModel implements BakedModel {
 
         // Get the position from the model data
         BlockPos pos = data.get(POSITION_PROPERTY);
-        // Get the block cache from the model data
-        SurroundingBlockCache blockCache = data.get(BLOCK_CACHE_PROPERTY);
-        // If the block cache is absent, the connected textures cannot be updated, so just push the mesh
-        if((blockCache == null || this.predicates.isEmpty()) && (pos == null || !this.hasSpecialQuads)){
+        // Get the predicate evaluations from the model data
+        List<TextureConnections> predicateEvaluations = data.get(PREDICATES_EVALUATION_PROPERTY);
+        // If the predicate evaluations is absent, the connected textures cannot be updated, so just push the mesh
+        if((predicateEvaluations == null || this.predicates.isEmpty()) && (pos == null || !this.hasSpecialQuads)){
             List<BakedQuad> bakedQuads = new ArrayList<>(quads.size());
             for(TaggedBakedQuad quad : quads)
                 bakedQuads.add(quad.bakedQuad);
             return bakedQuads;
         }
-        // Make sure to use the block state argument for the model's own block
-        if(state != null && blockCache != null)
-            blockCache.setSelf(state);
-
-        // Only compute connections for each predicate once
-        TextureConnections[] connectionsCache = new TextureConnections[this.predicates.size()];
 
         // Push a transform which maps any connecting texture quads to the correct uv
         ArrayList<BakedQuad> bakedQuads = new ArrayList<>(quads.size());
@@ -385,7 +379,7 @@ public class ConnectingBakedModel implements BakedModel {
                 bakedQuads.add(mutableQuad.toBakedQuad());
             }
             // Process connecting textures
-            else if(blockCache != null && quad.textureType == DefaultTextureTypes.CONNECTING){
+            else if(predicateEvaluations != null && quad.textureType == DefaultTextureTypes.CONNECTING){
                 // Get the quad index, predicate index, and sprite index
                 int quadIndex = quad.quadIndex;
                 int predicateIndex = quad.predicateIndex;
@@ -393,12 +387,8 @@ public class ConnectingBakedModel implements BakedModel {
 
                 // Get the connection predicate
                 QuadPredicates predicate = this.predicates.get(predicateIndex);
-                // Check if the connections have already been computed, otherwise compute them
-                TextureConnections connections = connectionsCache[predicateIndex];
-                if(connections == null){
-                    // Compute the connections
-                    connections = connectionsCache[predicateIndex] = computeConnections(predicate, blockCache);
-                }
+                // Get the evaluated connections for the predicate
+                TextureConnections connections = predicateEvaluations.get(predicateIndex);
 
                 // Get the sprite and the texture layout
                 TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
@@ -496,11 +486,13 @@ public class ConnectingBakedModel implements BakedModel {
         // Add position of the block
         if(this.hasSpecialQuads)
             builder.with(POSITION_PROPERTY, pos);
-        // Collect surrounding blocks for connecting textures
+        // Evaluate predicates for connecting textures
         if(!this.predicates.isEmpty()){
             SurroundingBlockCache blockCache = new SurroundingBlockCache(level, pos, state);
-            blockCache.fillAll();
-            builder.with(BLOCK_CACHE_PROPERTY, blockCache);
+            TextureConnections[] evaluations = new TextureConnections[this.predicates.size()];
+            for(int i = 0; i < this.predicates.size(); i++)
+                evaluations[i] = computeConnections(this.predicates.get(i), blockCache);
+            builder.with(PREDICATES_EVALUATION_PROPERTY, Arrays.asList(evaluations));
         }
         return builder.build();
     }

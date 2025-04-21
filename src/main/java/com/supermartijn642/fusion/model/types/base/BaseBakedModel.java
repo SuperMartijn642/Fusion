@@ -155,6 +155,11 @@ public class BaseBakedModel implements BlockStateModel {
     }
 
     @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
+        return this.hasSpecialQuads ? pos : 0;
+    }
+
+    @Override
     public TextureAtlasSprite particleIcon(){
         return this.particleIcon;
     }

@@ -401,6 +401,25 @@ public class ConnectingBakedModel implements BlockStateModel {
     }
 
     @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
+        if(this.predicates.isEmpty() && !this.hasSpecialQuads)
+            return 0;
+        List<Object> modelData = new ArrayList<>(2);
+        // Add position of the block
+        if(this.hasSpecialQuads)
+            modelData.add(pos);
+        // Evaluate predicates for connecting textures
+        if(!this.predicates.isEmpty()){
+            SurroundingBlockCache blockCache = new SurroundingBlockCache(level, pos, state);
+            TextureConnections[] evaluations = new TextureConnections[this.predicates.size()];
+            for(int i = 0; i < this.predicates.size(); i++)
+                evaluations[i] = computeConnections(this.predicates.get(i), blockCache);
+            modelData.add(Arrays.asList(evaluations));
+        }
+        return modelData;
+    }
+
+    @Override
     public TextureAtlasSprite particleIcon(){
         return this.particleIcon;
     }

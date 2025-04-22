@@ -1,3 +1,6 @@
+### Fusion 1.2.7b
+- Fixed integration with FramedBlocks
+
 ### Fusion 1.2.7a
 - Moved connection evaluation for connecting models fixing Fusion caching issue when combined with FramedBlocks
 

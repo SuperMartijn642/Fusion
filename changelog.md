@@ -1,3 +1,6 @@
+### Fusion 1.2.7b
+- Changed `#createGeometryKey` to provide a globally unique value by including the model itself
+
 ### Fusion 1.2.7a
 - Implemented `#createGeometryKey` for base and connecting models, so they can be cached
 

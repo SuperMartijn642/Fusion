@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.types.base;
 
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
+import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSprite;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
@@ -140,7 +141,7 @@ public class BaseBakedModel implements BlockStateModel {
 
     @Override
     public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
-        return this.hasSpecialQuads ? pos : 0;
+        return this.hasSpecialQuads ? Pair.of(this, pos) : this;
     }
 
     @Override

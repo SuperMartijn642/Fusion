@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
@@ -381,7 +382,7 @@ public class ConnectingBakedModel implements BlockStateModel {
     @Override
     public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
         if(this.predicates.isEmpty() && !this.hasSpecialQuads)
-            return 0;
+            return this;
         List<Object> modelData = new ArrayList<>(2);
         // Add position of the block
         if(this.hasSpecialQuads)
@@ -394,7 +395,7 @@ public class ConnectingBakedModel implements BlockStateModel {
                 evaluations[i] = computeConnections(this.predicates.get(i), blockCache);
             modelData.add(Arrays.asList(evaluations));
         }
-        return modelData;
+        return Pair.of(this, modelData);
     }
 
     @Override

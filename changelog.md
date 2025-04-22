@@ -1,3 +1,6 @@
+### Fusion 1.2.7a
+- Implemented `#createGeometryKey` for base and connecting models, so they can be cached
+
 ### Fusion 1.2.7
 - Fixed argument validation for `count` and `durability` item predicates
 

@@ -10,7 +10,6 @@ import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.FusionModelLoader;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
-import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
@@ -100,7 +99,6 @@ public class FusionClient {
         // Integration with FramedBlocks
         ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
             InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.PREDICATES_EVALUATION_PROPERTY);
-            InterModComms.sendTo("framedblocks", "add_ct_property", () -> BaseBakedModel.POSITION_PROPERTY);
         });
     }
 

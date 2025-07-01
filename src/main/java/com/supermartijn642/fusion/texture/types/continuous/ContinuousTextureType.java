@@ -118,6 +118,9 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData>
             x = -x - 1;
         x = x < 0 ? ((x % data.getColumns()) + data.getColumns()) % data.getColumns() : x % data.getColumns();
         y = y < 0 ? ((y % data.getRows()) + data.getRows()) % data.getRows() : y % data.getRows();
+        // Flip direction of sequence if it's on the side of the block (fixes #120)
+        if(axis != Direction.Axis.Y)
+            y = (data.getRows() - 1) - y;
         // Adjust the quad's uv
         if(x > 0 || y > 0){
             float width = sprite.getU1() - sprite.getU0();

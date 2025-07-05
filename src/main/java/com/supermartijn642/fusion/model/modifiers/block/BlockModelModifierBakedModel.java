@@ -1,22 +1,23 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.SingleVariant;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.ChunkRenderTypeSet;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -48,7 +49,7 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     }
 
     @Override
-    public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData data, @Nullable RenderType renderType){
+    public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData data, @Nullable ChunkSectionLayer renderType){
         if(!this.hasNonSimpleModels){
             this.models.forEach(model -> model.collectParts(random, parts, data, renderType));
             return;
@@ -81,14 +82,19 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     }
 
     @Override
-    public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
+    public Collection<ChunkSectionLayer> getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
         if(!this.hasNonSimpleModels)
             return BlockStateModel.super.getRenderTypes(state, rand, data);
-        ChunkRenderTypeSet renderTypes = this.hasSimpleModels ? BlockStateModel.super.getRenderTypes(state, rand, data) : ChunkRenderTypeSet.none();
+        Collection<ChunkSectionLayer> renderTypes = this.hasSimpleModels ? BlockStateModel.super.getRenderTypes(state, rand, data) : List.of();
+        boolean isMutableSet = false;
         ModelData[] arr = data.get(DATA_PROPERTY);
         for(int i = 0; i < this.nonSimpleModels.size(); i++){
             ModelData subData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
-            renderTypes = ChunkRenderTypeSet.union(this.nonSimpleModels.get(i).getRenderTypes(state, rand, subData), renderTypes);
+            if(!isMutableSet){
+                renderTypes = EnumSet.copyOf(renderTypes);
+                isMutableSet = true;
+            }
+            renderTypes.addAll(this.nonSimpleModels.get(i).getRenderTypes(state, rand, subData));
         }
         return renderTypes;
     }

@@ -12,8 +12,7 @@ import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
@@ -24,7 +23,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Consumer;
+import java.util.Optional;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -32,8 +31,6 @@ import java.util.function.Consumer;
 public class FusionClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
-
-    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", 0, RenderPipelines.GLINT, RenderType.CompositeState.builder().createCompositeState(false));
 
     public static void init(FMLJavaModLoadingContext context){
         // Register default texture types
@@ -90,28 +87,28 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
 
         // Integration with FramedBlocks
-        context.getModEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.BLOCK_CACHE_PROPERTY));
+        InterModEnqueueEvent.getBus(context.getModBusGroup()).addListener(event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.BLOCK_CACHE_PROPERTY));
     }
 
-    public static RenderType getRenderTypeMaterial(BaseTextureData.RenderType renderType){
+    public static Optional<ChunkSectionLayer> getChunkLayer(BaseTextureData.RenderType renderType){
         if(renderType == null)
-            return USE_ORIGINAL_RENDER_TYPE_MARKER;
-        RenderType material;
+            return Optional.empty();
+        ChunkSectionLayer material;
         //noinspection EnhancedSwitchMigration
         switch(renderType){
             case OPAQUE:
-                material = RenderType.solid();
+                material = ChunkSectionLayer.SOLID;
                 break;
             case CUTOUT:
-                material = RenderType.cutout();
+                material = ChunkSectionLayer.CUTOUT;
                 break;
             case TRANSLUCENT:
-                material = RenderType.translucent();
+                material = ChunkSectionLayer.TRANSLUCENT;
                 break;
             default:
                 throw new AssertionError();
         }
-        return material;
+        return Optional.of(material);
     }
 
     private static String fusionVersion;

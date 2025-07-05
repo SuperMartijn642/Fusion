@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.mixin;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.multipart.MultiPartModel;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -41,7 +42,7 @@ public class MultiPartModelMixin implements IForgeBlockStateModel {
     private List<BlockStateModel> models;
 
     @Override
-    public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData modelData, net.minecraft.client.renderer.RenderType renderType){
+    public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData modelData, ChunkSectionLayer renderType){
         if(this.models == null)
             this.models = this.shared.selectModels(this.blockState);
 

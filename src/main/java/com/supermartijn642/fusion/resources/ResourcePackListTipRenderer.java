@@ -4,7 +4,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
@@ -24,7 +24,7 @@ public class ResourcePackListTipRenderer {
     }
 
     public static void renderIcon(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphics graphics, int x, int y, int width, int height){
-        graphics.blit(RenderType::guiTextured, FUSION_LOGO, x, y, 0, 0, 12, 12, 12, 12);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, FUSION_LOGO, x, y, 0, 0, 12, 12, 12, 12);
     }
 
     public static Component getWarningMessage(FusionPackMetadata metadata, boolean isVanillaCompatible){

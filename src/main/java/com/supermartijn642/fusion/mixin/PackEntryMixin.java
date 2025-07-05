@@ -49,7 +49,7 @@ public class PackEntryMixin {
         method = "render",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Ljava/util/function/Function;Lnet/minecraft/resources/ResourceLocation;IIFFIIII)V",
+            target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/ResourceLocation;IIFFIIII)V",
             shift = At.Shift.BEFORE
         )
     )
@@ -65,7 +65,7 @@ public class PackEntryMixin {
         method = "render",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Ljava/util/function/Function;Lnet/minecraft/resources/ResourceLocation;IIFFIIII)V",
+            target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/ResourceLocation;IIFFIIII)V",
             shift = At.Shift.AFTER
         )
     )

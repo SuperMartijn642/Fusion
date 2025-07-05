@@ -19,6 +19,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -66,7 +67,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, true);
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
         RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
-        RenderType neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.block();
+        ChunkSectionLayer neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.block();
         // Finally, create the model
         return new ConnectingBakedModel(
             quads,

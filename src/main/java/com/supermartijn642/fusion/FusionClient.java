@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion;
 
-import com.google.common.collect.ImmutableSet;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
@@ -13,17 +12,16 @@ import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.SpriteLoader;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.metadata.MetadataSectionType;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.neoforge.client.event.RegisterSpriteDefaultMetadataSectionTypesEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -32,8 +30,6 @@ import java.util.function.Consumer;
 public class FusionClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
-
-    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", 0, RenderPipelines.GLINT, RenderType.CompositeState.builder().createCompositeState(false));
 
     public static void init(){
         // Register default texture types
@@ -78,10 +74,9 @@ public class FusionClient {
         EntityModelPredicateRegistry.registerEntityModelPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "dimension"), DimensionEntityModelPredicate.SERIALIZER);
 
         // Add Fusion's metadata section
-        SpriteLoader.DEFAULT_METADATA_SECTIONS = ImmutableSet.<MetadataSectionType<?>>builder()
-            .addAll(SpriteLoader.DEFAULT_METADATA_SECTIONS)
-            .add(FusionTextureMetadataSection.TYPE)
-            .build();
+        ModLoadingContext.get().getActiveContainer().getEventBus().addListener(
+            (Consumer<RegisterSpriteDefaultMetadataSectionTypesEvent>)e -> e.register(FusionTextureMetadataSection.TYPE)
+        );
 
         // Register Fusion model loader
         ModLoadingContext.get().getActiveContainer().getEventBus().addListener(
@@ -95,25 +90,25 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
     }
 
-    public static RenderType getRenderTypeMaterial(BaseTextureData.RenderType renderType){
+    public static Optional<ChunkSectionLayer> getChunkLayer(BaseTextureData.RenderType renderType){
         if(renderType == null)
-            return USE_ORIGINAL_RENDER_TYPE_MARKER;
-        RenderType material;
+            return Optional.empty();
+        ChunkSectionLayer material;
         //noinspection EnhancedSwitchMigration
         switch(renderType){
             case OPAQUE:
-                material = RenderType.solid();
+                material = ChunkSectionLayer.SOLID;
                 break;
             case CUTOUT:
-                material = RenderType.cutout();
+                material = ChunkSectionLayer.CUTOUT;
                 break;
             case TRANSLUCENT:
-                material = RenderType.translucent();
+                material = ChunkSectionLayer.TRANSLUCENT;
                 break;
             default:
                 throw new AssertionError();
         }
-        return material;
+        return Optional.of(material);
     }
 
     private static String fusionVersion;

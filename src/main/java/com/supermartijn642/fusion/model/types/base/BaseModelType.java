@@ -12,6 +12,7 @@ import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.*;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -57,7 +58,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
         boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, true);
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
         RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
-        RenderType neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.block();
+        ChunkSectionLayer neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.block();
         // Finally, create the model
         return new BaseBakedModel(
             quads,

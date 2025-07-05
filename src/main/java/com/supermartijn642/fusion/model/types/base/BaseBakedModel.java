@@ -10,17 +10,16 @@ import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType
 import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -30,20 +29,20 @@ import java.util.*;
  */
 public class BaseBakedModel implements BlockStateModel {
 
-    private final Map<RenderType,List<TaggedBakedQuad>[]> blockMesh;
-    private final List<RenderType> blockRenderTypes;
+    private final Map<Optional<ChunkSectionLayer>,List<TaggedBakedQuad>[]> blockMesh;
+    private final List<Optional<ChunkSectionLayer>> blockRenderTypes;
     private final List<TextureAtlasSprite> sprites;
     private final boolean hasSpecialQuads;
     private final boolean hasAmbientOcclusion;
     private final TextureAtlasSprite particleIcon;
 
-    public BaseBakedModel(List<BaseModelQuad> quads, boolean hasAmbientOcclusion, TextureAtlasSprite particleIcon, RenderType neoforgeRenderType){
+    public BaseBakedModel(List<BaseModelQuad> quads, boolean hasAmbientOcclusion, TextureAtlasSprite particleIcon, ChunkSectionLayer neoforgeRenderType){
         this.hasAmbientOcclusion = hasAmbientOcclusion;
         this.particleIcon = particleIcon;
 
         // Create block and item meshes from the quads
-        Map<RenderType,List<TaggedBakedQuad>[]> blockMesh = new HashMap<>();
-        Set<RenderType> blockRenderTypes = new HashSet<>();
+        Map<Optional<ChunkSectionLayer>,List<TaggedBakedQuad>[]> blockMesh = new HashMap<>();
+        Set<Optional<ChunkSectionLayer>> blockRenderTypes = new HashSet<>();
         HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
         MutableQuad mutableQuad = new MutableQuad();
@@ -61,13 +60,13 @@ public class BaseBakedModel implements BlockStateModel {
 
             TaggedBakedQuad finishedQuad = new TaggedBakedQuad(mutableQuad.toBakedQuad(), quad.textureType(), spriteIndex);
             // Add the block quads
-            RenderType renderType = FusionClient.getRenderTypeMaterial(quad.renderType());
-            if(renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER && neoforgeRenderType != null)
-                renderType = neoforgeRenderType;
-            blockRenderTypes.add(renderType);
+            Optional<ChunkSectionLayer> layer = FusionClient.getChunkLayer(quad.renderType());
+            if(layer.isEmpty() && neoforgeRenderType != null)
+                layer = Optional.of(neoforgeRenderType);
+            blockRenderTypes.add(layer);
             int cullIndex = cullIndex(quad.cullDirection());
             //noinspection unchecked
-            List<TaggedBakedQuad>[] mesh = blockMesh.computeIfAbsent(renderType, r -> new List[7]);
+            List<TaggedBakedQuad>[] mesh = blockMesh.computeIfAbsent(layer, r -> new List[7]);
             if(mesh[cullIndex] == null)
                 mesh[cullIndex] = new ArrayList<>();
             mesh[cullIndex].add(finishedQuad);
@@ -80,11 +79,11 @@ public class BaseBakedModel implements BlockStateModel {
 
     @Override
     public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockModelPart> parts){
-        for(RenderType renderType : this.blockRenderTypes){
+        for(Optional<ChunkSectionLayer> layer : this.blockRenderTypes){
             parts.add(new BlockModelPart() {
                 @Override
                 public List<BakedQuad> getQuads(@Nullable Direction cullDirection){
-                    return BaseBakedModel.this.getQuads(level, pos, state, cullDirection, random, renderType);
+                    return BaseBakedModel.this.getQuads(level, pos, state, cullDirection, random, layer);
                 }
 
                 @Override
@@ -98,9 +97,9 @@ public class BaseBakedModel implements BlockStateModel {
                 }
 
                 @Override
-                public RenderType getRenderType(BlockState state){
+                public ChunkSectionLayer getRenderType(BlockState state){
                     //noinspection deprecation
-                    return renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER ? ItemBlockRenderTypes.getChunkRenderType(state) : renderType;
+                    return layer.orElseGet(() -> ItemBlockRenderTypes.getChunkRenderType(state));
                 }
             });
         }
@@ -111,8 +110,9 @@ public class BaseBakedModel implements BlockStateModel {
         this.collectParts(null, null, null, random, parts);
     }
 
-    private List<BakedQuad> getQuads(@Nullable BlockAndTintGetter blockView, @Nullable BlockPos pos, @Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random, @NotNull RenderType renderType){
-        List<TaggedBakedQuad> quads = this.blockMesh.get(renderType)[cullIndex(cullDirection)];
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    private List<BakedQuad> getQuads(@Nullable BlockAndTintGetter blockView, @Nullable BlockPos pos, @Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random, Optional<ChunkSectionLayer> layer){
+        List<TaggedBakedQuad> quads = this.blockMesh.get(layer)[cullIndex(cullDirection)];
         if(quads == null)
             return Collections.emptyList();
 

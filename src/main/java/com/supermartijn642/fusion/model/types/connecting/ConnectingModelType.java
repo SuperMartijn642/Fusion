@@ -60,7 +60,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         //noinspection unchecked,rawtypes
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, true);
+        Boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, null);
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
         // Finally, create the model
         return new ConnectingBakedModel(

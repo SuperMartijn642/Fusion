@@ -16,7 +16,6 @@ import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType
 import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -107,7 +106,7 @@ public class ConnectingBakedModel implements BlockStateModel {
     private final boolean hasSpecialQuads;
     private final TextureAtlasSprite particleIcon;
 
-    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, TextureAtlasSprite particleIcon){
+    public ConnectingBakedModel(List<ConnectingModelQuad> quads, Boolean hasAmbientOcclusion, TextureAtlasSprite particleIcon){
         this.particleIcon = particleIcon;
 
         // Create block mesh from the quads
@@ -143,9 +142,9 @@ public class ConnectingBakedModel implements BlockStateModel {
                 hasSpecialQuads = true;
             }
             // Submit the quads
-            RenderMaterial material = FusionClient.getRenderTypeMaterial(hasAmbientOcclusion, quad.renderType(), quad.emissive());
             for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
-                emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
+                emitter.fromBakedQuad(quad.bakedQuad());
+                FusionClient.applyMaterialProperties(emitter, hasAmbientOcclusion, quad.renderType(), quad.emissive());
                 if(tag != null && quadIndex > 0)
                     emitter.tag(tag | (quadIndex << 20)); // Add the quad index to the tag
                 else if(tag != null)

@@ -51,7 +51,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
         // Bake the quads
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, true);
+        Boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, null);
         TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
         // Finally, create the model
         return new BaseBakedModel(

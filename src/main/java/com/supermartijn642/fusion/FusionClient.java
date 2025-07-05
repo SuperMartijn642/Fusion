@@ -15,13 +15,11 @@ import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.material.BlendMode;
-import net.fabricmc.fabric.api.renderer.v1.material.MaterialFinder;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
-import net.fabricmc.fabric.api.renderer.v1.material.ShadeMode;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.renderer.v1.mesh.ShadeMode;
 import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
@@ -34,7 +32,6 @@ import org.slf4j.LoggerFactory;
 public class FusionClient implements ClientModInitializer {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
-    private static final RenderMaterial[] RENDER_MATERIALS = new RenderMaterial[(2 | (1 << 2) | ((BaseTextureData.RenderType.values().length) << 3)) + 1];
 
     @Override
     public void onInitializeClient(){
@@ -91,28 +88,15 @@ public class FusionClient implements ClientModInitializer {
         ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
     }
 
-    public static RenderMaterial getRenderTypeMaterial(Boolean ambientOcclusion, BaseTextureData.RenderType renderType, boolean emissive){
-        int index = (ambientOcclusion == null ? 2 : ambientOcclusion ? 1 : 0)
-            | (emissive ? 1 : 0) << 2
-            | (renderType == null ? 0 : renderType.ordinal() + 1) << 3;
-        RenderMaterial material = RENDER_MATERIALS[index];
-        if(material == null){
-            MaterialFinder materialFinder = Renderer.get().materialFinder();
-            materialFinder.shadeMode(ShadeMode.VANILLA);
-            if(ambientOcclusion != null)
-                materialFinder.ambientOcclusion(ambientOcclusion ? TriState.TRUE : TriState.FALSE);
-            if(renderType != null){
-                BlendMode mode = renderType == BaseTextureData.RenderType.OPAQUE ? BlendMode.SOLID
-                    : renderType == BaseTextureData.RenderType.CUTOUT ? BlendMode.CUTOUT
-                    : renderType == BaseTextureData.RenderType.TRANSLUCENT ? BlendMode.TRANSLUCENT : null;
-                materialFinder.blendMode(mode);
-            }
-            if(emissive)
-                materialFinder.emissive(true).disableDiffuse(true);
-            material = materialFinder.find();
-            RENDER_MATERIALS[index] = material;
-        }
-        return material;
+    public static void applyMaterialProperties(QuadEmitter emitter, Boolean ambientOcclusion, BaseTextureData.RenderType renderType, boolean emissive){
+        emitter.shadeMode(ShadeMode.VANILLA);
+        emitter.ambientOcclusion(ambientOcclusion == null ? TriState.DEFAULT : ambientOcclusion ? TriState.TRUE : TriState.FALSE);
+        ChunkSectionLayer layer = renderType == BaseTextureData.RenderType.OPAQUE ? ChunkSectionLayer.SOLID
+            : renderType == BaseTextureData.RenderType.CUTOUT ? ChunkSectionLayer.CUTOUT
+            : renderType == BaseTextureData.RenderType.TRANSLUCENT ? ChunkSectionLayer.TRANSLUCENT : null;
+        emitter.renderLayer(layer);
+        if(emissive)
+            emitter.emissive(true).diffuseShade(true);
     }
 
     private static String fusionVersion;

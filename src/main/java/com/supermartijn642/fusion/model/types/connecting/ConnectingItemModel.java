@@ -6,7 +6,6 @@ import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -32,6 +31,7 @@ public class ConnectingItemModel implements ItemModel {
     private final ModelRenderProperties properties;
     private final Mesh mesh;
     private final Supplier<Vector3f[]> extents;
+    private final boolean animated;
 
     public ConnectingItemModel(List<ItemTintSource> tints, List<ConnectingModelQuad> quads, ModelRenderProperties properties){
         this.tints = tints;
@@ -52,9 +52,9 @@ public class ConnectingItemModel implements ItemModel {
                 auxiliaryQuadCount = layoutHandler.getAuxiliaryQuadCount();
             }
             // Process and submit the quads
-            RenderMaterial material = FusionClient.getRenderTypeMaterial(null, quad.renderType(), quad.emissive());
             for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
-                emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
+                emitter.fromBakedQuad(quad.bakedQuad());
+                FusionClient.applyMaterialProperties(emitter, null, quad.renderType(), quad.emissive());
                 // Process the quad if it has a connecting texture
                 // As item mesh does not depend on state, we can run the connecting texture processing immediately
                 if(layoutHandler != null){
@@ -68,20 +68,40 @@ public class ConnectingItemModel implements ItemModel {
             }
         }
         this.mesh = builder.immutableCopy();
+
+        // Check whether the quads contain animated textures
+        boolean animated = false;
+        for(BaseModelQuad quad : quads){
+            if(quad.bakedQuad().sprite().isAnimated()){
+                animated = true;
+                break;
+            }
+        }
+        this.animated = animated;
     }
 
     @Override
     public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable LivingEntity entity, int i){
+        renderState.appendModelIdentityElement(this);
         ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
-        if(stack.hasFoil())
-            layer.setFoilType(BlockModelWrapper.hasSpecialAnimatedTexture(stack) ? ItemStackRenderState.FoilType.SPECIAL : ItemStackRenderState.FoilType.STANDARD);
+        if(stack.hasFoil()){
+            ItemStackRenderState.FoilType foil = BlockModelWrapper.hasSpecialAnimatedTexture(stack) ? ItemStackRenderState.FoilType.SPECIAL : ItemStackRenderState.FoilType.STANDARD;
+            layer.setFoilType(foil);
+            renderState.setAnimated();
+            renderState.appendModelIdentityElement(foil);
+        }
         int tints = this.tints.size();
         int[] tintValues = layer.prepareTintLayers(tints);
-        for(int j = 0; j < tints; j++)
-            tintValues[j] = this.tints.get(j).calculate(stack, level, entity);
+        for(int j = 0; j < tints; j++){
+            int tint = this.tints.get(j).calculate(stack, level, entity);
+            tintValues[j] = tint;
+            renderState.appendModelIdentityElement(tint);
+        }
         layer.setExtents(this.extents);
         this.properties.applyToLayer(layer, displayContext);
         this.mesh.outputTo(layer.emitter());
         layer.setRenderType(Sheets.translucentItemSheet());
+        if(this.animated)
+            renderState.setAnimated();
     }
 }

@@ -1,7 +1,6 @@
 package com.supermartijn642.fusion.resources;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.extensions.PackExtension;
 import net.minecraft.ChatFormatting;
@@ -12,13 +11,14 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineLabel;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
+import org.joml.Matrix3x2fStack;
 
 import java.util.function.Consumer;
 
@@ -94,24 +94,24 @@ public class MinimumVersionWarningScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks){
         super.render(graphics, mouseX, mouseY, partialTicks);
-        PoseStack poseStack = graphics.pose();
-        poseStack.pushPose();
-        poseStack.translate(this.width / 2f, this.height / 2f - 110, 0);
+        Matrix3x2fStack poseStack = graphics.pose();
+        poseStack.pushMatrix();
+        poseStack.translate(this.width / 2f, this.height / 2f - 110);
 
         // Title
         int titleLeft = -(this.titleWidth + 17) / 2;
-        graphics.blit(RenderType::guiTextured, FUSION_LOGO, titleLeft, 0, 0, 0, 12, 12, 12, 12);
+        graphics.blit(FUSION_LOGO, titleLeft, 0, 0, 0, 12, 12, 12, 12);
         graphics.drawString(this.font, this.title, titleLeft + 17, 2, -1);
 
         // Content
-        poseStack.popPose();
-        poseStack.pushPose();
+        poseStack.popMatrix();
+        poseStack.pushMatrix();
         int middleHeight = 98 + this.headerMessage.getLineCount() * 10 + this.confirmationMessage.getLineCount() * 10;
-        poseStack.translate(this.width / 2f, (this.height - middleHeight) / 2f, 0);
+        poseStack.translate(this.width / 2f, (this.height - middleHeight) / 2f);
 
         graphics.fill(-98, 0, 98, 36, ARGB.color(70, 255, 255, 255));
-        graphics.blit(RenderType::guiTextured, this.pack.getIconTexture(), -96, 2, 0, 0, 32, 32, 32, 32);
-        graphics.drawString(this.font, this.packName, -62, 3, 16777215);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, this.pack.getIconTexture(), -96, 2, 0, 0, 32, 32, 32, 32);
+        graphics.drawString(this.font, this.packName, -62, 3, ARGB.color(255, 16777215));
         this.packDescription.renderLeftAligned(graphics, -62, 14, 10, -8355712);
 
         graphics.hLine(-115, 115, 44, ARGB.color(255, 255, 255));
@@ -127,10 +127,10 @@ public class MinimumVersionWarningScreen extends Screen {
         textLeft = -(this.versionLabelTextWidth + 5 + this.versionTextWidth) / 2;
         graphics.drawString(this.font, this.currentVersionLabel, textLeft, 76 + textHeight, ARGB.color(180, 180, 180));
         graphics.drawString(this.font, this.requiredVersionLabel, textLeft, 88 + textHeight, ARGB.color(180, 180, 180));
-        graphics.drawString(this.font, this.currentVersion, textLeft + this.versionLabelTextWidth + 5, 76 + textHeight, 16777215);
-        graphics.drawString(this.font, this.requiredVersion, textLeft + this.versionLabelTextWidth + 5, 88 + textHeight, 16777215);
+        graphics.drawString(this.font, this.currentVersion, textLeft + this.versionLabelTextWidth + 5, 76 + textHeight, ARGB.color(255, 16777215));
+        graphics.drawString(this.font, this.requiredVersion, textLeft + this.versionLabelTextWidth + 5, 88 + textHeight, ARGB.color(255, 16777215));
 
-        poseStack.popPose();
+        poseStack.popMatrix();
     }
 
     @Override

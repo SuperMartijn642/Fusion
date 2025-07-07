@@ -54,6 +54,7 @@ public class BaseBakedModel implements BlockStateModel {
         boolean hasSpecialQuads = false;
         for(BaseModelQuad quad : quads){
             emitter.fromBakedQuad(quad.bakedQuad());
+            emitter.cullFace(quad.cullDirection());
             FusionClient.applyMaterialProperties(emitter, hasAmbientOcclusion, quad.renderType(), quad.emissive());
             // Tag quads which need additional processing
             if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){

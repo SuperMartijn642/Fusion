@@ -54,6 +54,7 @@ public class ConnectingItemModel implements ItemModel {
             // Process and submit the quads
             for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
                 emitter.fromBakedQuad(quad.bakedQuad());
+                emitter.cullFace(quad.cullDirection());
                 FusionClient.applyMaterialProperties(emitter, null, quad.renderType(), quad.emissive());
                 // Process the quad if it has a connecting texture
                 // As item mesh does not depend on state, we can run the connecting texture processing immediately

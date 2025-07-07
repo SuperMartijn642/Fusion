@@ -144,6 +144,7 @@ public class ConnectingBakedModel implements BlockStateModel {
             // Submit the quads
             for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
                 emitter.fromBakedQuad(quad.bakedQuad());
+                emitter.cullFace(quad.cullDirection());
                 FusionClient.applyMaterialProperties(emitter, hasAmbientOcclusion, quad.renderType(), quad.emissive());
                 if(tag != null && quadIndex > 0)
                     emitter.tag(tag | (quadIndex << 20)); // Add the quad index to the tag

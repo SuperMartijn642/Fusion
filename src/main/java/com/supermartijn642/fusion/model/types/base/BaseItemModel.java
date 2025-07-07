@@ -40,6 +40,7 @@ public class BaseItemModel implements ItemModel {
         QuadEmitter emitter = builder.emitter();
         for(BaseModelQuad quad : quads){
             emitter.fromBakedQuad(quad.bakedQuad());
+            emitter.cullFace(quad.cullDirection());
             FusionClient.applyMaterialProperties(emitter, null, quad.renderType(), quad.emissive());
             emitter.emit();
         }

@@ -55,7 +55,7 @@ public class BaseBakedModel implements BlockStateModel {
         MutableQuad mutableQuad = new MutableQuad();
         for(BaseModelQuad quad : quads){
             mutableQuad.fillFromBakedQuad(quad.bakedQuad());
-            mutableQuad.ambientOcclusion(hasAmbientOcclusion);
+            mutableQuad.ambientOcclusion(!quad.emissive() && hasAmbientOcclusion);
             mutableQuad.emissive(quad.emissive());
             // Tag quads which need additional processing
             int spriteIndex = -1;

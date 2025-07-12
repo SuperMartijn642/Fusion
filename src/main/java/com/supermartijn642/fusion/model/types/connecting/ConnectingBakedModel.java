@@ -141,7 +141,7 @@ public class ConnectingBakedModel implements BlockStateModel {
             // Submit the quads
             for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad());
-                mutableQuad.ambientOcclusion(hasAmbientOcclusion);
+                mutableQuad.ambientOcclusion(!quad.emissive() && hasAmbientOcclusion);
                 mutableQuad.emissive(quad.emissive());
 
                 // Add the block quad

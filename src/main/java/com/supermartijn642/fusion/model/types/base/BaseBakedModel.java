@@ -74,7 +74,7 @@ public class BaseBakedModel implements BakedModel {
         MutableQuad mutableQuad = new MutableQuad();
         for(BaseModelQuad quad : quads){
             mutableQuad.fillFromBakedQuad(quad.bakedQuad());
-            mutableQuad.ambientOcclusion(hasAmbientOcclusion);
+            mutableQuad.ambientOcclusion(!quad.emissive() && hasAmbientOcclusion);
             mutableQuad.emissive(quad.emissive());
             if(quad.lightEmission() != null){
                 for(int i = 0; i < 4; i++){

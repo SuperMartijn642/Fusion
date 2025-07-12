@@ -162,7 +162,7 @@ public class ConnectingBakedModel implements BakedModel {
             // Submit the quads
             for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad());
-                mutableQuad.ambientOcclusion(hasAmbientOcclusion);
+                mutableQuad.ambientOcclusion(!quad.emissive() && hasAmbientOcclusion);
                 mutableQuad.emissive(quad.emissive());
                 if(quad.lightEmission() != null){
                     for(int i = 0; i < 4; i++){

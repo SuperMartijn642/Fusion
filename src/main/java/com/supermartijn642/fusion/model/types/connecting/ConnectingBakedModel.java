@@ -130,7 +130,7 @@ public class ConnectingBakedModel implements BakedModel {
         Map<RenderType,List<TaggedBakedQuad>[]> blockMesh = new HashMap<>();
         Set<RenderType> blockRenderTypes = new HashSet<>();
         Map<RenderType,List<BakedQuad>> itemMesh = new HashMap<>();
-        Set<RenderType> itemRenderTypes = new HashSet<>(), itemRenderTypesFabulous = new HashSet<>();
+        Set<RenderType> itemRenderTypes = new LinkedHashSet<>(), itemRenderTypesFabulous = new LinkedHashSet<>();
         HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
         HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;

@@ -27,7 +27,12 @@ repositories {
         }
         filter { includeGroup "maven.modrinth" }
     }
-    maven { url = "https://repo.spongepowered.org/maven" }
+    exclusiveContent {
+        forRepository {
+            maven { url = "https://repo.spongepowered.org/maven" }
+        }
+        filter { includeGroup "org.spongepowered" }
+    }
 }
 
 dependencies {

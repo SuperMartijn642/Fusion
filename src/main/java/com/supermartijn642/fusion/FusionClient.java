@@ -96,7 +96,7 @@ public class FusionClient implements ClientModInitializer {
             : renderType == BaseTextureData.RenderType.TRANSLUCENT ? ChunkSectionLayer.TRANSLUCENT : null;
         emitter.renderLayer(layer);
         if(emissive)
-            emitter.emissive(true).diffuseShade(true);
+            emitter.emissive(true).diffuseShade(true).ambientOcclusion(TriState.FALSE);
     }
 
     private static String fusionVersion;

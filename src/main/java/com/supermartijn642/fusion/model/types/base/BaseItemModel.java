@@ -37,7 +37,7 @@ public class BaseItemModel implements ItemModel {
         this.extents = Suppliers.memoize(() -> BlockModelWrapper.computeExtents(quads.stream().map(BaseModelQuad::bakedQuad).toList()));
 
         // Create the item mesh
-        Map<Optional<RenderType>,List<BakedQuad>> mesh = new HashMap<>();
+        Map<Optional<RenderType>,List<BakedQuad>> mesh = new LinkedHashMap<>();
         MutableQuad mutableQuad = new MutableQuad();
         for(BaseModelQuad quad : quads){
             mutableQuad.fillFromBakedQuad(quad.bakedQuad());

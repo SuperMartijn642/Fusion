@@ -39,7 +39,7 @@ public class ConnectingItemModel implements ItemModel {
         this.extents = Suppliers.memoize(() -> BlockModelWrapper.computeExtents(quads.stream().map(BaseModelQuad::bakedQuad).toList()));
 
         // Create the item mesh
-        Map<Optional<RenderType>,List<BakedQuad>> mesh = new HashMap<>();
+        Map<Optional<RenderType>,List<BakedQuad>> mesh = new LinkedHashMap<>();
         OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
         for(ConnectingModelQuad quad : quads){
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times

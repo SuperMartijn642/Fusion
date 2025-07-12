@@ -49,6 +49,8 @@ dependencies {
     compileOnly fg.deobf("curse.maven:vintagefix-871198:4714078")
     // MixinBooter
 //    runtimeOnly "curse.maven:mixin-booter-419286:4459218"
+    // Relictium
+    compileOnly fg.deobf("curse.maven:relictium-1181652:6103239")
 
     // Just Enough Items
 //    runtimeOnly fg.deobf("curse.maven:jei-238222:${just_enough_items_file}")

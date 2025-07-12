@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.MixinService;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -15,13 +15,20 @@ import java.util.Set;
 public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isVintageFixLoaded;
+    private boolean isVintagiumLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
+        this.isVintageFixLoaded = isClassAvailable("org.embeddedt.vintagefix.VintageFix");
+        this.isVintagiumLoaded = isClassAvailable("me.jellysquid.mods.sodium.client.SodiumClientMod") || isClassAvailable("io.themade4.relictium.Relictium");
+    }
+
+    private static boolean isClassAvailable(String className){
         try{
-            MixinService.getService().getBytecodeProvider().getClassNode("org.embeddedt.vintagefix.VintageFix");
+            MixinService.getService().getBytecodeProvider().getClassNode(className);
+            return true;
         }catch(Exception ignored){
-            this.isVintageFixLoaded = false;
+            return false;
         }
     }
 
@@ -32,7 +39,9 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName){
-        return !(this.isVintageFixLoaded && mixinClassName.endsWith(".TextureAtlasMixin"));
+        if(this.isVintageFixLoaded && mixinClassName.endsWith(".TextureAtlasMixin"))
+            return false;
+        return true;
     }
 
     @Override
@@ -41,9 +50,12 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public List<String> getMixins(){
-        return this.isVintageFixLoaded ?
-            Collections.singletonList("vintagefix.TextureAtlasMixinVintageFix")
-            : null;
+        List<String> mixins = new ArrayList<>();
+        if(this.isVintageFixLoaded)
+            mixins.add("vintagefix.TextureAtlasMixinVintageFix");
+        if(this.isVintagiumLoaded)
+            mixins.add("vintagium.BlockRendererMixinVintagium");
+        return mixins;
     }
 
     @Override

@@ -14,6 +14,7 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,11 +33,15 @@ public abstract class ItemBakedModel extends WrappedBakedModel {
 
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType){
+        if(cullDirection != null)
+            return Collections.emptyList();
         return this.getQuads(this.stack, random, data, renderType);
     }
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random){
+        if(cullDirection != null)
+            return Collections.emptyList();
         return this.getQuads(this.stack, random, ModelData.EMPTY, null);
     }
 

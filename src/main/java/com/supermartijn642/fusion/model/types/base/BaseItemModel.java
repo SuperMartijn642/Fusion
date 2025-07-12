@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -39,7 +39,7 @@ public class BaseItemModel implements ItemModel {
         this.extents = Suppliers.memoize(() -> BlockModelWrapper.computeExtents(quads.stream().map(BaseModelQuad::bakedQuad).toList()));
 
         // Create the item mesh
-        Map<RenderType,List<BakedQuad>> mesh = new HashMap<>();
+        Map<RenderType,List<BakedQuad>> mesh = new LinkedHashMap<>();
         MutableQuad mutableQuad = new MutableQuad();
         for(BaseModelQuad quad : quads){
             mutableQuad.fillFromBakedQuad(quad.bakedQuad());

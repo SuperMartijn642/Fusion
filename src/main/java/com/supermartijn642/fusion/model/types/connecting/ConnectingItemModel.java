@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -41,7 +41,7 @@ public class ConnectingItemModel implements ItemModel {
         this.extents = Suppliers.memoize(() -> BlockModelWrapper.computeExtents(quads.stream().map(BaseModelQuad::bakedQuad).toList()));
 
         // Create the item mesh
-        Map<RenderType,List<BakedQuad>> mesh = new HashMap<>();
+        Map<RenderType,List<BakedQuad>> mesh = new LinkedHashMap<>();
         OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
         for(ConnectingModelQuad quad : quads){
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times

@@ -33,11 +33,15 @@ public abstract class ItemBakedModel extends WrappedBakedModel {
 
     @Override
     public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @Nonnull Random random, @Nonnull IModelData data){
+        if(cullDirection != null)
+            return Collections.emptyList();
         return this.getQuads(this.stack, this.fabulous, random, data, MinecraftForgeClient.getRenderLayer());
     }
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, Random random){
+        if(cullDirection != null)
+            return Collections.emptyList();
         return this.getQuads(this.stack, this.fabulous, random, EmptyModelData.INSTANCE, MinecraftForgeClient.getRenderLayer());
     }
 

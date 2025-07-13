@@ -104,6 +104,7 @@ public class SpriteLoaderMixin {
                     textures.put(identifier, newTexture);
                 }
             }
+            fusionTextureMetadata.clear();
             return preparations;
         });
     }

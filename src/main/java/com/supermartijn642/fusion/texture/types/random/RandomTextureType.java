@@ -138,9 +138,9 @@ public class RandomTextureType implements TextureType<RandomTextureData> {
         // Determine which tile to use based on position and side
         RandomSource random = randomSupplier.get();
         if(data.getSeed() != null)
-            random.setSeed(data.getSeed() ^ ((pos.asLong() + 1) * side.ordinal()));
+            random.setSeed(data.getSeed() ^ ((pos.asLong() + 1) * (side.ordinal() + 1)));
         else
-            random.setSeed((pos.asLong() + 1) * side.ordinal());
+            random.setSeed((pos.asLong() + 1) * (side.ordinal() + 1));
         random.nextLong(); // Neighboring blocks may lead to similar seeds, hence generate long first to increase randomness
         int x = random.nextInt(data.getColumns());
         int y = random.nextInt(data.getRows());

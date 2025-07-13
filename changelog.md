@@ -1,3 +1,14 @@
+### Fusion 1.2.8
+- Added Hungarian translations (thanks to bayi!)
+- Ambient occlusion is now disabled for emissive quads
+- Fixed inverted vertical tile ordering for `continuous` textures
+- Fixed `DefaultConnectionPredicates#isFaceVisible` returning `is_same_block` predicate
+- Fixed `NotConnectionPredicate` serialization being invalid
+- Fixed crash when evaluating `biome` and `dimension` entity predicate
+- Fixed `random` texture seed always being 0 for bottom side
+- Fixed overrides folder not working for resource packs which use vanilla resource overlays
+- Fixed entity model modifiers using model for incorrect layer when targeting entities with multiple vanilla layers
+
 ### Fusion 1.2.7
 - Fixed argument validation for `count` and `durability` item predicates
 

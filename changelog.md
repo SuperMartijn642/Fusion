@@ -1,3 +1,12 @@
+### Fusion 1.2.8
+- Added Hungarian translations (thanks to bayi!)
+- Fixed quads with different render types being ordered randomly for `base` and `connecting` models
+- Fixed inverted vertical tile ordering for `continuous` textures
+- Fixed `DefaultConnectionPredicates#isFaceVisible` returning `is_same_block` predicate
+- Fixed `NotConnectionPredicate` serialization being invalid
+- Fixed `random` texture seed always being 0 for bottom side
+- Fixed model modifiers placed in overrides folder in zipped resource packs not getting loaded
+
 ### Fusion 1.2.7a
 - Moved connection evaluation for connecting models fixing Fusion caching issue when combined with FramedBlocks
 

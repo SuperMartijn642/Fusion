@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.FilePackResources;
@@ -65,21 +66,20 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
         }
     }
 
-    @Inject(
+    @ModifyReturnValue(
         method = "getNamespaces",
-        at = @At("RETURN"),
-        cancellable = true
+        at = @At("RETURN")
     )
-    private void getNamespaces(PackType type, CallbackInfoReturnable<Set<String>> ci){
+    private Set<String> getNamespaces(Set<String> namespaces, PackType type){
         if(this.overridesFolder == null)
-            return;
+            return namespaces;
 
         // Add namespaces from the overrides folder
         ZipFile zipFile = this.getOrCreateZipFile();
         if(zipFile == null)
-            return;
+            return namespaces;
         Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
-        Set<String> namespaces = Sets.newHashSet(ci.getReturnValue());
+        namespaces = Sets.newHashSet(namespaces);
         while(enumeration.hasMoreElements()){
             ArrayList<String> list;
             ZipEntry zipEntry = enumeration.nextElement();
@@ -96,7 +96,7 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
             }
             FilePackResources.LOGGER.warn("Ignored non-lowercase namespace: {} in {}", namespace, this.file);
         }
-        ci.setReturnValue(namespaces);
+        return namespaces;
     }
 
     @ModifyVariable(

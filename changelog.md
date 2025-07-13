@@ -1,3 +1,12 @@
+### Fusion 1.2.8
+- Added Hungarian translations (thanks to bayi!)
+- Added compatibility for Vintagium and Relictium
+- Fixed quads with different render types being ordered randomly for `base` and `connecting` models
+- Fixed inverted vertical tile ordering for `continuous` textures
+- Fixed `DefaultConnectionPredicates#isFaceVisible` returning `is_same_block` predicate
+- Fixed `NotConnectionPredicate` serialization being invalid
+- Fixed `random` texture seed always being 0 for bottom side
+
 ### Fusion 1.2.7
 - Fixed argument validation for `count` and `durability` item predicates
 

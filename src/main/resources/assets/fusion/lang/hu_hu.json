@@ -1,0 +1,10 @@
+{
+  "fusion.resource_packs.requires_newer_version": "(A Fusion újabb verziójához készült)",
+  "fusion.resource_packs.warning_screen.title": "Fusion verzió figyelmeztetés",
+  "fusion.resource_packs.warning_screen.message": "Ez a forráscsomag egy újabb verziójú Fusionhoz készült, és lehet, hogy nem működik megfelelően a jelenleg telepített Fusion verzióval.",
+  "fusion.resource_packs.warning_screen.confirmation": "Mindenképpen szeretnéd engedélyezni a forráscsomagot?",
+  "fusion.resource_packs.warning_screen.current_version": "Telepített verzió:",
+  "fusion.resource_packs.warning_screen.required_version": "Szükséges verzió:",
+  "fusion.resource_packs.warning_screen.cancel": "Nem",
+  "fusion.resource_packs.warning_screen.confirm": "Igen"
+}

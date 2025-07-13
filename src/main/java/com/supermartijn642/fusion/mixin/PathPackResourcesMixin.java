@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Sets;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
 import net.minecraft.FileUtil;
 import net.minecraft.resources.ResourceLocation;
@@ -60,17 +61,16 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         }).ifPresent(ci::setReturnValue);
     }
 
-    @Inject(
+    @ModifyReturnValue(
         method = "getNamespaces",
-        at = @At("RETURN"),
-        cancellable = true
+        at = @At("RETURN")
     )
-    private void getNamespaces(PackType type, CallbackInfoReturnable<Set<String>> ci){
+    private Set<String> getNamespaces(Set<String> namespaces, PackType type){
         if(this.overridesFolderRoot == null)
-            return;
+            return namespaces;
 
         // Add namespaces from the overrides folder
-        HashSet<String> namespaces = Sets.newHashSet(ci.getReturnValue());
+        namespaces = Sets.newHashSet(namespaces);
         Path typeFolder = this.overridesFolderRoot.resolve(type.getDirectory());
         try(DirectoryStream<Path> stream = Files.newDirectoryStream(typeFolder)){
             for(Path directory : stream){
@@ -85,7 +85,7 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         }catch(IOException e){
             PathPackResources.LOGGER.error("Failed to list path {}", typeFolder, e);
         }
-        ci.setReturnValue(namespaces);
+        return namespaces;
     }
 
     @ModifyVariable(

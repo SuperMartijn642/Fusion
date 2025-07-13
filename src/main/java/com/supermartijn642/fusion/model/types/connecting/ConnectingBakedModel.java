@@ -118,7 +118,7 @@ public class ConnectingBakedModel implements BakedModel {
     private final ItemTransforms transforms;
     private final ItemOverrides overrides;
 
-    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, ItemOverrides overrides){
+    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, ItemOverrides overrides, RenderType forgeRenderType){
         this.hasAmbientOcclusion = hasAmbientOcclusion;
         this.isGui3d = isGui3d;
         this.usesBlockLight = usesBlockLight;
@@ -174,6 +174,8 @@ public class ConnectingBakedModel implements BakedModel {
                 // Add the block quad
                 TaggedBakedQuad finishedQuad = new TaggedBakedQuad(mutableQuad.toBakedQuad(), textureType, spriteIndex, predicateIndex, quadIndex);
                 RenderType renderType = FusionClient.getRenderTypeMaterial(quad.renderType());
+                if(renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER && forgeRenderType != null)
+                    renderType = forgeRenderType;
                 blockRenderTypes.add(renderType);
                 int cullIndex = cullIndex(quad.cullDirection());
                 //noinspection unchecked

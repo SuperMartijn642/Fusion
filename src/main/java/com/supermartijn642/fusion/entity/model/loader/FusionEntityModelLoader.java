@@ -33,7 +33,7 @@ public class FusionEntityModelLoader {
     public static Map<ResourceLocation,ModelPart> MODELS = Map.of();
 
     public static ResourceLocation locationForLayer(ModelLayerLocation layer){
-        String layerFormatted = layer.getLayer().toLowerCase(Locale.ROOT).replace(':', '/').replaceAll("[a-z0-9/._-]","");
+        String layerFormatted = layer.getLayer().toLowerCase(Locale.ROOT).replace(':', '/').replaceAll("[^a-z0-9/._-]","");
         return new ResourceLocation(layer.getModel().getNamespace(), layer.getModel().getPath() + "/" + layerFormatted);
     }
 

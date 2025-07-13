@@ -115,9 +115,11 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData>
         // Determine which tile to use
         EnumFacing.Axis axis = side.getAxis();
         int x = axis == EnumFacing.Axis.X ? pos.getZ() : pos.getX();
-        int y = axis == EnumFacing.Axis.X ? pos.getY() : axis == EnumFacing.Axis.Y ? pos.getZ() : pos.getY();
+        int y = axis == EnumFacing.Axis.X ? -pos.getY() : axis == EnumFacing.Axis.Y ? -pos.getZ() - 1 : -pos.getY();
         if(side == EnumFacing.NORTH || side == EnumFacing.EAST)
             x = -x - 1;
+        if(side == EnumFacing.UP)
+            y = -y - 1;
         x = x < 0 ? ((x % data.getColumns()) + data.getColumns()) % data.getColumns() : x % data.getColumns();
         y = y < 0 ? ((y % data.getRows()) + data.getRows()) % data.getRows() : y % data.getRows();
         // Adjust the quad's uv

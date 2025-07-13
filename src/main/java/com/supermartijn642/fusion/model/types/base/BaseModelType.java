@@ -9,6 +9,7 @@ import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransform;
@@ -18,6 +19,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.SpecialModels;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.NamedRenderTypeManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -66,6 +68,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
         ItemTransform transformFixed = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemDisplayContext.FIXED) ? model.transforms.getTransform(ItemDisplayContext.FIXED) : null, ItemTransform.NO_TRANSFORM);
         ItemTransforms itemTransforms = new ItemTransforms(transformThirdPersonLeftHand, transformThirdPersonRightHand, transformFirstPersonLeftHand, transformFirstPersonRightHand, transformHead, transformGui, transformGround, transformFixed);
         BakedOverrides itemOverrides = data.getVanillaModel().overrides.isEmpty() ? BakedOverrides.EMPTY : new BakedOverrides(context.getModelBaker(), data.getVanillaModel().overrides);
+        //noinspection DataFlowIssue
+        RenderType neoforgeRenderType = NamedRenderTypeManager.get(data.getVanillaModel().customData.getRenderTypeHint()).block();
         // Finally, create the model
         return new BaseBakedModel(
             quads,
@@ -74,7 +78,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
             usesBlockLight,
             particleSprite,
             itemTransforms,
-            itemOverrides
+            itemOverrides,
+            neoforgeRenderType
         );
     }
 

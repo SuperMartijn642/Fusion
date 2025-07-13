@@ -70,9 +70,9 @@ public class BaseBakedModel implements BakedModel, CustomRenderTypeBakedModel {
 
         // Create block and item meshes from the quads
         Map<RenderType,List<TaggedBakedQuad>[]> blockMesh = new HashMap<>();
-        Set<RenderType> blockRenderTypes = new HashSet<>();
+        Set<RenderType> blockRenderTypes = new LinkedHashSet<>();
         Map<RenderType,List<BakedQuad>> itemMesh = new HashMap<>();
-        Set<RenderType> itemRenderTypes = new HashSet<>(), itemRenderTypesFabulous = new HashSet<>();
+        Set<RenderType> itemRenderTypes = new LinkedHashSet<>(), itemRenderTypesFabulous = new LinkedHashSet<>();
         HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
         MutableQuad mutableQuad = new MutableQuad();
@@ -133,7 +133,7 @@ public class BaseBakedModel implements BakedModel, CustomRenderTypeBakedModel {
         this.completeBlockMesh = new List[7];
         for(int i = 0; i < 7; i++){
             int cullIndex = i;
-            this.completeBlockMesh[i] = this.blockMesh.values().stream().map(arr -> arr[cullIndex]).filter(Objects::nonNull).flatMap(List::stream).toList();
+            this.completeBlockMesh[i] = blockRenderTypes.stream().map(r -> this.blockMesh.get(r)[cullIndex]).filter(Objects::nonNull).flatMap(List::stream).toList();
         }
         this.completeItemMesh = itemRenderTypes.stream().map(this.itemMesh::get).flatMap(List::stream).toList();
 

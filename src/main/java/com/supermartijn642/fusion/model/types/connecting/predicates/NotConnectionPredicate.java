@@ -31,7 +31,7 @@ public class NotConnectionPredicate implements ConnectionPredicate {
         @Override
         public JsonObject serialize(NotConnectionPredicate value){
             JsonObject json = new JsonObject();
-            json.add("predicates", FusionPredicateRegistry.serializeConnectionPredicate(value.predicate));
+            json.add("predicate", FusionPredicateRegistry.serializeConnectionPredicate(value.predicate));
             return json;
         }
     };

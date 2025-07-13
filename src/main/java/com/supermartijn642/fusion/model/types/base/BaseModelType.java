@@ -9,6 +9,7 @@ import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -17,6 +18,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraftforge.client.NamedRenderTypeManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -66,6 +68,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GROUND),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED)
         );
+        RenderType forgeRenderType = NamedRenderTypeManager.get(data.getVanillaModel().customData.getRenderTypeHint()).block();
         // Finally, create the model
         return new BaseBakedModel(
             quads,
@@ -73,7 +76,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
             isGui3d,
             usesBlockLight,
             particleSprite,
-            itemTransforms
+            itemTransforms,
+            forgeRenderType
         );
     }
 

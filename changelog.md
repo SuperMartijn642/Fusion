@@ -1,3 +1,15 @@
+### Fusion 1.2.8
+- Added Hungarian translations (thanks to bayi!)
+- Fixed quads being emitted 7 times for `base` and `connecting` models when rendered as items
+- Fixed quads with different render types being ordered randomly for `base` and `connecting` models when rendered as items
+- Fixed inverted vertical tile ordering for `continuous` textures
+- Fixed `DefaultConnectionPredicates#isFaceVisible` returning `is_same_block` predicate
+- Fixed `NotConnectionPredicate` serialization being invalid
+- Fixed crash when evaluating `biome` entity predicate
+- Fixed `random` texture seed always being 0 for bottom side
+- Fixed model modifiers placed in overrides folder in zipped resource packs not getting loaded
+- Fixed entity model modifiers using model for incorrect layer when targeting entities with multiple vanilla layers
+
 ### Fusion 1.2.7a
 - Moved connection evaluation for connecting models fixing Fusion caching issue when combined with FramedBlocks
 

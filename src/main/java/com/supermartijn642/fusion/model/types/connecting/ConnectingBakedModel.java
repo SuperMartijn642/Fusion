@@ -119,7 +119,7 @@ public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedM
         // Create block and item meshes from the quads
         //noinspection unchecked
         List<TaggedBakedQuad>[][] blockMesh = new List[BlockRenderLayer.values().length + 1][];
-        Set<BlockRenderLayer> blockRenderTypes = new HashSet<>();
+        Set<BlockRenderLayer> blockRenderTypes = new LinkedHashSet<>();
         List<BakedQuad> itemMesh = new ArrayList<>();
         HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
         HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();

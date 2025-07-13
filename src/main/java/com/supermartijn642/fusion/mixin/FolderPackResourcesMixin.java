@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Sets;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.FolderPackResources;
@@ -56,21 +57,20 @@ public class FolderPackResourcesMixin implements PackResourcesExtension {
         }
     }
 
-    @Inject(
+    @ModifyReturnValue(
         method = "getNamespaces",
-        at = @At("RETURN"),
-        cancellable = true
+        at = @At("RETURN")
     )
-    private void getNamespaces(PackType type, CallbackInfoReturnable<Set<String>> ci){
+    private Set<String> getNamespaces(Set<String> namespaces, PackType type){
         if(this.overridesFolder == null)
-            return;
+            return namespaces;
 
         // Add namespaces from the overrides folder
-        HashSet<String> namespaces = Sets.newHashSet(ci.getReturnValue());
+        namespaces = Sets.newHashSet(namespaces);
         File typeFolder = new File(this.overridesFolder, type.getDirectory());
         File[] folders = typeFolder.listFiles((FileFilter)DirectoryFileFilter.DIRECTORY);
         if(folders == null)
-            return;
+            return namespaces;
         for(File folder : folders){
             String relativePath = FolderPackResources.getRelativePath(typeFolder, folder);
             if(relativePath.equals(relativePath.toLowerCase(Locale.ROOT))){
@@ -80,29 +80,27 @@ public class FolderPackResourcesMixin implements PackResourcesExtension {
             //noinspection DataFlowIssue
             ((FolderPackResources)(Object)this).logWarning(relativePath);
         }
-        ci.setReturnValue(namespaces);
+        return namespaces;
     }
 
-    @Inject(
+    @ModifyReturnValue(
         method = "getResources",
-        at = @At("RETURN"),
-        cancellable = true
+        at = @At("RETURN")
     )
-    private void getResources(PackType type, String namespace, String folderName, Predicate<ResourceLocation> predicate, CallbackInfoReturnable<Collection<ResourceLocation>> ci){
+    private Collection<ResourceLocation> getResources(Collection<ResourceLocation> locations, PackType type, String namespace, String folderName, Predicate<ResourceLocation> predicate){
         if(this.overridesFolder == null)
-            return;
+            return locations;
 
-        if(ci.getReturnValue() == null)
-            return;
-        List<ResourceLocation> locations = ci.getReturnValue() instanceof ArrayList<ResourceLocation> ?
-            ((List<ResourceLocation>)ci.getReturnValue()) :
-            new ArrayList<>(ci.getReturnValue());
+        if(locations == null)
+            return null;
+        if(!(locations instanceof ArrayList<ResourceLocation>))
+            locations = new ArrayList<>(locations);
 
         // Put all locations into a set, so we can look them up quickly
         Set<ResourceLocation> locationSet = new HashSet<>(locations);
         // Add all the resources in the overrides folder
         File folder = new File(new File(new File(this.overridesFolder, type.getDirectory()), namespace), folderName);
-        this.listResources(folder, namespace, locations, folderName + "/", location -> !locationSet.contains(location) && predicate.test(location));
-        ci.setReturnValue(locations);
+        this.listResources(folder, namespace, (List<ResourceLocation>)locations, folderName + "/", location -> !locationSet.contains(location) && predicate.test(location));
+        return locations;
     }
 }

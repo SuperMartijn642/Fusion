@@ -50,7 +50,7 @@ public final class DefaultConnectionPredicates {
      * Creates a predicate which is satisfied if the block in the connection direction is visible.
      */
     public static ConnectionPredicate isFaceVisible(){
-        return IsSameBlockConnectionPredicate.INSTANCE;
+        return IsFaceVisibleConnectionPredicate.INSTANCE;
     }
 
     /**

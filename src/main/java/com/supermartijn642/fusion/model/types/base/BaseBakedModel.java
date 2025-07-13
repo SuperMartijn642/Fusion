@@ -25,6 +25,7 @@ import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created 06/09/2024 by SuperMartijn642
@@ -54,7 +55,7 @@ public class BaseBakedModel implements BakedModel {
 
         // Create block and item meshes from the quads
         Map<RenderType,List<TaggedBakedQuad>[]> blockMesh = new HashMap<>();
-        Set<RenderType> blockRenderTypes = new HashSet<>();
+        Set<RenderType> blockRenderTypes = new LinkedHashSet<>();
         HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
         MutableQuad mutableQuad = new MutableQuad();
@@ -91,7 +92,7 @@ public class BaseBakedModel implements BakedModel {
         this.completeBlockMesh = new List[7];
         for(int i = 0; i < 7; i++){
             int cullIndex = i;
-            this.completeBlockMesh[i] = this.blockMesh.values().stream().map(arr -> arr[cullIndex]).filter(Objects::nonNull).flatMap(List::stream).toList();
+            this.completeBlockMesh[i] = blockRenderTypes.stream().map(r -> this.blockMesh.get(r)[cullIndex]).filter(Objects::nonNull).flatMap(List::stream).collect(Collectors.toList());
         }
     }
 

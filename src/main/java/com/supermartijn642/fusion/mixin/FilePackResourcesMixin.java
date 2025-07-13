@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.FilePackResources;
@@ -77,26 +78,25 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
         }
     }
 
-    @Inject(
+    @ModifyReturnValue(
         method = "getNamespaces",
-        at = @At("RETURN"),
-        cancellable = true
+        at = @At("RETURN")
     )
-    private void getNamespaces(PackType type, CallbackInfoReturnable<Set<String>> ci){
+    private Set<String> getNamespaces(Set<String> namespaces, PackType type){
         if(this.overridesFolder == null)
-            return;
+            return namespaces;
 
         // Add namespaces from the overrides folder
         ZipFile zipFile;
         try{
             zipFile = this.getOrCreateZipFile();
         }catch(Exception ignored){
-            return;
+            return namespaces;
         }
         if(zipFile == null)
-            return;
+            return namespaces;
         Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
-        Set<String> namespaces = Sets.newHashSet(ci.getReturnValue());
+        namespaces = Sets.newHashSet(namespaces);
         while(enumeration.hasMoreElements()){
             ArrayList<String> list;
             ZipEntry zipEntry = enumeration.nextElement();
@@ -113,23 +113,21 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
             }
             FilePackResources.LOGGER.warn("Ignored non-lowercase namespace: {} in {}", namespace, ((FilePackResources)(Object)this).file);
         }
-        ci.setReturnValue(namespaces);
+        return namespaces;
     }
 
-    @Inject(
+    @ModifyReturnValue(
         method = "getResources",
-        at = @At("RETURN"),
-        cancellable = true
+        at = @At("RETURN")
     )
-    private void getResources(PackType type, String namespace, String folderName, int depth, Predicate<String> predicate, CallbackInfoReturnable<Collection<ResourceLocation>> ci){
+    private Collection<ResourceLocation> getResources(Collection<ResourceLocation> locations, PackType type, String namespace, String folderName, int depth, Predicate<String> predicate){
         if(this.overridesFolder == null)
-            return;
+            return locations;
 
-        if(ci.getReturnValue() == null)
-            return;
-        List<ResourceLocation> locations = ci.getReturnValue() instanceof ArrayList<ResourceLocation> ?
-            ((List<ResourceLocation>)ci.getReturnValue()) :
-            new ArrayList<>(ci.getReturnValue());
+        if(locations == null)
+            return null;
+        if(!(locations instanceof ArrayList<ResourceLocation>))
+            locations = new ArrayList<>(locations);
 
         // Put all locations into a set, so we can look them up quickly
         Set<ResourceLocation> locationSet = new HashSet<>(locations);
@@ -138,10 +136,10 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
         try{
             zipFile = this.getOrCreateZipFile();
         }catch(Exception ignored){
-            return;
+            return locations;
         }
         if(zipFile == null)
-            return;
+            return locations;
         Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
         String namespaceDirectory = this.overridesFolder + type.getDirectory() + "/" + namespace + "/";
         String pathDirectory = namespaceDirectory + folderName + "/";
@@ -163,6 +161,6 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
             if(identifierParts.length > depth && predicate.test(identifierParts[identifierParts.length - 1]))
                 locations.add(location);
         }
-        ci.setReturnValue(locations);
+        return locations;
     }
 }

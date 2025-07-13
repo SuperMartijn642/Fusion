@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.model.modifiers.block;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
@@ -10,6 +11,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.util.TriState;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -127,6 +129,16 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         @Override
         public TextureAtlasSprite particleIcon(){
             return this.original.particleIcon();
+        }
+
+        @Override
+        public RenderType getRenderType(BlockState state){
+            return this.original.getRenderType(state);
+        }
+
+        @Override
+        public TriState ambientOcclusion(){
+            return this.original.ambientOcclusion();
         }
     }
 }

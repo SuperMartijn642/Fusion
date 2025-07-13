@@ -111,9 +111,11 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData>
         // Determine which tile to use
         Direction.Axis axis = side.getAxis();
         int x = axis == Direction.Axis.X ? pos.getZ() : pos.getX();
-        int y = axis == Direction.Axis.X ? pos.getY() : axis == Direction.Axis.Y ? pos.getZ() : pos.getY();
+        int y = axis == Direction.Axis.X ? -pos.getY() : axis == Direction.Axis.Y ? -pos.getZ() - 1 : -pos.getY();
         if(side == Direction.NORTH || side == Direction.EAST)
             x = -x - 1;
+        if(side == Direction.UP)
+            y = -y - 1;
         x = x < 0 ? ((x % data.getColumns()) + data.getColumns()) % data.getColumns() : x % data.getColumns();
         y = y < 0 ? ((y % data.getRows()) + data.getRows()) % data.getRows() : y % data.getRows();
         // Adjust the quad's uv

@@ -4,9 +4,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.core.Holder;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -35,8 +32,6 @@ public class DimensionEntityModelPredicate implements EntityModelPredicate {
     };
 
     private final ResourceLocation dimension;
-    private RegistryAccess registry;
-    private Holder<Level> holder;
 
     public DimensionEntityModelPredicate(ResourceLocation dimension){
         this.dimension = dimension;
@@ -45,13 +40,7 @@ public class DimensionEntityModelPredicate implements EntityModelPredicate {
     @Override
     public boolean test(Entity entity){
         Level level = entity.level();
-        if(level == null)
-            return false;
-        if(level.registryAccess() != this.registry){
-            this.registry = level.registryAccess();
-            this.holder = this.registry.registryOrThrow(Registries.DIMENSION).getHolder(this.dimension).orElse(null);
-        }
-        return this.holder != null && this.holder.equals(level.dimension());
+        return level != null && level.dimension().location().equals(this.dimension);
     }
 
     @Override

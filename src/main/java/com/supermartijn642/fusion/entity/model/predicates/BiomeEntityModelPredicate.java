@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.entity.model.predicates;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -8,10 +7,6 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
@@ -55,8 +50,6 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
     };
 
     private final Set<ResourceLocation> biomes;
-    private RegistryAccess registry;
-    private Set<Holder<Biome>> holders;
 
     public BiomeEntityModelPredicate(Set<ResourceLocation> biomes){
         this.biomes = Set.copyOf(biomes);
@@ -69,18 +62,9 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
         Level level = entity.level();
         if(level == null)
             return false;
-        if(level.registryAccess() != this.registry){
-            this.registry = level.registryAccess();
-            Registry<Biome> biomeRegistry = this.registry.registryOrThrow(Registries.BIOME);
-            ImmutableSet.Builder<Holder<Biome>> builder = ImmutableSet.builder();
-            for(ResourceLocation biome : this.biomes)
-                biomeRegistry.getHolder(ResourceKey.create(Registries.BIOME, biome)).ifPresent(builder::add);
-            this.holders = builder.build();
-        }
-        if(this.holders == null || this.holders.isEmpty())
-            return false;
         Holder<Biome> biome = level.getBiome(entity.blockPosition());
-        return biome != null && this.holders.contains(biome);
+        //noinspection OptionalGetWithoutIsPresent
+        return biome != null && biome.isBound() && this.biomes.contains(biome.unwrapKey().get().location());
     }
 
     @Override

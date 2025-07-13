@@ -166,7 +166,7 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
                 if(locationSet.contains(location))
                     continue;
                 String[] identifierParts = path.substring(folderName.length() + 2).split("/");
-                if(identifierParts.length > depth && predicate.test(identifierParts[identifierParts.length - 1]))
+                if(identifierParts.length >= depth + 1 && predicate.test(identifierParts[identifierParts.length - 1]))
                     locations.add(location);
             }
         }

@@ -13,6 +13,7 @@
     "BlockModelMixin",
     "BlockModelWrapperMixin",
     "BufferSourceMixin",
+    "CompositePackResourceMixin",
     "EntityMixin",
     "EntityModelSetMixin",
     "EntityRenderDispatcherMixin",

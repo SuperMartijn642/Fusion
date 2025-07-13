@@ -7,11 +7,13 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.*;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.client.NamedRenderTypeManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -68,6 +70,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
         ItemTransform transformFixed = ((BaseModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemTransforms.TransformType.FIXED) ? model.transforms.getTransform(ItemTransforms.TransformType.FIXED) : null, ItemTransform.NO_TRANSFORM);
         ItemTransforms itemTransforms = new ItemTransforms(transformThirdPersonLeftHand, transformThirdPersonRightHand, transformFirstPersonLeftHand, transformFirstPersonRightHand, transformHead, transformGui, transformGround, transformFixed);
         ItemOverrides itemOverrides = data.getVanillaModel().overrides.isEmpty() ? ItemOverrides.EMPTY : new ItemOverrides(context.getModelBakery(), data.getVanillaModel(), i -> context.getModel(i).getAsVanillaModel(), data.getVanillaModel().overrides);
+        RenderType forgeRenderType = NamedRenderTypeManager.get(data.getVanillaModel().customData.getRenderTypeHint()).block();
         // Finally, create the model
         return new BaseBakedModel(
             quads,
@@ -76,7 +79,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
             usesBlockLight,
             particleSprite,
             itemTransforms,
-            itemOverrides
+            itemOverrides,
+            forgeRenderType
         );
     }
 

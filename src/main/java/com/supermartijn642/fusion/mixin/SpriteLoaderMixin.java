@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.extensions.SpriteContentsExtension;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
@@ -19,7 +20,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -28,7 +28,6 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 
 /**
@@ -36,9 +35,6 @@ import java.util.concurrent.Executor;
  */
 @Mixin(value = SpriteLoader.class, priority = 900)
 public class SpriteLoaderMixin {
-
-    @Unique
-    private static final Map<ResourceLocation,Pair<TextureType<Object>,Object>> fusionTextureMetadata = new ConcurrentHashMap<>(); // TODO find a place to clear this
 
     @Inject(
         method = "loadSprite",
@@ -57,7 +53,6 @@ public class SpriteLoaderMixin {
             metadata = resource.metadata().getSection(FusionTextureMetadataSection.INSTANCE).orElse(null);
         }catch(IOException ignored){ /* Metadata will always be cached already, so need to worry about exceptions */ }
         if(metadata != null){
-            fusionTextureMetadata.put(identifier, metadata);
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{
@@ -73,7 +68,10 @@ public class SpriteLoaderMixin {
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
             // Create the sprite contents
-            ci.setReturnValue(new SpriteContents(identifier, new FrameSize(newSize.left(), newSize.right()), image, animationMetadata));
+            SpriteContents contents = new SpriteContents(identifier, new FrameSize(newSize.left(), newSize.right()), image, animationMetadata);
+            //noinspection DataFlowIssue
+            ((SpriteContentsExtension)contents).setFusionMetadata(metadata);
+            ci.setReturnValue(contents);
         }
     }
 
@@ -85,11 +83,12 @@ public class SpriteLoaderMixin {
         ci.getReturnValue().thenApply(preparations -> {
             // Replace sprites
             Map<ResourceLocation,TextureAtlasSprite> textures = preparations.regions();
-            for(Map.Entry<ResourceLocation,Pair<TextureType<Object>,Object>> entry : fusionTextureMetadata.entrySet()){
+            for(Map.Entry<ResourceLocation,TextureAtlasSprite> entry : textures.entrySet()){
                 ResourceLocation identifier = entry.getKey();
-                TextureAtlasSprite texture = textures.get(identifier);
-                Pair<TextureType<Object>,Object> textureData = entry.getValue();
-                if(texture != null){
+                TextureAtlasSprite texture = entry.getValue();
+                //noinspection resource
+                Pair<TextureType<Object>,Object> textureData = ((SpriteContentsExtension)texture.contents()).getFusionMetadata();
+                if(textureData != null){
                     // Create the sprite
                     TextureAtlasSprite newTexture;
                     try(SpriteCreationContextImpl context = new SpriteCreationContextImpl(preparations, atlas, texture)){
@@ -104,7 +103,6 @@ public class SpriteLoaderMixin {
                     textures.put(identifier, newTexture);
                 }
             }
-            fusionTextureMetadata.clear();
             return preparations;
         });
     }

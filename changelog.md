@@ -1,3 +1,6 @@
+### Fusion 1.2.8a
+- Fixed texture metadata sometimes getting cleared to early
+
 ### Fusion 1.2.8
 - Added Hungarian translations (thanks to bayi!)
 - Ambient occlusion is now disabled for emissive quads

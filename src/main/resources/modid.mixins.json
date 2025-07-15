@@ -30,6 +30,7 @@
     "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
+    "SpriteContentsMixin",
     "SpriteLoaderMixin",
     "TerrainParticleMixin",
     "TextureAtlasSpriteMixin",

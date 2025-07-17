@@ -1,3 +1,6 @@
+### Fusion 1.2.8a
+- Fixed `MultiPartBakedModelMixin` not listed in mixins
+
 ### Fusion 1.2.8
 - Added Hungarian translations (thanks to bayi!)
 - Ambient occlusion is now disabled for emissive quads

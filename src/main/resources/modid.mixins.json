@@ -28,6 +28,7 @@
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
+    "MultiPartBakedModelMixin",
     "OutlineBufferSourceMixin",
     "PackEntryMixin",
     "PackMixin",

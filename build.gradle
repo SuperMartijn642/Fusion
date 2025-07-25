@@ -173,6 +173,7 @@ publishMods {
     type = me.modmuss50.mpp.ReleaseType.of(publishing_release_type.toUpperCase())
     changelog = file("changelog.md").text
     modLoaders.add("forge")
+    modLoaders.add("neoforge")
     maxRetries = 2
 
     curseforge {

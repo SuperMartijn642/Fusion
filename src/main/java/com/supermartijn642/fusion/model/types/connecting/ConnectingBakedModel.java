@@ -576,11 +576,11 @@ public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedM
                     int oldX = newVector[0];
                     int oldY = newVector[1];
                     if(axis != Direction.Axis.X)
-                        newVector[0] = ((positive ^ this.rotations == 3) ? 1 : -1) * (axis == Direction.Axis.Y ? -newVector[2] : newVector[1]);
+                        newVector[0] = ((positive ^ this.rotations == 3 ^ this.flipped) ? 1 : -1) * (axis == Direction.Axis.Y ? -newVector[2] : newVector[1]);
                     if(axis != Direction.Axis.Y)
-                        newVector[1] = ((positive ^ this.rotations == 3) ? 1 : -1) * (axis == Direction.Axis.Z ? -oldX : newVector[2]);
+                        newVector[1] = ((positive ^ this.rotations == 3 ^ this.flipped) ? 1 : -1) * (axis == Direction.Axis.Z ? -oldX : newVector[2]);
                     if(axis != Direction.Axis.Z)
-                        newVector[2] = ((positive ^ this.rotations == 3) ? 1 : -1) * (axis == Direction.Axis.X ? -oldY : oldX);
+                        newVector[2] = ((positive ^ this.rotations == 3 ^ this.flipped) ? 1 : -1) * (axis == Direction.Axis.X ? -oldY : oldX);
                 }
             }
             return newVector;

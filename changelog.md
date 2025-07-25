@@ -1,3 +1,7 @@
+### Fusion 1.2.9
+- Fixed `pieced` layout when a quads' uv does not cover the entire sprite
+- Fixed connecting textures using connections for the wrong direction for rotated quads with mirrored uv in some cases
+
 ### Fusion 1.2.8
 - Added Hungarian translations (thanks to bayi!)
 - Ambient occlusion is now disabled for emissive quads

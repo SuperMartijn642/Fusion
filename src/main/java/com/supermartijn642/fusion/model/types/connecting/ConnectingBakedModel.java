@@ -468,7 +468,7 @@ public class ConnectingBakedModel implements BlockStateModel {
 
     enum TextureOrientation {
         NORMAL_0(false, 0), NORMAL_90(false, 1), NORMAL_180(false, 2), NORMAL_270(false, 3),
-        FLIPPED_0(true, 0), FLIPPED_90(false, 1), FLIPPED_180(true, 2), FLIPPED_270(true, 3);
+        FLIPPED_0(true, 0), FLIPPED_90(true, 1), FLIPPED_180(true, 2), FLIPPED_270(true, 3);
 
         public static TextureOrientation of(boolean flipped, int rotations){
             return TextureOrientation.values()[flipped ? 4 + rotations : rotations];

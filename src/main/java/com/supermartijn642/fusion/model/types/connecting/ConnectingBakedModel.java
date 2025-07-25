@@ -526,8 +526,8 @@ public class ConnectingBakedModel implements BlockStateModel {
                     newVector[2] = positive ? vector[0] : -vector[0];
                 }
                 if(face.getAxis() == Direction.Axis.Z){
-                    newVector[0] = positive ? vector[1] : -vector[1];
-                    newVector[1] = positive ? vector[0] : -vector[0];
+                    newVector[0] = positive ? -vector[1] : vector[1];
+                    newVector[1] = positive ? -vector[0] : vector[0];
                 }
             }
             if(this.rotations > 0){

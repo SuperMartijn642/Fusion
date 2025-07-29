@@ -1,3 +1,6 @@
+### Fusion 1.2.9a
+- Fixed crash when using model modifiers with mods using Puzzles Lib installed
+
 ### Fusion 1.2.9
 - Fixed `pieced` layout when a quads' uv does not cover the entire sprite
 - Fixed connecting textures using connections for the wrong direction for rotated quads with mirrored uv in some cases

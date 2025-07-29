@@ -31,6 +31,11 @@ public class ModelBakeryMixin {
         at = @At("RETURN")
     )
     private CompletableFuture<ModelBakery.BakingResult> applyBlockModelOverlays(CompletableFuture<ModelBakery.BakingResult> future, SpriteGetter textureGetter, Executor executor){
+        // Ignore non-vanilla model bakeries
+        //noinspection ConstantValue,EqualsBetweenInconvertibleTypes
+        if(!this.getClass().equals(ModelBakery.class))
+            return future;
+
         return future.thenApply((results) -> {
             // Make sure model maps are mutable
             boolean blockModelsMutable = results.blockStateModels() instanceof HashMap;

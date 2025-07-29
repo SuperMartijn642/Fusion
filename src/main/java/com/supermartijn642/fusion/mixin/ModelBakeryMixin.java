@@ -33,6 +33,11 @@ public class ModelBakeryMixin {
         cancellable = true
     )
     private void applyBlockModelOverlays(SpriteGetter textureGetter, Executor executor, CallbackInfoReturnable<CompletableFuture<ModelBakery.BakingResult>> ci){
+        // Ignore non-vanilla model bakeries
+        //noinspection ConstantValue,EqualsBetweenInconvertibleTypes
+        if(!this.getClass().equals(ModelBakery.class))
+            return;
+
         ci.setReturnValue(ci.getReturnValue().thenApply((results) -> {
             // Make sure model maps are mutable
             boolean blockModelsMutable = results.blockStateModels() instanceof HashMap;

@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 
+import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -30,8 +31,21 @@ public class ModelBakeryMixin {
         at = @At("RETURN")
     )
     private CompletableFuture<ModelBakery.BakingResult> applyBlockModelOverlays(CompletableFuture<ModelBakery.BakingResult> future, SpriteGetter textureGetter, Executor executor){
-        return future.whenComplete((results, throwable) -> {
-            //noinspection DataFlowIssue
+        return future.thenApply((results) -> {
+            // Make sure model maps are mutable
+            boolean blockModelsMutable = results.blockStateModels() instanceof HashMap;
+            boolean itemModelsMutable = results.itemStackModels() instanceof HashMap;
+            if(!blockModelsMutable || !itemModelsMutable){
+                results = new ModelBakery.BakingResult(
+                    results.missingModels(),
+                    blockModelsMutable ? results.blockStateModels() : new HashMap<>(results.blockStateModels()),
+                    itemModelsMutable ? results.itemStackModels() : new HashMap<>(results.itemStackModels()),
+                    results.itemProperties(),
+                    results.standaloneModels()
+                );
+            }
+
+            // Apply Fusion model modifiers
             ModelBakery.ModelBakerImpl resolver = ((ModelBakery)(Object)this).new ModelBakerImpl(textureGetter);
             BlockModelModifierReloadListener.INSTANCE.applyOverlays(results, resolver);
             ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(results, new ItemModel.BakingContext(
@@ -40,6 +54,7 @@ public class ModelBakeryMixin {
                 results.missingModels().item(),
                 null
             ));
+            return results;
         });
     }
 }

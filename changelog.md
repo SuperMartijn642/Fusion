@@ -1,3 +1,6 @@
+### Fusion 1.2.10
+- Fixed all Fusion models loaded after any Fusion model has an error being broken
+
 ### Fusion 1.2.9a
 - Fixed crash when using model modifiers with mods using Puzzles Lib installed
 

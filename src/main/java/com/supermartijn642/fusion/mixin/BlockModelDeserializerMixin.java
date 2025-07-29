@@ -49,8 +49,12 @@ public class BlockModelDeserializerMixin {
 
                 // Load the model data
                 SHOULD_IGNORE.set(true);
-                ModelInstance<?> model = ModelTypeRegistryImpl.deserializeModelData(json.getAsJsonObject());
-                SHOULD_IGNORE.set(false);
+                ModelInstance<?> model;
+                try{
+                    model = ModelTypeRegistryImpl.deserializeModelData(json.getAsJsonObject());
+                }finally{
+                    SHOULD_IGNORE.set(false);
+                }
 
                 // Create a dummy block model
                 FusionBlockModel newModel = new FusionBlockModel(model);

@@ -8,6 +8,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.HashMap;
+
 /**
  * Created 28/12/2024 by SuperMartijn642
  */
@@ -20,6 +22,20 @@ public class ModelBakeryMixin {
     )
     private void applyBlockModelOverlays(ModelBakery.TextureGetter textureGetter, CallbackInfoReturnable<ModelBakery.BakingResult> ci){
         ModelBakery.BakingResult results = ci.getReturnValue();
+
+        // Make sure model maps are mutable
+        boolean blockModelsMutable = results.blockStateModels() instanceof HashMap;
+        boolean itemModelsMutable = results.itemStackModels() instanceof HashMap;
+        if(!blockModelsMutable || !itemModelsMutable){
+            results = new ModelBakery.BakingResult(
+                results.missingModel(),
+                blockModelsMutable ? results.blockStateModels() : new HashMap<>(results.blockStateModels()),
+                results.missingItemModel(),
+                itemModelsMutable ? results.itemStackModels() : new HashMap<>(results.itemStackModels()),
+                results.itemProperties()
+            );
+        }
+
         ModelBakery.ModelBakerImpl resolver = ((ModelBakery)(Object)this).new ModelBakerImpl(textureGetter, () -> "Fusion Model Modifiers");
         BlockModelModifierReloadListener.INSTANCE.applyOverlays(results, resolver);
         ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(results, resolver);

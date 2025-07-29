@@ -21,6 +21,11 @@ public class ModelBakeryMixin {
         at = @At("RETURN")
     )
     private void applyBlockModelOverlays(ModelBakery.TextureGetter textureGetter, CallbackInfoReturnable<ModelBakery.BakingResult> ci){
+        // Ignore non-vanilla model bakeries
+        //noinspection ConstantValue,EqualsBetweenInconvertibleTypes
+        if(!this.getClass().equals(ModelBakery.class))
+            return;
+
         ModelBakery.BakingResult results = ci.getReturnValue();
 
         // Make sure model maps are mutable

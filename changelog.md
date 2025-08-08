@@ -1,3 +1,6 @@
+### Fusion 1.2.10a
+- Fixed crash when getting render types for block model modifiers
+
 ### Fusion 1.2.10
 - Fixed all Fusion models loaded after any Fusion model has an error being broken
 

@@ -91,7 +91,7 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
         for(int i = 0; i < this.nonSimpleModels.size(); i++){
             ModelData subData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
             if(!isMutableSet){
-                renderTypes = EnumSet.copyOf(renderTypes);
+                renderTypes = renderTypes.isEmpty() ? EnumSet.noneOf(ChunkSectionLayer.class) : EnumSet.copyOf(renderTypes);
                 isMutableSet = true;
             }
             renderTypes.addAll(this.nonSimpleModels.get(i).getRenderTypes(state, rand, subData));

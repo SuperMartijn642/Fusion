@@ -193,7 +193,10 @@ public class BaseBakedModel implements BlockStateModel {
         if(this.shouldCheckOriginalBlockRenderTypes){
             // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
             //noinspection deprecation
-            Collection<ChunkSectionLayer> layers = EnumSet.copyOf(ItemBlockRenderTypes.getRenderLayers(state));
+            Collection<ChunkSectionLayer> layers = ItemBlockRenderTypes.getRenderLayers(state);
+            if(layers.isEmpty())
+                return this.blockRenderTypes;
+            layers = EnumSet.copyOf(layers);
             layers.addAll(this.blockRenderTypes);
             return layers;
         }

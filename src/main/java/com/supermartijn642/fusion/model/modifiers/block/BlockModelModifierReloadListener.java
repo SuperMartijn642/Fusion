@@ -61,7 +61,7 @@ public class BlockModelModifierReloadListener {
             Properties properties = entry.getValue();
             List<ResourceLocation> overlays = properties.appendModels;
             List<IBakedModel> overlayModels = overlays.stream().map(bakedModels::get).collect(Collectors.toList());
-            IBakedModel model = new BlockModelModifierBakedModel(targetModel, overlayModels);
+            IBakedModel model = new BlockModelModifierBakedModel(targetModel, overlayModels, properties.showBreakingOverlay);
             if(properties.paneCullingFix)
                 model = new PaneCullingBakedModel(model);
             bakedModels.put(target, model);
@@ -149,22 +149,33 @@ public class BlockModelModifierReloadListener {
             }
         }
 
+        // Get whether to use the appended models for breaking overlay
+        Boolean showBreakingOverlay = null;
+        if(json.has("show_breaking_overlay")){
+            if(!json.get("show_breaking_overlay").isJsonPrimitive() || !json.get("show_breaking_overlay").getAsJsonPrimitive().isBoolean())
+                throw new JsonParseException("Property 'show_breaking_overlay' must be a boolean!");
+            showBreakingOverlay = json.get("show_breaking_overlay").getAsBoolean();
+        }
+
         // Pane culling option
-        boolean paneCullingFix = false;
+        Boolean paneCullingFix = null;
         if(json.has("pane_culling_fix")){
             if(!json.get("pane_culling_fix").isJsonPrimitive() || !json.getAsJsonPrimitive("pane_culling_fix").isBoolean())
                 throw new JsonParseException("Property 'pane_culling_fix' must be a boolean!");
             paneCullingFix = json.get("pane_culling_fix").getAsBoolean();
         }
 
-        if(models.isEmpty() && !paneCullingFix)
+        if(models.isEmpty() && paneCullingFix != Boolean.TRUE)
             return;
 
         // Put the properties into the map
         for(ModelResourceLocation target : targets){
             Properties properties = this.models.computeIfAbsent(target, t -> new Properties());
             properties.appendModels.addAll(models);
-            properties.paneCullingFix = paneCullingFix;
+            if(showBreakingOverlay != null)
+                properties.showBreakingOverlay = showBreakingOverlay;
+            if(paneCullingFix != null)
+                properties.paneCullingFix = paneCullingFix;
         }
     }
 
@@ -234,5 +245,6 @@ public class BlockModelModifierReloadListener {
     private static class Properties {
         final List<ResourceLocation> appendModels = new ArrayList<>();
         boolean paneCullingFix;
+        boolean showBreakingOverlay = true;
     }
 }

@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.*;
@@ -31,6 +32,7 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
 
     private final IBakedModel original;
     private final List<IBakedModel> models;
+    private final boolean showBreakingOverlay;
     private final boolean hasNonSimpleModels;
     private final List<IBakedModel> nonSimpleModels;
     private final List<BakedQuad> quads;
@@ -38,11 +40,12 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
     private final List<BakedQuad>[] culledQuads = new List[6];
     private final Set<BlockRenderLayer> customBlockRenderTypes;
 
-    public BlockModelModifierBakedModel(IBakedModel original, List<IBakedModel> models){
+    public BlockModelModifierBakedModel(IBakedModel original, List<IBakedModel> models, boolean showBreakingOverlay){
         this.original = original;
         this.models = new ArrayList<>(models.size() + 1);
         this.models.add(original);
         this.models.addAll(models);
+        this.showBreakingOverlay = showBreakingOverlay;
         List<IBakedModel> nonSimpleModels = new ArrayList<>();
         List<BakedQuad> quads = new ArrayList<>();
         //noinspection unchecked
@@ -72,6 +75,8 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
 
     @Override
     public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random random, @Nonnull IModelData data){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+            return this.original.getQuads(state, side, random, data);
         if(!this.hasNonSimpleModels)
             return side == null ? this.quads : this.culledQuads[side.ordinal()];
         IModelData[] arr = data.getData(DATA_PROPERTY);
@@ -83,6 +88,8 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
 
     @Override
     public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random random){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+            return this.original.getQuads(state, side, random);
         if(!this.hasNonSimpleModels)
             return side == null ? this.quads : this.culledQuads[side.ordinal()];
         List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
@@ -93,6 +100,8 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
 
     @Override
     public Collection<BlockRenderLayer> getBlockRenderTypes(){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+            return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).getBlockRenderTypes() : Collections.emptyList();
         return this.customBlockRenderTypes;
     }
 

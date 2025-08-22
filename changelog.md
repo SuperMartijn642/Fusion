@@ -1,3 +1,8 @@
+### Fusion 1.2.11
+- Added `show_breaking_overlay` option to block model modifiers to not show the breaking overlay for appended models
+- Fixed crash when modded model bakeries do not contain model modifiers' target models
+- Fixed quad tinting sometimes taking tinting function from the wrong texture
+
 ### Fusion 1.2.10
 - Fixed all Fusion models loaded after any Fusion model has an error being broken
 

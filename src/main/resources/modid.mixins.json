@@ -17,6 +17,7 @@
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "BlockModelRendererMixin",
+    "BlockRenderDispatcherMixin",
     "FileResourcePackMixin",
     "FolderResourcePackMixin",
     "ItemModelShaperMixin",

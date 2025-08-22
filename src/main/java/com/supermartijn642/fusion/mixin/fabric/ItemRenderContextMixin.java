@@ -30,8 +30,10 @@ public class ItemRenderContextMixin {
     private void colorizeQuad(MutableQuadViewImpl quad, int colorIndex, CallbackInfo ci){
         // In case texture has a custom tinting set, replace the original tinting
         if(colorIndex == 39216){
-            TextureAtlasSprite sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
-            if(!(sprite instanceof BaseTextureSprite)){
+            TextureAtlasSprite sprite;
+            if(quad.tag() == 0)
+                sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
+            else{
                 float u = (quad.tag() & 65535) / 65535f;
                 float v = (quad.tag() >> 16) / 65535f;
                 sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(u, v);

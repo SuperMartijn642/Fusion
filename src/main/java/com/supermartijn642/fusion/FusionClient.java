@@ -36,6 +36,8 @@ public class FusionClient implements ClientModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
     private static final RenderMaterial[] RENDER_MATERIALS = new RenderMaterial[(2 | (1 << 2) | ((BaseTextureData.RenderType.values().length) << 3)) + 1];
 
+    public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
+
     @Override
     public void onInitializeClient(){
         // Register default texture types

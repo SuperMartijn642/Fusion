@@ -14,6 +14,7 @@
     "AgeableMobMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "BlockRenderDispatcherMixin",
     "BufferSourceMixin",
     "CompositePackResourceMixin",
     "EntityMixin",

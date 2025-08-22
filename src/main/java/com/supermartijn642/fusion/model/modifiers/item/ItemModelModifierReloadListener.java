@@ -54,6 +54,7 @@ public class ItemModelModifierReloadListener {
         for(Map.Entry<ResourceLocation,ItemModelPredicatesProperties> entry : this.models.entrySet()){
             ResourceLocation target = entry.getKey();
             ItemModelPredicatesProperties properties = entry.getValue();
+            if(!bakedModels.containsKey(target)) continue;
             ItemModel defaultModel = properties.defaultModel == null ? bakedModels.get(target) : new BlockModelWrapper(resolver.bake(properties.defaultModel, BlockModelRotation.X0_Y0), List.of());
             List<Pair<ItemPredicate,BakedModel>> models = properties.models.stream()
                 .map(pair -> pair.mapRight(location -> resolver.bake(location, BlockModelRotation.X0_Y0)))

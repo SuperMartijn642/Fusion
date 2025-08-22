@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.supermartijn642.fusion.FusionClient;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -74,6 +75,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     private final BakedModel original;
     private final List<BakedModel> models;
+    private final boolean showBreakingOverlay;
     private final boolean hasNonSimpleModels;
     private final List<BakedModel> nonSimpleModels;
     private final List<BakedQuad> quads;
@@ -82,11 +84,12 @@ public class BlockModelModifierBakedModel implements BakedModel {
     private final ChunkRenderTypeSet chunkRenderTypes;
     private final boolean addNativeBlockRenderTypes;
 
-    public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models){
+    public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models, boolean showBreakingOverlay){
         this.original = original;
         this.models = new ArrayList<>(models.size() + 1);
         this.models.add(original);
         this.models.addAll(models);
+        this.showBreakingOverlay = showBreakingOverlay;
         List<BakedModel> nonSimpleModels = new ArrayList<>();
         List<BakedQuad> quads = new ArrayList<>();
         //noinspection unchecked
@@ -121,6 +124,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random, ModelData data, @Nullable RenderType renderType){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+            return this.original.getQuads(state, side, random, data, renderType);
         if(!this.hasNonSimpleModels)
             return side == null ? this.quads : this.culledQuads[side.ordinal()];
         ModelData[] arr = data.get(DATA_PROPERTY);
@@ -132,6 +137,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+            return this.original.getQuads(state, side, random);
         if(!this.hasNonSimpleModels)
             return side == null ? this.quads : this.culledQuads[side.ordinal()];
         List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
@@ -142,6 +149,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource random, ModelData data){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+            return this.original.getRenderTypes(state, random, data);
         ChunkRenderTypeSet renderTypes = this.chunkRenderTypes;
         if(this.addNativeBlockRenderTypes)
             renderTypes = ChunkRenderTypeSet.union(renderTypes, BakedModel.super.getRenderTypes(state, random, data));

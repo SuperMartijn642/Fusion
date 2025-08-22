@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
+import com.supermartijn642.fusion.FusionClient;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -18,21 +19,32 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     private final BlockStateModel original;
     private final List<BlockStateModel> models;
+    private final boolean showBreakingOverlay;
 
-    public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models){
+    public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models, boolean showBreakingOverlay){
         this.original = original;
         this.models = new ArrayList<>(models.size() + 1);
         this.models.add(original);
         this.models.addAll(models);
+        this.showBreakingOverlay = showBreakingOverlay;
     }
 
     @Override
     public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockModelPart> parts){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            this.original.collectParts(level, pos, state, random, parts);
+            return;
+        }
         this.models.forEach(model -> model.collectParts(level, pos, state, random, parts));
     }
 
     @Override
     public void collectParts(RandomSource random, List<BlockModelPart> parts){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            //noinspection deprecation
+            this.original.collectParts(random, parts);
+            return;
+        }
         //noinspection deprecation
         this.models.forEach(model -> model.collectParts(random, parts));
     }

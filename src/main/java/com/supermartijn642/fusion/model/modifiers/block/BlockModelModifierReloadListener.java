@@ -57,6 +57,7 @@ public class BlockModelModifierReloadListener {
         for(Map.Entry<ModelResourceLocation,Properties> entry : this.models.entrySet()){
             ModelResourceLocation target = entry.getKey();
             IBakedModel targetModel = bakedModels.getObject(target);
+            if(targetModel == null) continue;
             Properties properties = entry.getValue();
             List<ResourceLocation> overlays = properties.appendModels;
             List<IBakedModel> overlayModels = overlays.stream().map(BlockModelModifierReloadListener::overlayModelLocation).map(bakedModels::getObject).collect(Collectors.toList());

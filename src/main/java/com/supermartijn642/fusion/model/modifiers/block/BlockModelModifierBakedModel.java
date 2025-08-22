@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,16 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
             return;
         }
         this.models.forEach(model -> model.collectParts(level, pos, state, random, parts));
+    }
+
+    @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random){
+        List<Object> keys = new ArrayList<>(this.models.size() + 2);
+        keys.add(this);
+        keys.add(this.original.createGeometryKey(blockView, pos, state, random));
+        for(BlockStateModel model : this.models)
+            keys.add(model.createGeometryKey(blockView, pos, state, random));
+        return keys;
     }
 
     @Override

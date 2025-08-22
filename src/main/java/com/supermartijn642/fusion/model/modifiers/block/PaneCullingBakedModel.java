@@ -106,6 +106,14 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
             stateBelow == null || !stateBelow.getValue(SIDE_PROPERTIES[partSide.ordinal()]);
     }
 
+    @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random){
+        return Pair.of(
+            this,
+            super.createGeometryKey(blockView, pos, state, random)
+        );
+    }
+
     private class FilteringModelPart implements BlockModelPart {
 
         private final BlockModelPart original;

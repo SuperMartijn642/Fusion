@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
+import com.supermartijn642.fusion.FusionClient;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
@@ -29,14 +30,16 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     private final BlockStateModel original;
     private final List<BlockStateModel> models;
+    private final boolean showBreakingOverlay;
     private final boolean hasSimpleModels, hasNonSimpleModels;
     private final List<BlockStateModel> nonSimpleModels;
 
-    public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models){
+    public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models, boolean showBreakingOverlay){
         this.original = original;
         this.models = new ArrayList<>(models.size() + 1);
         this.models.add(original);
         this.models.addAll(models);
+        this.showBreakingOverlay = showBreakingOverlay;
         List<BlockStateModel> nonSimpleModels = new ArrayList<>();
         for(BlockStateModel model : this.models){
             if(!model.getClass().equals(SingleVariant.class))
@@ -49,6 +52,10 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     @Override
     public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData data, @Nullable RenderType renderType){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            this.original.collectParts(random, parts, data, renderType);
+            return;
+        }
         if(!this.hasNonSimpleModels){
             this.models.forEach(model -> model.collectParts(random, parts, data, renderType));
             return;
@@ -77,11 +84,17 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     @Override
     public void collectParts(RandomSource random, List<BlockModelPart> parts){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            this.original.collectParts(random, parts);
+            return;
+        }
         this.models.forEach(model -> model.collectParts(random, parts, ModelData.EMPTY, null));
     }
 
     @Override
     public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+            return this.original.getRenderTypes(state, rand, data);
         if(!this.hasNonSimpleModels)
             return BlockStateModel.super.getRenderTypes(state, rand, data);
         ChunkRenderTypeSet renderTypes = this.hasSimpleModels ? BlockStateModel.super.getRenderTypes(state, rand, data) : ChunkRenderTypeSet.none();

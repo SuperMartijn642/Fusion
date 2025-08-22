@@ -13,7 +13,7 @@
     "forge.VertexLighterFlatMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
-    "DiggingParticleMixin",
+    "BlockRenderDispatcherMixin",
     "FilePackResourcesMixin",
     "FolderPackResourcesMixin",
     "ItemBlockRenderTypesMixin",

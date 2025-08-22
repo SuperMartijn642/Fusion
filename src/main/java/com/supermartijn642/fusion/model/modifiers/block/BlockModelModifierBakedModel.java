@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
+import com.supermartijn642.fusion.FusionClient;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
@@ -21,14 +22,20 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     private final BlockStateModel original;
     private final List<BlockStateModel> models;
+    private final boolean showBreakingOverlay;
 
-    public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models){
+    public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models, boolean showBreakingOverlay){
         this.original = original;
         this.models = List.copyOf(models);
+        this.showBreakingOverlay = showBreakingOverlay;
     }
 
     @Override
     public void emitQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            this.original.emitQuads(emitter, blockView, pos, state, random, cullTest);
+            return;
+        }
         this.original.emitQuads(emitter, blockView, pos, state, random, cullTest);
         for(BlockStateModel model : this.models)
             model.emitQuads(emitter, blockView, pos, state, random, cullTest);

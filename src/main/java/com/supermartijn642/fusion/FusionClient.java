@@ -33,6 +33,8 @@ public class FusionClient implements ClientModInitializer {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
 
+    public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
+
     @Override
     public void onInitializeClient(){
         // Register default texture types

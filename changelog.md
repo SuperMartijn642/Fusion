@@ -1,3 +1,7 @@
+### Fusion 1.2.11
+- Added `show_breaking_overlay` option to block model modifiers to not show the breaking overlay for appended models
+- Fixed crash when modded model bakeries do not contain model modifiers' target models
+
 ### Fusion 1.2.10a
 - Fixed crash when getting render types for block model modifiers
 

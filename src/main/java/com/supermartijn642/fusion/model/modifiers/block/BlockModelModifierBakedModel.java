@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
+import com.supermartijn642.fusion.FusionClient;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -25,10 +26,12 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     private final BakedModel original;
     private final List<BakedModel> models;
+    private final boolean showBreakingOverlay;
 
-    public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models){
+    public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models, boolean showBreakingOverlay){
         this.original = original;
         this.models = List.copyOf(models);
+        this.showBreakingOverlay = showBreakingOverlay;
     }
 
     @Override
@@ -38,6 +41,10 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            this.original.emitBlockQuads(blockView, state, pos, randomSupplier, context);
+            return;
+        }
         this.original.emitBlockQuads(blockView, state, pos, randomSupplier, context);
         for(BakedModel model : this.models)
             model.emitBlockQuads(blockView, state, pos, randomSupplier, context);
@@ -45,6 +52,10 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            this.original.emitItemQuads(stack, randomSupplier, context);
+            return;
+        }
         this.original.emitItemQuads(stack, randomSupplier, context);
         for(BakedModel model : this.models)
             model.emitItemQuads(stack, randomSupplier, context);
@@ -52,6 +63,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random){
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+            return this.original.getQuads(state, side, random);
         List<BakedQuad> quads = new ArrayList<>(this.original.getQuads(state, side, random));
         for(BakedModel model : this.models)
             quads.addAll(model.getQuads(state, side, random));

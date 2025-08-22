@@ -12,6 +12,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -39,6 +40,16 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
         this.original.emitQuads(emitter, blockView, pos, state, random, cullTest);
         for(BlockStateModel model : this.models)
             model.emitQuads(emitter, blockView, pos, state, random, cullTest);
+    }
+
+    @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random){
+        List<Object> keys = new ArrayList<>(this.models.size() + 2);
+        keys.add(this);
+        keys.add(this.original.createGeometryKey(blockView, pos, state, random));
+        for(BlockStateModel model : this.models)
+            keys.add(model.createGeometryKey(blockView, pos, state, random));
+        return keys;
     }
 
     @Override

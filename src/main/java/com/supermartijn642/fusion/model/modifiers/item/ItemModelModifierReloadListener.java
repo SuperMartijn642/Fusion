@@ -56,6 +56,7 @@ public class ItemModelModifierReloadListener {
         for(Map.Entry<ModelResourceLocation,ItemModelPredicatesProperties> entry : this.models.entrySet()){
             ModelResourceLocation target = entry.getKey();
             ItemModelPredicatesProperties properties = entry.getValue();
+            if(!bakedModels.containsKey(target)) continue;
             IBakedModel defaultModel = properties.defaultModel == null ? bakedModels.get(target) : bakedModels.get(properties.defaultModel);
             List<Pair<ItemPredicate,IBakedModel>> models = properties.models.stream()
                 .map(pair -> pair.mapRight(bakedModels::get))

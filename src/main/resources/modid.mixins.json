@@ -12,6 +12,7 @@
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "BlockModelWrapperMixin",
+    "BlockRenderDispatcherMixin",
     "BufferSourceMixin",
     "CompositePackResourceMixin",
     "EntityMixin",

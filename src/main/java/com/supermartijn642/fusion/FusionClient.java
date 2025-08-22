@@ -32,6 +32,8 @@ public class FusionClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
 
+    public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
+
     public static void init(FMLJavaModLoadingContext context){
         // Register default texture types
         FusionTextureTypeRegistry.registerTextureType(ResourceLocation.fromNamespaceAndPath("fusion", "vanilla"), DefaultTextureTypes.VANILLA);

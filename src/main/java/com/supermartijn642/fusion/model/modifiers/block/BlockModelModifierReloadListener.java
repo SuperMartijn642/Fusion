@@ -56,6 +56,7 @@ public class BlockModelModifierReloadListener {
         for(Map.Entry<BlockState,Properties> entry : this.models.entrySet()){
             BlockState target = entry.getKey();
             BlockStateModel targetModel = bakedModels.get(target);
+            if(targetModel == null) continue;
             Properties properties = entry.getValue();
             List<ResourceLocation> overlays = properties.appendModels;
             List<BlockStateModel> overlayModels = overlays.stream().map(l -> new SingleVariant.Unbaked(new Variant(l, Variant.SimpleModelState.DEFAULT)).bake(resolver)).toList();

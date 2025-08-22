@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
+import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadView;
@@ -82,5 +83,13 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         return quadDirection == Direction.UP ?
             stateAbove == null || !stateAbove.getValue(SIDE_PROPERTIES[partSide.ordinal()]) :
             stateBelow == null || !stateBelow.getValue(SIDE_PROPERTIES[partSide.ordinal()]);
+    }
+
+    @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random){
+        return Pair.of(
+            this,
+            super.createGeometryKey(blockView, pos, state, random)
+        );
     }
 }

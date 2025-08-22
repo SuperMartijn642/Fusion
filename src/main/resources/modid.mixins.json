@@ -10,6 +10,7 @@
     "neoforge.QuadLighterMixin",
     "AgeableMobMixin",
     "BlockModelMixin",
+    "BlockRenderDispatcherMixin",
     "BufferSourceMixin",
     "CompositePackResourceMixin",
     "EntityMixin",

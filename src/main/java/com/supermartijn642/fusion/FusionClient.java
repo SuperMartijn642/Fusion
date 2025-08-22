@@ -37,6 +37,8 @@ public class FusionClient {
 
     public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", null, null, 0, RenderType.CompositeState.builder().createCompositeState(false));
 
+    public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
+
     public static void init(){
         // Register default texture types
         FusionTextureTypeRegistry.registerTextureType(ResourceLocation.fromNamespaceAndPath("fusion", "vanilla"), DefaultTextureTypes.VANILLA);

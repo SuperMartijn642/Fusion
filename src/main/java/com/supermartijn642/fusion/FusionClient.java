@@ -25,6 +25,8 @@ public class FusionClient {
 
     public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", null, null, 0, false, false, RenderType.CompositeState.builder().createCompositeState(false));
 
+    public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
+
     private static NativeImage dummyImage;
 
     public static NativeImage getDummyImage(){

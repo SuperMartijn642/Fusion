@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class BlockRenderDispatcherMixin {
 
     @Inject(
-        method = "renderBlockDamage",
+        method = "renderBlockDamage(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)V",
         at = @At("HEAD"),
         remap = false
     )
@@ -23,7 +23,7 @@ public class BlockRenderDispatcherMixin {
     }
 
     @Inject(
-        method = "renderBlockDamage",
+        method = "renderBlockDamage(Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/IBlockDisplayReader;Lcom/mojang/blaze3d/matrix/MatrixStack;Lcom/mojang/blaze3d/vertex/IVertexBuilder;Lnet/minecraftforge/client/model/data/IModelData;)V",
         at = @At("TAIL"),
         remap = false
     )

@@ -14,16 +14,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class BlockRenderDispatcherMixin {
 
     @Inject(
-        method = "renderBreakingTexture",
-        at = @At("HEAD")
+        method = "renderBreakingTexture(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/ModelData;)V",
+        at = @At("HEAD"),
+        remap = false
     )
     private void renderBreakingTextureHead(CallbackInfo ci){
         FusionClient.IS_RENDERING_BREAKING_OVERLAY.set(true);
     }
 
     @Inject(
-        method = "renderBreakingTexture",
-        at = @At("TAIL")
+        method = "renderBreakingTexture(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraftforge/client/model/data/ModelData;)V",
+        at = @At("TAIL"),
+        remap = false
     )
     private void renderBreakingTextureTail(CallbackInfo ci){
         FusionClient.IS_RENDERING_BREAKING_OVERLAY.set(false);

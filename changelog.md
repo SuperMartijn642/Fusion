@@ -1,3 +1,6 @@
+### Fusion 1.2.11a
+- Fixed `show_breaking_overlay` option for block model modifiers not working
+
 ### Fusion 1.2.11
 - Added `show_breaking_overlay` option to block model modifiers to not show the breaking overlay for appended models
 - Fixed crash when modded model bakeries do not contain model modifiers' target models

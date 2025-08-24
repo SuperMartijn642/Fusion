@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class BlockRenderDispatcherMixin {
 
     @Inject(
-        method = "renderBreakingTexture",
+        method = "renderBreakingTexture(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/neoforged/neoforge/client/model/data/ModelData;)V",
         at = @At("HEAD")
     )
     private void renderBreakingTextureHead(CallbackInfo ci){
@@ -22,7 +22,7 @@ public class BlockRenderDispatcherMixin {
     }
 
     @Inject(
-        method = "renderBreakingTexture",
+        method = "renderBreakingTexture(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/neoforged/neoforge/client/model/data/ModelData;)V",
         at = @At("TAIL")
     )
     private void renderBreakingTextureTail(CallbackInfo ci){

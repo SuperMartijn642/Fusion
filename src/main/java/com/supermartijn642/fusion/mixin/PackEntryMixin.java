@@ -17,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.function.Consumer;
 
@@ -46,39 +45,35 @@ public class PackEntryMixin {
     }
 
     @Inject(
-        method = "render",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/ResourceLocation;IIFFIIII)V",
-            shift = At.Shift.BEFORE
-        )
+        method = "renderContent",
+        at = @At("HEAD")
     )
-    private void renderBackground(GuiGraphics graphics, int entryIndex, int top, int left, int width, int height, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
+    private void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
         if(this.metadata == null)
             return;
-        if(this.parent.maxScrollAmount() > 0)
-            width -= 7;
-        ResourcePackListTipRenderer.renderBackground(this.metadata, this.pack.getCompatibility().isCompatible(), graphics, left, top, width, height);
+        //noinspection DataFlowIssue
+        TransferableSelectionList.PackEntry entry = (TransferableSelectionList.PackEntry)(Object)this;
+        ResourcePackListTipRenderer.renderBackground(this.metadata, this.pack.getCompatibility().isCompatible(), graphics, entry.getContentX(), entry.getContentY(), entry.getContentWidth(), entry.getContentHeight());
     }
 
     @Inject(
-        method = "render",
+        method = "renderContent",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/ResourceLocation;IIFFIIII)V",
             shift = At.Shift.AFTER
         )
     )
-    private void renderIcon(GuiGraphics graphics, int entryIndex, int top, int left, int width, int height, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
+    private void renderIcon(GuiGraphics graphics, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
         if(this.metadata == null)
             return;
-        if(this.parent.maxScrollAmount() > 0)
-            width -= 7;
-        ResourcePackListTipRenderer.renderIcon(this.metadata, this.pack.getCompatibility().isCompatible(), graphics, left, top, width, height);
+        //noinspection DataFlowIssue
+        TransferableSelectionList.PackEntry entry = (TransferableSelectionList.PackEntry)(Object)this;
+        ResourcePackListTipRenderer.renderIcon(this.metadata, this.pack.getCompatibility().isCompatible(), graphics, entry.getContentX(), entry.getContentY(), entry.getContentWidth(), entry.getContentHeight());
     }
 
     @ModifyVariable(
-        method = "render",
+        method = "renderContent",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/gui/screens/packs/PackSelectionModel$Entry;canSelect()Z",
@@ -97,7 +92,7 @@ public class PackEntryMixin {
         at = @At("HEAD"),
         cancellable = true
     )
-    private void showFusionWarningScreen(CallbackInfoReturnable<Boolean> ci){
+    private void showFusionWarningScreen(CallbackInfo ci){
         if(this.metadata == null)
             return;
         Consumer<Boolean> callback = select -> {
@@ -106,6 +101,6 @@ public class PackEntryMixin {
                 this.pack.select();
         };
         if(ResourcePackListTipRenderer.showWarningScreen(this.metadata, this.pack.getCompatibility().isCompatible(), (PackSelectionModel.EntryBase)this.pack, callback))
-            ci.setReturnValue(false);
+            ci.cancel();
     }
 }

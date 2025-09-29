@@ -4,7 +4,9 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.resources.model.MaterialSet;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.SpriteGetter;
 import org.spongepowered.asm.mixin.Final;
@@ -25,6 +27,12 @@ public class ModelBakeryMixin {
     @Final
     @Shadow
     private EntityModelSet entityModelSet;
+    @Final
+    @Shadow
+    private MaterialSet materials;
+    @Final
+    @Shadow
+    private PlayerSkinRenderCache playerSkinRenderCache;
 
     @ModifyReturnValue(
         method = "bakeModels",
@@ -55,6 +63,8 @@ public class ModelBakeryMixin {
             ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(results, new ItemModel.BakingContext(
                 resolver,
                 this.entityModelSet,
+                this.materials,
+                this.playerSkinRenderCache,
                 results.missingModels().item(),
                 null
             ));

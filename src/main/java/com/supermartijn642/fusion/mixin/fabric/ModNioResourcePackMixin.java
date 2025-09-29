@@ -41,7 +41,7 @@ public class ModNioResourcePackMixin {
 
             Path overridesPath = null;
             try(InputStream stream = Files.newInputStream(metaPath)){
-                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.TYPE, stream);
+                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.TYPE, stream, null);
                 if(metadata != null && metadata.hasOverridesFolder())
                     overridesPath = rootPath.resolve(metadata.getOverridesFolder());
             }catch(Exception ignore){

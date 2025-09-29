@@ -88,7 +88,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.HEAD),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GUI),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GROUND),
-            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED)
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.ON_SHELF)
         );
         // Finally, create the model
         return new ConnectingItemModel(

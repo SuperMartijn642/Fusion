@@ -10,7 +10,7 @@ import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.item.*;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,8 @@ public class BaseItemModel implements ItemModel {
         // Check whether the quads contain animated textures
         boolean animated = false;
         for(BaseModelQuad quad : quads){
-            if(quad.bakedQuad().sprite().isAnimated()){
+            //noinspection resource
+            if(quad.bakedQuad().sprite().contents().isAnimated()){
                 animated = true;
                 break;
             }
@@ -58,7 +59,7 @@ public class BaseItemModel implements ItemModel {
     }
 
     @Override
-    public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable LivingEntity entity, int i){
+    public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable ItemOwner owner, int i){
         renderState.appendModelIdentityElement(this);
         ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
         if(stack.hasFoil()){
@@ -70,7 +71,7 @@ public class BaseItemModel implements ItemModel {
         int tints = this.tints.size();
         int[] tintValues = layer.prepareTintLayers(tints);
         for(int j = 0; j < tints; j++){
-            int tint = this.tints.get(j).calculate(stack, level, entity);
+            int tint = this.tints.get(j).calculate(stack, level, owner == null ? null : owner.asLivingEntity());
             tintValues[j] = tint;
             renderState.appendModelIdentityElement(tint);
         }

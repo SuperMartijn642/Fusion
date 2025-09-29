@@ -8,7 +8,6 @@ import net.caffeinemc.mods.sodium.api.util.ColorMixer;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer;
 import net.caffeinemc.mods.sodium.client.render.frapi.mesh.MutableQuadViewImpl;
 import net.caffeinemc.mods.sodium.client.render.frapi.render.AbstractBlockRenderContext;
-import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,15 +30,15 @@ public abstract class BlockRendererMixin extends AbstractBlockRenderContext {
     private void tintQuad(MutableQuadViewImpl quad, CallbackInfo ci){
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.tintIndex() == 39216){
-            TextureAtlasSprite sprite = quad.cachedSprite();
+            TextureAtlasSprite sprite;
             if(quad.tag() == 0)
-                sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
+                sprite = quad.sprite(Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks()).spriteFinder());
             else{
                 float u = (quad.tag() & 65535) / 65535f;
                 float v = (quad.tag() >> 16) / 65535f;
-                sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(u, v);
+                sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks()).spriteFinder().find(u, v);
+                quad.cachedSprite(sprite);
             }
-            quad.cachedSprite(sprite);
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
                 if(tinting != null){

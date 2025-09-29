@@ -4,8 +4,8 @@ import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.TerrainParticle;
-import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -17,10 +17,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Created 16/09/2024 by SuperMartijn642
  */
 @Mixin(TerrainParticle.class)
-public abstract class TerrainParticleMixin extends TextureSheetParticle {
+public abstract class TerrainParticleMixin extends SingleQuadParticle {
 
-    protected TerrainParticleMixin(ClientLevel clientLevel, double d, double e, double f){
-        super(clientLevel, d, e, f);
+    protected TerrainParticleMixin(){
+        super(null, 0, 0, 0, null);
     }
 
     @Inject(

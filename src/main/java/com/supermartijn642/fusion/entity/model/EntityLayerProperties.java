@@ -3,7 +3,6 @@ package com.supermartijn642.fusion.entity.model;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.entity.VanillaModelLayerProperties;
 import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicate;
-import com.supermartijn642.fusion.util.Triple;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.resources.ResourceLocation;
@@ -35,7 +34,7 @@ public class EntityLayerProperties {
         return this.identifier;
     }
 
-    public Triple<ModelPart,ResourceLocation,Float> chooseModel(Entity entity){
+    public ModelChoice chooseModel(Entity entity){
         // Find the model to use
         List<ModelOption> options = this.defaultModel;
         for(Pair<EntityModelPredicate,List<ModelOption>> conditional : this.conditionals){
@@ -46,7 +45,7 @@ public class EntityLayerProperties {
         }
         // If there's only a single option, avoid interacting with the random
         if(options.size() == 1 && (options.get(0).textures == null || options.get(0).textures.size() == 1))
-            return Triple.of(options.get(0).model, options.get(0).textures == null ? null : options.get(0).textures.get(0), options.get(0).scaling);
+            return new ModelChoice(options.get(0).model, options.get(0).textures == null ? null : options.get(0).textures.get(0), options.get(0).scaling);
 
         // Pick a random option from the weighted list of options
         RANDOM.setSeed(this.seed(entity.getUUID()));
@@ -64,7 +63,7 @@ public class EntityLayerProperties {
             throw new AssertionError("Weights should add up to 1, yet no model was found for value '" + value + "'!");
         // Pick a random texture from the chosen option
         ResourceLocation texture = option.textures == null ? null : option.textures.size() > 1 ? option.textures.get(RANDOM.nextInt(option.textures.size())) : option.textures.get(0);
-        return Triple.of(option.model, texture, option.scaling);
+        return new ModelChoice(option.model, texture, option.scaling);
     }
 
     private long seed(UUID uuid){
@@ -148,5 +147,8 @@ public class EntityLayerProperties {
                 this.scaling
             );
         }
+    }
+
+    public record ModelChoice(ModelPart model, ResourceLocation texture, Float scaling) {
     }
 }

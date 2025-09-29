@@ -13,7 +13,6 @@ import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.SpriteTicker;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
-import net.minecraft.server.packs.resources.ResourceMetadata;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -178,7 +177,7 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         private int frame, tickCounter;
 
         public ScrollingSpriteContents(SpriteContents original, int[] xPositions, int[] yPositions, int[] frameTimes){
-            super(original.name(), new FrameSize(original.width(), original.height()), original.originalImage, ResourceMetadata.EMPTY);
+            super(original.name(), new FrameSize(original.width(), original.height()), original.originalImage);
             this.xPositions = xPositions;
             this.yPositions = yPositions;
             this.frameTimes = frameTimes;

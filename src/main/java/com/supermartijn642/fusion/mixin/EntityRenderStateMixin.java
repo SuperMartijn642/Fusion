@@ -17,7 +17,7 @@ public class EntityRenderStateMixin implements EntityRenderStateExtension {
 
     @Override
     public EntityLayerProperties.ModelChoice getFusionModel(int layerIndex){
-        return this.models[layerIndex];
+        return this.models == null ? null : this.models[layerIndex];
     }
 
     @Override

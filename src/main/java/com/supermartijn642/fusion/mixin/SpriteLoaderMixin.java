@@ -11,15 +11,13 @@ import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -29,15 +27,11 @@ import java.util.concurrent.Executor;
 @Mixin(value = SpriteLoader.class, priority = 900)
 public class SpriteLoaderMixin {
 
-    @Final
-    @Shadow
-    private ResourceLocation location;
-
     @Inject(
-        method = "loadAndStitch(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/ResourceLocation;ILjava/util/concurrent/Executor;Ljava/util/Collection;)Ljava/util/concurrent/CompletableFuture;",
+        method = "loadAndStitch(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/ResourceLocation;ILjava/util/concurrent/Executor;Ljava/util/Set;)Ljava/util/concurrent/CompletableFuture;",
         at = @At("RETURN")
     )
-    private void initializeTextures(ResourceManager resourceManager, ResourceLocation atlas, int i, Executor executor, Collection<?> metadataSections, CallbackInfoReturnable<CompletableFuture<SpriteLoader.Preparations>> ci){
+    private void initializeTextures(ResourceManager resourceManager, ResourceLocation atlas, int i, Executor executor, Set<?> metadataSections, CallbackInfoReturnable<CompletableFuture<SpriteLoader.Preparations>> ci){
         ci.getReturnValue().thenApply(preparations -> {
             // Replace sprites
             Map<ResourceLocation,TextureAtlasSprite> textures = preparations.regions();
@@ -48,7 +42,7 @@ public class SpriteLoaderMixin {
                 if(textureData != null){
                     // Create the sprite
                     TextureAtlasSprite newTexture;
-                    try(SpriteCreationContextImpl context = new SpriteCreationContextImpl(preparations, this.location, texture)){
+                    try(SpriteCreationContextImpl context = new SpriteCreationContextImpl(preparations, texture)){
                         newTexture = textureData.left().createSprite(context, textureData.right());
                     }catch(Exception e){
                         FusionClient.LOGGER.error("Encountered an exception whilst initialising texture '{}' for texture type '{}'!", identifier, TextureTypeRegistryImpl.getIdentifier(textureData.left()), e);

@@ -10,14 +10,12 @@ import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.FusionModelLoader;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
-import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.neoforge.client.event.ModelEvent;
-import net.neoforged.neoforge.client.event.RegisterSpriteDefaultMetadataSectionTypesEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,11 +72,6 @@ public class FusionClient {
         EntityModelPredicateRegistry.registerEntityModelPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "is_baby"), BabyEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistry.registerEntityModelPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "biome"), BiomeEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistry.registerEntityModelPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "dimension"), DimensionEntityModelPredicate.SERIALIZER);
-
-        // Add Fusion's metadata section
-        ModLoadingContext.get().getActiveContainer().getEventBus().addListener(
-            (Consumer<RegisterSpriteDefaultMetadataSectionTypesEvent>)e -> e.register(FusionTextureMetadataSection.TYPE)
-        );
 
         // Register Fusion model loader
         ModLoadingContext.get().getActiveContainer().getEventBus().addListener(

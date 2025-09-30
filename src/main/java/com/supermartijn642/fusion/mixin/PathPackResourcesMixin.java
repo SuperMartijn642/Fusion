@@ -60,9 +60,10 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         if(Files.exists(path)){
             String overridesFolder;
             try(InputStream stream = Files.newInputStream(path)){
-                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.TYPE, stream);
+                //noinspection DataFlowIssue
+                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.TYPE, stream, null);
                 overridesFolder = metadata != null ? metadata.getOverridesFolder() : null;
-            }catch(IOException ignored){
+            }catch(IOException | NullPointerException ignored){
                 return;
             }
             if(overridesFolder != null)

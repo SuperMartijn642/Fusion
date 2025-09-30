@@ -86,7 +86,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.HEAD),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GUI),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GROUND),
-            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED)
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.ON_SHELF)
         );
         RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
         RenderType neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entity();

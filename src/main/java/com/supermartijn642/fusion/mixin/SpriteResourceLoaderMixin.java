@@ -13,8 +13,8 @@ import net.minecraft.client.renderer.texture.atlas.SpriteResourceLoader;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.metadata.MetadataSectionType;
 import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.server.packs.resources.ResourceMetadata;
 import net.neoforged.neoforge.client.textures.SpriteContentsConstructor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,8 +22,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created 08/10/2024 by SuperMartijn642
@@ -31,8 +32,9 @@ import java.util.Optional;
 @Mixin(SpriteResourceLoader.class)
 public interface SpriteResourceLoaderMixin {
 
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     @Inject(
-        method = "lambda$create$0(Ljava/util/Collection;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/server/packs/resources/Resource;Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
+        method = "lambda$create$0(Ljava/util/Set;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/server/packs/resources/Resource;Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
         at = {
             @At(
                 value = "INVOKE_ASSIGN",
@@ -41,7 +43,7 @@ public interface SpriteResourceLoaderMixin {
             ),
             @At(
                 value = "INVOKE",
-                target = "Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;create(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Lnet/minecraft/server/packs/resources/ResourceMetadata;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
+                target = "Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;create(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Ljava/util/Optional;Ljava/util/List;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
                 shift = At.Shift.BEFORE
             )
         },
@@ -49,9 +51,16 @@ public interface SpriteResourceLoaderMixin {
         cancellable = true,
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private static void modifyFrameSize(Collection<?> metadataSerializers, ResourceLocation identifier, Resource resource, SpriteContentsConstructor constructor, CallbackInfoReturnable<SpriteContents> ci, ResourceMetadata resourceMetadata, NativeImage image, Optional<AnimationMetadataSection> animationMetadata, FrameSize originalSize){
+    private static void modifyFrameSize(Set<?> metadataSerializers, ResourceLocation identifier, Resource resource, SpriteContentsConstructor constructor, CallbackInfoReturnable<SpriteContents> ci, Optional<AnimationMetadataSection> animationMetadata, List<MetadataSectionType.WithValue<?>> resourceMetadata, NativeImage image, FrameSize originalSize){
         // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionTextureMetadataSection.TYPE).orElse(null);
+        Pair<TextureType<Object>,Object> metadata = null;
+        for(MetadataSectionType.WithValue<?> entry : resourceMetadata){
+            if(entry.type() == FusionTextureMetadataSection.TYPE){
+                //noinspection unchecked
+                metadata = (Pair<TextureType<Object>,Object>)entry.value();
+                break;
+            }
+        }
         if(metadata != null){
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
@@ -68,7 +77,7 @@ public interface SpriteResourceLoaderMixin {
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
             // Create the sprite contents
-            ci.setReturnValue(new SpriteContents(identifier, new FrameSize(newSize.left(), newSize.right()), image, resourceMetadata));
+            ci.setReturnValue(constructor.create(identifier, new FrameSize(newSize.left(), newSize.right()), image, animationMetadata, resourceMetadata));
         }
     }
 }

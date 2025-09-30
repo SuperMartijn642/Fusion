@@ -11,7 +11,7 @@ public class Fusion {
 
     public Fusion(){
         // Initialize Fusion stuff if this is on the client
-        if(FMLEnvironment.dist.isClient())
+        if(FMLEnvironment.getDist().isClient())
             FusionClient.init();
     }
 }

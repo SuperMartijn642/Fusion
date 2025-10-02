@@ -17,6 +17,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.List;
+
 /**
  * Created 19/10/2023 by SuperMartijn642
  */
@@ -32,10 +34,10 @@ public class PackMixin implements PackExtension {
     }
 
     @Inject(
-        method = "<init>",
+        method = "<init>(Ljava/lang/String;ZLnet/minecraft/server/packs/repository/Pack$ResourcesSupplier;Lnet/minecraft/network/chat/Component;Lnet/minecraft/server/packs/repository/Pack$Info;Lnet/minecraft/server/packs/repository/Pack$Position;ZLnet/minecraft/server/packs/repository/PackSource;Ljava/util/List;)V",
         at = @At("RETURN")
     )
-    private void init(String identifier, boolean required, Pack.ResourcesSupplier resourcesSupplier, Component title, Pack.Info info, Pack.Position position, boolean fixedPosition, PackSource packSource, CallbackInfo ci){
+    private void init(String identifier, boolean required, Pack.ResourcesSupplier resourcesSupplier, Component title, Pack.Info info, Pack.Position position, boolean fixedPosition, PackSource packSource, List<Pack> children, CallbackInfo ci){
         try(PackResources resources = resourcesSupplier.openPrimary(identifier)){
             this.metadata = resources.getMetadataSection(FusionPackMetadataSection.INSTANCE);
         }catch(Exception e){

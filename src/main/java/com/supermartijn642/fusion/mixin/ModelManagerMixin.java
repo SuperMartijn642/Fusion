@@ -22,7 +22,7 @@ import java.util.Map;
 public class ModelManagerMixin {
 
     @Inject(
-        method = "lambda$loadBlockModels$8(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",
+        method = "lambda$loadBlockModels$5(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",
         at = @At("HEAD")
     )
     private static void reloadModelModifiers(ResourceManager resourceManager, CallbackInfoReturnable<Map<?,?>> ci){
@@ -47,7 +47,7 @@ public class ModelManagerMixin {
     }
 
     @Inject(
-        method = "lambda$loadBlockModels$9(Ljava/util/Map$Entry;)Lcom/mojang/datafixers/util/Pair;",
+        method = "lambda$loadBlockModels$6(Ljava/util/Map$Entry;)Lcom/mojang/datafixers/util/Pair;",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/block/model/BlockModel;fromStream(Ljava/io/Reader;)Lnet/minecraft/client/renderer/block/model/BlockModel;",

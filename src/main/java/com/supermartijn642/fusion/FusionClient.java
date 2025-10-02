@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion;
 
-import com.google.common.collect.ImmutableSet;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
@@ -11,11 +10,8 @@ import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
-import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
-import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.metadata.MetadataSectionType;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
@@ -75,12 +71,6 @@ public class FusionClient {
         EntityModelPredicateRegistry.registerEntityModelPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "is_baby"), BabyEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistry.registerEntityModelPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "biome"), BiomeEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistry.registerEntityModelPredicate(ResourceLocation.fromNamespaceAndPath("fusion", "dimension"), DimensionEntityModelPredicate.SERIALIZER);
-
-        // Add Fusion's metadata section
-        SpriteLoader.DEFAULT_METADATA_SECTIONS = ImmutableSet.<MetadataSectionType<?>>builder()
-            .addAll(SpriteLoader.DEFAULT_METADATA_SECTIONS)
-            .add(FusionTextureMetadataSection.TYPE)
-            .build();
 
         // Finalize registration
 

@@ -93,7 +93,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.HEAD),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GUI),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.GROUND),
-            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED)
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED),
+            ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.ON_SHELF)
         );
         RenderType forgeRenderType = context.getForgeContext() != null ? context.getForgeContext().getRenderType().entityFabulous() : null;
         // Finally, create the model

@@ -1,7 +1,6 @@
 package com.supermartijn642.fusion.api.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 
@@ -46,11 +45,6 @@ public interface SpriteCreationContext {
      * Gets the height of the texture.
      */
     int getAtlasHeight();
-
-    /**
-     * Gets the atlas which the sprite is stitched to.
-     */
-    TextureAtlas getAtlas();
 
     /**
      * Gets the x-position of the sprite on the atlas.

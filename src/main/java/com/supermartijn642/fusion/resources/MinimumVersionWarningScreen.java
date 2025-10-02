@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.resources;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.extensions.PackExtension;
 import net.minecraft.ChatFormatting;
@@ -11,6 +10,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineLabel;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
@@ -112,14 +112,14 @@ public class MinimumVersionWarningScreen extends Screen {
         graphics.fill(-98, 0, 98, 36, ARGB.color(70, 255, 255, 255));
         graphics.blit(RenderPipelines.GUI_TEXTURED, this.pack.getIconTexture(), -96, 2, 0, 0, 32, 32, 32, 32);
         graphics.drawString(this.font, this.packName, -62, 3, ARGB.color(255, 16777215));
-        this.packDescription.renderLeftAligned(graphics, -62, 14, 10, -8355712);
+        this.packDescription.render(graphics, MultiLineLabel.Align.LEFT, -62, 14, 10, true, -8355712);
 
         graphics.hLine(-115, 115, 44, ARGB.color(255, 255, 255));
 
         int textLeft = -Math.max(this.headerMessage.getWidth(), this.confirmationMessage.getWidth()) / 2;
-        this.headerMessage.renderLeftAligned(graphics, textLeft, 54, 10, -1);
+        this.headerMessage.render(graphics, MultiLineLabel.Align.LEFT, textLeft, 54, 10, true, -1);
         int textHeight = this.headerMessage.getLineCount() * 10;
-        this.confirmationMessage.renderLeftAligned(graphics, textLeft, 58 + textHeight, 10, -1);
+        this.confirmationMessage.render(graphics, MultiLineLabel.Align.LEFT, textLeft, 58 + textHeight, 10, true, -1);
         textHeight += this.confirmationMessage.getLineCount() * 10;
 
         graphics.hLine(-115, 115, 66 + textHeight, ARGB.color(255, 255, 255));
@@ -139,11 +139,11 @@ public class MinimumVersionWarningScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers){
-        if(keyCode == InputConstants.KEY_ESCAPE){
+    public boolean keyPressed(KeyEvent keyEvent){
+        if(keyEvent.isEscape()){
             this.confirmation.accept(false);
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(keyEvent);
     }
 }

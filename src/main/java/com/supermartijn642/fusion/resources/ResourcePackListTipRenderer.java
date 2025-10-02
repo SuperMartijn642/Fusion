@@ -20,7 +20,7 @@ public class ResourcePackListTipRenderer {
 
     public static void renderBackground(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphics graphics, int x, int y, int width, int height){
         if(isVanillaCompatible && !metadata.isMinVersionSatisfied())
-            graphics.fill(x - 1, y - 1, x + width - 3, y + height + 1, ARGB.color(255, 114, 83, 0));
+            graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, ARGB.color(255, 114, 83, 0));
     }
 
     public static void renderIcon(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphics graphics, int x, int y, int width, int height){

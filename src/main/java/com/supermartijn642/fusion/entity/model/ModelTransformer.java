@@ -32,8 +32,8 @@ public class ModelTransformer {
                 cube.maxX = -cube.minX;
                 cube.minX = -maxX;
             },
-            polygon -> polygon.normal().x *= -1,
-            vertex -> vertex.pos().x *= -1
+            polygon -> polygon.normal.x *= -1,
+            vertex -> vertex.x *= -1
         );
     }
 
@@ -53,8 +53,8 @@ public class ModelTransformer {
                 cube.maxY = -cube.minY;
                 cube.minY = -maxY;
             },
-            polygon -> polygon.normal().y *= -1,
-            vertex -> vertex.pos().y *= -1
+            polygon -> polygon.normal.y *= -1,
+            vertex -> vertex.y *= -1
         );
     }
 
@@ -74,8 +74,8 @@ public class ModelTransformer {
                 cube.maxZ = -cube.minZ;
                 cube.minZ = -maxZ;
             },
-            polygon -> polygon.normal().z *= -1,
-            vertex -> vertex.pos().z *= -1
+            polygon -> polygon.normal.z *= -1,
+            vertex -> vertex.z *= -1
         );
     }
 
@@ -127,7 +127,7 @@ public class ModelTransformer {
         return copy;
     }
 
-    private static ModelPart transform(ModelPart part, Consumer<ModelPart> partTransform, Consumer<ModelPart.Cube> cubeTransform, Consumer<ModelPart.Polygon> polygonTransform, Consumer<ModelPart.Vertex> vertexTransform){
+    private static ModelPart transform(ModelPart part, Consumer<ModelPart> partTransform, Consumer<ModelPart.Cube> cubeTransform, Consumer<MutablePolygon> polygonTransform, Consumer<MutableVertex> vertexTransform){
         ModelPart copy;
         if(part instanceof DummyModelPart){
             copy = new DummyModelPart(transform(((DummyModelPart)part).getDummyChild(), partTransform, cubeTransform, polygonTransform, vertexTransform));
@@ -156,7 +156,7 @@ public class ModelTransformer {
         return copy;
     }
 
-    private static ModelPart.Cube transform(ModelPart.Cube cube, Consumer<ModelPart.Cube> cubeTransform, Consumer<ModelPart.Polygon> polygonTransform, Consumer<ModelPart.Vertex> vertexTransform){
+    private static ModelPart.Cube transform(ModelPart.Cube cube, Consumer<ModelPart.Cube> cubeTransform, Consumer<MutablePolygon> polygonTransform, Consumer<MutableVertex> vertexTransform){
         ModelPart.Cube copy = new ModelPart.Cube(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, Set.of());
         copy.polygons = Arrays.stream(cube.polygons).map(p -> transform(p, polygonTransform, vertexTransform)).toArray(ModelPart.Polygon[]::new);
         copy.minX = cube.minX;
@@ -168,16 +168,48 @@ public class ModelTransformer {
         return copy;
     }
 
-    private static ModelPart.Polygon transform(ModelPart.Polygon polygon, Consumer<ModelPart.Polygon> polygonTransform, Consumer<ModelPart.Vertex> vertexTransform){
-        return new ModelPart.Polygon(
+    private static ModelPart.Polygon transform(ModelPart.Polygon polygon, Consumer<MutablePolygon> polygonTransform, Consumer<MutableVertex> vertexTransform){
+        MutablePolygon mutable = new MutablePolygon(
             Arrays.stream(polygon.vertices()).map(v -> transform(v, vertexTransform)).toArray(ModelPart.Vertex[]::new),
-            polygon.normal()
+            new Vector3f(polygon.normal())
         );
+        polygonTransform.accept(mutable);
+        return mutable.build();
     }
 
-    private static ModelPart.Vertex transform(ModelPart.Vertex vertex, Consumer<ModelPart.Vertex> vertexTransform){
-        ModelPart.Vertex copy = new ModelPart.Vertex(new Vector3f(vertex.pos()), vertex.u(), vertex.v());
-        vertexTransform.accept(copy);
-        return copy;
+    private static ModelPart.Vertex transform(ModelPart.Vertex vertex, Consumer<MutableVertex> vertexTransform){
+        MutableVertex mutable = new MutableVertex(vertex);
+        vertexTransform.accept(mutable);
+        return mutable.build();
+    }
+
+    private static class MutablePolygon {
+        ModelPart.Vertex[] vertices;
+        Vector3f normal;
+
+        public MutablePolygon(ModelPart.Vertex[] vertices, Vector3f normal){
+            this.vertices = vertices;
+            this.normal = normal;
+        }
+
+        public ModelPart.Polygon build(){
+            return new ModelPart.Polygon(this.vertices, this.normal);
+        }
+    }
+
+    private static class MutableVertex {
+        float x, y, z, u, v;
+
+        public MutableVertex(ModelPart.Vertex vertex){
+            this.x = vertex.x();
+            this.y = vertex.y();
+            this.z = vertex.z();
+            this.u = vertex.u();
+            this.v = vertex.v();
+        }
+
+        public ModelPart.Vertex build(){
+            return new ModelPart.Vertex(this.x, this.y, this.z, this.u, this.v);
+        }
     }
 }

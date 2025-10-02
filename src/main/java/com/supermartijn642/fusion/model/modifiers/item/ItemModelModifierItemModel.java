@@ -6,7 +6,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -35,11 +35,11 @@ public class ItemModelModifierItemModel implements ItemModel {
     }
 
     @Override
-    public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable LivingEntity entity, int i){
+    public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable ItemOwner owner, int i){
         ItemModel model = this.forStack(stack);
         if(model == null)
-            this.defaultModel.update(renderState, stack, modelResolver, displayContext, level, entity, i);
+            this.defaultModel.update(renderState, stack, modelResolver, displayContext, level, owner, i);
         else
-            model.update(renderState, stack, modelResolver, displayContext, level, entity, i);
+            model.update(renderState, stack, modelResolver, displayContext, level, owner, i);
     }
 }

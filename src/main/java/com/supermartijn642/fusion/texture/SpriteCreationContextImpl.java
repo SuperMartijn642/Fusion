@@ -2,9 +2,7 @@ package com.supermartijn642.fusion.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.SpriteLoader;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
 
@@ -18,13 +16,12 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
     private final ResourceLocation identifier;
     private final NativeImage[] images;
     private final int atlasWidth, atlasHeight;
-    private final TextureAtlas atlas;
     private final int spriteX, spriteY, spriteWidth, spriteHeight;
     private final int mipmapLevels;
     private boolean imagesRequested = false;
 
     @SuppressWarnings("resource")
-    public SpriteCreationContextImpl(SpriteLoader.Preparations preparations, ResourceLocation atlas, TextureAtlasSprite original){
+    public SpriteCreationContextImpl(SpriteLoader.Preparations preparations, TextureAtlasSprite original){
         this.original = original;
         this.textureWidth = original.contents().originalImage.getWidth();
         this.textureHeight = original.contents().originalImage.getHeight();
@@ -32,7 +29,6 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
         this.images = original.contents().byMipLevel;
         this.atlasWidth = preparations.width();
         this.atlasHeight = preparations.height();
-        this.atlas = Minecraft.getInstance().getModelManager().getAtlas(atlas);
         this.spriteX = original.getX();
         this.spriteY = original.getY();
         this.spriteWidth = original.contents().width();
@@ -80,11 +76,6 @@ public class SpriteCreationContextImpl implements SpriteCreationContext, AutoClo
     @Override
     public int getAtlasHeight(){
         return this.atlasHeight;
-    }
-
-    @Override
-    public TextureAtlas getAtlas(){
-        return this.atlas;
     }
 
     @Override

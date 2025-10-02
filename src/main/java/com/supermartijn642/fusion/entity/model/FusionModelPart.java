@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.entity.EntityRenderTypeHelper;
 import com.supermartijn642.fusion.entity.VanillaModelLayerProperties;
 import com.supermartijn642.fusion.extensions.BufferSourceExtension;
 import com.supermartijn642.fusion.extensions.EntityExtension;
-import com.supermartijn642.fusion.util.Triple;
+import com.supermartijn642.fusion.extensions.EntityRenderStateExtension;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -19,13 +19,15 @@ import net.minecraft.world.entity.Entity;
  */
 public class FusionModelPart extends SubModelPart {
 
+    public static final ThreadLocal<MultiBufferSource.BufferSource> BUFFER_SOURCE_CONTEXT = new ThreadLocal<>();
+    public static final ThreadLocal<EntityRenderStateExtension> RENDER_STATE_CONTEXT = new ThreadLocal<>();
+
     private final int layerIndex;
     private final ModelPart original;
     private VanillaModelLayerProperties vanillaProperties;
     private EntityLayerProperties properties;
 
     private boolean ready;
-    private MultiBufferSource bufferSource;
     private ResourceLocation currentTexture;
     private Float currentScaling;
 
@@ -46,22 +48,33 @@ public class FusionModelPart extends SubModelPart {
             this.mirror(this.original);
     }
 
-    public void setup(Entity entity, MultiBufferSource bufferSource){
+    public void extractState(Entity entity, EntityRenderStateExtension state){
         if(this.properties == null)
             return;
-        this.bufferSource = bufferSource;
-
         // Check if the cached model choice should be recomputed
+        EntityLayerProperties.ModelChoice model;
         if(((EntityExtension)entity).shouldFusionRecomputeModel(this.layerIndex)){
-            Triple<ModelPart,ResourceLocation,Float> model = this.properties.chooseModel(entity);
+            model = this.properties.chooseModel(entity);
             ((EntityExtension)entity).setFusionModel(this.layerIndex, model);
-        }
+        }else
+            model = ((EntityExtension)entity).getFusionModel(this.layerIndex);
+        state.setFusionModel(this.layerIndex, model);
+    }
 
-        // Get the cached model choice
-        Triple<ModelPart,ResourceLocation,Float> modelChoice = ((EntityExtension)entity).getFusionModel(this.layerIndex);
-        ModelPart currentModel = modelChoice.left();
-        this.currentTexture = modelChoice.middle();
-        this.currentScaling = modelChoice.right();
+    public void setup(){
+        if(this.properties == null)
+            return;
+
+        // Get the model from render state context
+        EntityRenderStateExtension state = RENDER_STATE_CONTEXT.get();
+        if(state == null)
+            return;
+        EntityLayerProperties.ModelChoice modelChoice = state.getFusionModel(this.layerIndex);
+        if(modelChoice == null)
+            return;
+        ModelPart currentModel = modelChoice.model();
+        this.currentTexture = modelChoice.texture();
+        this.currentScaling = modelChoice.scaling();
 
         // Reset the model to its initial state
         resetPose(currentModel);
@@ -76,10 +89,10 @@ public class FusionModelPart extends SubModelPart {
         if(this.properties == null)
             return;
 
-        this.bufferSource = null;
         this.currentTexture = null;
         this.currentScaling = null;
         this.adjustedRenderType = null;
+        this.ready = false;
     }
 
     @Override
@@ -89,6 +102,7 @@ public class FusionModelPart extends SubModelPart {
 
     public void renderPart(SubModelPart part, PoseStack poseStack, VertexConsumer vertexConsumer, int i, int j, int k){
         if(!this.visible) return;
+        this.setup();
         if(!this.ready){
             if(part == this)
                 this.original.render(poseStack, vertexConsumer, i, j, k);
@@ -96,8 +110,11 @@ public class FusionModelPart extends SubModelPart {
         }
 
         // Get render type for current texture
-        if(this.bufferSource != null && this.currentTexture != null)
-            vertexConsumer = this.adjustTexture(vertexConsumer, this.bufferSource);
+        if(this.currentTexture != null){
+            MultiBufferSource.BufferSource bufferSource = BUFFER_SOURCE_CONTEXT.get();
+            if(bufferSource != null)
+                vertexConsumer = this.adjustTexture(vertexConsumer, bufferSource);
+        }
 
         poseStack.pushPose();
         this.vanillaProperties.transform(poseStack);
@@ -105,6 +122,7 @@ public class FusionModelPart extends SubModelPart {
             poseStack.scale(this.currentScaling, this.currentScaling, this.currentScaling);
         part.renderInternal(poseStack, vertexConsumer, i, j, k);
         poseStack.popPose();
+        this.clear();
     }
 
     private static void resetPose(ModelPart part){

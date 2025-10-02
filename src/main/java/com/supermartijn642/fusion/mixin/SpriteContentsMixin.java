@@ -14,12 +14,14 @@ import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.ResourceMetadata;
-import net.minecraftforge.client.textures.ForgeTextureMetadata;
+import net.minecraft.server.packs.metadata.MetadataSectionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Created 12/09/2023 by SuperMartijn642
@@ -41,7 +43,7 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
     }
 
     @ModifyVariable(
-        method = "<init>(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Lnet/minecraft/server/packs/resources/ResourceMetadata;Lnet/minecraftforge/client/textures/ForgeTextureMetadata;)V",
+        method = "<init>(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Ljava/util/Optional;Ljava/util/List;)V",
         at = @At(
             value = "INVOKE",
             target = "Ljava/lang/Object;<init>()V",
@@ -49,19 +51,25 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
         ),
         ordinal = 0
     )
-    private FrameSize initMetadata(FrameSize originalSize, ResourceLocation identifier, FrameSize ignore, NativeImage image, ResourceMetadata resourceMetadata, ForgeTextureMetadata forgeTextureMetadata){
+    private FrameSize initMetadata(FrameSize originalSize, ResourceLocation identifier, FrameSize ignore, NativeImage image, Optional<AnimationMetadataSection> animationMetadata, List<MetadataSectionType.WithValue<?>> resourceMetadata){
         // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = resourceMetadata.getSection(FusionTextureMetadataSection.TYPE).orElse(null);
+        Pair<TextureType<Object>,Object> metadata = null;
+        for(MetadataSectionType.WithValue<?> entry : resourceMetadata){
+            if(entry.type() == FusionTextureMetadataSection.TYPE){
+                //noinspection unchecked
+                metadata = (Pair<TextureType<Object>,Object>)entry.value();
+                break;
+            }
+        }
         if(metadata != null){
             this.fusionTextureMetadata = metadata;
             // Get the animation metadata
             if(resourceMetadata instanceof ResourceMetadataExtension)
                 ((ResourceMetadataExtension)resourceMetadata).disableFusionOverwrite();
-            AnimationMetadataSection animationMetadata = resourceMetadata.getSection(AnimationMetadataSection.TYPE).orElse(null);
             // Adjust the frame size
             Pair<Integer,Integer> newSize;
             try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier, animationMetadata), metadata.right());
+                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.width(), originalSize.height(), image.getWidth(), image.getHeight(), identifier, animationMetadata.orElse(null)), metadata.right());
             }catch(TextureErrorException e){
                 FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
                 // TODO

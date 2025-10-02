@@ -1,3 +1,6 @@
+### Fusion 1.2.11b
+- Fixed Fusion's `pack.mcmeta` data not getting loaded for mod resources
+
 ### Fusion 1.2.11a
 - Fixed `show_breaking_overlay` option for block model modifiers not working
 

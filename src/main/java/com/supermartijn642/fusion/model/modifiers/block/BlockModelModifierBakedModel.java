@@ -126,10 +126,13 @@ public class BlockModelModifierBakedModel implements BakedModel {
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random, ModelData data, @Nullable RenderType renderType){
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
             return this.original.getQuads(state, side, random, data, renderType);
+        boolean addSimpleQuads = renderType == null
+            || this.chunkRenderTypes.contains(renderType)
+            || (this.addNativeBlockRenderTypes && BakedModel.super.getRenderTypes(state, random, data).contains(renderType));
         if(!this.hasNonSimpleModels)
-            return side == null ? this.quads : this.culledQuads[side.ordinal()];
+            return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : List.of();
         ModelData[] arr = data.get(DATA_PROPERTY);
-        List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
+        List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
         for(int i = 0; i < this.nonSimpleModels.size(); i++)
             quads.addAll(this.nonSimpleModels.get(i).getQuads(state, side, random, arr == null || arr[i] == null ? ModelData.EMPTY : arr[i], renderType));
         return quads;

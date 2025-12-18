@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
 import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.RenderType;
@@ -12,6 +13,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ILightReader;
+import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
@@ -76,10 +78,12 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
     public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random random, @Nonnull IModelData data){
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
             return this.original.getQuads(state, side, random, data);
+        RenderType renderType = MinecraftForgeClient.getRenderLayer();
+        boolean addSimpleQuads = renderType == null || state == null || OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
         if(!this.hasNonSimpleModels)
-            return side == null ? this.quads : this.culledQuads[side.ordinal()];
+            return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : Collections.emptyList();
         IModelData[] arr = data.getData(DATA_PROPERTY);
-        List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
+        List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
         for(int i = 0; i < this.nonSimpleModels.size(); i++)
             quads.addAll(this.nonSimpleModels.get(i).getQuads(state, side, random, arr == null || arr[i] == null ? EmptyModelData.INSTANCE : arr[i]));
         return quads;
@@ -89,9 +93,11 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
     public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random random){
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
             return this.original.getQuads(state, side, random);
+        RenderType renderType = MinecraftForgeClient.getRenderLayer();
+        boolean addSimpleQuads = renderType == null || state == null || OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
         if(!this.hasNonSimpleModels)
-            return side == null ? this.quads : this.culledQuads[side.ordinal()];
-        List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
+            return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : Collections.emptyList();
+        List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
         for(IBakedModel model : this.nonSimpleModels)
             quads.addAll(model.getQuads(state, side, random));
         return quads;

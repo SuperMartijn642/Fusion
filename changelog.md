@@ -1,3 +1,6 @@
+### Fusion 1.2.11c
+- Fixed the breaking texture not showing on blocks targeted by a block model modifier
+
 ### Fusion 1.2.11b
 - Fixed Fusion's `pack.mcmeta` data not getting loaded for mod resources
 

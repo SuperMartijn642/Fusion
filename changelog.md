@@ -1,3 +1,6 @@
+### Fusion 1.2.11b
+- Fixed the breaking texture not showing on blocks targeted by a block model modifier
+
 ### Fusion 1.2.11a
 - Fixed `show_breaking_overlay` option for block model modifiers not working
 

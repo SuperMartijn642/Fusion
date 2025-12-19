@@ -1,3 +1,6 @@
+### Fusion 1.2.11c
+- Fixed crash when using NeoForge 21.9.14-beta and newer with other mods
+
 ### Fusion 1.2.11b
 - Fixed overrides folder property not working with NeoForge `JarContentsPackResources`
 

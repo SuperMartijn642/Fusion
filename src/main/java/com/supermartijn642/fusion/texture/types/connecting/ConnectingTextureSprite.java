@@ -19,6 +19,7 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
             1,
             original.getX(),
             original.getY(),
+            original.padding,
             data
         );
         this.u0 = original.u0;

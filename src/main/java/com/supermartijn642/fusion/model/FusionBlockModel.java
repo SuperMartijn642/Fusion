@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.context.ContextMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,16 +25,16 @@ import java.util.*;
  */
 public class FusionBlockModel implements UnbakedModel {
 
-    public static final ThreadLocal<ResourceLocation> CURRENT_MODEL = new ThreadLocal<>();
+    public static final ThreadLocal<Identifier> CURRENT_MODEL = new ThreadLocal<>();
 
-    private final ResourceLocation name;
+    private final Identifier name;
     private final ModelInstance<?> model;
     private final UnbakedModel vanillaModel;
-    private Collection<ResourceLocation> dependencies;
-    private Map<ResourceLocation,UnbakedModel> resolvedDependencies;
+    private Collection<Identifier> dependencies;
+    private Map<Identifier,UnbakedModel> resolvedDependencies;
 
     public FusionBlockModel(ModelInstance<?> model){
-        ResourceLocation name = CURRENT_MODEL.get();
+        Identifier name = CURRENT_MODEL.get();
         this.name = name == null ? IdentifierUtil.withFusionNamespace("unknown") : name;
         this.model = model;
         this.vanillaModel = model.getAsVanillaModel();
@@ -89,7 +89,7 @@ public class FusionBlockModel implements UnbakedModel {
         }
     }
 
-    private Map<ResourceLocation,UnbakedModel> resolveDependencies(ModelBaker modelBaker){
+    private Map<Identifier,UnbakedModel> resolveDependencies(ModelBaker modelBaker){
         if(this.resolvedDependencies != null)
             return this.resolvedDependencies;
         // Get the direct dependencies from the model
@@ -103,17 +103,17 @@ public class FusionBlockModel implements UnbakedModel {
                 throw new RuntimeException("Model type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' returned null when requesting dependencies '" + this.name + "'!");
         }
         this.resolvedDependencies = new HashMap<>(this.dependencies.size());
-        for(ResourceLocation location : this.dependencies)
+        for(Identifier location : this.dependencies)
             this.resolvedDependencies.put(location, modelBaker.getModel(location).wrapped());
         // Recursively gather all dependencies for the model
-        Deque<ResourceLocation> unresolved = new LinkedList<>(this.dependencies);
+        Deque<Identifier> unresolved = new LinkedList<>(this.dependencies);
         while(!unresolved.isEmpty()){
-            ResourceLocation location = unresolved.removeFirst();
+            Identifier location = unresolved.removeFirst();
             UnbakedModel unbakedModel = this.resolvedDependencies.get(location);
             if(unbakedModel instanceof FusionBlockModel fusionBlockModel)
                 this.resolvedDependencies.putAll(fusionBlockModel.resolveDependencies(modelBaker));
             else{
-                ResourceLocation parent = unbakedModel.parent();
+                Identifier parent = unbakedModel.parent();
                 if(parent != null){
                     this.resolvedDependencies.put(parent, modelBaker.getModel(parent).wrapped());
                     unresolved.add(parent);
@@ -159,7 +159,7 @@ public class FusionBlockModel implements UnbakedModel {
     }
 
     @Override
-    public @Nullable ResourceLocation parent(){
+    public @Nullable Identifier parent(){
         return this.vanillaModel == null ? null : this.vanillaModel.parent();
     }
 

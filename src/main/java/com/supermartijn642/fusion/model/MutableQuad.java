@@ -1,56 +1,48 @@
 package com.supermartijn642.fusion.model;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
-import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
-
-import java.util.Arrays;
+import net.neoforged.neoforge.client.model.quad.BakedColors;
+import net.neoforged.neoforge.client.model.quad.BakedNormals;
+import org.joml.Vector3f;
 
 /**
  * Created 11/09/2024 by SuperMartijn642
  */
 public class MutableQuad {
 
-    private static final int VERTEX_SIZE;
-    private static final int LIGHTMAP_OFFSET;
-    private static final int UV_OFFSET;
-    private static final int POSITION_OFFSET;
-
-    static{
-        VertexFormat format = DefaultVertexFormat.BLOCK;
-        VERTEX_SIZE = format.getVertexSize() / 4;
-        LIGHTMAP_OFFSET = format.getOffset(VertexFormatElement.UV2) / 4;
-        UV_OFFSET = format.getOffset(VertexFormatElement.UV) / 4;
-        POSITION_OFFSET = format.getOffset(VertexFormatElement.POSITION) / 4;
-    }
-
-    private final int[] vertices;
+    private final Vector3f[] positions = new Vector3f[4];
+    private final long[] uvs = new long[4];
     private int tintIndex;
     private Direction lightFace;
     private TextureAtlasSprite sprite;
     private boolean shade;
+    private int lightEmission;
     private boolean hasAmbientOcclusion;
+    private BakedNormals bakedNormals = BakedNormals.UNSPECIFIED;
+    private BakedColors bakedColors = BakedColors.DEFAULT;
     private boolean emissive = false;
 
-    protected MutableQuad(int[] vertexData){
-        this.vertices = vertexData;
-    }
-
     public MutableQuad(){
-        this(new int[VERTEX_SIZE * 4]);
+        for(int i = 0; i < 4; i++)
+            this.positions[i] = new Vector3f();
     }
 
     public void fillFromBakedQuad(BakedQuad quad){
-        System.arraycopy(quad.vertices(), 0, this.vertices, 0, this.vertices.length);
+        for(int i = 0; i < 4; i++){
+            this.positions[i].set(quad.position(i));
+            this.uvs[i] = quad.packedUV(i);
+        }
         this.tintIndex = quad.tintIndex();
         this.lightFace = quad.direction();
         this.sprite = quad.sprite();
         this.shade = quad.shade();
+        this.lightEmission = quad.lightEmission();
         this.hasAmbientOcclusion = quad.hasAmbientOcclusion();
+        this.bakedNormals = quad.bakedNormals();
+        this.bakedColors = quad.bakedColors();
         this.emissive = false;
     }
 
@@ -58,63 +50,50 @@ public class MutableQuad {
         this.emissive = emissive;
     }
 
-    public void lightmap(int vertexIndex, int lightmap){
-        int offset = vertexIndex * VERTEX_SIZE + LIGHTMAP_OFFSET;
-        this.vertices[offset] = lightmap;
-    }
-
-    public int lightmap(int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + LIGHTMAP_OFFSET;
-        return this.vertices[offset];
-    }
-
     public void ambientOcclusion(boolean ambientOcclusion){
         this.hasAmbientOcclusion = ambientOcclusion;
     }
 
     public void uv(int vertexIndex, float u, float v){
-        int offset = vertexIndex * VERTEX_SIZE + UV_OFFSET;
-        this.vertices[offset] = Float.floatToRawIntBits(u);
-        this.vertices[offset + 1] = Float.floatToRawIntBits(v);
+        this.uvs[vertexIndex] = UVPair.pack(u, v);
     }
 
     public float u(int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + UV_OFFSET;
-        return Float.intBitsToFloat(this.vertices[offset]);
+        return UVPair.unpackU(this.uvs[vertexIndex]);
     }
 
     public float v(int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + UV_OFFSET + 1;
-        return Float.intBitsToFloat(this.vertices[offset]);
+        return UVPair.unpackV(this.uvs[vertexIndex]);
     }
 
     public void pos(int vertexIndex, float x, float y, float z){
-        int offset = vertexIndex * VERTEX_SIZE + POSITION_OFFSET;
-        this.vertices[offset] = Float.floatToRawIntBits(x);
-        this.vertices[offset + 1] = Float.floatToRawIntBits(y);
-        this.vertices[offset + 2] = Float.floatToRawIntBits(z);
+        this.positions[vertexIndex].set(x, y, z);
     }
 
     public float x(int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + POSITION_OFFSET;
-        return Float.intBitsToFloat(this.vertices[offset]);
+        return this.positions[vertexIndex].x();
     }
 
     public float y(int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + POSITION_OFFSET + 1;
-        return Float.intBitsToFloat(this.vertices[offset]);
+        return this.positions[vertexIndex].y();
     }
 
     public float z(int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + POSITION_OFFSET + 2;
-        return Float.intBitsToFloat(this.vertices[offset]);
+        return this.positions[vertexIndex].z();
     }
 
     public BakedQuad toBakedQuad(){
-        if(this.emissive){
-            for(int i = 0; i < 4; i++)
-                this.lightmap(i, LightTexture.FULL_BRIGHT);
-        }
-        return new BakedQuad(Arrays.copyOf(this.vertices, this.vertices.length), this.tintIndex, this.lightFace, this.sprite, !this.emissive && this.shade, 0, this.hasAmbientOcclusion);
+        return new BakedQuad(
+            new Vector3f(this.positions[0]), new Vector3f(this.positions[1]), new Vector3f(this.positions[2]), new Vector3f(this.positions[3]),
+            this.uvs[0], this.uvs[1], this.uvs[2], this.uvs[3],
+            this.tintIndex,
+            this.lightFace,
+            this.sprite,
+            this.shade,
+            this.emissive ? 15 : this.lightEmission,
+            this.bakedNormals,
+            this.bakedColors,
+            this.hasAmbientOcclusion
+        );
     }
 }

@@ -5,7 +5,7 @@ import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.ResourcePackListTipRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.MultiLineLabel;
+import net.minecraft.client.gui.components.MultiLineTextWidget;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
 import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
 import net.minecraft.network.chat.Component;
@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.function.Consumer;
@@ -32,6 +31,9 @@ public class PackEntryMixin {
     @Final
     @Shadow
     private TransferableSelectionList parent;
+    @Final
+    @Shadow
+    private MultiLineTextWidget descriptionWidget;
     @Unique
     private FusionPackMetadata metadata;
 
@@ -60,7 +62,7 @@ public class PackEntryMixin {
         method = "renderContent",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/ResourceLocation;IIFFIIII)V",
+            target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V",
             shift = At.Shift.AFTER
         )
     )
@@ -72,7 +74,7 @@ public class PackEntryMixin {
         ResourcePackListTipRenderer.renderIcon(this.metadata, this.pack.getCompatibility().isCompatible(), graphics, entry.getContentX(), entry.getContentY(), entry.getContentWidth(), entry.getContentHeight());
     }
 
-    @ModifyVariable(
+    @Inject(
         method = "renderContent",
         at = @At(
             value = "INVOKE",
@@ -80,11 +82,12 @@ public class PackEntryMixin {
             shift = At.Shift.BEFORE
         )
     )
-    private MultiLineLabel adjustDescription(MultiLineLabel label){
+    private void adjustDescription(CallbackInfo ci){
         if(this.metadata == null)
-            return label;
+            return;
         Component warningMessage = ResourcePackListTipRenderer.getWarningMessage(this.metadata, this.pack.getCompatibility().isCompatible());
-        return warningMessage == null ? label : MultiLineLabel.create(Minecraft.getInstance().font, 157, 2, warningMessage);
+        if(warningMessage != null)
+            this.descriptionWidget.setMessage(warningMessage);
     }
 
     @Inject(

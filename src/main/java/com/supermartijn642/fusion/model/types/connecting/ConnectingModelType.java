@@ -15,17 +15,17 @@ import com.supermartijn642.fusion.api.predicate.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelElement;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.neoforge.client.RenderTypeGroup;
 import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
@@ -41,7 +41,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
     public static final String DEFAULT_CONNECTION_KEY = "default";
 
     @Override
-    public Collection<ResourceLocation> getModelDependencies(ConnectingModelData data){
+    public Collection<Identifier> getModelDependencies(ConnectingModelData data){
         return DefaultModelTypes.VANILLA.getModelDependencies(data.getVanillaModel());
     }
 
@@ -52,7 +52,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
     }
 
     @Override
-    public List<ResourceLocation> getParentModels(ConnectingModelData data){
+    public List<Identifier> getParentModels(ConnectingModelData data){
         return data.getParents();
     }
 
@@ -100,13 +100,15 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.ON_SHELF)
         );
         RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
-        RenderType neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entity();
+        RenderType neoforgeItemRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entityItem();
+        RenderType neoforgeBlockRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entityBlock();
         // Finally, create the model
         return new ConnectingItemModel(
             context.getTintSources(),
             quads,
             new ModelRenderProperties(usesBlockLight, particleSprite, transforms),
-            neoforgeRenderType
+            neoforgeItemRenderType,
+            neoforgeBlockRenderType
         );
     }
 

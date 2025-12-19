@@ -7,7 +7,7 @@ import com.supermartijn642.fusion.api.model.ModelType;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -37,7 +37,7 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public Collection<ResourceLocation> getModelDependencies(){
+    public Collection<Identifier> getModelDependencies(){
         return this.modelType.getModelDependencies(this.modelData);
     }
 
@@ -57,7 +57,7 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public List<ResourceLocation> getParentModels(){
+    public List<Identifier> getParentModels(){
         return this.modelType.getParentModels(this.modelData);
     }
 }

@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.mixin;
 import com.google.common.collect.Sets;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.IoSupplier;
@@ -89,7 +89,7 @@ public class JarContentsPackResourcesMixin implements PackResourcesExtension {
             if(directoryIndex == -1)
                 return; // Ignore files that are directly beneath the prefix, only directories can be namespaces
             var namespace = relativePath.substring(prefixLength, directoryIndex);
-            if(ResourceLocation.isValidNamespace(namespace))
+            if(Identifier.isValidNamespace(namespace))
                 namespaces.add(namespace);
             else
                 LOGGER.warn("Non [a-z0-9_.-] character in namespace {} in Fusion overrides in pack {}, ignoring", namespace, this.contents);
@@ -107,12 +107,12 @@ public class JarContentsPackResourcesMixin implements PackResourcesExtension {
             return output;
 
         // First send all override folder entries, then ignore regular entries which were overridden
-        Set<ResourceLocation> overriddenLocations = new HashSet<>();
+        Set<Identifier> overriddenLocations = new HashSet<>();
         String namespaceDirectory = this.addPrefix(this.overridesFolder + type.getDirectory() + "/" + namespace + "/");
         String pathDirectory = namespaceDirectory + path + "/";
         this.contents.visitContent(pathDirectory, (relativePath, resource) -> {
             String identifier = relativePath.substring(namespaceDirectory.length());
-            ResourceLocation location = ResourceLocation.tryBuild(namespace, identifier);
+            Identifier location = Identifier.tryBuild(namespace, identifier);
             if(location != null){
                 overriddenLocations.add(location);
                 output.accept(location, resource.retain()::open);

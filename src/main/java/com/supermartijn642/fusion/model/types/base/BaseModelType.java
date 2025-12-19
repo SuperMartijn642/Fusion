@@ -10,14 +10,14 @@ import com.supermartijn642.fusion.api.model.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.neoforge.client.RenderTypeGroup;
 import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
@@ -33,7 +33,7 @@ import java.util.List;
 public class BaseModelType implements ModelType<BaseModelData> {
 
     @Override
-    public Collection<ResourceLocation> getModelDependencies(BaseModelData data){
+    public Collection<Identifier> getModelDependencies(BaseModelData data){
         return data.getParents();
     }
 
@@ -44,7 +44,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
     }
 
     @Override
-    public List<ResourceLocation> getParentModels(BaseModelData data){
+    public List<Identifier> getParentModels(BaseModelData data){
         return data.getParents();
     }
 
@@ -90,13 +90,15 @@ public class BaseModelType implements ModelType<BaseModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.ON_SHELF)
         );
         RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
-        RenderType neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entity();
+        RenderType neoforgeItemRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entityItem();
+        RenderType neoforgeBlockRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entityBlock();
         // Finally, create the model
         return new BaseItemModel(
             context.getTintSources(),
             quads,
             new ModelRenderProperties(usesBlockLight, particleSprite, transforms),
-            neoforgeRenderType
+            neoforgeItemRenderType,
+            neoforgeBlockRenderType
         );
     }
 
@@ -107,14 +109,14 @@ public class BaseModelType implements ModelType<BaseModelData> {
         // Read parents
         if(json.has("parent") && json.has("parents"))
             throw new JsonParseException("Model can only have either 'parent' or 'parents', not both!");
-        List<ResourceLocation> parents = List.of();
+        List<Identifier> parents = List.of();
         if(json.has("parent")){
             if(!json.get("parent").isJsonPrimitive() || !json.get("parent").getAsJsonPrimitive().isString())
                 throw new JsonParseException("Property 'parent' must be a string!");
             String parent = json.get("parent").getAsString();
             if(!IdentifierUtil.isValidIdentifier(parent))
                 throw new JsonParseException("Property 'parent' must be a valid identifier!");
-            parents = List.of(ResourceLocation.parse(parent));
+            parents = List.of(Identifier.parse(parent));
         }else if(json.has("parents")){
             if(!json.get("parents").isJsonArray())
                 throw new JsonParseException("Property 'parents' must be an array!");
@@ -126,7 +128,7 @@ public class BaseModelType implements ModelType<BaseModelData> {
                 String parent = element.getAsString();
                 if(!IdentifierUtil.isValidIdentifier(parent))
                     throw new JsonParseException("Array 'parents' must only contain valid identifiers, not '" + parent + "'!");
-                parents.add(ResourceLocation.parse(parent));
+                parents.add(Identifier.parse(parent));
             }
             if(!parents.isEmpty())
                 model = new BlockModel(model.geometry(), model.guiLight(), model.ambientOcclusion(), model.transforms(), model.textureSlots(), parents.get(0), model.rootTransform(), model.renderTypeGroup(), model.partVisibility());

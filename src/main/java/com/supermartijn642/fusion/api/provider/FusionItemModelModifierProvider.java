@@ -11,7 +11,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -27,13 +27,13 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Allows generating item model modifier files.
  * Users must extend the class and overwrite {@link FusionItemModelModifierProvider#generate()}.
- * Users may use {@link FusionItemModelModifierProvider#modifier(ResourceLocation)} to obtain a builder for the given location.
+ * Users may use {@link FusionItemModelModifierProvider#modifier(Identifier)} to obtain a builder for the given location.
  * <p>
  * Created 07/04/2025 by SuperMartijn642
  */
 public abstract class FusionItemModelModifierProvider implements DataProvider {
 
-    private final Map<ResourceLocation,ModifierBuilder> modifiers = new HashMap<>();
+    private final Map<Identifier,ModifierBuilder> modifiers = new HashMap<>();
     private final String modName;
     private final PackOutput output;
 
@@ -51,8 +51,8 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
 
         List<CompletableFuture<?>> tasks = new ArrayList<>();
         Path output = this.output.getOutputFolder();
-        for(Map.Entry<ResourceLocation,ModifierBuilder> entry : this.modifiers.entrySet()){
-            ResourceLocation location = entry.getKey();
+        for(Map.Entry<Identifier,ModifierBuilder> entry : this.modifiers.entrySet()){
+            Identifier location = entry.getKey();
             JsonObject json = this.toJson(entry.getValue());
             String extension = location.getPath().endsWith(".json") ? "" : ".json";
             Path path = Path.of("assets", location.getNamespace(), "fusion/model_modifiers/items", location.getPath() + extension);
@@ -69,7 +69,7 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
         JsonArray targets = new JsonArray();
         modifier.targets.stream()
             .sorted()
-            .map(ResourceLocation::toString)
+            .map(Identifier::toString)
             .forEach(targets::add);
         json.add("targets", targets);
         // Default model
@@ -77,7 +77,7 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
             json.addProperty("default_model", modifier.defaultModel.toString());
         // Conditional models
         JsonArray models = new JsonArray();
-        for(Pair<ResourceLocation,ItemPredicate> pair : modifier.conditionalModels){
+        for(Pair<Identifier,ItemPredicate> pair : modifier.conditionalModels){
             JsonObject model = new JsonObject();
             model.addProperty("model", pair.left().toString());
             JsonArray conditions = new JsonArray();
@@ -93,14 +93,14 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
     }
 
     /**
-     * Configures item model modifiers which should be generated through {@link #modifier(ResourceLocation)}.
+     * Configures item model modifiers which should be generated through {@link #modifier(Identifier)}.
      */
     protected abstract void generate();
 
     /**
      * Creates or gets the item model modifier builder for the given location.
      */
-    public final ModifierBuilder modifier(ResourceLocation location){
+    public final ModifierBuilder modifier(Identifier location){
         return this.modifiers.computeIfAbsent(location, ModifierBuilder::new);
     }
 
@@ -110,19 +110,19 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
     }
 
     public static final class ModifierBuilder {
-        private final ResourceLocation location;
-        private final Set<ResourceLocation> targets = new HashSet<>();
-        private final List<Pair<ResourceLocation,ItemPredicate>> conditionalModels = new ArrayList<>();
-        private ResourceLocation defaultModel = null;
+        private final Identifier location;
+        private final Set<Identifier> targets = new HashSet<>();
+        private final List<Pair<Identifier,ItemPredicate>> conditionalModels = new ArrayList<>();
+        private Identifier defaultModel = null;
 
-        private ModifierBuilder(ResourceLocation location){
+        private ModifierBuilder(Identifier location){
             this.location = location;
         }
 
         /**
          * Add the given item identifier to the targets for this modifier.
          */
-        public ModifierBuilder target(ResourceLocation item){
+        public ModifierBuilder target(Identifier item){
             this.targets.add(item);
             return this;
         }
@@ -147,7 +147,7 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
         /**
          * Sets the default model to use when none of the conditional models are applicable.
          */
-        public ModifierBuilder defaultModel(ResourceLocation location){
+        public ModifierBuilder defaultModel(Identifier location){
             this.defaultModel = location;
             return this;
         }
@@ -158,7 +158,7 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
          * The first conditional models for which its conditions are met will be used.
          * @see DefaultItemPredicates
          */
-        public ModifierBuilder conditionalModel(ResourceLocation model, ItemPredicate condition){
+        public ModifierBuilder conditionalModel(Identifier model, ItemPredicate condition){
             this.conditionalModels.add(Pair.of(model, condition));
             return this;
         }

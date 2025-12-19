@@ -27,8 +27,8 @@ public class BaseModelQuad {
             BaseTextureData data = ((BaseTextureSprite)sprite).data();
             this.renderType = data.getRenderType();
             this.emissive = data.isEmissive();
-            if(data.getTinting() != null)
-                bakedQuad = new BakedQuad(bakedQuad.vertices(), 39216, bakedQuad.direction(), bakedQuad.sprite(), bakedQuad.shade(), bakedQuad.lightEmission(), bakedQuad.hasAmbientOcclusion());
+            if(data.getTinting() != null) // Create an identical quad, but with tint index '39216'
+                bakedQuad = new BakedQuad(bakedQuad.position0(), bakedQuad.position1(), bakedQuad.position2(), bakedQuad.position3(), bakedQuad.packedUV0(), bakedQuad.packedUV1(), bakedQuad.packedUV2(), bakedQuad.packedUV3(), 39216, bakedQuad.direction(), bakedQuad.sprite(), bakedQuad.shade(), bakedQuad.lightEmission(), bakedQuad.bakedNormals(), bakedQuad.bakedColors(), bakedQuad.hasAmbientOcclusion());
         }else{
             this.renderType = null;
             this.emissive = false;

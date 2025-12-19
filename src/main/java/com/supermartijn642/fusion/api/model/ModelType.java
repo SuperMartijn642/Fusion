@@ -4,7 +4,7 @@ import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -19,7 +19,7 @@ public interface ModelType<T> extends Serializer<T> {
      * Gets all the dependencies on other model files.
      * @param data custom model data
      */
-    Collection<ResourceLocation> getModelDependencies(T data);
+    Collection<Identifier> getModelDependencies(T data);
 
     /**
      * Converts the model data into a baked model.
@@ -44,5 +44,5 @@ public interface ModelType<T> extends Serializer<T> {
     /**
      * Gets any 'parent' models which the model may inherit properties from.
      */
-    List<ResourceLocation> getParentModels(T data);
+    List<Identifier> getParentModels(T data);
 }

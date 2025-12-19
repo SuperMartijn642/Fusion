@@ -8,7 +8,7 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.predicate.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,13 +22,13 @@ public class ConnectingModelDataBuilderImpl implements ConnectingModelDataBuilde
     private final Map<String,List<ConnectionPredicate>> predicates = new HashMap<>();
 
     @Override
-    public ConnectingModelDataBuilder parent(ResourceLocation parent){
+    public ConnectingModelDataBuilder parent(Identifier parent){
         this.baseModel.parent(parent);
         return this;
     }
 
     @Override
-    public ConnectingModelDataBuilder parents(ResourceLocation... parents){
+    public ConnectingModelDataBuilder parents(Identifier... parents){
         this.baseModel.parents(parents);
         return this;
     }
@@ -40,7 +40,7 @@ public class ConnectingModelDataBuilderImpl implements ConnectingModelDataBuilde
     }
 
     @Override
-    public ConnectingModelDataBuilder texture(String key, ResourceLocation texture){
+    public ConnectingModelDataBuilder texture(String key, Identifier texture){
         this.baseModel.texture(key, texture);
         return this;
     }

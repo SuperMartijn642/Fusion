@@ -4,10 +4,13 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.extensions.PackExtension;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ActiveTextCollector;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.TextAlignment;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineLabel;
+import net.minecraft.client.gui.render.state.GuiTextRenderState;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
 import net.minecraft.client.input.KeyEvent;
@@ -15,7 +18,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 import org.joml.Matrix3x2fStack;
@@ -27,7 +30,7 @@ import java.util.function.Consumer;
  */
 public class MinimumVersionWarningScreen extends Screen {
 
-    private static final ResourceLocation FUSION_LOGO = ResourceLocation.fromNamespaceAndPath("fusion", "textures/resourcepacks/fusion_icon.png");
+    private static final Identifier FUSION_LOGO = Identifier.fromNamespaceAndPath("fusion", "textures/resourcepacks/fusion_icon.png");
 
     private final PackSelectionModel.EntryBase pack;
     private final Consumer<Boolean> confirmation;
@@ -112,14 +115,42 @@ public class MinimumVersionWarningScreen extends Screen {
         graphics.fill(-98, 0, 98, 36, ARGB.color(70, 255, 255, 255));
         graphics.blit(RenderPipelines.GUI_TEXTURED, this.pack.getIconTexture(), -96, 2, 0, 0, 32, 32, 32, 32);
         graphics.drawString(this.font, this.packName, -62, 3, ARGB.color(255, 16777215));
-        this.packDescription.render(graphics, MultiLineLabel.Align.LEFT, -62, 14, 10, true, -8355712);
+        ActiveTextCollector dummyTextCollector = graphics.textRenderer();
+        this.packDescription.visitLines(TextAlignment.LEFT, -62, 14, 10, new ActiveTextCollector() { // I want not-white text, so now I have to do this garbage
+            @Override
+            public Parameters defaultParameters(){
+                return dummyTextCollector.defaultParameters();
+            }
+
+            @Override
+            public void defaultParameters(Parameters parameters){
+                dummyTextCollector.defaultParameters(parameters);
+            }
+
+            @Override
+            public void accept(TextAlignment alignment, int x, int y, Parameters parameters, FormattedCharSequence text){
+                int left = alignment.calculateLeft(x, Minecraft.getInstance().font, text);
+                GuiTextRenderState textRenderState = new GuiTextRenderState(
+                    Minecraft.getInstance().font, text, parameters.pose(), left, y, ARGB.color(parameters.opacity(), -8355712), 0, true, true, parameters.scissor()
+                );
+                if(ARGB.as8BitChannel(parameters.opacity()) != 0)
+                    graphics.guiRenderState.submitText(textRenderState);
+
+                ActiveTextCollector.findElementUnderCursor(textRenderState, mouseX, mouseY, s -> {});
+            }
+
+            @Override
+            public void acceptScrolling(Component component, int i, int j, int k, int l, int m, Parameters parameters){
+                dummyTextCollector.acceptScrolling(component, i, j, k, l, m, parameters);
+            }
+        });
 
         graphics.hLine(-115, 115, 44, ARGB.color(255, 255, 255));
 
         int textLeft = -Math.max(this.headerMessage.getWidth(), this.confirmationMessage.getWidth()) / 2;
-        this.headerMessage.render(graphics, MultiLineLabel.Align.LEFT, textLeft, 54, 10, true, -1);
+        this.headerMessage.visitLines(TextAlignment.LEFT, textLeft, 54, 10, graphics.textRenderer());
         int textHeight = this.headerMessage.getLineCount() * 10;
-        this.confirmationMessage.render(graphics, MultiLineLabel.Align.LEFT, textLeft, 58 + textHeight, 10, true, -1);
+        this.confirmationMessage.visitLines(TextAlignment.LEFT, textLeft, 58 + textHeight, 10, graphics.textRenderer());
         textHeight += this.confirmationMessage.getLineCount() * 10;
 
         graphics.hLine(-115, 115, 66 + textHeight, ARGB.color(255, 255, 255));

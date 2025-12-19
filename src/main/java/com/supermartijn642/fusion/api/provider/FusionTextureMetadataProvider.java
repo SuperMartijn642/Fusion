@@ -7,7 +7,7 @@ import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforgespi.language.IModInfo;
@@ -22,13 +22,13 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Allows generating texture metadata files for Fusion's texture types.
  * Users must extend the class and overwrite {@link FusionTextureMetadataProvider#generate()}.
- * Users may use {@link FusionTextureMetadataProvider#addTextureMetadata(ResourceLocation, TextureType, Object)} to add metadata which should be generated.
+ * Users may use {@link FusionTextureMetadataProvider#addTextureMetadata(Identifier, TextureType, Object)} to add metadata which should be generated.
  * <p>
  * Created 02/05/2023 by SuperMartijn642
  */
 public abstract class FusionTextureMetadataProvider implements DataProvider {
 
-    private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> metadata = new HashMap<>();
+    private final Map<Identifier,Pair<TextureType<Object>,Object>> metadata = new HashMap<>();
     private final String modName;
     private final PackOutput output;
 
@@ -46,8 +46,8 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
 
         List<CompletableFuture<?>> tasks = new ArrayList<>();
         Path output = this.output.getOutputFolder();
-        for(Map.Entry<ResourceLocation,Pair<TextureType<Object>,Object>> entry : this.metadata.entrySet()){
-            ResourceLocation location = entry.getKey();
+        for(Map.Entry<Identifier,Pair<TextureType<Object>,Object>> entry : this.metadata.entrySet()){
+            Identifier location = entry.getKey();
             Pair<TextureType<Object>,Object> metadata = entry.getValue();
             String extension = location.getPath().endsWith(".mcmeta") ? "" : location.getPath().lastIndexOf('.') > location.getPath().lastIndexOf('/') ? ".mcmeta" : ".png.mcmeta";
             Path path = Path.of("assets", location.getNamespace(), "textures", location.getPath() + extension);
@@ -59,7 +59,7 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
     }
 
     /**
-     * Adds texture metadata which should be generated through {@link #addTextureMetadata(ResourceLocation, TextureType, Object)}.
+     * Adds texture metadata which should be generated through {@link #addTextureMetadata(Identifier, TextureType, Object)}.
      */
     protected abstract void generate();
 
@@ -69,7 +69,7 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
      * @param textureType type of the texture
      * @param data        metadata to be serialized
      */
-    public final <T> void addTextureMetadata(ResourceLocation location, TextureType<T> textureType, T data){
+    public final <T> void addTextureMetadata(Identifier location, TextureType<T> textureType, T data){
         //noinspection unchecked
         Pair<TextureType<Object>,Object> previousValue = this.metadata.put(location, Pair.of((TextureType<Object>)textureType, (Object)data));
         if(previousValue != null)

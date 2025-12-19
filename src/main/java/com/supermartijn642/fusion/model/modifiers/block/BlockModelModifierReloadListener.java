@@ -19,7 +19,7 @@ import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.world.level.block.Block;
@@ -45,7 +45,7 @@ public class BlockModelModifierReloadListener {
     }
 
     public void registerOverlays(ResolvableModel.Resolver resolver){
-        Set<ResourceLocation> models = new HashSet<>();
+        Set<Identifier> models = new HashSet<>();
         for(Properties properties : this.models.values())
             models.addAll(properties.appendModels);
         models.forEach(resolver::markDependency);
@@ -58,7 +58,7 @@ public class BlockModelModifierReloadListener {
             BlockStateModel targetModel = bakedModels.get(target);
             if(targetModel == null) continue;
             Properties properties = entry.getValue();
-            List<ResourceLocation> overlays = properties.appendModels;
+            List<Identifier> overlays = properties.appendModels;
             List<BlockStateModel> overlayModels = overlays.stream().map(l -> new SingleVariant.Unbaked(new Variant(l, Variant.SimpleModelState.DEFAULT)).bake(resolver)).toList();
             BlockStateModel model = new BlockModelModifierBakedModel(targetModel, overlayModels, properties.showBreakingOverlay);
             if(properties.paneCullingFix)
@@ -71,7 +71,7 @@ public class BlockModelModifierReloadListener {
         this.models.clear();
 
         // Find all overlay files
-        Map<ResourceLocation,JsonElement> resources = new HashMap<>();
+        Map<Identifier,JsonElement> resources = new HashMap<>();
         SimpleJsonResourceReloadListener.scanDirectory(resourceManager, ID_CONVERTER, JsonOps.INSTANCE, new Codec<>() {
             @Override
             public <T> DataResult<Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
@@ -85,8 +85,8 @@ public class BlockModelModifierReloadListener {
         }, resources);
 
         // Parse all the model overlay files
-        for(Map.Entry<ResourceLocation,JsonElement> entry : resources.entrySet()){
-            ResourceLocation location = entry.getKey();
+        for(Map.Entry<Identifier,JsonElement> entry : resources.entrySet()){
+            Identifier location = entry.getKey();
             if(!entry.getValue().isJsonObject())
                 throw new IllegalArgumentException("Block model overlay '" + location + "' must contain a json object!");
             JsonObject json = entry.getValue().getAsJsonObject();
@@ -108,7 +108,7 @@ public class BlockModelModifierReloadListener {
             if(element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()){ // Handle simple strings
                 if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                     throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
-                ResourceLocation identifier = ResourceLocation.parse(element.getAsString());
+                Identifier identifier = Identifier.parse(element.getAsString());
                 Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
                 if(block.isEmpty())
                     throw new JsonParseException("Could not find a block for model overlay target '" + identifier + "'!");
@@ -126,7 +126,7 @@ public class BlockModelModifierReloadListener {
             throw new JsonParseException("Must have either 'append' or 'pane_culling_fix' property!");
 
         // Get the models
-        Set<ResourceLocation> models = new LinkedHashSet<>(); // This should maintain order
+        Set<Identifier> models = new LinkedHashSet<>(); // This should maintain order
         if(json.has("append")){
             if(!json.get("append").isJsonArray())
                 throw new JsonParseException("Property 'append' must be an array!");
@@ -136,7 +136,7 @@ public class BlockModelModifierReloadListener {
                     throw new JsonParseException("Array property 'append' must only contain strings!");
                 if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                     throw new JsonParseException("Model must be a valid identifier, not '" + element.getAsString() + "'!!");
-                models.add(ResourceLocation.parse(element.getAsString()));
+                models.add(Identifier.parse(element.getAsString()));
             }
         }
 
@@ -176,7 +176,7 @@ public class BlockModelModifierReloadListener {
             throw new JsonParseException("Target must have string property 'block'!");
         if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
             throw new JsonParseException("Target property 'block' must be a valid identifier, not '" + json.get("block").getAsString() + "'!!");
-        ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
+        Identifier identifier = Identifier.parse(json.get("block").getAsString());
         Optional<Block> optional = BuiltInRegistries.BLOCK.getOptional(identifier);
         if(optional.isEmpty())
             throw new JsonParseException("Could not find a block for model overlay target '" + identifier + "'!");
@@ -234,7 +234,7 @@ public class BlockModelModifierReloadListener {
     }
 
     private static class Properties {
-        final List<ResourceLocation> appendModels = new ArrayList<>();
+        final List<Identifier> appendModels = new ArrayList<>();
         boolean paneCullingFix;
         boolean showBreakingOverlay = true;
     }

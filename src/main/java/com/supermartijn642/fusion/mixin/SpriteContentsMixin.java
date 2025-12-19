@@ -8,7 +8,8 @@ import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.resources.metadata.texture.TextureMetadataSection;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -40,10 +41,10 @@ public class SpriteContentsMixin implements SpriteContentsExtension {
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     @Inject(
-        method = "<init>(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Ljava/util/Optional;Ljava/util/List;)V",
+        method = "<init>(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)V",
         at = @At("TAIL")
     )
-    private void initMetadata(ResourceLocation identifier, FrameSize frameSize, NativeImage image, Optional<AnimationMetadataSection> animationMetadata, List<MetadataSectionType.WithValue<?>> resourceMetadata, CallbackInfo ci){
+    private void initMetadata(Identifier identifier, FrameSize frameSize, NativeImage image, Optional<AnimationMetadataSection> animationMetadata, List<MetadataSectionType.WithValue<?>> resourceMetadata, Optional<TextureMetadataSection> textureMetadata, CallbackInfo ci){
         // Get the fusion metadata
         for(MetadataSectionType.WithValue<?> entry : resourceMetadata){
             if(entry.type() == FusionTextureMetadataSection.TYPE){

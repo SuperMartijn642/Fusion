@@ -16,7 +16,7 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 
 import java.util.*;
@@ -41,7 +41,7 @@ public class EntityModelModifierManager {
         reloadCounter++;
 
         // Put all vanilla models into a map to allow referencing them
-        Map<ResourceLocation,Supplier<ModelPart>> vanillaModels = new HashMap<>();
+        Map<Identifier,Supplier<ModelPart>> vanillaModels = new HashMap<>();
         originalModels.forEach((layer, layerDefinition) -> vanillaModels.put(FusionEntityModelLoader.locationForLayer(layer), layerDefinition::bakeRoot));
 
         // Get the raw modifier info from the reload listener
@@ -55,7 +55,7 @@ public class EntityModelModifierManager {
             for(Map.Entry<ModelLayerLocation,EntityModelModifierReloadListener.Layer> layerEntry : modifier.layers.entrySet()){
                 ModelLayerLocation layerIdentifier = layerEntry.getKey();
                 EntityModelModifierReloadListener.Layer rawLayer = layerEntry.getValue();
-                Set<ResourceLocation> missingModels = new HashSet<>();
+                Set<Identifier> missingModels = new HashSet<>();
                 // Get the default models and textures
                 List<EntityLayerProperties.ModelOption> defaultModels = rawLayer.defaultModel.model == null ?
                     bakeModelOptions(layerIdentifier, List.of(new EntityModelModifierReloadListener.ModelOption(Either.left(FusionEntityModelLoader.locationForLayer(layerIdentifier)), null, null, null, null, null, null, null, null, 1)), null, rawLayer.defaultModel, vanillaModels, missingModels) :
@@ -84,7 +84,7 @@ public class EntityModelModifierManager {
         }
     }
 
-    private static List<EntityLayerProperties.ModelOption> bakeModelOptions(ModelLayerLocation layer, List<EntityModelModifierReloadListener.ModelOption> rawOptions, List<EntityLayerProperties.ModelOption> defaultModels, EntityModelModifierReloadListener.ModelOption defaults, Map<ResourceLocation,Supplier<ModelPart>> vanillaModels, Set<ResourceLocation> missingModels){
+    private static List<EntityLayerProperties.ModelOption> bakeModelOptions(ModelLayerLocation layer, List<EntityModelModifierReloadListener.ModelOption> rawOptions, List<EntityLayerProperties.ModelOption> defaultModels, EntityModelModifierReloadListener.ModelOption defaults, Map<Identifier,Supplier<ModelPart>> vanillaModels, Set<Identifier> missingModels){
         List<EntityLayerProperties.ModelOption> options = new ArrayList<>(rawOptions.size());
         for(EntityModelModifierReloadListener.ModelOption option : rawOptions){
             if(option.model == null || option.model.isRight()){
@@ -109,7 +109,7 @@ public class EntityModelModifierManager {
                 }
                 double totalWeight = models.stream().mapToDouble(EntityLayerProperties.ModelOption::weight).sum();
                 for(EntityLayerProperties.ModelOption defaultModel : models){
-                    List<ResourceLocation> textures = option.textures == null ? defaultModel.textures() == null ? defaults.textures : defaultModel.textures() : option.textures;
+                    List<Identifier> textures = option.textures == null ? defaultModel.textures() == null ? defaults.textures : defaultModel.textures() : option.textures;
                     Float scale = option.scale == null ? defaultModel.scaling() == null ? defaults.scale : defaultModel.scaling() : option.scale;
                     options.add(new EntityLayerProperties.ModelOption(defaultModel.model(), defaultModel.isVanillaModel(), textures, defaultModel.weight() / totalWeight * option.weight, scale));
                 }
@@ -133,7 +133,7 @@ public class EntityModelModifierManager {
                     model = ModelTransformer.flipY(model);
                 if(option.flipZ == null ? defaults.flipZ == Boolean.TRUE : option.flipZ)
                     model = ModelTransformer.flipZ(model);
-                List<ResourceLocation> textures = option.textures == null ? defaults.textures : option.textures;
+                List<Identifier> textures = option.textures == null ? defaults.textures : option.textures;
                 Float scale = option.scale == null ? defaults.scale : option.scale;
                 options.add(new EntityLayerProperties.ModelOption(model, baked.right(), textures, option.weight, scale));
             }
@@ -151,7 +151,7 @@ public class EntityModelModifierManager {
         return options;
     }
 
-    private static Pair<ModelPart,Boolean> bakeModel(ModelLayerLocation layer, ResourceLocation modelLocation, Map<ResourceLocation,Supplier<ModelPart>> vanillaModels, Set<ResourceLocation> missingModels){
+    private static Pair<ModelPart,Boolean> bakeModel(ModelLayerLocation layer, Identifier modelLocation, Map<Identifier,Supplier<ModelPart>> vanillaModels, Set<Identifier> missingModels){
         ModelPart model = FusionEntityModelLoader.MODELS.get(modelLocation);
         boolean isVanillaModel = false;
         if(model == null){

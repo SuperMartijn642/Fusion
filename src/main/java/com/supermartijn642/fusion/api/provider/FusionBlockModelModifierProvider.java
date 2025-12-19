@@ -7,7 +7,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -23,13 +23,13 @@ import java.util.stream.Collectors;
 /**
  * Allows generating block model modifier files.
  * Users must extend the class and overwrite {@link FusionBlockModelModifierProvider#generate()}.
- * Users may use {@link FusionBlockModelModifierProvider#modifier(ResourceLocation)} to obtain a builder for the given location.
+ * Users may use {@link FusionBlockModelModifierProvider#modifier(Identifier)} to obtain a builder for the given location.
  * <p>
  * Created 07/04/2025 by SuperMartijn642
  */
 public abstract class FusionBlockModelModifierProvider implements DataProvider {
 
-    private final Map<ResourceLocation,ModifierBuilder> modifiers = new HashMap<>();
+    private final Map<Identifier,ModifierBuilder> modifiers = new HashMap<>();
     private final String modName;
     private final PackOutput output;
 
@@ -47,8 +47,8 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
 
         List<CompletableFuture<?>> tasks = new ArrayList<>();
         Path output = this.output.getOutputFolder();
-        for(Map.Entry<ResourceLocation,ModifierBuilder> entry : this.modifiers.entrySet()){
-            ResourceLocation location = entry.getKey();
+        for(Map.Entry<Identifier,ModifierBuilder> entry : this.modifiers.entrySet()){
+            Identifier location = entry.getKey();
             JsonObject json = this.toJson(entry.getValue());
             String extension = location.getPath().endsWith(".json") ? "" : ".json";
             Path path = Path.of("assets", location.getNamespace(), "fusion/model_modifiers/blocks", location.getPath() + extension);
@@ -66,7 +66,7 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
         modifier.targets.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
             .forEach(entry -> {
-                ResourceLocation block = entry.getKey();
+                Identifier block = entry.getKey();
                 Map<Property<?>,Set<Object>> properties = entry.getValue();
                 if(properties.isEmpty()){
                     targets.add(block.toString());
@@ -96,7 +96,7 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
         if(!modifier.appendModels.isEmpty() || !modifier.paneCullingFix){
             JsonArray appendModels = new JsonArray();
             modifier.appendModels.stream()
-                .map(ResourceLocation::toString)
+                .map(Identifier::toString)
                 .sorted()
                 .forEach(appendModels::add);
             json.add("append", appendModels);
@@ -108,14 +108,14 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
     }
 
     /**
-     * Configures block model modifiers which should be generated through {@link #modifier(ResourceLocation)}.
+     * Configures block model modifiers which should be generated through {@link #modifier(Identifier)}.
      */
     protected abstract void generate();
 
     /**
      * Creates or gets the block model modifier builder for the given location.
      */
-    public final ModifierBuilder modifier(ResourceLocation location){
+    public final ModifierBuilder modifier(Identifier location){
         return this.modifiers.computeIfAbsent(location, ModifierBuilder::new);
     }
 
@@ -125,19 +125,19 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
     }
 
     public static final class ModifierBuilder {
-        private final ResourceLocation location;
-        private final Map<ResourceLocation,Map<Property<?>,Set<Object>>> targets = new HashMap<>();
-        private final Set<ResourceLocation> appendModels = new HashSet<>();
+        private final Identifier location;
+        private final Map<Identifier,Map<Property<?>,Set<Object>>> targets = new HashMap<>();
+        private final Set<Identifier> appendModels = new HashSet<>();
         private boolean paneCullingFix = false;
 
-        private ModifierBuilder(ResourceLocation location){
+        private ModifierBuilder(Identifier location){
             this.location = location;
         }
 
         /**
          * Adds the given block identifier to the targets for this modifier.
          */
-        public ModifierBuilder target(ResourceLocation block){
+        public ModifierBuilder target(Identifier block){
             if(!this.targets.containsKey(block))
                 this.targets.put(block, new HashMap<>());
             return this;
@@ -154,7 +154,7 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
          * Adds the given block with the given properties to the targets for this modifier.
          */
         public ModifierBuilder target(Block block, Map<Property<?>,Set<?>> properties){
-            ResourceLocation identifier = BuiltInRegistries.BLOCK.getKey(block);
+            Identifier identifier = BuiltInRegistries.BLOCK.getKey(block);
             Map<Property<?>,Set<Object>> map = this.targets.computeIfAbsent(identifier, o -> new HashMap<>());
             for(Map.Entry<Property<?>,Set<?>> entry : properties.entrySet()){
                 Property<?> property = entry.getKey();
@@ -195,7 +195,7 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
         /**
          * Adds the given model to be appended to any targeted block's model.
          */
-        public ModifierBuilder appendModel(ResourceLocation location){
+        public ModifierBuilder appendModel(Identifier location){
             this.appendModels.add(location);
             return this;
         }

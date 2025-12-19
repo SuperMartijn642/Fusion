@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.mixin;
 import com.google.common.collect.Sets;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.FilePackResources;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
@@ -95,7 +95,7 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
             String namespace = FilePackResources.extractNamespace(typePath, name);
             if(namespace.isEmpty())
                 continue;
-            if(ResourceLocation.isValidNamespace(namespace)){
+            if(Identifier.isValidNamespace(namespace)){
                 namespaces.add(namespace);
                 continue;
             }
@@ -117,7 +117,7 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
         ZipFile zipFile = this.zipFileAccess.getOrCreateZipFile();
         if(zipFile == null)
             return output;
-        Set<ResourceLocation> overriddenLocations = new HashSet<>();
+        Set<Identifier> overriddenLocations = new HashSet<>();
         Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
         String namespaceDirectory = this.addPrefix(this.overridesFolder + type.getDirectory() + "/" + namespace + "/");
         String pathDirectory = namespaceDirectory + path + "/";
@@ -126,7 +126,7 @@ public class FilePackResourcesMixin implements PackResourcesExtension {
             ZipEntry zipEntry = enumeration.nextElement();
             if(zipEntry.isDirectory() || !(name = zipEntry.getName()).startsWith(pathDirectory)) continue;
             String identifier = name.substring(namespaceDirectory.length());
-            ResourceLocation location = ResourceLocation.tryBuild(namespace, identifier);
+            Identifier location = Identifier.tryBuild(namespace, identifier);
             if(location != null){
                 overriddenLocations.add(location);
                 output.accept(location, IoSupplier.create(zipFile, zipEntry));

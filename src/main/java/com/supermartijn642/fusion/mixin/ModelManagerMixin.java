@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReload
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.resources.model.ModelDiscovery;
 import net.minecraft.client.resources.model.ModelManager;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -55,7 +55,7 @@ public class ModelManagerMixin {
         ),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private static void deserializeModel(Map.Entry<?,?> entry, CallbackInfoReturnable<?> ci, ResourceLocation name){
+    private static void deserializeModel(Map.Entry<?,?> entry, CallbackInfoReturnable<?> ci, Identifier name){
         // Store the model identifier, so the model can know its name
         FusionBlockModel.CURRENT_MODEL.set(name);
     }

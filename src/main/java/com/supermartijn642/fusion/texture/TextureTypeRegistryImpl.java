@@ -7,7 +7,7 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,11 +17,11 @@ import java.util.Map;
  */
 public class TextureTypeRegistryImpl {
 
-    private static final Map<ResourceLocation,TextureType<?>> IDENTIFIER_TO_TEXTURE_TYPE = new HashMap<>();
-    private static final Map<TextureType<?>,ResourceLocation> TEXTURE_TYPE_TO_IDENTIFIER = new HashMap<>();
+    private static final Map<Identifier,TextureType<?>> IDENTIFIER_TO_TEXTURE_TYPE = new HashMap<>();
+    private static final Map<TextureType<?>,Identifier> TEXTURE_TYPE_TO_IDENTIFIER = new HashMap<>();
     private static boolean finalized = false;
 
-    public static synchronized void registerTextureType(ResourceLocation identifier, TextureType<?> textureType){
+    public static synchronized void registerTextureType(Identifier identifier, TextureType<?> textureType){
         if(finalized)
             throw new RuntimeException("Texture types must be registered before textures get loaded!");
         if(IDENTIFIER_TO_TEXTURE_TYPE.containsKey(identifier))
@@ -36,7 +36,7 @@ public class TextureTypeRegistryImpl {
     public static <T> JsonObject serializeTextureData(TextureType<T> textureType, T textureData){
         if(!finalized)
             throw new RuntimeException("Can only serialize texture data after registration has completed!");
-        ResourceLocation identifier = TEXTURE_TYPE_TO_IDENTIFIER.get(textureType);
+        Identifier identifier = TEXTURE_TYPE_TO_IDENTIFIER.get(textureType);
         if(identifier == null)
             throw new RuntimeException("Cannot use unregistered texture type '" + textureType + "'!");
 
@@ -60,7 +60,7 @@ public class TextureTypeRegistryImpl {
             throw new RuntimeException("Can only deserialize texture data after registration has completed!");
         //noinspection unchecked
         TextureType<T> textureType = (TextureType<T>)DefaultTextureTypes.BASE;
-        ResourceLocation identifier = getIdentifier(textureType);
+        Identifier identifier = getIdentifier(textureType);
         if(json.has("type")){
             JsonElement typeJson = json.getAsJsonObject().get("type");
             if(typeJson == null || !typeJson.isJsonPrimitive() || !typeJson.getAsJsonPrimitive().isString())
@@ -84,7 +84,7 @@ public class TextureTypeRegistryImpl {
         return Pair.of(textureType, textureData);
     }
 
-    public static ResourceLocation getIdentifier(TextureType<?> textureType){
+    public static Identifier getIdentifier(TextureType<?> textureType){
         return TEXTURE_TYPE_TO_IDENTIFIER.get(textureType);
     }
 

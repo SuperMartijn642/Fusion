@@ -12,7 +12,8 @@ import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.atlas.SpriteResourceLoader;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.resources.metadata.texture.TextureMetadataSection;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
 import net.minecraft.server.packs.resources.Resource;
 import net.neoforged.neoforge.client.textures.SpriteContentsConstructor;
@@ -34,7 +35,7 @@ public interface SpriteResourceLoaderMixin {
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     @Inject(
-        method = "lambda$create$0(Ljava/util/Set;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/server/packs/resources/Resource;Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
+        method = "lambda$create$0(Ljava/util/Set;Lnet/minecraft/resources/Identifier;Lnet/minecraft/server/packs/resources/Resource;Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
         at = {
             @At(
                 value = "INVOKE_ASSIGN",
@@ -43,7 +44,7 @@ public interface SpriteResourceLoaderMixin {
             ),
             @At(
                 value = "INVOKE",
-                target = "Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;create(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Ljava/util/Optional;Ljava/util/List;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
+                target = "Lnet/neoforged/neoforge/client/textures/SpriteContentsConstructor;create(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/resources/metadata/animation/FrameSize;Lcom/mojang/blaze3d/platform/NativeImage;Ljava/util/Optional;Ljava/util/List;Ljava/util/Optional;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
                 shift = At.Shift.BEFORE
             )
         },
@@ -51,7 +52,7 @@ public interface SpriteResourceLoaderMixin {
         cancellable = true,
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private static void modifyFrameSize(Set<?> metadataSerializers, ResourceLocation identifier, Resource resource, SpriteContentsConstructor constructor, CallbackInfoReturnable<SpriteContents> ci, Optional<AnimationMetadataSection> animationMetadata, List<MetadataSectionType.WithValue<?>> resourceMetadata, NativeImage image, FrameSize originalSize){
+    private static void modifyFrameSize(Set<?> metadataSerializers, Identifier identifier, Resource resource, SpriteContentsConstructor constructor, CallbackInfoReturnable<SpriteContents> ci, Optional<AnimationMetadataSection> animationMetadata, Optional<TextureMetadataSection> textureMetadata, List<MetadataSectionType.WithValue<?>> resourceMetadata, NativeImage image, FrameSize originalSize){
         // Get the fusion metadata
         Pair<TextureType<Object>,Object> metadata = null;
         for(MetadataSectionType.WithValue<?> entry : resourceMetadata){
@@ -77,7 +78,7 @@ public interface SpriteResourceLoaderMixin {
             if(newSize == null)
                 throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + identifier + "'!");
             // Create the sprite contents
-            ci.setReturnValue(constructor.create(identifier, new FrameSize(newSize.left(), newSize.right()), image, animationMetadata, resourceMetadata));
+            ci.setReturnValue(constructor.create(identifier, new FrameSize(newSize.left(), newSize.right()), image, animationMetadata, resourceMetadata, textureMetadata));
         }
     }
 }

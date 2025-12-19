@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,7 +28,7 @@ public class BlockModelWrapperMixin {
     private void bake(ItemModel.BakingContext context, CallbackInfoReturnable<ItemModel> ci){
         //noinspection DataFlowIssue
         BlockModelWrapper.Unbaked unbaked = (BlockModelWrapper.Unbaked)(Object)this;
-        ResourceLocation location = unbaked.model();
+        Identifier location = unbaked.model();
         ResolvedModel wrapper = context.blockModelBaker().getModel(location);
         if(wrapper != null){
             UnbakedModel wrapped = wrapper.wrapped();

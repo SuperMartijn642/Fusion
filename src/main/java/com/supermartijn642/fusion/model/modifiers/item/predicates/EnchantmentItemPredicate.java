@@ -9,7 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -27,7 +27,7 @@ public class EnchantmentItemPredicate implements ItemPredicate {
                 throw new JsonParseException("Item-predicate must have string property 'enchantment'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("enchantment").getAsString()))
                 throw new JsonParseException("Property 'enchantment' must be a valid identifier, not '" + json.get("enchantment").getAsString() + "'!");
-            ResourceLocation enchantment = ResourceLocation.parse(json.get("enchantment").getAsString());
+            Identifier enchantment = Identifier.parse(json.get("enchantment").getAsString());
 
             // Maximum level
             int maxLevel = 255;
@@ -67,12 +67,12 @@ public class EnchantmentItemPredicate implements ItemPredicate {
         }
     };
 
-    private final ResourceLocation enchantment;
+    private final Identifier enchantment;
     private final int minLevel, maxLevel;
     private RegistryAccess registry;
     private Holder<Enchantment> holder;
 
-    public EnchantmentItemPredicate(ResourceLocation enchantment, int minLevel, int maxLevel){
+    public EnchantmentItemPredicate(Identifier enchantment, int minLevel, int maxLevel){
         if(enchantment == null)
             throw new NullPointerException("Enchantment must not be null!");
         if(minLevel < 0 || minLevel > 255)

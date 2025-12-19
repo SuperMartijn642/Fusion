@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.api.model.data;
 
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
@@ -16,5 +16,5 @@ public interface BaseModelData {
 
     BlockModel getVanillaModel();
 
-    List<ResourceLocation> getParents();
+    List<Identifier> getParents();
 }

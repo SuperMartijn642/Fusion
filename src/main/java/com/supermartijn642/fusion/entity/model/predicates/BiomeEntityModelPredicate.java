@@ -7,7 +7,7 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
@@ -25,13 +25,13 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
         public BiomeEntityModelPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("biomes") || !json.get("biomes").isJsonArray())
                 throw new JsonParseException("Biome-predicate must have array property 'biomes'!");
-            Set<ResourceLocation> biomes = new HashSet<>();
+            Set<Identifier> biomes = new HashSet<>();
             for(JsonElement element : json.getAsJsonArray("biomes")){
                 if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
                     throw new JsonParseException("Array property 'biomes' must only contain strings!");
                 if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                     throw new JsonParseException("Biome entries must be a valid identifier, not '" + element.getAsString() + "'!");
-                biomes.add(ResourceLocation.parse(element.getAsString()));
+                biomes.add(Identifier.parse(element.getAsString()));
             }
             return new BiomeEntityModelPredicate(biomes);
         }
@@ -41,7 +41,7 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
             JsonObject json = new JsonObject();
             JsonArray biomes = new JsonArray(value.biomes.size());
             value.biomes.stream()
-                .map(ResourceLocation::toString)
+                .map(Identifier::toString)
                 .sorted()
                 .forEach(biomes::add);
             json.add("biomes", biomes);
@@ -49,9 +49,9 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
         }
     };
 
-    private final Set<ResourceLocation> biomes;
+    private final Set<Identifier> biomes;
 
-    public BiomeEntityModelPredicate(Set<ResourceLocation> biomes){
+    public BiomeEntityModelPredicate(Set<Identifier> biomes){
         this.biomes = Set.copyOf(biomes);
     }
 
@@ -64,7 +64,7 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
             return false;
         Holder<Biome> biome = level.getBiome(entity.blockPosition());
         //noinspection OptionalGetWithoutIsPresent
-        return biome != null && biome.isBound() && this.biomes.contains(biome.unwrapKey().get().location());
+        return biome != null && biome.isBound() && this.biomes.contains(biome.unwrapKey().get().identifier());
     }
 
     @Override

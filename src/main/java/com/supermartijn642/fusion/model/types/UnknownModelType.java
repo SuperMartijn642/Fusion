@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BlockModelRotation;
 import net.minecraft.client.resources.model.QuadCollection;
 import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -38,8 +38,8 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     }
 
     @Override
-    public Collection<ResourceLocation> getModelDependencies(T data){
-        ResourceLocation parent = data.parent();
+    public Collection<Identifier> getModelDependencies(T data){
+        Identifier parent = data.parent();
         return parent == null ? List.of() : List.of(parent);
     }
 
@@ -56,12 +56,12 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     public ItemModel bakeItemModel(ItemModelBakingContext context, T data){
         TextureSlots textures = new TextureSlots(context.getTopLevelTextureReferences());
         TextureAtlasSprite particle = context.getModelBaker().sprites().resolveSlot(textures, "particle", () -> context.getModelIdentifier().toString());
-        QuadCollection quads = context.getTopLevelGeometry().bake(textures, context.getModelBaker(), BlockModelRotation.X0_Y0, () -> context.getModelIdentifier().toString());
+        QuadCollection quads = context.getTopLevelGeometry().bake(textures, context.getModelBaker(), BlockModelRotation.IDENTITY, () -> context.getModelIdentifier().toString());
         return new BlockModelWrapper(context.getTintSources(), quads.getAll(), new ModelRenderProperties(
             context.getTopLevelUseBlockLighting(),
             particle,
             context.getTopLevelItemTransforms()
-        ));
+        ), BlockModelWrapper.detectRenderType(quads.getAll()));
     }
 
     @Override
@@ -70,8 +70,8 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     }
 
     @Override
-    public List<ResourceLocation> getParentModels(T data){
-        ResourceLocation parent = data.parent();
+    public List<Identifier> getParentModels(T data){
+        Identifier parent = data.parent();
         return parent == null ? List.of() : List.of(parent);
     }
 }

@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.resources.model.Material;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.*;
 
@@ -15,16 +15,16 @@ import java.util.*;
  */
 public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelDataBuilderImpl,BaseModelData> {
 
-    private final Set<ResourceLocation> parents = new LinkedHashSet<>(); // This should maintain insertion order
+    private final Set<Identifier> parents = new LinkedHashSet<>(); // This should maintain insertion order
     private final Map<String,String> textures = new HashMap<>();
 
     @Override
-    public BaseModelDataBuilderImpl parent(ResourceLocation parent){
+    public BaseModelDataBuilderImpl parent(Identifier parent){
         return this.parents(parent);
     }
 
     @Override
-    public BaseModelDataBuilderImpl parents(ResourceLocation... parents){
+    public BaseModelDataBuilderImpl parents(Identifier... parents){
         this.parents.addAll(Arrays.asList(parents));
         return this;
     }
@@ -45,7 +45,7 @@ public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelD
     }
 
     @Override
-    public BaseModelDataBuilderImpl texture(String key, ResourceLocation texture){
+    public BaseModelDataBuilderImpl texture(String key, Identifier texture){
         if(!key.matches("[a-zA-Z_]*"))
             throw new IllegalArgumentException("Texture reference must only contain characters [a-zA-Z_]!");
         if(this.textures.containsKey(key))
@@ -57,15 +57,15 @@ public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelD
 
     @Override
     public BaseModelData build(){
-        List<ResourceLocation> parents = new ArrayList<>(this.parents);
+        List<Identifier> parents = new ArrayList<>(this.parents);
         // Create a vanilla model representation of the properties
-        ResourceLocation parent = parents.isEmpty() ? null : parents.get(0);
+        Identifier parent = parents.isEmpty() ? null : parents.get(0);
         TextureSlots.Data.Builder textures = new TextureSlots.Data.Builder();
         this.textures.forEach((key, value) -> {
             if(value.charAt(0) == '#')
                 textures.addReference(key, value);
             else
-                textures.addTexture(key, new Material(TextureAtlases.getBlocks(), ResourceLocation.parse(value)));
+                textures.addTexture(key, new Material(TextureAtlases.getBlocks(), Identifier.parse(value)));
         });
         BlockModel vanillaModel = new BlockModel(null, null, null, null, textures.build(), parent);
         return new BaseModelDataImpl(vanillaModel, parents, Collections.emptyList());

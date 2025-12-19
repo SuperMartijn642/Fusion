@@ -13,11 +13,13 @@ import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.item.*;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -30,8 +32,9 @@ public class ConnectingItemModel implements ItemModel {
     private final List<ItemTintSource> tints;
     private final ModelRenderProperties properties;
     private final Mesh mesh;
-    private final Supplier<Vector3f[]> extents;
+    private final Supplier<Vector3fc[]> extents;
     private final boolean animated;
+    private final RenderType renderType;
 
     public ConnectingItemModel(List<ItemTintSource> tints, List<ConnectingModelQuad> quads, ModelRenderProperties properties){
         this.tints = tints;
@@ -42,6 +45,7 @@ public class ConnectingItemModel implements ItemModel {
         MutableMesh builder = Renderer.get().mutableMesh();
         QuadEmitter emitter = builder.emitter();
         OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
+        boolean useBlockAtlas = false;
         for(ConnectingModelQuad quad : quads){
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times
             int auxiliaryQuadCount = 0;
@@ -67,8 +71,12 @@ public class ConnectingItemModel implements ItemModel {
                 }
                 emitter.emit();
             }
+            // Use block atlas if there are quads using sprite from it
+            if(quad.bakedQuad().sprite().atlasLocation().equals(TextureAtlas.LOCATION_BLOCKS))
+                useBlockAtlas = true;
         }
         this.mesh = builder.immutableCopy();
+        this.renderType = useBlockAtlas ? Sheets.translucentBlockItemSheet() : Sheets.translucentItemSheet();
 
         // Check whether the quads contain animated textures
         boolean animated = false;
@@ -102,7 +110,7 @@ public class ConnectingItemModel implements ItemModel {
         layer.setExtents(this.extents);
         this.properties.applyToLayer(layer, displayContext);
         this.mesh.outputTo(layer.emitter());
-        layer.setRenderType(Sheets.translucentItemSheet());
+        layer.setRenderType(this.renderType);
         if(this.animated)
             renderState.setAnimated();
     }

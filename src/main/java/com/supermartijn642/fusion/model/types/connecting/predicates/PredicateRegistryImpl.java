@@ -6,7 +6,7 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,11 +16,11 @@ import java.util.Map;
  */
 public class PredicateRegistryImpl {
 
-    private static final Map<ResourceLocation,Serializer<? extends ConnectionPredicate>> IDENTIFIER_TO_SERIALIZER = new HashMap<>();
-    private static final Map<Serializer<? extends ConnectionPredicate>,ResourceLocation> SERIALIZER_TO_IDENTIFIER = new HashMap<>();
+    private static final Map<Identifier,Serializer<? extends ConnectionPredicate>> IDENTIFIER_TO_SERIALIZER = new HashMap<>();
+    private static final Map<Serializer<? extends ConnectionPredicate>,Identifier> SERIALIZER_TO_IDENTIFIER = new HashMap<>();
     private static boolean finalized = false;
 
-    public static synchronized void registerConnectionPredicate(ResourceLocation identifier, Serializer<? extends ConnectionPredicate> serializer){
+    public static synchronized void registerConnectionPredicate(Identifier identifier, Serializer<? extends ConnectionPredicate> serializer){
         if(finalized)
             throw new RuntimeException("Predicates must be registered before models get loaded!");
         if(IDENTIFIER_TO_SERIALIZER.containsKey(identifier))
@@ -35,7 +35,7 @@ public class PredicateRegistryImpl {
     public static JsonObject serializeConnectionPredicate(ConnectionPredicate predicate){
         if(!finalized)
             throw new RuntimeException("Can only serialize predicates after registration has completed!");
-        ResourceLocation identifier = SERIALIZER_TO_IDENTIFIER.get(predicate.getSerializer());
+        Identifier identifier = SERIALIZER_TO_IDENTIFIER.get(predicate.getSerializer());
         if(identifier == null)
             throw new RuntimeException("Cannot use unregistered predicate serializer '" + predicate.getSerializer() + "'!");
 
@@ -63,7 +63,7 @@ public class PredicateRegistryImpl {
             throw new JsonParseException("Predicate must have string property 'type'!");
         if(!IdentifierUtil.isValidIdentifier(typeJson.getAsString()))
             throw new JsonParseException("Property 'type' must be a valid identifier!");
-        ResourceLocation identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
+        Identifier identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
         Serializer<? extends ConnectionPredicate> serializer = IDENTIFIER_TO_SERIALIZER.get(identifier);
         if(serializer == null)
             throw new JsonParseException("Unknown predicate type '" + identifier + "'!");

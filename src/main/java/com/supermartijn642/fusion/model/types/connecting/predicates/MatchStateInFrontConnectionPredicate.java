@@ -12,7 +12,7 @@ import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -34,7 +34,7 @@ public class MatchStateInFrontConnectionPredicate implements ConnectionPredicate
                 throw new JsonParseException("Match state predicate must have string property 'block'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
-            ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
+            Identifier identifier = Identifier.parse(json.get("block").getAsString());
             Optional<Block> optional = BuiltInRegistries.BLOCK.getOptional(identifier);
             if(optional.isEmpty())
                 throw new JsonParseException("Unknown block '" + identifier + "'!");

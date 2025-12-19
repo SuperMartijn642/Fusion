@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,7 +28,7 @@ public class SingleVariantMixin {
         //noinspection DataFlowIssue
         SingleVariant.Unbaked unbaked = (SingleVariant.Unbaked)(Object)this;
         Variant variant = unbaked.variant();
-        ResourceLocation location = variant.modelLocation();
+        Identifier location = variant.modelLocation();
         ResolvedModel wrapper = modelBaker.getModel(location);
         if(wrapper != null){
             UnbakedModel wrapped = wrapper.wrapped();

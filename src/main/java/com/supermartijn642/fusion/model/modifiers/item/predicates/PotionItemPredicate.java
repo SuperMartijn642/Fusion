@@ -8,7 +8,7 @@ import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
@@ -27,7 +27,7 @@ public class PotionItemPredicate implements ItemPredicate {
                 throw new JsonParseException("Potion-predicate must have string property 'enchantment'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("potion").getAsString()))
                 throw new JsonParseException("Property 'enchantment' must be a valid identifier, not '" + json.get("potion").getAsString() + "'!");
-            ResourceLocation potionIdentifier = ResourceLocation.parse(json.get("potion").getAsString());
+            Identifier potionIdentifier = Identifier.parse(json.get("potion").getAsString());
             Optional<Holder.Reference<Potion>> potion = BuiltInRegistries.POTION.get(potionIdentifier);
             if(potion.isEmpty())
                 throw new JsonParseException("Unknown potion '" + potionIdentifier + "'!");
@@ -37,7 +37,7 @@ public class PotionItemPredicate implements ItemPredicate {
         @Override
         public JsonObject serialize(PotionItemPredicate value){
             JsonObject json = new JsonObject();
-            json.addProperty("potion", value.potion.unwrapKey().get().location().toString());
+            json.addProperty("potion", value.potion.unwrapKey().get().identifier().toString());
             return json;
         }
     };

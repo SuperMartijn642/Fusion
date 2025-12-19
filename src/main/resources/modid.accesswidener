@@ -9,6 +9,8 @@ extendable class net/minecraft/client/renderer/block/model/BlockElement
 accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/google/gson/Gson;
 extendable class net/minecraft/client/renderer/block/model/BlockModel
 # BlockModelWrapper
+accessible method net/minecraft/client/renderer/item/BlockModelWrapper <init> (Ljava/util/List;Ljava/util/List;Lnet/minecraft/client/renderer/item/ModelRenderProperties;Ljava/util/function/Function;)V
+accessible method net/minecraft/client/renderer/item/BlockModelWrapper detectRenderType (Ljava/util/List;)Ljava/util/function/Function;
 accessible method net/minecraft/client/renderer/item/BlockModelWrapper hasSpecialAnimatedTexture (Lnet/minecraft/world/item/ItemStack;)Z
 # EntityModelSet
 accessible field net/minecraft/client/model/geom/EntityModelSet roots Ljava/util/Map;
@@ -30,10 +32,12 @@ accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
 # ModelBakery$ModelBakerImpl
-accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/SpriteGetter;)V
+accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/SpriteGetter;Lnet/minecraft/client/resources/model/ModelBaker$PartCache;Lnet/minecraft/client/resources/model/ModelBakery$MissingModels;)V
 accessible class net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl
+# ModelBakery$PartCacheImpl
+accessible method net/minecraft/client/resources/model/ModelBakery$PartCacheImpl <init> ()V
+accessible class net/minecraft/client/resources/model/ModelBakery$PartCacheImpl
 # ModelDiscovery$ModelWrapper
-accessible method net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper <init> (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/model/UnbakedModel;Z)V
 accessible class net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper
 # ModelLayers
 accessible field net/minecraft/client/model/geom/ModelLayers ALL_MODELS Ljava/util/Set;
@@ -68,31 +72,40 @@ accessible field net/minecraft/server/packs/PathPackResources LOGGER Lorg/slf4j/
 accessible method net/minecraft/server/packs/PathPackResources returnFileIfExists (Ljava/nio/file/Path;)Lnet/minecraft/server/packs/resources/IoSupplier;
 # ReloadableResourceManager
 accessible field net/minecraft/server/packs/resources/ReloadableResourceManager resources Lnet/minecraft/server/packs/resources/CloseableResourceManager;
-# RenderStateShard
-accessible field net/minecraft/client/renderer/RenderStateShard name Ljava/lang/String;
-# RenderStateShard$TextureStateShard
-accessible field net/minecraft/client/renderer/RenderStateShard$TextureStateShard texture Ljava/util/Optional;
-# RenderType$CompositeRenderType
-accessible field net/minecraft/client/renderer/RenderType$CompositeRenderType state Lnet/minecraft/client/renderer/RenderType$CompositeState;
-# RenderType$CompositeState
-accessible field net/minecraft/client/renderer/RenderType$CompositeState outlineProperty Lnet/minecraft/client/renderer/RenderType$OutlineProperty;
-accessible field net/minecraft/client/renderer/RenderType$CompositeState textureState Lnet/minecraft/client/renderer/RenderStateShard$EmptyTextureStateShard;
+# RenderSetup
+accessible field net/minecraft/client/renderer/rendertype/RenderSetup outlineProperty Lnet/minecraft/client/renderer/rendertype/RenderSetup$OutlineProperty;
+accessible field net/minecraft/client/renderer/rendertype/RenderSetup textures Ljava/util/Map;
+# RenderSetup$TextureBinding
+accessible class net/minecraft/client/renderer/rendertype/RenderSetup$TextureBinding
+# RenderType
+accessible field net/minecraft/client/renderer/rendertype/RenderType name Ljava/lang/String;
+accessible field net/minecraft/client/renderer/rendertype/RenderType state Lnet/minecraft/client/renderer/rendertype/RenderSetup;
 # SpriteContents
 accessible field net/minecraft/client/renderer/texture/SpriteContents originalImage Lcom/mojang/blaze3d/platform/NativeImage;
 accessible field net/minecraft/client/renderer/texture/SpriteContents byMipLevel [Lcom/mojang/blaze3d/platform/NativeImage;
 accessible field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
-accessible method net/minecraft/client/renderer/texture/SpriteContents upload (IIII[Lcom/mojang/blaze3d/platform/NativeImage;Lcom/mojang/blaze3d/textures/GpuTexture;)V
+accessible field net/minecraft/client/renderer/texture/SpriteContents mipmapStrategy Lnet/minecraft/client/renderer/texture/MipmapStrategy;
+accessible field net/minecraft/client/renderer/texture/SpriteContents alphaCutoffBias F
+accessible field net/minecraft/client/renderer/texture/SpriteContents name Lnet/minecraft/resources/Identifier;
+accessible field net/minecraft/client/renderer/texture/SpriteContents width I
+accessible field net/minecraft/client/renderer/texture/SpriteContents height I
 mutable field net/minecraft/client/renderer/texture/SpriteContents byMipLevel [Lcom/mojang/blaze3d/platform/NativeImage;
 mutable field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
+mutable field net/minecraft/client/renderer/texture/SpriteContents mipmapStrategy Lnet/minecraft/client/renderer/texture/MipmapStrategy;
+mutable field net/minecraft/client/renderer/texture/SpriteContents alphaCutoffBias F
 # SpriteContents$AnimatedTexture
 accessible method net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Ljava/util/List;IZ)V
 accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
+# SpriteContents$AnimationState
+accessible method net/minecraft/client/renderer/texture/SpriteContents$AnimationState <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;[Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
+# SpriteContents$FrameInfo
+accessible class net/minecraft/client/renderer/texture/SpriteContents$FrameInfo
 # TextureAtlasSprite
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
-accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite <init> (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/renderer/texture/SpriteContents;IIII)V
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite padding I
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F

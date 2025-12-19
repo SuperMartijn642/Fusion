@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
@@ -20,7 +20,7 @@ public class DimensionEntityModelPredicate implements EntityModelPredicate {
                 throw new JsonParseException("Dimension-predicate must have string property 'dimension'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("dimension").getAsString()))
                 throw new JsonParseException("Dimension must be a valid identifier, not '" + json.get("dimension").getAsString() + "'!");
-            return new DimensionEntityModelPredicate(ResourceLocation.parse(json.get("dimension").getAsString()));
+            return new DimensionEntityModelPredicate(Identifier.parse(json.get("dimension").getAsString()));
         }
 
         @Override
@@ -31,16 +31,16 @@ public class DimensionEntityModelPredicate implements EntityModelPredicate {
         }
     };
 
-    private final ResourceLocation dimension;
+    private final Identifier dimension;
 
-    public DimensionEntityModelPredicate(ResourceLocation dimension){
+    public DimensionEntityModelPredicate(Identifier dimension){
         this.dimension = dimension;
     }
 
     @Override
     public boolean test(Entity entity){
         Level level = entity.level();
-        return level != null && level.dimension().location().equals(this.dimension);
+        return level != null && level.dimension().identifier().equals(this.dimension);
     }
 
     @Override

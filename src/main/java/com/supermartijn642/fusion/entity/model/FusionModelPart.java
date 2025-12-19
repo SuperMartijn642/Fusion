@@ -9,9 +9,9 @@ import com.supermartijn642.fusion.extensions.EntityExtension;
 import com.supermartijn642.fusion.extensions.EntityRenderStateExtension;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderStateShard;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderSetup;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 
 /**
@@ -28,7 +28,7 @@ public class FusionModelPart extends SubModelPart {
     private EntityLayerProperties properties;
 
     private boolean ready;
-    private ResourceLocation currentTexture;
+    private Identifier currentTexture;
     private Float currentScaling;
 
     private RenderType adjustedRenderType;
@@ -137,14 +137,11 @@ public class FusionModelPart extends SubModelPart {
         RenderType renderType = ((BufferSourceExtension)bufferSource).fusionGetLastRenderType();
         if(this.adjustedRenderType != null && this.adjustedRenderType == renderType)
             return bufferSource.getBuffer(renderType);
-        if(!(renderType instanceof RenderType.CompositeRenderType))
-            return buffer;
-
         // Check what texture the render type uses
-        RenderStateShard.EmptyTextureStateShard textureState = ((RenderType.CompositeRenderType)renderType).state.textureState;
-        if(!(textureState instanceof RenderStateShard.TextureStateShard))
+        RenderSetup.TextureBinding sampler0 = renderType.state.textures.get("Sampler0");
+        if(sampler0 == null)
             return buffer;
-        ResourceLocation texture = ((RenderStateShard.TextureStateShard)textureState).texture.orElse(null);
+        Identifier texture = sampler0.location();
         if(this.currentTexture.equals(texture)) // If the texture already matches the model's texture, just use the original buffer
             return buffer;
 

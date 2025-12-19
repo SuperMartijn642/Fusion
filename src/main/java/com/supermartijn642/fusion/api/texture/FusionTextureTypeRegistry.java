@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.api.texture;
 
 import com.google.gson.JsonObject;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -14,7 +14,7 @@ public final class FusionTextureTypeRegistry {
      * @param identifier  identifier for the texture type
      * @param textureType handler for custom texture data and creating the sprite
      */
-    public static void registerTextureType(ResourceLocation identifier, TextureType<?> textureType){
+    public static void registerTextureType(Identifier identifier, TextureType<?> textureType){
         TextureTypeRegistryImpl.registerTextureType(identifier, textureType);
     }
 

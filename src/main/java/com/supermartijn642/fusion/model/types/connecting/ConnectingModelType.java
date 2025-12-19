@@ -23,7 +23,7 @@ import net.minecraft.client.renderer.item.ModelRenderProperties;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +37,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
     public static final String DEFAULT_CONNECTION_KEY = "default";
 
     @Override
-    public Collection<ResourceLocation> getModelDependencies(ConnectingModelData data){
+    public Collection<Identifier> getModelDependencies(ConnectingModelData data){
         return DefaultModelTypes.VANILLA.getModelDependencies(data.getVanillaModel());
     }
 
@@ -48,7 +48,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
     }
 
     @Override
-    public List<ResourceLocation> getParentModels(ConnectingModelData data){
+    public List<Identifier> getParentModels(ConnectingModelData data){
         return data.getParents();
     }
 

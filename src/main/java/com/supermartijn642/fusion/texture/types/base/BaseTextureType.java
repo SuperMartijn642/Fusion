@@ -37,6 +37,7 @@ public class BaseTextureType implements TextureType<BaseTextureData> {
             context.getAtlasHeight(),
             context.getSpritePositionX(),
             context.getSpritePositionY(),
+            context.getSpritePadding(),
             data
         );
     }

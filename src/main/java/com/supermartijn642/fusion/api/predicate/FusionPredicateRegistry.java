@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateRegistryImpl;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -17,7 +17,7 @@ public final class FusionPredicateRegistry {
      * @param serializer serializer used to save the predicates to and load the predicates from json
      * @see ConnectionPredicate
      */
-    public static void registerConnectionPredicate(ResourceLocation identifier, Serializer<? extends ConnectionPredicate> serializer){
+    public static void registerConnectionPredicate(Identifier identifier, Serializer<? extends ConnectionPredicate> serializer){
         PredicateRegistryImpl.registerConnectionPredicate(identifier, serializer);
     }
 

@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.api.texture;
 
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,7 +40,7 @@ public interface SpritePreparationContext {
     /**
      * Gets the identifier of the texture.
      */
-    ResourceLocation getIdentifier();
+    Identifier getIdentifier();
 
     /**
      * Gets the vanilla animation metadata for the texture.

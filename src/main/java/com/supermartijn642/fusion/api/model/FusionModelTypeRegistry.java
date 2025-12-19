@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.api.model;
 
 import com.google.gson.JsonObject;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -14,7 +14,7 @@ public final class FusionModelTypeRegistry {
      * @param identifier identifier for the model type
      * @param modelType  handler for the custom model
      */
-    public static void registerModelType(ResourceLocation identifier, ModelType<?> modelType){
+    public static void registerModelType(Identifier identifier, ModelType<?> modelType){
         ModelTypeRegistryImpl.registerModelType(identifier, modelType);
     }
 

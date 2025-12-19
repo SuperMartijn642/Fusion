@@ -5,7 +5,7 @@ import com.supermartijn642.fusion.entity.VanillaModelLayerProperties;
 import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicate;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 
@@ -62,7 +62,7 @@ public class EntityLayerProperties {
         if(option == null)
             throw new AssertionError("Weights should add up to 1, yet no model was found for value '" + value + "'!");
         // Pick a random texture from the chosen option
-        ResourceLocation texture = option.textures == null ? null : option.textures.size() > 1 ? option.textures.get(RANDOM.nextInt(option.textures.size())) : option.textures.get(0);
+        Identifier texture = option.textures == null ? null : option.textures.size() > 1 ? option.textures.get(RANDOM.nextInt(option.textures.size())) : option.textures.get(0);
         return new ModelChoice(option.model, texture, option.scaling);
     }
 
@@ -91,11 +91,11 @@ public class EntityLayerProperties {
     public static class ModelOption {
         private final ModelPart model;
         private final boolean isVanillaModel;
-        private final List<ResourceLocation> textures;
+        private final List<Identifier> textures;
         private final double weight;
         private final Float scaling;
 
-        public ModelOption(ModelPart model, boolean isVanillaModel, List<ResourceLocation> textures, double weight, Float scaling){
+        public ModelOption(ModelPart model, boolean isVanillaModel, List<Identifier> textures, double weight, Float scaling){
             this.model = model;
             this.isVanillaModel = isVanillaModel;
             this.textures = textures;
@@ -115,7 +115,7 @@ public class EntityLayerProperties {
             return this.isVanillaModel;
         }
 
-        public List<ResourceLocation> textures(){
+        public List<Identifier> textures(){
             return this.textures;
         }
 
@@ -149,6 +149,6 @@ public class EntityLayerProperties {
         }
     }
 
-    public record ModelChoice(ModelPart model, ResourceLocation texture, Float scaling) {
+    public record ModelChoice(ModelPart model, Identifier texture, Float scaling) {
     }
 }

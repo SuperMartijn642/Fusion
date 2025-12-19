@@ -14,7 +14,7 @@ import net.minecraft.client.resources.model.QuadCollection;
 import net.minecraft.client.resources.model.UnbakedGeometry;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 
 import java.util.ArrayList;
@@ -31,10 +31,10 @@ import java.util.stream.Collectors;
 public class BaseModelDataImpl implements BaseModelData {
 
     protected final BlockModel model;
-    protected final List<ResourceLocation> parents;
+    protected final List<Identifier> parents;
     protected final List<BaseModelElement> elements;
 
-    public BaseModelDataImpl(BlockModel model, List<ResourceLocation> parents, List<BaseModelElement> elements){
+    public BaseModelDataImpl(BlockModel model, List<Identifier> parents, List<BaseModelElement> elements){
         this.model = model;
         this.parents = ImmutableList.copyOf(parents);
         this.elements = ImmutableList.copyOf(elements);
@@ -46,7 +46,7 @@ public class BaseModelDataImpl implements BaseModelData {
     }
 
     @Override
-    public List<ResourceLocation> getParents(){
+    public List<Identifier> getParents(){
         return this.parents;
     }
 
@@ -55,19 +55,19 @@ public class BaseModelDataImpl implements BaseModelData {
     }
 
     public void validateParents(BlockModelBakingContext context){
-        List<ResourceLocation> encounteredModels = new ArrayList<>();
-        for(ResourceLocation parent : this.parents)
+        List<Identifier> encounteredModels = new ArrayList<>();
+        for(Identifier parent : this.parents)
             this.validateParents(context, parent, encounteredModels);
     }
 
-    private void validateParents(BlockModelBakingContext context, ResourceLocation modelLocation, List<ResourceLocation> encounteredModels){
+    private void validateParents(BlockModelBakingContext context, Identifier modelLocation, List<Identifier> encounteredModels){
         if(encounteredModels.contains(modelLocation))
             throw new IllegalStateException("Unable to bake model '" + context.getModelIdentifier() + "' due to circular dependency " + encounteredModels.stream().map(o -> "'" + o + "'").collect(Collectors.joining("->")) + "->'" + modelLocation + "'!");
         encounteredModels.add(modelLocation);
 
         ModelInstance<?> model = context.getModel(modelLocation);
         if(model != null){
-            for(ResourceLocation dependency : model.getParentModels())
+            for(Identifier dependency : model.getParentModels())
                 this.validateParents(context, dependency, encounteredModels);
         }
 
@@ -87,7 +87,7 @@ public class BaseModelDataImpl implements BaseModelData {
                 return value;
         }
 
-        for(ResourceLocation location : model.getParentModels()){
+        for(Identifier location : model.getParentModels()){
             ModelInstance<?> dependency = context.getModel(location);
             if(dependency != null){
                 T childValue = this.findProperty(context, dependency, property);
@@ -145,7 +145,7 @@ public class BaseModelDataImpl implements BaseModelData {
         return quads;
     }
 
-    private void bakeQuads(BlockModelBakingContext context, ModelInstance<?> model, ResourceLocation modelLocation, Deque<ModelInstance<?>> modelStack, Consumer<BaseModelQuad> output){
+    private void bakeQuads(BlockModelBakingContext context, ModelInstance<?> model, Identifier modelLocation, Deque<ModelInstance<?>> modelStack, Consumer<BaseModelQuad> output){
         modelStack.addLast(model);
 
         // If the model has elements, bake them
@@ -157,7 +157,7 @@ public class BaseModelDataImpl implements BaseModelData {
                     for(Direction direction : element.faces().keySet()){
                         BlockElementFace face = element.faces().get(direction);
                         TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                        BakedQuad quad = FaceBakery.bakeQuad(element.from(), element.to(), face, sprite, direction, context.getTransformation(), element.rotation(), element.shade(), element.lightEmission());
+                        BakedQuad quad = FaceBakery.bakeQuad(context.getModelBaker().parts(), element.from(), element.to(), face, sprite, direction, context.getTransformation(), element.rotation(), element.shade(), element.lightEmission());
                         Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().transformation().getMatrix(), face.cullForDirection()) : null;
                         output.accept(new BaseModelQuad(quad, cullDirection));
                     }
@@ -183,7 +183,7 @@ public class BaseModelDataImpl implements BaseModelData {
         }
 
         // If the model has no elements, check for parents
-        for(ResourceLocation location : model.getParentModels()){
+        for(Identifier location : model.getParentModels()){
             ModelInstance<?> dependency = context.getModel(location);
             if(dependency != null)
                 this.bakeQuads(context, dependency, location, modelStack, output);

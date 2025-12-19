@@ -19,6 +19,7 @@ import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
@@ -29,6 +30,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3fc;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -78,17 +80,13 @@ public class ConnectingBakedModel implements BlockStateModel {
     }
 
     private static float[] getUV(BakedQuad quad, int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + VERTEX_UV_OFFSET;
-        return new float[]{Float.intBitsToFloat(quad.vertices()[offset]), Float.intBitsToFloat(quad.vertices()[offset + 1])};
+        long packed = quad.packedUV(vertexIndex);
+        return new float[]{UVPair.unpackU(packed), UVPair.unpackV(packed)};
     }
 
     private static float[] getPosition(BakedQuad quad, int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + VERTEX_POSITION_OFFSET;
-        return new float[]{
-            Float.intBitsToFloat(quad.vertices()[offset]),
-            Float.intBitsToFloat(quad.vertices()[offset + 1]),
-            Float.intBitsToFloat(quad.vertices()[offset + 2])
-        };
+        Vector3fc position = quad.position(vertexIndex);
+        return new float[]{position.x(), position.y(), position.z()};
     }
 
     /*

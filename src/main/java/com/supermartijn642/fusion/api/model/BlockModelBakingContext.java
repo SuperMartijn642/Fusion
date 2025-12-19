@@ -7,7 +7,7 @@ import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.client.resources.model.UnbakedGeometry;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -33,7 +33,7 @@ public interface BlockModelBakingContext {
      * @param atlas   atlas which the texture is stitched to
      * @param texture texture identifier
      */
-    default TextureAtlasSprite getTexture(ResourceLocation atlas, ResourceLocation texture){
+    default TextureAtlasSprite getTexture(Identifier atlas, Identifier texture){
         return this.getTexture(SpriteIdentifier.of(atlas, texture));
     }
 
@@ -41,7 +41,7 @@ public interface BlockModelBakingContext {
      * Gets the sprite for the given texture on the block atlas.
      * @param texture texture identifier
      */
-    default TextureAtlasSprite getBlockTexture(ResourceLocation texture){
+    default TextureAtlasSprite getBlockTexture(Identifier texture){
         return this.getTexture(TextureAtlases.getBlocks(), texture);
     }
 
@@ -53,7 +53,7 @@ public interface BlockModelBakingContext {
     /**
      * @return the identifier of the model.
      */
-    ResourceLocation getModelIdentifier();
+    Identifier getModelIdentifier();
 
     /**
      * Gets the model corresponding to the given identifier.
@@ -61,7 +61,7 @@ public interface BlockModelBakingContext {
      * @param identifier identifier for the model
      */
     @Nullable
-    ModelInstance<?> getModel(ResourceLocation identifier);
+    ModelInstance<?> getModel(Identifier identifier);
 
     /**
      * Gets the resolved texture reference data for the model stack.

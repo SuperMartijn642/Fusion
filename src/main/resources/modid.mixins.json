@@ -10,7 +10,7 @@
     "fabric.AbstractTerrainRenderContextMixin",
     "fabric.FabricDataGenHelperMixin",
     "fabric.ItemRenderContextMixin",
-    "fabric.ModNioResourcePackMixin",
+    "fabric.ModNioPackResourcesMixin",
     "AgeableMobMixin",
     "AtlasConfigMixin",
     "BlockModelDeserializerMixin",

@@ -2,14 +2,14 @@ package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.model.SpriteIdentifierImpl;
 import net.minecraft.client.resources.model.Material;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
  */
 public interface SpriteIdentifier {
 
-    static SpriteIdentifier of(ResourceLocation atlas, ResourceLocation texture){
+    static SpriteIdentifier of(Identifier atlas, Identifier texture){
         return SpriteIdentifierImpl.of(atlas, texture);
     }
 
@@ -24,9 +24,9 @@ public interface SpriteIdentifier {
         return SpriteIdentifierImpl.MISSING;
     }
 
-    ResourceLocation getAtlas();
+    Identifier getAtlas();
 
-    ResourceLocation getTexture();
+    Identifier getTexture();
 
     default Material toMaterial(){
         return new Material(this.getAtlas(), this.getTexture());

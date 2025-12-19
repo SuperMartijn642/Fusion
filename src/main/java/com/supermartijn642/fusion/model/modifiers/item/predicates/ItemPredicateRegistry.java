@@ -6,7 +6,7 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,11 +16,11 @@ import java.util.Map;
  */
 public class ItemPredicateRegistry {
 
-    private static final Map<ResourceLocation,Serializer<? extends ItemPredicate>> IDENTIFIER_TO_SERIALIZER = new HashMap<>();
-    private static final Map<Serializer<? extends ItemPredicate>,ResourceLocation> SERIALIZER_TO_IDENTIFIER = new HashMap<>();
+    private static final Map<Identifier,Serializer<? extends ItemPredicate>> IDENTIFIER_TO_SERIALIZER = new HashMap<>();
+    private static final Map<Serializer<? extends ItemPredicate>,Identifier> SERIALIZER_TO_IDENTIFIER = new HashMap<>();
     private static boolean finalized = false;
 
-    public static synchronized void registerItemPredicate(ResourceLocation identifier, Serializer<? extends ItemPredicate> serializer){
+    public static synchronized void registerItemPredicate(Identifier identifier, Serializer<? extends ItemPredicate> serializer){
         if(finalized)
             throw new RuntimeException("Item predicates must be registered before models get loaded!");
         if(IDENTIFIER_TO_SERIALIZER.containsKey(identifier))
@@ -35,7 +35,7 @@ public class ItemPredicateRegistry {
     public static JsonObject serializeItemPredicate(ItemPredicate predicate){
         if(!finalized)
             throw new RuntimeException("Can only serialize item predicates after registration has completed!");
-        ResourceLocation identifier = SERIALIZER_TO_IDENTIFIER.get(predicate.getSerializer());
+        Identifier identifier = SERIALIZER_TO_IDENTIFIER.get(predicate.getSerializer());
         if(identifier == null)
             throw new RuntimeException("Cannot use unregistered item predicate serializer '" + predicate.getSerializer() + "'!");
 
@@ -63,7 +63,7 @@ public class ItemPredicateRegistry {
             throw new JsonParseException("Item predicate must have string property 'type'!");
         if(!IdentifierUtil.isValidIdentifier(typeJson.getAsString()))
             throw new JsonParseException("Property 'type' must be a valid identifier!");
-        ResourceLocation identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
+        Identifier identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
         Serializer<? extends ItemPredicate> serializer = IDENTIFIER_TO_SERIALIZER.get(identifier);
         if(serializer == null)
             throw new JsonParseException("Unknown item predicate type '" + identifier + "'!");

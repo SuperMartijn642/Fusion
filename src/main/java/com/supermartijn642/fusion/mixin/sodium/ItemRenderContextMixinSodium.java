@@ -33,8 +33,8 @@ public class ItemRenderContextMixinSodium {
             if(quad.tag() == 0)
                 sprite = quad.sprite(Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks()).spriteFinder());
             else{
-                float u = (quad.tag() & 65535) / 65535f;
-                float v = (quad.tag() >> 16) / 65535f;
+                float u = ((quad.tag() >> 4) & 16383) / 16383f;
+                float v = (quad.tag() >> 18) / 16383f;
                 sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks()).spriteFinder().find(u, v);
                 quad.cachedSprite(sprite);
             }

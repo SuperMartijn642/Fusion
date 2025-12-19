@@ -48,8 +48,7 @@ public class BlockRenderDispatcherMixin {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/block/state/BlockState;getSeed(Lnet/minecraft/core/BlockPos;)J"
-        ),
-        remap = false
+        )
     )
     private ModelData renderBreakingTextureUpdateModelData(ModelData modelData, BlockState state, BlockPos pos, BlockAndTintGetter level){
         /*

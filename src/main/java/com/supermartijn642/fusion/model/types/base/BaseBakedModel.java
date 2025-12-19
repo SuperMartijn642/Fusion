@@ -131,7 +131,7 @@ public class BaseBakedModel implements BakedModel {
         MutableQuad mutableQuad = new MutableQuad();
         context.pushTransform(
             quad -> {
-                if(quad.tag() != 0){
+                if((quad.tag() & 15) != 0){
                     // Unpack type and sprite index from the tag
                     int tag = quad.tag();
                     int type = quad.tag() & ((1 << 4) - 1);
@@ -141,7 +141,7 @@ public class BaseBakedModel implements BakedModel {
                     TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
 
                     // TODO fix this workaround
-                    quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 65535) | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 65535) << 16);
+                    quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 16383) << 4 | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 16383) << 18);
 
                     // Handle random texture type
                     if(type == 2){

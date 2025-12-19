@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.texture;
 
 import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -12,10 +12,10 @@ public class SpritePreparationContextImpl implements SpritePreparationContext {
 
     private final int originalWidth, originalHeight;
     private final int textureWidth, textureHeight;
-    private final ResourceLocation identifier;
+    private final Identifier identifier;
     private final AnimationMetadataSection animationMetadata;
 
-    public SpritePreparationContextImpl(int originalWidth, int originalHeight, int textureWidth, int textureHeight, ResourceLocation identifier, AnimationMetadataSection animationMetadata){
+    public SpritePreparationContextImpl(int originalWidth, int originalHeight, int textureWidth, int textureHeight, Identifier identifier, AnimationMetadataSection animationMetadata){
         this.originalWidth = originalWidth;
         this.originalHeight = originalHeight;
         this.textureWidth = textureWidth;
@@ -45,7 +45,7 @@ public class SpritePreparationContextImpl implements SpritePreparationContext {
     }
 
     @Override
-    public ResourceLocation getIdentifier(){
+    public Identifier getIdentifier(){
         return this.identifier;
     }
 

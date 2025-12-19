@@ -9,7 +9,7 @@ import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,15 +28,15 @@ import java.util.concurrent.Executor;
 public class SpriteLoaderMixin {
 
     @Inject(
-        method = "loadAndStitch(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/ResourceLocation;ILjava/util/concurrent/Executor;Ljava/util/Set;)Ljava/util/concurrent/CompletableFuture;",
+        method = "loadAndStitch(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/Identifier;ILjava/util/concurrent/Executor;Ljava/util/Set;)Ljava/util/concurrent/CompletableFuture;",
         at = @At("RETURN")
     )
-    private void initializeTextures(ResourceManager resourceManager, ResourceLocation atlas, int i, Executor executor, Set<?> metadataSections, CallbackInfoReturnable<CompletableFuture<SpriteLoader.Preparations>> ci){
+    private void initializeTextures(ResourceManager resourceManager, Identifier atlas, int i, Executor executor, Set<?> metadataSections, CallbackInfoReturnable<CompletableFuture<SpriteLoader.Preparations>> ci){
         ci.getReturnValue().thenApply(preparations -> {
             // Replace sprites
-            Map<ResourceLocation,TextureAtlasSprite> textures = preparations.regions();
-            for(Map.Entry<ResourceLocation,TextureAtlasSprite> entry : textures.entrySet()){
-                ResourceLocation identifier = entry.getKey();
+            Map<Identifier,TextureAtlasSprite> textures = preparations.regions();
+            for(Map.Entry<Identifier,TextureAtlasSprite> entry : textures.entrySet()){
+                Identifier identifier = entry.getKey();
                 TextureAtlasSprite texture = entry.getValue();
                 Pair<TextureType<Object>,Object> textureData = ((SpriteContentsExtension)texture.contents()).fusionTextureMetadata();
                 if(textureData != null){

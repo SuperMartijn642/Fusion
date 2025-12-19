@@ -1,23 +1,25 @@
 package com.supermartijn642.fusion.model.types.base;
 
 import com.google.common.base.Suppliers;
-import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.MutableQuad;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.item.*;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.RenderTypeHelper;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
+import org.joml.Vector3fc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /**
@@ -27,26 +29,25 @@ public class BaseItemModel implements ItemModel {
 
     private final List<ItemTintSource> tints;
     private final ModelRenderProperties properties;
-    private final List<Pair<Optional<RenderType>,List<BakedQuad>>> mesh;
-    private final Supplier<Vector3f[]> extents;
+    private final List<Pair<RenderType,List<BakedQuad>>> mesh;
+    private final Supplier<Vector3fc[]> extents;
     private final boolean animated;
 
-    public BaseItemModel(List<ItemTintSource> tints, List<BaseModelQuad> quads, ModelRenderProperties properties, RenderType forgeRenderType){
+    public BaseItemModel(List<ItemTintSource> tints, List<BaseModelQuad> quads, ModelRenderProperties properties){
         this.tints = tints;
         this.properties = properties;
         this.extents = Suppliers.memoize(() -> BlockModelWrapper.computeExtents(quads.stream().map(BaseModelQuad::bakedQuad).toList()));
 
         // Create the item mesh
-        Map<Optional<RenderType>,List<BakedQuad>> mesh = new LinkedHashMap<>();
+        Map<RenderType,List<BakedQuad>> mesh = new LinkedHashMap<>();
         MutableQuad mutableQuad = new MutableQuad();
         for(BaseModelQuad quad : quads){
             mutableQuad.fillFromBakedQuad(quad.bakedQuad());
             mutableQuad.emissive(quad.emissive());
 
             // Add the item quads
-            Optional<RenderType> renderType = FusionClient.getChunkLayer(quad.renderType()).map(RenderTypeHelper::getEntityRenderType);
-            if(renderType.isEmpty() && forgeRenderType != null)
-                renderType = Optional.of(forgeRenderType);
+            RenderType renderType = quad.bakedQuad().sprite().atlasLocation().equals(TextureAtlas.LOCATION_BLOCKS) ?
+                Sheets.translucentBlockItemSheet() : Sheets.translucentItemSheet();
             List<BakedQuad> itemQuads = mesh.computeIfAbsent(renderType, k -> new ArrayList<>());
             itemQuads.add(mutableQuad.toBakedQuad());
         }
@@ -83,7 +84,7 @@ public class BaseItemModel implements ItemModel {
             tintValues[j] = tint;
             renderState.appendModelIdentityElement(tint);
         }
-        for(Pair<Optional<RenderType>,List<BakedQuad>> pair : this.mesh){
+        for(Pair<RenderType,List<BakedQuad>> pair : this.mesh){
             ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
             if(foilType != null)
                 layer.setFoilType(foilType);
@@ -91,7 +92,7 @@ public class BaseItemModel implements ItemModel {
             layer.setExtents(this.extents);
             this.properties.applyToLayer(layer, displayContext);
             layer.prepareQuadList().addAll(pair.right());
-            layer.setRenderType(pair.left().orElseGet(() -> ItemBlockRenderTypes.getRenderType(stack)));
+            layer.setRenderType(pair.left());
         }
     }
 }

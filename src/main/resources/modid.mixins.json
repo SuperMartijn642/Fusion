@@ -33,7 +33,7 @@
     "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
-    "ResourceMetadata\$BuilderMixin",
+    "ResourceMetadataMixin",
     "SingleVariantMixin",
     "SpriteContentsMixin",
     "SpriteLoaderMixin",

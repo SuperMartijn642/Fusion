@@ -2,22 +2,29 @@ package com.supermartijn642.fusion.texture.types.scrolling;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.systems.GpuDevice;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
+import com.mojang.blaze3d.textures.GpuTextureView;
+import com.mojang.blaze3d.textures.TextureFormat;
 import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
 import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.client.renderer.texture.SpriteContents;
-import net.minecraft.client.renderer.texture.SpriteTicker;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
+import net.minecraft.util.ARGB;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
-import java.util.stream.IntStream;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
@@ -160,12 +167,13 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         // Finally create the new sprite
         ScrollingSpriteContents contents = new ScrollingSpriteContents(context.createOriginalSprite().contents(), xPositions, yPositions, frameTimes);
         return new BaseTextureSprite(
-            context.getTextureIdentifier(),
+            context.getAtlasLocation(),
             contents,
             context.getAtlasWidth(),
             context.getAtlasHeight(),
             context.getSpritePositionX(),
             context.getSpritePositionY(),
+            context.getSpritePadding(),
             data
         );
     }
@@ -173,63 +181,81 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
     private static class ScrollingSpriteContents extends SpriteContents {
 
         private final int[] xPositions, yPositions;
-        private final int[] frameTimes;
-        private int frame, tickCounter;
+        private final List<FrameInfo> frames;
 
         public ScrollingSpriteContents(SpriteContents original, int[] xPositions, int[] yPositions, int[] frameTimes){
             super(original.name(), new FrameSize(original.width(), original.height()), original.originalImage);
-            this.xPositions = xPositions;
-            this.yPositions = yPositions;
-            this.frameTimes = frameTimes;
             this.byMipLevel = original.byMipLevel;
+            this.mipmapStrategy = original.mipmapStrategy;
+            this.alphaCutoffBias = original.alphaCutoffBias;
+
+            List<Pair<Integer,Integer>> positions = new ArrayList<>();
+            List<FrameInfo> frames = new ArrayList<>();
+            for(int i = 0; i < frameTimes.length; i++){
+                Pair<Integer,Integer> position = Pair.of(xPositions[i], yPositions[i]);
+                int frameIndex = positions.indexOf(position);
+                if(frameIndex == -1){
+                    frameIndex = positions.size();
+                    positions.add(position);
+                }
+                frames.add(new FrameInfo(frameIndex, frameTimes[i]));
+            }
+            this.xPositions = positions.stream().mapToInt(Pair::left).toArray();
+            this.yPositions = positions.stream().mapToInt(Pair::right).toArray();
+            this.frames = List.copyOf(frames);
             this.animatedTexture = new ScrollingAnimatedTexture();
         }
 
-        private void tick(int x, int y, GpuTexture gpuTexture){
-            if(++this.tickCounter >= this.frameTimes[this.frame]){
-                this.frame = (this.frame + 1) % this.xPositions.length;
-                this.tickCounter = 0;
-                this.uploadFrame(x, y, this.frame, gpuTexture);
-            }
-        }
-
-        private void uploadFrame(int x, int y, int frame, GpuTexture gpuTexture){
-            this.upload(x, y, this.xPositions[frame], this.yPositions[frame], this.byMipLevel, gpuTexture);
-        }
-
         @Override
-        public IntStream getUniqueFrames(){
-            return IntStream.of(1);
+        public boolean isTransparent(int frame, int x, int y){
+            int index = this.frames.get(frame).index();
+            return ARGB.alpha(this.originalImage.getPixel(
+                this.xPositions[index] + x,
+                this.yPositions[index] + y
+            )) == 0;
         }
 
         private class ScrollingAnimatedTexture extends SpriteContents.AnimatedTexture {
 
             public ScrollingAnimatedTexture(){
-                super(Collections.emptyList(), 1, false);
+                super(ScrollingSpriteContents.this.frames, 1, false);
             }
 
             @Override
-            public SpriteTicker createTicker(){
-                return new SpriteTicker() {
-                    @Override
-                    public void tickAndUpload(int x, int y, GpuTexture gpuTexture){
-                        ScrollingSpriteContents.this.tick(x, y, gpuTexture);
+            public AnimationState createAnimationState(GpuBufferSlice bufferSlice, int offset){
+                GpuDevice gpuDevice = RenderSystem.getDevice();
+                Int2ObjectMap<GpuTextureView> textureViews = new Int2ObjectOpenHashMap<>();
+                GpuBufferSlice[] slices = new GpuBufferSlice[ScrollingSpriteContents.this.byMipLevel.length];
+
+                for(int frameIndex : this.getUniqueFrames().toArray()){
+                    GpuTexture gpuTexture = gpuDevice.createTexture(
+                        () -> ScrollingSpriteContents.this.name + " animation frame " + frameIndex,
+                        5,
+                        TextureFormat.RGBA8,
+                        ScrollingSpriteContents.this.width,
+                        ScrollingSpriteContents.this.height,
+                        1,
+                        ScrollingSpriteContents.this.byMipLevel.length + 1
+                    );
+                    int x = ScrollingSpriteContents.this.xPositions[frameIndex];
+                    int y = ScrollingSpriteContents.this.yPositions[frameIndex];
+
+                    for(int m = 0; m < ScrollingSpriteContents.this.byMipLevel.length; m++){
+                        RenderSystem.getDevice()
+                            .createCommandEncoder()
+                            .writeToTexture(
+                                gpuTexture, ScrollingSpriteContents.this.byMipLevel[m], m, 0, 0, 0, ScrollingSpriteContents.this.width >> m, ScrollingSpriteContents.this.height >> m, x >> m, y >> m
+                            );
                     }
 
-                    @Override
-                    public void close(){
-                    }
-                };
-            }
+                    textureViews.put(frameIndex, RenderSystem.getDevice().createTextureView(gpuTexture));
+                }
 
-            @Override
-            public void uploadFirstFrame(int x, int y, GpuTexture gpuTexture){
-                ScrollingSpriteContents.this.uploadFrame(x, y, 0, gpuTexture);
-            }
+                for(int level = 0; level < ScrollingSpriteContents.this.byMipLevel.length; level++)
+                    //noinspection IntegerMultiplicationImplicitCastToLong
+                    slices[level] = bufferSlice.slice(level * offset, offset);
 
-            @Override
-            public IntStream getUniqueFrames(){
-                return ScrollingSpriteContents.this.getUniqueFrames();
+                return new AnimationState(this, textureViews, slices);
             }
         }
     }

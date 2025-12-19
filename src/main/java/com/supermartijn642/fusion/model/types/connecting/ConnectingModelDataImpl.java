@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -28,7 +28,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
     private final Map<String,ConnectionPredicate> predicates;
     private final Map<String,String> connectionReferences;
 
-    public ConnectingModelDataImpl(BlockModel model, List<ResourceLocation> parents, List<ConnectingModelElement> elements, Map<String,ConnectionPredicate> predicates, Map<String,String> references){
+    public ConnectingModelDataImpl(BlockModel model, List<Identifier> parents, List<ConnectingModelElement> elements, Map<String,ConnectionPredicate> predicates, Map<String,String> references){
         //noinspection rawtypes,unchecked
         super(model, parents, (List)elements);
         this.predicates = ImmutableMap.copyOf(predicates);
@@ -87,7 +87,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
                 for(Direction direction : element.faces().keySet()){
                     BlockElementFace face = element.faces().get(direction);
                     TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                    BakedQuad quad = FaceBakery.bakeQuad(element.from(), element.to(), face, sprite, direction, context.getTransformation(), element.rotation(), element.shade(), element.lightEmission());
+                    BakedQuad quad = FaceBakery.bakeQuad(context.getModelBaker().parts(), element.from(), element.to(), face, sprite, direction, context.getTransformation(), element.rotation(), element.shade(), element.lightEmission());
                     Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().transformation().getMatrix(), face.cullForDirection()) : null;
                     String connectionsKey = element instanceof ConnectingModelElement && ((ConnectingModelElement)element).faceConnectionKeys.containsKey(direction) ? ((ConnectingModelElement)element).faceConnectionKeys.get(direction) : face.texture();
                     ConnectionPredicate predicate = this.resolveConnectionKey(context, modelStack, connectionsKey);
@@ -100,7 +100,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
         }
 
         // If the model has no elements, check for parents
-        for(ResourceLocation location : model.getParentModels()){
+        for(Identifier location : model.getParentModels()){
             ModelInstance<?> dependency = context.getModel(location);
             if(dependency != null)
                 this.bakeQuads(context, dependency, modelStack, output);
@@ -186,7 +186,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
                 return Either.right(reference);
         }
         // Check parent models
-        for(ResourceLocation location : model.getParentModels()){
+        for(Identifier location : model.getParentModels()){
             ModelInstance<?> parent = context.getModel(location);
             if(parent != null){
                 Either<ConnectionPredicate,String> entry = findConnectionsEntry(context, parent, key);

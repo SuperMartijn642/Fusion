@@ -2,12 +2,12 @@ package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Sets;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
-import net.minecraft.FileUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.server.packs.resources.IoSupplier;
+import net.minecraft.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Final;
@@ -50,11 +50,11 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
     }
 
     @Inject(
-        method = "getResource(Lnet/minecraft/server/packs/PackType;Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/server/packs/resources/IoSupplier;",
+        method = "getResource(Lnet/minecraft/server/packs/PackType;Lnet/minecraft/resources/Identifier;)Lnet/minecraft/server/packs/resources/IoSupplier;",
         at = @At("HEAD"),
         cancellable = true
     )
-    private void getResource(PackType type, ResourceLocation location, CallbackInfoReturnable<IoSupplier<InputStream>> ci){
+    private void getResource(PackType type, Identifier location, CallbackInfoReturnable<IoSupplier<InputStream>> ci){
         if(this.overridesFolderRoot == null)
             return;
 
@@ -81,7 +81,7 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         try(DirectoryStream<Path> stream = Files.newDirectoryStream(typeFolder)){
             for(Path directory : stream){
                 String location = directory.getFileName().toString();
-                if(ResourceLocation.isValidNamespace(location)){
+                if(Identifier.isValidNamespace(location)){
                     namespaces.add(location);
                     continue;
                 }
@@ -104,7 +104,7 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
             return output;
 
         // First send all override folder entries, then ignore regular entries which were overridden
-        Set<ResourceLocation> overriddenLocations = new HashSet<>();
+        Set<Identifier> overriddenLocations = new HashSet<>();
         FileUtil.decomposePath(path).ifSuccess(list -> {
             Path namespaceFolder = this.overridesFolderRoot.resolve(type.getDirectory()).resolve(namespace);
             PathPackResources.listPath(namespace, namespaceFolder, list, (location, streamSupplier) -> {

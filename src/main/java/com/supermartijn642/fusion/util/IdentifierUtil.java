@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.util;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
@@ -46,12 +46,12 @@ public class IdentifierUtil {
     }
 
     /**
-     * Converts the given string into a {@link ResourceLocation} instance. If no namespace is specified, the 'fusion' namespace will be used
+     * Converts the given string into a {@link Identifier} instance. If no namespace is specified, the 'fusion' namespace will be used
      */
-    public static ResourceLocation withFusionNamespace(String identifier){
+    public static Identifier withFusionNamespace(String identifier){
         String[] parts = identifier.split(":");
         return parts.length == 1 ?
-            ResourceLocation.fromNamespaceAndPath("fusion", parts[0]) :
-            ResourceLocation.parse(identifier);
+            Identifier.fromNamespaceAndPath("fusion", parts[0]) :
+            Identifier.parse(identifier);
     }
 }

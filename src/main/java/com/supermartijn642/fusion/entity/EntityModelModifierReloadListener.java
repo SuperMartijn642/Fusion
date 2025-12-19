@@ -15,7 +15,7 @@ import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.world.entity.EntityType;
@@ -38,7 +38,7 @@ public class EntityModelModifierReloadListener {
         return MODIFIERS;
     }
 
-    public static void getModelLocations(Consumer<ResourceLocation> output){
+    public static void getModelLocations(Consumer<Identifier> output){
         for(Modifier modifier : MODIFIERS.values())
             modifier.gatherModelLocations(output);
     }
@@ -47,7 +47,7 @@ public class EntityModelModifierReloadListener {
         MODIFIERS.clear();
 
         // Find all overlay files
-        Map<ResourceLocation,JsonElement> resources = new HashMap<>();
+        Map<Identifier,JsonElement> resources = new HashMap<>();
         SimpleJsonResourceReloadListener.scanDirectory(resourceManager, ID_CONVERTER, JsonOps.INSTANCE, new Codec<>() {
             @Override
             public <T> DataResult<com.mojang.datafixers.util.Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
@@ -61,8 +61,8 @@ public class EntityModelModifierReloadListener {
         }, resources);
 
         // Parse all the model overlay files
-        for(Map.Entry<ResourceLocation,JsonElement> entry : resources.entrySet()){
-            ResourceLocation location = entry.getKey();
+        for(Map.Entry<Identifier,JsonElement> entry : resources.entrySet()){
+            Identifier location = entry.getKey();
             if(!entry.getValue().isJsonObject())
                 throw new IllegalArgumentException("Entity model modifier '" + location + "' must contain a json object!");
             JsonObject json = entry.getValue().getAsJsonObject();
@@ -90,7 +90,7 @@ public class EntityModelModifierReloadListener {
                 throw new JsonParseException("Property 'targets' array must only contain strings!");
             if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                 throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
-            ResourceLocation identifier = ResourceLocation.parse(element.getAsString());
+            Identifier identifier = Identifier.parse(element.getAsString());
             Optional<EntityType<?>> entityType = BuiltInRegistries.ENTITY_TYPE.getOptional(identifier);
             if(entityType.isEmpty())
                 throw new JsonParseException("Could not find an entity type for '" + identifier + "'!");
@@ -113,7 +113,7 @@ public class EntityModelModifierReloadListener {
 
         for(EntityType<?> target : targets){
             Modifier modifier = MODIFIERS.computeIfAbsent(target, Modifier::new);
-            ResourceLocation entityIdentifier = BuiltInRegistries.ENTITY_TYPE.getKey(target);
+            Identifier entityIdentifier = BuiltInRegistries.ENTITY_TYPE.getKey(target);
             for(Map.Entry<String,Layer> entry : layers.entrySet()){
                 ModelLayerLocation location = new ModelLayerLocation(entityIdentifier, entry.getKey());
                 modifier.layers.put(location, entry.getValue());
@@ -175,16 +175,16 @@ public class EntityModelModifierReloadListener {
         if(element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()){
             if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                 throw new JsonParseException("Property '" + propertyName + "' must be a valid identifier, not '" + element.getAsString() + "'!");
-            return new ModelOption(Either.left(ResourceLocation.parse(element.getAsString())), null, null, null, null, null, null, null, null, 1);
+            return new ModelOption(Either.left(Identifier.parse(element.getAsString())), null, null, null, null, null, null, null, null, 1);
         }
         if(element.isJsonObject()){
             JsonObject json = element.getAsJsonObject();
             // Model
-            Either<ResourceLocation,List<ModelOption>> model = null;
+            Either<Identifier,List<ModelOption>> model = null;
             if(json.has("model"))
                 model = Either.right(parseModelOptions(json.get("model"), propertyName));
             // Texture
-            List<ResourceLocation> textures;
+            List<Identifier> textures;
             if(json.has("texture"))
                 textures = parseTextures(json.get("texture"), propertyName);
             else
@@ -250,23 +250,23 @@ public class EntityModelModifierReloadListener {
         throw new JsonParseException("Property '" + propertyName + "' must be a string or an object!");
     }
 
-    private static List<ResourceLocation> parseTextures(JsonElement json, String propertyName){
+    private static List<Identifier> parseTextures(JsonElement json, String propertyName){
         // Single texture string
         if(json.isJsonPrimitive() && json.getAsJsonPrimitive().isString()){
             if(!IdentifierUtil.isValidIdentifier(json.getAsString()))
                 throw new JsonParseException("Texture must be a valid location, not '" + json.getAsString() + "'!");
-            return List.of(ResourceLocation.parse("textures/" + json.getAsString() + ".png"));
+            return List.of(Identifier.parse("textures/" + json.getAsString() + ".png"));
         }
         // Array of strings
         if(json.isJsonArray()){
             JsonArray array = json.getAsJsonArray();
-            List<ResourceLocation> textures = new ArrayList<>(array.size());
+            List<Identifier> textures = new ArrayList<>(array.size());
             for(JsonElement element : array){
                 if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
                     throw new JsonParseException("Array property '" + propertyName + "' must only contain strings!");
                 if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                     throw new JsonParseException("Texture must be a valid identifier, not '" + element.getAsString() + "'!!");
-                textures.add(ResourceLocation.parse("textures/" + element.getAsString() + ".png"));
+                textures.add(Identifier.parse("textures/" + element.getAsString() + ".png"));
             }
             return textures;
         }
@@ -282,7 +282,7 @@ public class EntityModelModifierReloadListener {
             this.entityType = entityType;
         }
 
-        void gatherModelLocations(Consumer<ResourceLocation> output){
+        void gatherModelLocations(Consumer<Identifier> output){
             this.layers.values().forEach(layer -> layer.gatherModelLocations(output));
         }
     }
@@ -297,7 +297,7 @@ public class EntityModelModifierReloadListener {
             this.conditionals = conditionals;
         }
 
-        void gatherModelLocations(Consumer<ResourceLocation> output){
+        void gatherModelLocations(Consumer<Identifier> output){
             this.defaultModel.gatherModelLocations(output);
             for(Pair<EntityModelPredicate,ModelOption> conditional : this.conditionals)
                 conditional.right().gatherModelLocations(output);
@@ -305,14 +305,14 @@ public class EntityModelModifierReloadListener {
     }
 
     public static class ModelOption {
-        public final Either<ResourceLocation,List<ModelOption>> model;
-        public final List<ResourceLocation> textures;
+        public final Either<Identifier,List<ModelOption>> model;
+        public final List<Identifier> textures;
         public final Boolean flipX, flipY, flipZ;
         public final Float offsetX, offsetY, offsetZ;
         public final Float scale;
         public final double weight;
 
-        public ModelOption(Either<ResourceLocation,List<ModelOption>> model, List<ResourceLocation> textures, Boolean flipX, Boolean flipY, Boolean flipZ, Float offsetX, Float offsetY, Float offsetZ, Float scale, float weight){
+        public ModelOption(Either<Identifier,List<ModelOption>> model, List<Identifier> textures, Boolean flipX, Boolean flipY, Boolean flipZ, Float offsetX, Float offsetY, Float offsetZ, Float scale, float weight){
             this.model = model;
             this.textures = textures;
             this.flipX = flipX;
@@ -325,7 +325,7 @@ public class EntityModelModifierReloadListener {
             this.weight = weight;
         }
 
-        void gatherModelLocations(Consumer<ResourceLocation> output){
+        void gatherModelLocations(Consumer<Identifier> output){
             if(this.model != null){
                 if(this.model.isLeft())
                     output.accept(this.model.left());

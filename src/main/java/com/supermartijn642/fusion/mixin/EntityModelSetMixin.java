@@ -10,7 +10,7 @@ import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -48,7 +48,7 @@ public class EntityModelSetMixin {
 
         EntityModelPredicateRegistry.finalizeRegistration();
         // Gather all model locations which should be considered for loading
-        Set<ResourceLocation> locations = new HashSet<>();
+        Set<Identifier> locations = new HashSet<>();
         // Add models referenced in model modifiers
         EntityModelModifierReloadListener.reload(resourceManager);
         EntityModelModifierReloadListener.getModelLocations(locations::add);
@@ -57,7 +57,7 @@ public class EntityModelSetMixin {
             locations.add(FusionEntityModelLoader.locationForLayer(layer));
 
         // Try to load models from resource packs
-        List<ResourceLocation> locationsSorted = locations.stream().sorted(Comparator.comparing(ResourceLocation::toString)).toList();
+        List<Identifier> locationsSorted = locations.stream().sorted(Comparator.comparing(Identifier::toString)).toList();
         FusionEntityModelLoader.loadModels(locationsSorted, resourceManager);
 
         // Finalize the models/layers

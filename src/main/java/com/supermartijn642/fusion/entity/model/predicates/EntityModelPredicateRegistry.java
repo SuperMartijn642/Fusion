@@ -5,7 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,11 +15,11 @@ import java.util.Map;
  */
 public class EntityModelPredicateRegistry {
 
-    private static final Map<ResourceLocation,Serializer<? extends EntityModelPredicate>> IDENTIFIER_TO_SERIALIZER = new HashMap<>();
-    private static final Map<Serializer<? extends EntityModelPredicate>,ResourceLocation> SERIALIZER_TO_IDENTIFIER = new HashMap<>();
+    private static final Map<Identifier,Serializer<? extends EntityModelPredicate>> IDENTIFIER_TO_SERIALIZER = new HashMap<>();
+    private static final Map<Serializer<? extends EntityModelPredicate>,Identifier> SERIALIZER_TO_IDENTIFIER = new HashMap<>();
     private static boolean finalized = false;
 
-    public static synchronized void registerEntityModelPredicate(ResourceLocation identifier, Serializer<? extends EntityModelPredicate> serializer){
+    public static synchronized void registerEntityModelPredicate(Identifier identifier, Serializer<? extends EntityModelPredicate> serializer){
         if(finalized)
             throw new RuntimeException("Entity model predicates must be registered before models get loaded!");
         if(IDENTIFIER_TO_SERIALIZER.containsKey(identifier))
@@ -34,7 +34,7 @@ public class EntityModelPredicateRegistry {
     public static JsonObject serializeEntityModelPredicate(EntityModelPredicate predicate){
         if(!finalized)
             throw new RuntimeException("Can only serialize entity model predicates after registration has completed!");
-        ResourceLocation identifier = SERIALIZER_TO_IDENTIFIER.get(predicate.getSerializer());
+        Identifier identifier = SERIALIZER_TO_IDENTIFIER.get(predicate.getSerializer());
         if(identifier == null)
             throw new RuntimeException("Cannot use unregistered entity model predicate serializer '" + predicate.getSerializer() + "'!");
 
@@ -62,7 +62,7 @@ public class EntityModelPredicateRegistry {
             throw new JsonParseException("Entity model predicate must have string property 'type'!");
         if(!IdentifierUtil.isValidIdentifier(typeJson.getAsString()))
             throw new JsonParseException("Property 'type' must be a valid identifier!");
-        ResourceLocation identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
+        Identifier identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
         Serializer<? extends EntityModelPredicate> serializer = IDENTIFIER_TO_SERIALIZER.get(identifier);
         if(serializer == null)
             throw new JsonParseException("Unknown entity model predicate type '" + identifier + "'!");

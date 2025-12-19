@@ -17,7 +17,7 @@ import java.util.Set;
 public class AtlasConfigMixin {
 
     @ModifyVariable(
-        method = "<init>(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;ZLjava/util/Set;)V",
+        method = "<init>(Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;ZLjava/util/Set;)V",
         at = @At("HEAD"),
         ordinal = 0
     )

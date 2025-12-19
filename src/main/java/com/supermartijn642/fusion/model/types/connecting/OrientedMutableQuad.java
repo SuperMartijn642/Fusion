@@ -23,16 +23,6 @@ public class OrientedMutableQuad extends MutableQuad {
     }
 
     @Override
-    public void lightmap(int vertexIndex, int lightmap){
-        super.lightmap(this.permutation[vertexIndex], lightmap);
-    }
-
-    @Override
-    public int lightmap(int vertexIndex){
-        return super.lightmap(this.permutation[vertexIndex]);
-    }
-
-    @Override
     public void uv(int vertexIndex, float u, float v){
         super.uv(this.permutation[vertexIndex], u, v);
     }

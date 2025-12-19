@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.extensions.BufferSourceExtension;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;

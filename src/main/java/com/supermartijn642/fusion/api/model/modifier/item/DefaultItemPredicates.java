@@ -4,7 +4,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.alchemy.Potion;
 
 import java.util.Arrays;
@@ -106,21 +106,21 @@ public class DefaultItemPredicates {
     /**
      * Creates a predicate which is satisfied when the item has the given enchantment.
      */
-    public static ItemPredicate enchantment(ResourceLocation enchantment){
+    public static ItemPredicate enchantment(Identifier enchantment){
         return enchantment(enchantment, 1, 255);
     }
 
     /**
      * Creates a predicate which is satisfied when the item's level of the given enchantment is equal to the given level.
      */
-    public static ItemPredicate enchantment(ResourceLocation enchantment, int level){
+    public static ItemPredicate enchantment(Identifier enchantment, int level){
         return enchantment(enchantment, level, level);
     }
 
     /**
      * Creates a predicate which is satisfied when the item's level of the given enchantment is between the given minimum and maximum levels (both inclusive).
      */
-    public static ItemPredicate enchantment(ResourceLocation enchantment, int minLevel, int maxLevel){
+    public static ItemPredicate enchantment(Identifier enchantment, int minLevel, int maxLevel){
         return new EnchantmentItemPredicate(enchantment, minLevel, maxLevel);
     }
 

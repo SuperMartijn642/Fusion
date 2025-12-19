@@ -1,6 +1,9 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
@@ -17,7 +20,7 @@ import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.world.item.Item;
@@ -29,28 +32,27 @@ import java.util.*;
  */
 public class ItemModelModifierReloadListener {
 
-    private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/model_modifiers/items";
     private static final FileToIdConverter ID_CONVERTER = FileToIdConverter.json(LOCATION);
 
     public static final ItemModelModifierReloadListener INSTANCE = new ItemModelModifierReloadListener();
 
-    private final Map<ResourceLocation,ItemModelPredicatesProperties> models = new HashMap<>();
+    private final Map<Identifier,ItemModelPredicatesProperties> models = new HashMap<>();
 
     private ItemModelModifierReloadListener(){
     }
 
     public void registerPredicateModels(ResolvableModel.Resolver resolver){
-        Set<ResourceLocation> models = new HashSet<>();
+        Set<Identifier> models = new HashSet<>();
         for(ItemModelPredicatesProperties properties : this.models.values())
             models.addAll(properties.dependencies());
         models.forEach(resolver::markDependency);
     }
 
     public void applyPredicateModels(ModelBakery.BakingResult results, ItemModel.BakingContext bakingContext){
-        Map<ResourceLocation,ItemModel> bakedModels = results.itemStackModels();
-        for(Map.Entry<ResourceLocation,ItemModelPredicatesProperties> entry : this.models.entrySet()){
-            ResourceLocation target = entry.getKey();
+        Map<Identifier,ItemModel> bakedModels = results.itemStackModels();
+        for(Map.Entry<Identifier,ItemModelPredicatesProperties> entry : this.models.entrySet()){
+            Identifier target = entry.getKey();
             ItemModelPredicatesProperties properties = entry.getValue();
             if(!bakedModels.containsKey(target)) continue;
             ItemModel defaultModel = this.getOrBakeModel(properties.defaultModel == null ? target : properties.defaultModel, bakedModels, bakingContext);
@@ -61,7 +63,7 @@ public class ItemModelModifierReloadListener {
         }
     }
 
-    private ItemModel getOrBakeModel(ResourceLocation location, Map<ResourceLocation,ItemModel> bakedModels, ItemModel.BakingContext bakingContext){
+    private ItemModel getOrBakeModel(Identifier location, Map<Identifier,ItemModel> bakedModels, ItemModel.BakingContext bakingContext){
         return bakedModels.computeIfAbsent(location, l -> new BlockModelWrapper.Unbaked(l, List.of()).bake(bakingContext));
     }
 
@@ -70,7 +72,7 @@ public class ItemModelModifierReloadListener {
         this.models.clear();
 
         // Find all item model predicate files
-        Map<ResourceLocation,JsonElement> resources = new HashMap<>();
+        Map<Identifier,JsonElement> resources = new HashMap<>();
         SimpleJsonResourceReloadListener.scanDirectory(resourceManager, ID_CONVERTER, JsonOps.INSTANCE, new Codec<>() {
             @Override
             public <T> DataResult<com.mojang.datafixers.util.Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
@@ -84,8 +86,8 @@ public class ItemModelModifierReloadListener {
         }, resources);
 
         // Parse all the item model predicate files
-        for(Map.Entry<ResourceLocation,JsonElement> entry : resources.entrySet()){
-            ResourceLocation location = entry.getKey();
+        for(Map.Entry<Identifier,JsonElement> entry : resources.entrySet()){
+            Identifier location = entry.getKey();
             if(!entry.getValue().isJsonObject())
                 throw new IllegalArgumentException("Item model predicates file '" + location + "' must contain a json object!");
             JsonObject json = entry.getValue().getAsJsonObject();
@@ -102,13 +104,13 @@ public class ItemModelModifierReloadListener {
         if(!json.has("targets") || !json.get("targets").isJsonArray())
             throw new JsonParseException("Item model predicates file must have array property 'targets'!");
         JsonArray targetsJson = json.getAsJsonArray("targets");
-        Set<ResourceLocation> targets = new HashSet<>();
+        Set<Identifier> targets = new HashSet<>();
         for(JsonElement element : targetsJson){
             if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
                 throw new JsonParseException("Array property 'targets' must only contain strings!");
             if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                 throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
-            ResourceLocation identifier = ResourceLocation.parse(element.getAsString());
+            Identifier identifier = Identifier.parse(element.getAsString());
             Optional<Item> item = BuiltInRegistries.ITEM.getOptional(identifier);
             if(item.isEmpty())
                 throw new JsonParseException("Could not find an item for target '" + identifier + "'!");
@@ -118,20 +120,20 @@ public class ItemModelModifierReloadListener {
             return;
 
         // Get the default model
-        ResourceLocation defaultModel = null;
+        Identifier defaultModel = null;
         if(json.has("default_model")){
             if(!json.get("default_model").isJsonPrimitive() || !json.getAsJsonPrimitive("default_model").isString())
                 throw new JsonParseException("Property 'default_model' must be a string!");
             if(!IdentifierUtil.isValidIdentifier(json.get("default_model").getAsString()))
                 throw new JsonParseException("Default model must be a valid identifier, not '" + json.get("default_model").getAsString() + "'!");
-            defaultModel = ResourceLocation.parse(json.get("default_model").getAsString());
+            defaultModel = Identifier.parse(json.get("default_model").getAsString());
         }
 
         // Get the models
         if(!json.has("models") || !json.get("models").isJsonArray())
             throw new JsonParseException("Item model predicates file must have array property 'models'!");
         JsonArray modelsJson = json.getAsJsonArray("models");
-        List<Pair<ItemPredicate,ResourceLocation>> models = new ArrayList<>();
+        List<Pair<ItemPredicate,Identifier>> models = new ArrayList<>();
         for(JsonElement element : modelsJson){
             if(!element.isJsonObject())
                 throw new JsonParseException("Array property 'models' must only contain objects!");
@@ -142,17 +144,17 @@ public class ItemModelModifierReloadListener {
 
         // Put everything into the map
         ItemModelPredicatesProperties properties = new ItemModelPredicatesProperties(defaultModel, models);
-        for(ResourceLocation target : targets)
+        for(Identifier target : targets)
             this.models.put(target, properties);
     }
 
-    private Pair<ItemPredicate,ResourceLocation> parseModelEntry(JsonObject json){
+    private Pair<ItemPredicate,Identifier> parseModelEntry(JsonObject json){
         // Model
         if(!json.has("model") || !json.get("model").isJsonPrimitive() || !json.getAsJsonPrimitive("model").isString())
             throw new JsonParseException("Models entry must have string property 'model'!");
         if(!IdentifierUtil.isValidIdentifier(json.get("model").getAsString()))
             throw new JsonParseException("Model must be a valid identifier, not '" + json.get("model").getAsString() + "'!");
-        ResourceLocation model = ResourceLocation.parse(json.get("model").getAsString());
+        Identifier model = Identifier.parse(json.get("model").getAsString());
 
         // Conditions
         if(!json.has("conditions") || !json.get("conditions").isJsonArray())
@@ -172,19 +174,19 @@ public class ItemModelModifierReloadListener {
     }
 
     private static class ItemModelPredicatesProperties {
-        final ResourceLocation defaultModel;
-        final List<Pair<ItemPredicate,ResourceLocation>> models;
+        final Identifier defaultModel;
+        final List<Pair<ItemPredicate,Identifier>> models;
 
-        private ItemModelPredicatesProperties(ResourceLocation defaultModel, List<Pair<ItemPredicate,ResourceLocation>> models){
+        private ItemModelPredicatesProperties(Identifier defaultModel, List<Pair<ItemPredicate,Identifier>> models){
             this.defaultModel = defaultModel;
             this.models = models;
         }
 
-        Collection<ResourceLocation> dependencies(){
-            Set<ResourceLocation> models = new HashSet<>(this.models.size() + 1);
+        Collection<Identifier> dependencies(){
+            Set<Identifier> models = new HashSet<>(this.models.size() + 1);
             if(this.defaultModel != null)
                 models.add(this.defaultModel);
-            for(Pair<ItemPredicate,ResourceLocation> entry : this.models)
+            for(Pair<ItemPredicate,Identifier> entry : this.models)
                 models.add(entry.right());
             return models;
         }

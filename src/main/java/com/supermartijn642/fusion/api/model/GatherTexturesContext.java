@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.api.model;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -12,5 +12,5 @@ public interface GatherTexturesContext {
      * @return a pair containing the model type and the model's data
      * @throws IllegalArgumentException when the requested model was not in {@link ModelType#getModelDependencies(Object)}
      */
-    ModelInstance<?> getModel(ResourceLocation identifier);
+    ModelInstance<?> getModel(Identifier identifier);
 }

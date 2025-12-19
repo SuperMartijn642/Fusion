@@ -7,7 +7,7 @@ import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,11 +17,11 @@ import java.util.Map;
  */
 public class ModelTypeRegistryImpl {
 
-    private static final Map<ResourceLocation,ModelType<?>> IDENTIFIER_TO_MODEL_TYPE = new HashMap<>();
-    private static final Map<ModelType<?>,ResourceLocation> MODEL_TYPE_TO_IDENTIFIER = new HashMap<>();
+    private static final Map<Identifier,ModelType<?>> IDENTIFIER_TO_MODEL_TYPE = new HashMap<>();
+    private static final Map<ModelType<?>,Identifier> MODEL_TYPE_TO_IDENTIFIER = new HashMap<>();
     private static boolean finalized = false;
 
-    public static synchronized void registerModelType(ResourceLocation identifier, ModelType<?> modelType){
+    public static synchronized void registerModelType(Identifier identifier, ModelType<?> modelType){
         if(finalized)
             throw new RuntimeException("Model types must be registered before models get loaded!");
         if(IDENTIFIER_TO_MODEL_TYPE.containsKey(identifier))
@@ -36,7 +36,7 @@ public class ModelTypeRegistryImpl {
     public static JsonObject serializeModelData(ModelInstance<?> model){
         if(!finalized)
             throw new RuntimeException("Can only serialize model data after registration has completed!");
-        ResourceLocation identifier = MODEL_TYPE_TO_IDENTIFIER.get(model.getModelType());
+        Identifier identifier = MODEL_TYPE_TO_IDENTIFIER.get(model.getModelType());
         if(identifier == null)
             throw new RuntimeException("Cannot use unregistered model type '" + model.getModelType() + "'!");
 
@@ -62,7 +62,7 @@ public class ModelTypeRegistryImpl {
             throw new RuntimeException("Can only deserialize model data after registration has completed!");
         //noinspection rawtypes,unchecked
         ModelType<Object> modelType = (ModelType)DefaultModelTypes.BASE;
-        ResourceLocation identifier = getIdentifier(modelType);
+        Identifier identifier = getIdentifier(modelType);
         if(json.has("type")){
             JsonElement typeJson = json.getAsJsonObject().get("type");
             if(typeJson == null || !typeJson.isJsonPrimitive() || !typeJson.getAsJsonPrimitive().isString())
@@ -92,7 +92,7 @@ public class ModelTypeRegistryImpl {
         return ModelInstance.of(modelType, modelData);
     }
 
-    public static ResourceLocation getIdentifier(ModelType<?> modelType){
+    public static Identifier getIdentifier(ModelType<?> modelType){
         if(!finalized){
             synchronized(ModelTypeRegistryImpl.class){
                 return MODEL_TYPE_TO_IDENTIFIER.get(modelType);

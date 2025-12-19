@@ -23,10 +23,10 @@ public class ItemRendererMixin {
         method = "renderQuadList",
         at = @At(
             value = "INVOKE",
-            target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;FFFFIIZ)V"
+            target = "Lcom/mojang/blaze3d/vertex/VertexConsumer;putBulkData(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;Lnet/minecraft/client/renderer/block/model/BakedQuad;FFFFII)V"
         )
     )
-    private static void renderQuadList(VertexConsumer vertexConsumer, PoseStack.Pose pose, BakedQuad quad, float red, float green, float blue, float alpha, int lightmap, int overlay, boolean readExistingColor){
+    private static void renderQuadList(VertexConsumer vertexConsumer, PoseStack.Pose pose, BakedQuad quad, float red, float green, float blue, float alpha, int lightmap, int overlay){
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.tintIndex() == 39216){
             TextureAtlasSprite sprite = quad.sprite();
@@ -42,6 +42,6 @@ public class ItemRendererMixin {
             }
         }
         // Call the original method
-        vertexConsumer.putBulkData(pose, quad, red, green, blue, alpha, lightmap, overlay, readExistingColor);
+        vertexConsumer.putBulkData(pose, quad, red, green, blue, alpha, lightmap, overlay);
     }
 }

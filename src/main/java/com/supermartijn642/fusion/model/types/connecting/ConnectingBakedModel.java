@@ -15,6 +15,7 @@ import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSpri
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
+import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
@@ -29,6 +30,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3fc;
 
 import java.util.*;
 
@@ -80,17 +82,13 @@ public class ConnectingBakedModel implements BlockStateModel {
     }
 
     private static float[] getUV(BakedQuad quad, int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + VERTEX_UV_OFFSET;
-        return new float[]{Float.intBitsToFloat(quad.vertices()[offset]), Float.intBitsToFloat(quad.vertices()[offset + 1])};
+        long packed = quad.packedUV(vertexIndex);
+        return new float[]{UVPair.unpackU(packed), UVPair.unpackV(packed)};
     }
 
     private static float[] getPosition(BakedQuad quad, int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + VERTEX_POSITION_OFFSET;
-        return new float[]{
-            Float.intBitsToFloat(quad.vertices()[offset]),
-            Float.intBitsToFloat(quad.vertices()[offset + 1]),
-            Float.intBitsToFloat(quad.vertices()[offset + 2])
-        };
+        Vector3fc position = quad.position(vertexIndex);
+        return new float[]{position.x(), position.y(), position.z()};
     }
 
     private final List<TaggedBakedQuad>[] completeBlockMesh;

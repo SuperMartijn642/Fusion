@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -27,7 +27,7 @@ public interface ModelInstance<T> {
     /**
      * Gets all the dependencies on other model files.
      */
-    Collection<ResourceLocation> getModelDependencies();
+    Collection<Identifier> getModelDependencies();
 
     /**
      * Converts the model data into a baked block model.
@@ -55,5 +55,5 @@ public interface ModelInstance<T> {
     /**
      * Gets any 'parent' models which the model may inherit properties from.
      */
-    List<ResourceLocation> getParentModels();
+    List<Identifier> getParentModels();
 }

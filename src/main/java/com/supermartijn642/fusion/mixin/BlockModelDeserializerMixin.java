@@ -9,7 +9,7 @@ import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateRegistryImpl;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -38,7 +38,7 @@ public class BlockModelDeserializerMixin {
 
         JsonElement loaderJson = json.getAsJsonObject().get("loader");
         if(loaderJson != null && loaderJson.isJsonPrimitive() && loaderJson.getAsJsonPrimitive().isString() && IdentifierUtil.isValidIdentifier(loaderJson.getAsString())){
-            ResourceLocation loader = ResourceLocation.parse(loaderJson.getAsString());
+            Identifier loader = Identifier.parse(loaderJson.getAsString());
             if(loader.getNamespace().equals("fusion") && loader.getPath().equals("model")){
                 // Finalize model type registration
                 ModelTypeRegistryImpl.finalizeRegistration();

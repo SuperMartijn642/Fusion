@@ -4,7 +4,7 @@ import com.supermartijn642.fusion.model.FusionBlockModel;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.resources.model.*;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.Zone;
 import org.spongepowered.asm.mixin.Mixin;
@@ -39,7 +39,7 @@ public class ModelManagerMixin {
         ),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private static void registerBlockModelOverlays(Map<ResourceLocation,UnbakedModel> models, BlockStateModelLoader.LoadedModels loadedModels, ClientItemInfoLoader.LoadedClientInfos clientInfos, CallbackInfoReturnable<ModelDiscovery> ci, Zone zone, ModelDiscovery modelDiscovery){
+    private static void registerBlockModelOverlays(Map<Identifier,UnbakedModel> models, BlockStateModelLoader.LoadedModels loadedModels, ClientItemInfoLoader.LoadedClientInfos clientInfos, CallbackInfoReturnable<ModelDiscovery> ci, Zone zone, ModelDiscovery modelDiscovery){
         modelDiscovery.addRoot(resolver -> {
             BlockModelModifierReloadListener.INSTANCE.registerOverlays(resolver);
             ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver);
@@ -55,7 +55,7 @@ public class ModelManagerMixin {
         ),
         locals = LocalCapture.CAPTURE_FAILHARD
     )
-    private static void deserializeModel(Map.Entry<?,?> entry, CallbackInfoReturnable<?> ci, ResourceLocation name){
+    private static void deserializeModel(Map.Entry<?,?> entry, CallbackInfoReturnable<?> ci, Identifier name){
         // Store the model identifier, so the model can know its name
         FusionBlockModel.CURRENT_MODEL.set(name);
     }

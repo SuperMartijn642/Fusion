@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 
 import java.util.function.Consumer;
@@ -16,7 +16,7 @@ import java.util.function.Consumer;
  */
 public class ResourcePackListTipRenderer {
 
-    private static final ResourceLocation FUSION_LOGO = ResourceLocation.fromNamespaceAndPath("fusion", "textures/resourcepacks/fusion_icon_blurred.png");
+    private static final Identifier FUSION_LOGO = Identifier.fromNamespaceAndPath("fusion", "textures/resourcepacks/fusion_icon_blurred.png");
 
     public static void renderBackground(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphics graphics, int x, int y, int width, int height){
         if(isVanillaCompatible && !metadata.isMinVersionSatisfied())

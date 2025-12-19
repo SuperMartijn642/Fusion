@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.api.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -28,7 +28,7 @@ public interface SpriteCreationContext {
     /**
      * Gets the identifier of the texture.
      */
-    ResourceLocation getTextureIdentifier();
+    Identifier getTextureIdentifier();
 
     /**
      * Gets the texture data. Each element in the array corresponds to one mipmap level.
@@ -45,6 +45,11 @@ public interface SpriteCreationContext {
      * Gets the height of the texture.
      */
     int getAtlasHeight();
+
+    /**
+     * Gets the atlas which the sprite is stitched to.
+     */
+    Identifier getAtlasLocation();
 
     /**
      * Gets the x-position of the sprite on the atlas.
@@ -65,6 +70,11 @@ public interface SpriteCreationContext {
      * Gets the height of the sprite as allocated on the atlas.
      */
     int getSpriteHeight();
+
+    /**
+     * Gets the padding of the texture atlas sprite.
+     */
+    int getSpritePadding();
 
     /**
      * Gets the configured number of mipmap levels.

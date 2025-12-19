@@ -4,7 +4,7 @@ import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.resources.model.Material;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
@@ -13,7 +13,7 @@ public class SpriteIdentifierImpl implements SpriteIdentifier {
 
     public static final SpriteIdentifier MISSING = of(TextureAtlases.getBlocks(), MissingTextureAtlasSprite.getLocation());
 
-    public static SpriteIdentifier of(ResourceLocation atlas, ResourceLocation texture){
+    public static SpriteIdentifier of(Identifier atlas, Identifier texture){
         return new SpriteIdentifierImpl(atlas, texture);
     }
 
@@ -21,10 +21,10 @@ public class SpriteIdentifierImpl implements SpriteIdentifier {
         return new SpriteIdentifierImpl(material);
     }
 
-    private final ResourceLocation atlas, texture;
+    private final Identifier atlas, texture;
     private Material material;
 
-    private SpriteIdentifierImpl(ResourceLocation atlas, ResourceLocation texture){
+    private SpriteIdentifierImpl(Identifier atlas, Identifier texture){
         this.atlas = atlas;
         this.texture = texture;
     }
@@ -35,12 +35,12 @@ public class SpriteIdentifierImpl implements SpriteIdentifier {
     }
 
     @Override
-    public ResourceLocation getAtlas(){
+    public Identifier getAtlas(){
         return this.atlas;
     }
 
     @Override
-    public ResourceLocation getTexture(){
+    public Identifier getTexture(){
         return this.texture;
     }
 

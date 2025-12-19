@@ -295,7 +295,7 @@ public class ConnectingBakedModel implements BakedModel {
         if(this.hasSpecialQuads){
             emitter.pushTransform(
                 quad -> {
-                    if(quad.tag() != 0){
+                    if((quad.tag() & 15) != 0){
                         // Ignore the quad if it will be culled anyway
                         Direction cullFace = quad.cullFace();
                         if(cullFace != null && culledFaces[cullFace.ordinal()])
@@ -310,7 +310,7 @@ public class ConnectingBakedModel implements BakedModel {
                         TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
 
                         // TODO fix this workaround
-                        quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 65535) | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 65535) << 16);
+                        quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 16383) << 4 | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 16383) << 18);
 
                         // Handle random texture type
                         if(type == 2){
@@ -339,7 +339,7 @@ public class ConnectingBakedModel implements BakedModel {
             SurroundingBlockCache blockCache = new SurroundingBlockCache(blockView, pos, state);
             // Push a transform which maps any connecting texture quads to the correct uv
             emitter.pushTransform(quad -> {
-                if(quad.tag() != 0){
+                if((quad.tag() & 15) != 0){
                     // Ignore the quad if it will be culled anyway
                     Direction cullFace = quad.cullFace();
                     if(cullFace != null && culledFaces[cullFace.ordinal()])
@@ -369,7 +369,7 @@ public class ConnectingBakedModel implements BakedModel {
                     ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).data().getLayout();
 
                     // TODO fix this workaround
-                    quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 65535) | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 65535) << 16);
+                    quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 16383) << 4 | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 16383) << 18);
 
                     // Remap the quad's uv
                     mutableQuad.set(quad);

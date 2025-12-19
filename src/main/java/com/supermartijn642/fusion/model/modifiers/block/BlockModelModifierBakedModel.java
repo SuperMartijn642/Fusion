@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraftforge.client.MinecraftForgeClient;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
@@ -68,8 +69,10 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
     public @Nonnull List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long random){
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
             return this.original.getQuads(state, side, random);
+        BlockRenderLayer renderType = MinecraftForgeClient.getRenderLayer();
+        boolean addSimpleQuads = renderType == null || state == null || state.getBlock().getBlockLayer() == renderType;
         if(!this.hasNonSimpleModels)
-            return side == null ? this.quads : this.culledQuads[side.ordinal()];
+            return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : Collections.emptyList();
         List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
         for(IBakedModel nonSimpleModel : this.nonSimpleModels)
             quads.addAll(nonSimpleModel.getQuads(state, side, random));

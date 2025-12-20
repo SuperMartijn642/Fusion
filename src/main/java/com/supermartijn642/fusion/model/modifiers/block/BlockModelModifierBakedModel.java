@@ -74,8 +74,10 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
         if(!this.hasNonSimpleModels)
             return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : Collections.emptyList();
         List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
-        for(IBakedModel nonSimpleModel : this.nonSimpleModels)
-            quads.addAll(nonSimpleModel.getQuads(state, side, random));
+        for(IBakedModel model : this.nonSimpleModels){
+            if(renderType == null || !(model instanceof CustomRenderTypeBakedModel) || ((CustomRenderTypeBakedModel)model).getBlockRenderTypes().contains(renderType))
+                quads.addAll(model.getQuads(state, side, random));
+        }
         return quads;
     }
 

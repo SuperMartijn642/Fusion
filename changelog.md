@@ -1,3 +1,6 @@
+### Fusion 1.2.11d
+- Fixed block model modifier outputting quads from `WeightedBakedModel`s for all render types
+
 ### Fusion 1.2.11c
 - Fixed the breaking texture not showing on blocks targeted by a block model modifier
 

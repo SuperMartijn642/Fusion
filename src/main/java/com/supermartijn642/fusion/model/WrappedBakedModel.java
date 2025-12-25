@@ -13,8 +13,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
 import javax.vecmath.Matrix4f;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -74,7 +72,7 @@ public class WrappedBakedModel implements IBakedModel, CustomRenderTypeBakedMode
     }
 
     @Override
-    public Collection<BlockRenderLayer> getBlockRenderTypes(){
-        return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).getBlockRenderTypes() : Collections.emptyList();
+    public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer){
+        return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).canRenderInLayer(state, layer) : OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
     }
 }

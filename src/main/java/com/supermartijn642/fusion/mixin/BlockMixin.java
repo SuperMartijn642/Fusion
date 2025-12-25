@@ -25,7 +25,7 @@ public class BlockMixin {
     )
     private void canRenderInLayer(IBlockState state, BlockRenderLayer renderType, CallbackInfoReturnable<Boolean> ci){ // Might not work for mods that overwrite this in their block class
         IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(state);
-        if(model instanceof CustomRenderTypeBakedModel && ((CustomRenderTypeBakedModel)model).getBlockRenderTypes().contains(renderType))
+        if(model instanceof CustomRenderTypeBakedModel && ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType))
             ci.setReturnValue(true);
     }
 }

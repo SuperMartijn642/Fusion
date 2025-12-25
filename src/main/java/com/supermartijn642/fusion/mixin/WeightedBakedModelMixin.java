@@ -1,7 +1,9 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.google.common.collect.ImmutableSet;
+import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
 import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.WeightedBakedModel;
 import net.minecraft.util.BlockRenderLayer;
 import org.spongepowered.asm.mixin.Final;
@@ -12,10 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created 26/10/2023 by SuperMartijn642
@@ -27,25 +26,32 @@ public class WeightedBakedModelMixin implements CustomRenderTypeBakedModel {
     @Shadow
     private List<WeightedBakedModel.WeightedModel> models;
     @Unique
-    private Set<BlockRenderLayer> customBlockRenderTypes;
+    private boolean hasCustomRenderTypeModels;
 
     @Inject(
         method = "<init>",
         at = @At("TAIL")
     )
     public void init(List<WeightedBakedModel.WeightedModel> models, CallbackInfo ci){
-        Set<BlockRenderLayer> customBlockRenderTypes = new HashSet<>();
-        this.models.stream()
-            .map(o -> o.model)
-            .filter(CustomRenderTypeBakedModel.class::isInstance)
-            .map(CustomRenderTypeBakedModel.class::cast)
-            .map(CustomRenderTypeBakedModel::getBlockRenderTypes)
-            .forEach(customBlockRenderTypes::addAll);
-        this.customBlockRenderTypes = ImmutableSet.copyOf(customBlockRenderTypes);
+        for(WeightedBakedModel.WeightedModel entry : this.models){
+            if(entry.model instanceof CustomRenderTypeBakedModel){
+                this.hasCustomRenderTypeModels = true;
+                break;
+            }
+        }
     }
 
     @Override
-    public Collection<BlockRenderLayer> getBlockRenderTypes(){
-        return this.customBlockRenderTypes;
+    public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer){
+        if(!this.hasCustomRenderTypeModels)
+            return OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
+        for(WeightedBakedModel.WeightedModel entry : this.models){
+            IBakedModel model = entry.model;
+            if(model instanceof CustomRenderTypeBakedModel ?
+                ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
+                OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                return true;
+        }
+        return false;
     }
 }

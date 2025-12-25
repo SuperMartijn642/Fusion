@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.model.MutableQuad;
+import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSprite;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
@@ -126,7 +127,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         else{
             List<TaggedBakedQuad>[] mesh = this.blockMesh[renderType.ordinal() + 1];
             quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
-            if(this.shouldCheckOriginalBlockRenderTypes && state != null && state.getBlock().canRenderInLayer(state, renderType)){
+            if(this.shouldCheckOriginalBlockRenderTypes && state != null && OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType)){
                 mesh = this.blockMesh[0];
                 List<TaggedBakedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
                 if(additionalQuads != null){
@@ -197,8 +198,10 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
     }
 
     @Override
-    public List<BlockRenderLayer> getBlockRenderTypes(){
-        return this.blockRenderTypes;
+    public boolean canRenderInLayer(BlockState state, BlockRenderLayer layer){
+        if(this.blockRenderTypes.contains(layer))
+            return true;
+        return this.shouldCheckOriginalBlockRenderTypes && OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
     }
 
     @Override

@@ -18,7 +18,7 @@ public class BlockStateMixin implements IForgeBlockState {
         //noinspection DataFlowIssue
         BlockState state = (BlockState)(Object)this;
         IBakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
-        if(model instanceof CustomRenderTypeBakedModel && ((CustomRenderTypeBakedModel)model).getBlockRenderTypes().contains(renderType))
+        if(model instanceof CustomRenderTypeBakedModel && ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType))
             return true;
         return this.getBlockState().getBlock().canRenderInLayer(this.getBlockState(), renderType);
     }

@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.google.common.collect.ImmutableSet;
+import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
 import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.BakedQuad;
@@ -24,7 +24,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -44,24 +45,15 @@ public class WeightedBakedModelMixin implements IForgeBakedModel, CustomRenderTy
     private static final ConcurrentHashMap<Class<? extends IForgeBakedModel>,Boolean> MODELS_PRODUCING_DATA = new ConcurrentHashMap<>();
 
     @Unique
-    private Set<BlockRenderLayer> customBlockRenderTypes;
-    @Unique
     private boolean fusion$innerModelProducesData;
+    @Unique
+    private boolean hasCustomRenderTypeModels;
 
     @Inject(
         method = "<init>",
         at = @At("TAIL")
     )
     public void init(List<WeightedBakedModel.WeightedModel> models, CallbackInfo ci){
-        Set<BlockRenderLayer> customBlockRenderTypes = new HashSet<>();
-        this.list.stream()
-            .map(o -> o.model)
-            .filter(CustomRenderTypeBakedModel.class::isInstance)
-            .map(CustomRenderTypeBakedModel.class::cast)
-            .map(CustomRenderTypeBakedModel::getBlockRenderTypes)
-            .forEach(customBlockRenderTypes::addAll);
-        this.customBlockRenderTypes = ImmutableSet.copyOf(customBlockRenderTypes);
-
         this.fusion$innerModelProducesData = this.list.stream().anyMatch(w -> w.model != null && MODELS_PRODUCING_DATA.computeIfAbsent(w.model.getClass(), clz -> {
             try{
                 Method method = clz.getMethod("getModelData", IEnviromentBlockReader.class, BlockPos.class, BlockState.class, IModelData.class);
@@ -71,6 +63,12 @@ public class WeightedBakedModelMixin implements IForgeBakedModel, CustomRenderTy
                 return true;
             }
         }));
+        for(WeightedBakedModel.WeightedModel entry : this.list){
+            if(entry.model instanceof CustomRenderTypeBakedModel){
+                this.hasCustomRenderTypeModels = true;
+                break;
+            }
+        }
     }
 
     @Nonnull
@@ -94,7 +92,16 @@ public class WeightedBakedModelMixin implements IForgeBakedModel, CustomRenderTy
     }
 
     @Override
-    public Collection<BlockRenderLayer> getBlockRenderTypes(){
-        return this.customBlockRenderTypes;
+    public boolean canRenderInLayer(BlockState state, BlockRenderLayer layer){
+        if(!this.hasCustomRenderTypeModels)
+            return OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
+        for(WeightedBakedModel.WeightedModel entry : this.list){
+            IBakedModel model = entry.model;
+            if(model instanceof CustomRenderTypeBakedModel ?
+                ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
+                OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                return true;
+        }
+        return false;
     }
 }

@@ -454,8 +454,10 @@ public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedM
     }
 
     @Override
-    public List<RenderType> getBlockRenderTypes(){
-        return this.blockRenderTypes;
+    public boolean canRenderInLayer(BlockState state, RenderType layer){
+        if(this.blockRenderTypes.contains(layer))
+            return true;
+        return this.shouldCheckOriginalBlockRenderTypes && OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
 import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
 import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
@@ -408,8 +409,10 @@ public class ConnectingBakedModel implements IBakedModel, CustomRenderTypeBakedM
     }
 
     @Override
-    public List<RenderType> getBlockRenderTypes(){
-        return this.blockRenderTypes;
+    public boolean canRenderInLayer(BlockState state, RenderType layer){
+        if(this.blockRenderTypes.contains(layer))
+            return true;
+        return this.shouldCheckOriginalBlockRenderTypes && OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
     }
 
     @Nonnull

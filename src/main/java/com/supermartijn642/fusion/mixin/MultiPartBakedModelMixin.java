@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
 import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.RenderType;
@@ -50,25 +50,19 @@ public class MultiPartBakedModelMixin implements IForgeBakedModel, CustomRenderT
     private Map<BlockState,BitSet> selectorCache;
 
     @Unique
-    private Set<RenderType> customBlockRenderTypes;
+    private boolean hasCustomRenderTypeModels;
 
     @Inject(
         method = "<init>",
         at = @At("TAIL")
     )
     private void init(List<Pair<Predicate<BlockState>,IBakedModel>> models, CallbackInfo ci){
-        Set<RenderType> customBlockRenderTypes = null;
         for(Pair<Predicate<BlockState>,IBakedModel> model : models){
             if(model.getRight() instanceof CustomRenderTypeBakedModel){
-                Collection<RenderType> renderTypes = ((CustomRenderTypeBakedModel)model.getRight()).getBlockRenderTypes();
-                if(!renderTypes.isEmpty()){
-                    if(customBlockRenderTypes == null)
-                        customBlockRenderTypes = new HashSet<>();
-                    customBlockRenderTypes.addAll(renderTypes);
-                }
+                this.hasCustomRenderTypeModels = true;
+                break;
             }
         }
-        this.customBlockRenderTypes = customBlockRenderTypes == null ? Collections.emptySet() : ImmutableSet.copyOf(customBlockRenderTypes);
     }
 
     @Nonnull
@@ -136,7 +130,37 @@ public class MultiPartBakedModelMixin implements IForgeBakedModel, CustomRenderT
     }
 
     @Override
-    public Collection<RenderType> getBlockRenderTypes(){
-        return this.customBlockRenderTypes;
+    public boolean canRenderInLayer(BlockState state, RenderType layer){
+        if(!this.hasCustomRenderTypeModels)
+            return OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
+        if(state == null)
+            return false;
+
+        // If the block state is already cached, use the cache
+        BitSet bitset = this.selectorCache.get(state);
+        if(bitset != null){
+            for(int i = 0; i < bitset.length(); ++i){
+                if(bitset.get(i)){
+                    IBakedModel model = this.selectors.get(i).getRight();
+                    if(model instanceof CustomRenderTypeBakedModel ?
+                        ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
+                        OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        // Check the predicate for each model
+        for(Pair<Predicate<BlockState>,IBakedModel> selector : this.selectors){
+            if(selector.getLeft().test(state)){
+                IBakedModel model = selector.getRight();
+                if(model instanceof CustomRenderTypeBakedModel ?
+                    ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
+                    OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                    return true;
+            }
+        }
+        return false;
     }
 }

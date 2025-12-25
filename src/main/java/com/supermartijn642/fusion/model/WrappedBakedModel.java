@@ -16,8 +16,6 @@ import net.minecraftforge.client.model.data.IModelData;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -104,7 +102,7 @@ public class WrappedBakedModel implements IBakedModel, CustomRenderTypeBakedMode
     }
 
     @Override
-    public Collection<RenderType> getBlockRenderTypes(){
-        return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).getBlockRenderTypes() : Collections.emptyList();
+    public boolean canRenderInLayer(BlockState state, RenderType layer){
+        return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).canRenderInLayer(state, layer) : OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
     }
 }

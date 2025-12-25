@@ -25,7 +25,7 @@ public class ItemBlockRenderTypesMixin {
     )
     private static void canRenderInLayer(BlockState state, RenderType renderType, CallbackInfoReturnable<Boolean> ci){
         IBakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
-        if(model instanceof CustomRenderTypeBakedModel && ((CustomRenderTypeBakedModel)model).getBlockRenderTypes().contains(renderType))
+        if(model instanceof CustomRenderTypeBakedModel && ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType))
             ci.setReturnValue(true);
     }
 }

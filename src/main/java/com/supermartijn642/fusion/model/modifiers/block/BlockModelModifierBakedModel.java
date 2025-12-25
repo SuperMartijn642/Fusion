@@ -25,7 +25,9 @@ import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.IntStream;
 
 /**
@@ -43,7 +45,6 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
     private final List<BakedQuad> quads;
     @SuppressWarnings("unchecked")
     private final List<BakedQuad>[] culledQuads = new List[6];
-    private final Set<RenderType> customBlockRenderTypes;
     private final boolean hasLayeredModels;
 
     public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models, boolean showBreakingOverlay){
@@ -56,14 +57,11 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
         List<BakedQuad> quads = new ArrayList<>();
         //noinspection unchecked
         List<BakedQuad>[] culledQuads = IntStream.range(0, 6).mapToObj(i -> new ArrayList<>()).toArray(List[]::new);
-        Set<RenderType> customBlockRenderTypes = new HashSet<>();
         boolean hasLayeredModels = false;
         Random random = new Random();
         for(BakedModel model : this.models){
             if(!model.getClass().equals(SimpleBakedModel.class)){
                 nonSimpleModels.add(model);
-                if(model instanceof CustomRenderTypeBakedModel)
-                    customBlockRenderTypes.addAll(((CustomRenderTypeBakedModel)model).getBlockRenderTypes());
                 if(model.isLayered())
                     hasLayeredModels = true;
             }else{
@@ -79,7 +77,6 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
         this.quads = List.copyOf(quads);
         for(Direction side : Direction.values())
             this.culledQuads[side.ordinal()] = List.copyOf(culledQuads[side.ordinal()]);
-        this.customBlockRenderTypes = Set.copyOf(customBlockRenderTypes);
         this.hasLayeredModels = hasLayeredModels;
     }
 
@@ -95,7 +92,7 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
         List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
         for(int i = 0; i < this.nonSimpleModels.size(); i++){
             BakedModel model = this.nonSimpleModels.get(i);
-            if(renderType == null || !(model instanceof CustomRenderTypeBakedModel) || ((CustomRenderTypeBakedModel)model).getBlockRenderTypes().contains(renderType))
+            if(renderType == null || state == null || !(model instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType))
                 quads.addAll(model.getQuads(state, side, random, arr == null || arr[i] == null ? EmptyModelData.INSTANCE : arr[i]));
         }
         return quads;
@@ -110,16 +107,24 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
         if(!this.hasNonSimpleModels)
             return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : List.of();
         List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
-        for(BakedModel model : this.nonSimpleModels)
-            quads.addAll(model.getQuads(state, side, random));
+        for(BakedModel model : this.nonSimpleModels){
+            if(renderType == null || state == null || !(model instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType))
+                quads.addAll(model.getQuads(state, side, random));
+        }
         return quads;
     }
 
     @Override
-    public Collection<RenderType> getBlockRenderTypes(){
+    public boolean canRenderInLayer(BlockState state, RenderType layer){
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
-            return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).getBlockRenderTypes() : List.of();
-        return this.customBlockRenderTypes;
+            return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).canRenderInLayer(state, layer) : OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
+        for(BakedModel model : this.models){
+            if(model instanceof CustomRenderTypeBakedModel ?
+                ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
+                OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                return true;
+        }
+        return false;
     }
 
     @Override

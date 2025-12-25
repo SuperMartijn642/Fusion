@@ -1,18 +1,23 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
 import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.MultiPartBakedModel;
 import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.tuple.Pair;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.*;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -21,30 +26,61 @@ import java.util.function.Predicate;
 @Mixin(MultiPartBakedModel.class)
 public class MultiPartBakedModelMixin implements CustomRenderTypeBakedModel {
 
+    @Final
+    @Shadow
+    private List<Pair<Predicate<BlockState>,BakedModel>> selectors;
+    @Final
+    @Shadow
+    private Map<BlockState,BitSet> selectorCache;
+
     @Unique
-    private Set<RenderType> customBlockRenderTypes;
+    private boolean hasCustomRenderTypeModels;
 
     @Inject(
         method = "<init>",
         at = @At("TAIL")
     )
     private void init(List<Pair<Predicate<BlockState>,BakedModel>> models, CallbackInfo ci){
-        Set<RenderType> customBlockRenderTypes = null;
         for(Pair<Predicate<BlockState>,BakedModel> model : models){
             if(model.getRight() instanceof CustomRenderTypeBakedModel){
-                Collection<RenderType> renderTypes = ((CustomRenderTypeBakedModel)model.getRight()).getBlockRenderTypes();
-                if(!renderTypes.isEmpty()){
-                    if(customBlockRenderTypes == null)
-                        customBlockRenderTypes = new HashSet<>();
-                    customBlockRenderTypes.addAll(renderTypes);
-                }
+                this.hasCustomRenderTypeModels = true;
+                break;
             }
         }
-        this.customBlockRenderTypes = customBlockRenderTypes == null ? Collections.emptySet() : Set.copyOf(customBlockRenderTypes);
     }
 
     @Override
-    public Collection<RenderType> getBlockRenderTypes(){
-        return this.customBlockRenderTypes;
+    public boolean canRenderInLayer(BlockState state, RenderType layer){
+        if(!this.hasCustomRenderTypeModels)
+            return OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
+        if(state == null)
+            return false;
+
+        // If the block state is already cached, use the cache
+        BitSet bitset = this.selectorCache.get(state);
+        if(bitset != null){
+            for(int i = 0; i < bitset.length(); ++i){
+                if(bitset.get(i)){
+                    BakedModel model = this.selectors.get(i).getRight();
+                    if(model instanceof CustomRenderTypeBakedModel ?
+                        ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
+                        OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        // Check the predicate for each model
+        for(Pair<Predicate<BlockState>,BakedModel> selector : this.selectors){
+            if(selector.getLeft().test(state)){
+                BakedModel model = selector.getRight();
+                if(model instanceof CustomRenderTypeBakedModel ?
+                    ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
+                    OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                    return true;
+            }
+        }
+        return false;
     }
 }

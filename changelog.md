@@ -1,3 +1,6 @@
+### Fusion 1.2.11d
+- Fixed custom render types not working
+
 ### Fusion 1.2.11c
 - Fixed block model modifier outputting quads from `WeightedBakedModel`s for all render types
 

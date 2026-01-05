@@ -1,3 +1,6 @@
+### Fusion 1.2.11d
+- Fixed `enchantment` item model modifier predicate not working for enchanted books
+
 ### Fusion 1.2.11c
 - Fixed block model modifier outputting quads from `WeightedBakedModel`s for all render types
 

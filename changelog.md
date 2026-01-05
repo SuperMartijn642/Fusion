@@ -1,3 +1,6 @@
+### Fusion 1.2.11d
+- Fixed `enchantment` item model modifier predicate not working for enchanted books
+
 ### Fusion 1.2.11c
 - Fixed crash when using NeoForge 21.9.14-beta and newer with other mods
 

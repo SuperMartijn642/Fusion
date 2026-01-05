@@ -10,6 +10,8 @@ accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/
 extendable class net/minecraft/client/renderer/block/model/BlockModel
 # BlockModelWrapper
 accessible method net/minecraft/client/renderer/item/BlockModelWrapper hasSpecialAnimatedTexture (Lnet/minecraft/world/item/ItemStack;)Z
+# EnchantmentHelper
+accessible method net/minecraft/world/item/enchantment/EnchantmentHelper getComponentType (Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/core/component/DataComponentType;
 # EntityModelSet
 accessible field net/minecraft/client/model/geom/EntityModelSet roots Ljava/util/Map;
 # FilePackResources

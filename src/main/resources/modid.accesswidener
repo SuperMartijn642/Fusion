@@ -21,6 +21,8 @@ accessible field net/minecraft/client/renderer/block/model/BlockModel textureMap
 accessible field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
 accessible method net/minecraft/client/renderer/block/model/BlockModel bakeFace (Lnet/minecraft/client/renderer/block/model/BlockElement;Lnet/minecraft/client/renderer/block/model/BlockElementFace;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/core/Direction;Lnet/minecraft/client/resources/model/ModelState;Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/block/model/BakedQuad;
 accessible method net/minecraft/client/renderer/block/model/BlockModel findTextureEntry (Ljava/lang/String;)Lcom/mojang/datafixers/util/Either;
+# EnchantmentHelper
+accessible method net/minecraft/world/item/enchantment/EnchantmentHelper getComponentType (Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/core/component/DataComponentType;
 # FilePackResources
 accessible field net/minecraft/server/packs/FilePackResources LOGGER Lorg/slf4j/Logger;
 # FilePackResources$SharedZipFileAccess

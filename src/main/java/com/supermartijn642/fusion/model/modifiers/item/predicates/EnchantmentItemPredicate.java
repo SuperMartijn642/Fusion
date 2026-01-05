@@ -9,6 +9,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
@@ -85,7 +87,10 @@ public class EnchantmentItemPredicate implements ItemPredicate {
 
     @Override
     public boolean test(ItemStack stack){
-        int level = stack.getEnchantments().getLevel(this.enchantment);
+        ItemEnchantments enchantments = stack.get(EnchantmentHelper.getComponentType(stack));
+        if(enchantments == null || enchantments.isEmpty())
+            return this.minLevel == 0;
+        int level = enchantments.getLevel(this.enchantment);
         return level >= this.minLevel && level <= this.maxLevel;
     }
 

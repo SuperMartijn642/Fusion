@@ -1,0 +1,23 @@
+name: Resource pack issue
+title: "Resource pack issue"
+description: There is an issue with a resource pack you downloaded
+body:
+  - type: markdown
+    attributes:
+      value: "
+      ## For players  
+      
+      If you are experiencing an issue with a resource pack, please report the issue to the author of the resource pack.  
+      
+      If you are experiencing a crash or believe the issue is caused by Fusion not working as expected, please use the 'Crash report' or 'Bug report' templates.  
+      
+      ## For resource pack developers  
+      
+      If you are developing a resource pack and Fusion is not behaving correctly or you have a question regarding your resource pack, please use the 'Bug report' or 'Resource pack help' templates, respectively.
+      "
+  - type: checkboxes
+    attributes:
+      label: Have you read the above message?
+      options:
+        - label: I read the above message.
+          required: true

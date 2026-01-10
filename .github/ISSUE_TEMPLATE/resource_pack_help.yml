@@ -1,0 +1,41 @@
+name: Resource pack help
+title: "[Help] Your title here"
+description: You need help developing a resource pack
+labels: help
+body:
+  - type: input
+    id: input-0
+    attributes:
+      label: Minecraft version(s)
+      description: What Minecraft version(s) are you developing for?
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-0
+    attributes:
+      label: Relevant files
+      description: Please share a link to download the resource pack that you need help with. Try to include just the relevant files to what you need help with. Also mention names of files or folders that are relevant.
+  - type: textarea
+    id: textarea-1
+    attributes:
+      label: Relevant mods or projects
+      description: If your development is related to other mods or projects, for example adding mod compatibility, please mention them here. Please also shortly explain what the other projects do if relevant to issue.
+  - type: textarea
+    id: textarea-2
+    attributes:
+      label: What are you trying to achieve?
+      description: Please describe what you are trying to do that you need help with.
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-3
+    attributes:
+      label: What do you need help with?
+      description: "Please describe what you need help with. For example: Is there something you do not understand? Can you not get something to work?"
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-4
+    attributes:
+      label: What have you tried?
+      description: Please describe what you have tried so far that did not work.

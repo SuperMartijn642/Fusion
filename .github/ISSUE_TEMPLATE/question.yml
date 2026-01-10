@@ -1,0 +1,27 @@
+name: Question
+title: "[Question] Your title here"
+description: Ask a question about this project
+projects: []
+labels:
+  - question
+body:
+  - type: textarea
+    id: textarea-0
+    attributes:
+      label: Relevant Minecraft versions and other mods/projects
+      description: If your question is related to specific Minecraft versions or other
+        mods or projects, please mention them here. Please also shortly explain
+        what the Minecraft versions or other projects do if relevant to the
+        question.
+  - type: textarea
+    id: textarea-1
+    attributes:
+      label: Question
+      description: Please describe your question.
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-2
+    attributes:
+      label: Additional context
+      description: Please share any other context or screenshots for the question here.

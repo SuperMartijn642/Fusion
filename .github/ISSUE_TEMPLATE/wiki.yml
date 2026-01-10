@@ -1,0 +1,28 @@
+name: Wiki
+title: "[Wiki] Your title here"
+description: Suggestions for/issues with the wiki
+projects: [wiki]
+labels: wiki
+body:
+  - type: textarea
+    id: textarea-0
+    attributes:
+      label: Relevant wiki page(s)
+      description: Please include the title or a link to the page(s) relevant to your issue or suggestion.
+  - type: textarea
+    id: textarea-1
+    attributes:
+      label: Issue/Suggestion
+      description: Clearly describe the issue or suggestion
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-2
+    attributes:
+      label: Examples
+      description: Please share any examples of your issue or suggestion here.
+  - type: textarea
+    id: textarea-3
+    attributes:
+      label: Additional context
+      description: Please share any other context or screenshots here.

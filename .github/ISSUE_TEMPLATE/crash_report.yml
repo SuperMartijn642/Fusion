@@ -1,0 +1,69 @@
+name: Crash report
+title: "[Crash] Your title here"
+description: A crash occurred
+labels: crash
+body:
+  - type: input
+    id: input-0
+    attributes:
+      label: Minecraft version
+      description: What Minecraft version are you using?
+    validations:
+      required: true
+  - type: dropdown
+    id: dropdown-1
+    attributes:
+      label: Mod Loader
+      description: Which mod loader are you using?
+      options:
+        - Fabric
+        - Forge
+        - NeoForge
+        - Quilt
+    validations:
+      required: true
+  - type: input
+    id: input-2
+    attributes:
+      label: Fusion version
+      description: What version of Fusion are you using?
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-1
+    attributes:
+      label: Rendering and optimization mods
+      description: Please enter whether you are using any rendering/optimization mods such as Embeddium, OptiFine, Sodium, or Iris. If yes, please list which rendering/optimization mods you are using with their versions.
+  - type: textarea
+    id: textarea-2
+    attributes:
+      label: Resource packs
+      description: If the crash occurs with specific resource packs, please share the names, versions, and links to those resource packs. Try to include just the resource packs needed to reproduce the crash. If it is not a publicly available resource pack, please share a link to a download for the resource pack.
+  - type: dropdown
+    id: dropdown-5
+    attributes:
+      label: Game environment
+      description: Please select whether it was a server or a client that crashed.
+      options:
+        - Client
+        - Server
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-3
+    attributes:
+      label: Steps to reproduce
+      description: Please describe the steps needed to recreate the crash. If you
+        cannot recreate the crash, please describe what you were doing when the
+        crash occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-4
+    attributes:
+      label: Crash report (~/logs/latest.log)
+      description: Please share a link to the `latest.log` file from your game. The
+        file is located at `logs/latest.log` next to your mods folder. You can
+        use https://gist.github.com/ to upload the log and get a link.
+    validations:
+      required: true

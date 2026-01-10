@@ -1,0 +1,64 @@
+name: Bug report
+title: "[Bug] Your title here"
+description: Report of a bug
+labels: bug
+body:
+  - type: input
+    id: input-0
+    attributes:
+      label: Minecraft version
+      description: What Minecraft version are you using?
+    validations:
+      required: true
+  - type: dropdown
+    id: dropdown-1
+    attributes:
+      label: Mod Loader
+      description: Which mod loader are you using?
+      options:
+        - Fabric
+        - Forge
+        - NeoForge
+        - Quilt
+    validations:
+      required: true
+  - type: input
+    id: input-2
+    attributes:
+      label: Fusion version
+      description: What version of Fusion are you using?
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-1
+    attributes:
+      label: Rendering and optimization mods
+      description: Please enter whether you are using any rendering/optimization mods such as Embeddium, OptiFine, Sodium, or Iris. If yes, please list which rendering/optimization mods you are using with their versions.
+  - type: textarea
+    id: textarea-2
+    attributes:
+      label: Bug description
+      description: Please describe your issue. It is often clearest if you describe
+        the current behavior and the expected behavior is.
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-3
+    attributes:
+      label: Steps to reproduce
+      description: Please describe the steps needed to recreate the issue. If you
+        cannot recreate the issue, please describe what you were doing when the
+        issue occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: textarea-4
+    attributes:
+      label: Example resource pack
+      description: If the issue requires a specific resource pack setup, please share a link to a resource pack with which the issue occurs. Try to include just the files needed to reproduce the issue.
+  - type: textarea
+    id: textarea-5
+    attributes:
+      label: Screenshots
+      description: Please share some screenshots of the issue. If screenshots are not
+        relevant to your issue, you can omit this section.

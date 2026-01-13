@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.api.model.data;
 
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
+import com.supermartijn642.fusion.api.util.Either;
 
 import java.util.Map;
 
@@ -17,5 +18,9 @@ public interface ConnectingModelData extends BaseModelData {
 
     ConnectionPredicate getDefaultConnectionPredicate();
 
-    Map<String,ConnectionPredicate> getAllConnectionPredicates();
+    /**
+     * Gets all connection predicates by key.
+     * Each key points to either a connection predicate or to another connections key.
+     */
+    Map<String,Either<ConnectionPredicate,String>> getAllConnectionPredicates();
 }

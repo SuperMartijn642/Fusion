@@ -14,14 +14,20 @@ public interface ConnectingModelDataBuilder extends BaseModelDataBuilder<Connect
     }
 
     /**
-     * Adds a new connection predicate. Of the added predicates, only one needs to be satisfied to form a connection.
-     * In case multiple predicates should be satisfied, use {@link DefaultConnectionPredicates#and(ConnectionPredicate...)}.
+     * Sets the default connection predicate for this model.
+     * @see DefaultConnectionPredicates
      */
-    ConnectingModelDataBuilder connection(ConnectionPredicate predicate);
+    ConnectingModelDataBuilder defaultConnections(ConnectionPredicate predicate);
 
     /**
-     * Adds a new connection predicate for the given texture. Of the added predicates, only one needs to be satisfied to form a connection.
-     * In case multiple predicates should be satisfied, use {@link DefaultConnectionPredicates#and(ConnectionPredicate...)}.
+     * Sets the connection predicate for the given key.
+     * @see DefaultConnectionPredicates
      */
-    ConnectingModelDataBuilder connection(String texture, ConnectionPredicate predicate);
+    ConnectingModelDataBuilder connections(String key, ConnectionPredicate predicate);
+
+    /**
+     * Sets the connections for key {@code key} to redirect to key {@code reference}.
+     * @see DefaultConnectionPredicates
+     */
+    ConnectingModelDataBuilder connections(String key, String reference);
 }

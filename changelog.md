@@ -1,3 +1,7 @@
+### Fusion 1.2.12
+- Fixed handling of connections key references in connecting models
+- Fixed texture references added through base model data builder having an extra '#'
+
 ### Fusion 1.2.11c
 - Fixed custom render types not working
 

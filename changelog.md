@@ -1,3 +1,6 @@
+### Fusion 1.2.12
+- Fixed handling of connections key references in connecting models
+
 ### Fusion 1.2.11c
 - Fixed custom render types not working
 

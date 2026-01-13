@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
-import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelBakingContext;
@@ -31,14 +30,12 @@ import java.util.stream.Collectors;
  */
 public class ConnectingModelDataImpl extends BaseModelDataImpl implements ConnectingModelData {
 
-    private final Map<String,ConnectionPredicate> predicates;
-    private final Map<String,String> connectionReferences;
+    private final Map<String,Either<ConnectionPredicate,String>> connections;
 
-    public ConnectingModelDataImpl(BlockModel model, List<ResourceLocation> parents, List<ConnectingModelElement> elements, Map<String,ConnectionPredicate> predicates, Map<String,String> references){
+    public ConnectingModelDataImpl(BlockModel model, List<ResourceLocation> parents, List<ConnectingModelElement> elements, Map<String,Either<ConnectionPredicate,String>> connections){
         //noinspection rawtypes,unchecked
         super(model, parents, (List)elements);
-        this.predicates = ImmutableMap.copyOf(predicates);
-        this.connectionReferences = ImmutableMap.copyOf(references);
+        this.connections = Map.copyOf(connections);
     }
 
     @Override
@@ -49,7 +46,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
 
     @Override
     public ConnectionPredicate getConnectionPredicate(String texture){
-        return this.predicates.get(texture);
+        return this.connections.get(texture).leftOrElse(null);
     }
 
     @Override
@@ -58,12 +55,8 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
     }
 
     @Override
-    public Map<String,ConnectionPredicate> getAllConnectionPredicates(){
-        return this.predicates;
-    }
-
-    public Map<String,String> getConnectionReferences(){
-        return this.connectionReferences;
+    public Map<String,Either<ConnectionPredicate,String>> getAllConnectionPredicates(){
+        return this.connections;
     }
 
     @Override
@@ -132,15 +125,15 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
             for(ModelInstance<?> model : modelStack){
                 if(model.getModelType() != DefaultModelTypes.CONNECTING)
                     continue;
-                ConnectionPredicate predicate = ((ConnectingModelDataImpl)model.getModelData()).predicates.get(currentKey);
+                Either<ConnectionPredicate,String> either = this.connections.get(currentKey);
+                if(either == null)
+                    continue;
                 // If a predicate is found return it
-                if(predicate != null)
-                    return predicate;
-                String reference = ((ConnectingModelDataImpl)model.getModelData()).connectionReferences.get(currentKey);
-                if(reference != null){
-                    newKey = reference;
-                    break;
-                }
+                if(either.isLeft())
+                    return either.left();
+                // Update the current key
+                newKey = either.right();
+                break;
             }
             // If no connections map contains the key, use the texture references
             if(newKey == null){
@@ -185,12 +178,9 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
     private static Either<ConnectionPredicate,String> findConnectionsEntry(ModelBakingContext context, ModelInstance<?> model, String key){
         // Check the model itself
         if(model.getModelType() == DefaultModelTypes.CONNECTING){
-            ConnectionPredicate predicate = ((ConnectingModelDataImpl)model.getModelData()).predicates.get(key);
-            if(predicate != null)
-                return Either.left(predicate);
-            String reference = ((ConnectingModelDataImpl)model.getModelData()).connectionReferences.get(key);
-            if(reference != null)
-                return Either.right(reference);
+            Either<ConnectionPredicate,String> either = ((ConnectingModelDataImpl)model.getModelData()).connections.get(key);
+            if(either != null)
+                return either;
         }
         // Check parent models
         for(ResourceLocation location : model.getParentModels()){

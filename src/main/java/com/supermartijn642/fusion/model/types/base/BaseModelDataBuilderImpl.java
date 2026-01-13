@@ -63,7 +63,7 @@ public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelD
         TextureSlots.Data.Builder textures = new TextureSlots.Data.Builder();
         this.textures.forEach((key, value) -> {
             if(value.charAt(0) == '#')
-                textures.addReference(key, value);
+                textures.addReference(key, value.substring(1));
             else
                 textures.addTexture(key, new Material(TextureAtlases.getBlocks(), Identifier.parse(value)));
         });

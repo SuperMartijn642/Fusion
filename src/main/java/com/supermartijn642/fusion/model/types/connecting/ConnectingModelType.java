@@ -10,6 +10,7 @@ import com.supermartijn642.fusion.api.model.data.ConnectingModelData;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.predicate.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
+import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelElement;
 import net.minecraft.client.renderer.model.*;
@@ -86,22 +87,25 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         // Deserialize the base model
         BaseModelData base = DefaultModelTypes.BASE.deserialize(json);
         // Deserialize all the predicates from the 'connections' array
-        Map<String,ConnectionPredicate> predicates = new HashMap<>();
-        Map<String,String> connectionReferences = new HashMap<>();
-        predicates.put("default", DefaultConnectionPredicates.isSameState());
+        Map<String,Either<ConnectionPredicate,String>> connections = new LinkedHashMap<>(); // This should maintain order
+        connections.put("default", Either.left(DefaultConnectionPredicates.isSameState()));
         if(json.has("connections")){
             JsonElement connectionsElement = json.get("connections");
             if(connectionsElement.isJsonArray() || (connectionsElement.isJsonObject() && connectionsElement.getAsJsonObject().has("type"))) // Legacy array
-                predicates.put("default", loadPredicate(connectionsElement, "connections"));
+                connections.put("default", Either.left(loadPredicate(connectionsElement, "connections")));
             else if(connectionsElement.isJsonObject()){ // Load predicates per texture
                 JsonObject object = connectionsElement.getAsJsonObject();
                 if(object.size() == 0)
                     throw new JsonParseException("Property 'connections' must have a 'type' key or keys per texture!");
-                for(Map.Entry<String,JsonElement> texture : object.entrySet()){
-                    if(texture.getValue().isJsonPrimitive() && texture.getValue().getAsJsonPrimitive().isString())
-                        connectionReferences.put(texture.getKey(), texture.getValue().getAsString());
-                    else
-                        predicates.put(texture.getKey(), loadPredicate(texture.getValue(), texture.getKey()));
+                for(Map.Entry<String,JsonElement> entry : object.entrySet()){
+                    String key = entry.getKey();
+                    if(entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isString()){
+                        String reference = entry.getValue().getAsString();
+                        if(reference.isEmpty() || reference.charAt(0) != '#')
+                            throw new JsonParseException("Reference for connections key '" + key + "' must start with '#'!");
+                        connections.put(key, Either.right(reference.substring(1)));
+                    }else
+                        connections.put(key, Either.left(loadPredicate(entry.getValue(), key)));
                 }
             }else
                 throw new JsonParseException("Property 'connections' must be an array!");
@@ -138,7 +142,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
                 connectionKeys
             ));
         }
-        return new ConnectingModelDataImpl(base.getVanillaModel(), base.getParents(), elements, predicates, connectionReferences);
+        return new ConnectingModelDataImpl(base.getVanillaModel(), base.getParents(), elements, connections);
     }
 
     @Override
@@ -146,12 +150,17 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         // Serialize base model
         JsonObject json = DefaultModelTypes.BASE.serialize(value);
         // Create an array with all the serialized predicates
-        Map<String,ConnectionPredicate> predicates = value.getAllConnectionPredicates();
-        if(predicates.size() == 1 && predicates.containsKey("default"))
-            json.add("connections", FusionPredicateRegistry.serializeConnectionPredicate(predicates.get("default")));
+        Map<String,Either<ConnectionPredicate,String>> predicates = value.getAllConnectionPredicates();
+        if(predicates.size() == 1 && predicates.containsKey("default") && predicates.get("default").isLeft())
+            json.add("connections", FusionPredicateRegistry.serializeConnectionPredicate(predicates.get("default").left()));
         else if(!predicates.isEmpty()){
             JsonObject connectionsJson = new JsonObject();
-            predicates.forEach((texture, predicate) -> connectionsJson.add(texture, FusionPredicateRegistry.serializeConnectionPredicate(predicate)));
+            predicates.forEach((key, predicate) -> {
+                if(predicate.isLeft())
+                    connectionsJson.add(key, FusionPredicateRegistry.serializeConnectionPredicate(predicate.left()));
+                else
+                    connectionsJson.addProperty(key, '#' + predicate.right());
+            });
             json.add("connections", connectionsJson);
         }
         // Add 'connections' property to element faces

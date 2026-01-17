@@ -65,7 +65,7 @@ public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelD
         ResourceLocation parent = parents.isEmpty() ? null : parents.get(0);
         Map<String,Either<Material,String>> textures = this.textures.entrySet().stream()
             .map(entry -> Pair.of(entry.getKey(), entry.getValue()))
-            .map(pair -> pair.<Either<Material,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s.substring(1)) : Either.left(new Material(TextureAtlases.getBlocks(), new ResourceLocation(s)))))
+            .map(pair -> pair.<Either<Material,String>>mapRight(s -> s.charAt(0) == '#' ? Either.right(s) : Either.left(new Material(TextureAtlases.getBlocks(), new ResourceLocation(s)))))
             .collect(Collectors.toMap(Pair::left, Pair::right));
         BlockModel vanillaModel = new BlockModel(parent, Collections.emptyList(), textures, true, null, ItemTransforms.NO_TRANSFORMS, Collections.emptyList());
         return new BaseModelDataImpl(vanillaModel, parents, Collections.emptyList());

@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -91,6 +92,21 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
 
     @Override
     public TextureAtlasSprite createSprite(SpriteCreationContext context, ConnectingTextureData data){
+        // Legacy full layout was a square image, so change the mipmaps to new aspect ratio to match framing
+        List<int[][]> textureBuffers = context.getTextureBuffers();
+        if(data.getLayout() == ConnectingTextureLayout.FULL && context.getTextureWidth() == context.getTextureHeight()){
+            int properHeight = context.getTextureWidth() * 3 / 4;
+            for(int[][] frame : textureBuffers){
+                for(int level = 0; level < frame.length; level++){
+                    int properSize = context.getTextureWidth() * properHeight >> (level * 2);
+                    int[] newBuffer = new int[properSize];
+                    System.arraycopy(frame[level], 0, newBuffer, 0, properSize);
+                    frame[level] = newBuffer;
+                }
+            }
+        }
+
+        // Create connecting sprite
         TextureAtlasSprite sprite = context.createOriginalSprite();
         return new ConnectingTextureSprite(sprite, data);
     }

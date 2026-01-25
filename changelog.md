@@ -1,3 +1,6 @@
+### Fusion 1.2.12a
+- Fixed handling of legacy square aspect ratio full layout connecting textures
+
 ### Fusion 1.2.12
 - Fixed handling of connections key references in connecting models
 

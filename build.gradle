@@ -41,7 +41,7 @@ dependencies {
     // ModernFix
 //    modRuntimeOnly "curse.maven:modernfix-790626:6171685"
     // Sodium
-    modCompileOnly "maven.modrinth:sodium:mc1.21.11-0.8.1-fabric"
+    modCompileOnly "maven.modrinth:sodium:mc1.21.11-0.8.4-fabric"
     // Iris
 //    modRuntimeOnly "maven.modrinth:iris:1.10.3+1.21.11-fabric"
 

@@ -1,3 +1,6 @@
+### Fusion 1.2.12a
+- Fixed performance issues when resolving custom texture tinting with Sodium installed
+
 ### Fusion 1.2.12
 - Fixed handling of connections key references in connecting models
 - Fixed texture references added through base model data builder having an extra '#'

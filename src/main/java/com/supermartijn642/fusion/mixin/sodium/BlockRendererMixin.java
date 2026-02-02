@@ -3,13 +3,11 @@ package com.supermartijn642.fusion.mixin.sodium;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
-import com.supermartijn642.fusion.util.TextureAtlases;
 import net.caffeinemc.mods.sodium.api.util.ColorMixer;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer;
 import net.caffeinemc.mods.sodium.client.render.model.AbstractBlockRenderContext;
 import net.caffeinemc.mods.sodium.client.render.model.MutableQuadViewImpl;
-import net.caffeinemc.mods.sodium.client.render.texture.ExtendedTextureAtlas;
-import net.minecraft.client.Minecraft;
+import net.caffeinemc.mods.sodium.client.render.texture.SpriteFinderCache;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,12 +31,12 @@ public abstract class BlockRendererMixin extends AbstractBlockRenderContext {
         if(quad.getTintIndex() == 39216){
             TextureAtlasSprite sprite = quad.cachedSprite();
             if(!(sprite instanceof BaseTextureSprite)){
-                if(quad.getTag() == 0)
-                    sprite = quad.sprite(((ExtendedTextureAtlas)Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks())).sodium$getSpriteFinder());
-                else{
+                if(quad.getTag() == 0){
+                    sprite = quad.sprite(SpriteFinderCache.forBlockAtlas());
+                }else{
                     float u = ((quad.getTag() >> 4) & 16383) / 16383f;
                     float v = (quad.getTag() >> 18) / 16383f;
-                    sprite = ((ExtendedTextureAtlas)Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks())).sodium$getSpriteFinder().find(u, v);
+                    sprite = SpriteFinderCache.forBlockAtlas().find(u, v);
                     quad.cachedSprite(sprite);
                 }
             }

@@ -51,6 +51,8 @@ dependencies {
 //    runtimeOnly "curse.maven:mixin-booter-419286:4459218"
     // Relictium
     compileOnly fg.deobf("curse.maven:relictium-1181652:6103239")
+    // LoliASM
+    compileOnly fg.deobf("curse.maven:loliasm-460609:7267368")
 
     // Just Enough Items
 //    runtimeOnly fg.deobf("curse.maven:jei-238222:${just_enough_items_file}")
@@ -127,7 +129,7 @@ minecraft {
 
 tasks.register('processSources', Sync) {
     from sourceSets.main.java
-    into layout.buildDirectory.dir("/sources")
+    into layout.buildDirectory.dir("sources")
     inputs.property 'version', version
 
     // Replace mod properties in main mod class

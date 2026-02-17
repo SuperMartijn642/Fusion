@@ -1,3 +1,6 @@
+### Fusion 1.2.12b
+- Fixed crash with CensoredASM
+
 ### Fusion 1.2.12a
 - Fixed handling of legacy square aspect ratio full layout connecting textures
 

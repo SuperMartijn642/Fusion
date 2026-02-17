@@ -35,7 +35,7 @@ public class BlockRendererMixinVintagium {
     )
     private int[] getBlockTint(int[] colors, IBlockAccess level, IBlockState state, BlockPos pos, ModelVertexSink sink, Vec3d offset, IBlockColor colorProvider, BakedQuad quad, QuadLightData light, ChunkRenderData.Builder renderData){
         // In case texture has a custom tinting set, replace the original tinting
-        if(quad.tintIndex == 39216){
+        if(quad.getTintIndex() == 39216){
             TextureAtlasSprite sprite = quad.getSprite();
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();

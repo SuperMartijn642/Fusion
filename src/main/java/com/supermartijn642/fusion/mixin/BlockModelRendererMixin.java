@@ -71,7 +71,7 @@ public class BlockModelRendererMixin {
     )
     private BakedQuad tintQuadAO(BakedQuad quad, IBlockAccess level, IBlockState state, BlockPos pos, BufferBuilder vertexConsumer, List<BakedQuad> quads, float[] arr, BitSet bitSet, BlockModelRenderer.AmbientOcclusionFace occlusion){
         // In case texture has a custom tinting set, replace the original tinting
-        if(quad.tintIndex == 39216){
+        if(quad.getTintIndex() == 39216){
             TextureAtlasSprite sprite = quad.getSprite();
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
@@ -101,7 +101,7 @@ public class BlockModelRendererMixin {
     )
     private BakedQuad tintQuadFlat(BakedQuad quad, IBlockAccess level, IBlockState state, BlockPos pos, int lightmap, boolean recalculateLight, BufferBuilder vertexConsumer){
         // In case texture has a custom tinting set, replace the original tinting
-        if(quad.tintIndex == 39216){
+        if(quad.getTintIndex() == 39216){
             TextureAtlasSprite sprite = quad.getSprite();
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();

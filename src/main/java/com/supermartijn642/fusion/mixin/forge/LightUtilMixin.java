@@ -29,7 +29,7 @@ public class LightUtilMixin {
     )
     private static void putBakedQuad(IVertexConsumer consumer, BakedQuad quad, CallbackInfo ci){
         // In case texture has a custom tinting set, mark the vertex consumer
-        if(quad.tintIndex == 39216){
+        if(quad.getTintIndex() == 39216){
             TextureAtlasSprite sprite = quad.getSprite();
             if(sprite instanceof BaseTextureSprite){
                 BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();

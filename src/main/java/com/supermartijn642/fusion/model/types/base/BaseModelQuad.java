@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.Optional;
 import zone.rong.loliasm.bakedquad.SupportingBakedQuad;
 import zone.rong.loliasm.config.LoliConfig;
 
@@ -17,6 +18,13 @@ import zone.rong.loliasm.config.LoliConfig;
 public class BaseModelQuad {
 
     private static final boolean isSquashBakedQuadEnabled = Loader.isModLoaded("loliasm") && LoliConfig.instance.squashBakedQuads;
+
+    // This was being inlined causing class-loading, @Optional.Method annotation needed
+    @Optional.Method(modid = "loliasm")
+    private static BakedQuad newSupportingQuad(BakedQuad quad) {
+        return new SupportingBakedQuad(quad.getVertexData(), 39216, quad.getFace(),
+                quad.getSprite(), quad.shouldApplyDiffuseLighting(), quad.getFormat());
+    }
 
     private final BakedQuad bakedQuad;
     private final TextureType<?> textureType;
@@ -37,10 +45,9 @@ public class BaseModelQuad {
             this.emissive = data.isEmissive();
             if(data.getTinting() != null)
                 if(isSquashBakedQuadEnabled) {
-                    quad = new SupportingBakedQuad(quad.getVertexData(), 39216, quad.getFace(),
-                            quad.getSprite(), quad.shouldApplyDiffuseLighting(), quad.getFormat());
+                    quad = newSupportingQuad(quad);
                 }else{
-                    bakedQuad.tintIndex = 39216;
+                    quad.tintIndex = 39216;
                 }
         }else{
             this.renderType = null;

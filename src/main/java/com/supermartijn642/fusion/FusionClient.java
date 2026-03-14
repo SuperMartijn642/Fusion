@@ -40,6 +40,7 @@ public class FusionClient implements ClientModInitializer {
         FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "scrolling"), DefaultTextureTypes.SCROLLING);
         FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "random"), DefaultTextureTypes.RANDOM);
         FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "continuous"), DefaultTextureTypes.CONTINUOUS);
+        FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "biome"), DefaultTextureTypes.BIOME);
         // Register default model types
         FusionModelTypeRegistry.registerModelType(Identifier.fromNamespaceAndPath("fusion", "unknown"), DefaultModelTypes.UNKNOWN);
         FusionModelTypeRegistry.registerModelType(Identifier.fromNamespaceAndPath("fusion", "vanilla"), DefaultModelTypes.VANILLA);

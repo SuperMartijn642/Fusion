@@ -8,6 +8,8 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.texture.types.biome.BiomeTextureSprite;
+import com.supermartijn642.fusion.texture.types.biome.BiomeTextureType;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
@@ -131,8 +133,8 @@ public class ConnectingBakedModel implements BlockStateModel {
                 tag = 1 | (spriteIndex << 4) | (predicateIndex << 12);
             }
             // Tag quads which need additional processing
-            if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
-                int type = quad.textureType() == DefaultTextureTypes.RANDOM ? 2 : 3;
+            if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS || quad.textureType() == DefaultTextureTypes.BIOME){
+                int type = quad.textureType() == DefaultTextureTypes.RANDOM ? 2 : quad.textureType() == DefaultTextureTypes.CONTINUOUS ? 3 : 4;
                 // Give each sprite a unique index
                 int spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().sprite(), o -> sprites.size());
                 // Pack the type and sprite index into the tag
@@ -279,6 +281,13 @@ public class ConnectingBakedModel implements BlockStateModel {
                             mutableQuad.set(quad);
                             mutableQuad.resetPermutation();
                             ContinuousTextureType.processQuad(mutableQuad, pos, quad.nominalFace(), (ContinuousTextureSprite)sprite);
+                            return true;
+                        }
+                        // Handle biome texture type
+                        if(type == 4){
+                            mutableQuad.set(quad);
+                            mutableQuad.resetPermutation();
+                            BiomeTextureType.processQuad(mutableQuad, blockView, pos, quad.nominalFace(), (BiomeTextureSprite)sprite);
                             return true;
                         }
                     }

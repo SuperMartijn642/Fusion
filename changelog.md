@@ -1,3 +1,6 @@
+### Fusion 1.2.12c
+- Fixed crash without CensoredASM
+
 ### Fusion 1.2.12b
 - Fixed crash with CensoredASM
 

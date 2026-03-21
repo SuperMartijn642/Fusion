@@ -25,6 +25,7 @@ import java.util.List;
  */
 public class BlockModelModifierBakedModel implements BlockStateModel {
 
+    private static final ModelProperty<Long> SEED_PROPERTY = new ModelProperty<>();
     private static final ModelProperty<ModelData[]> DATA_PROPERTY = new ModelProperty<>();
     private static final ModelProperty<BlockState> STATE_PROPERTY = new ModelProperty<>();
 
@@ -52,12 +53,19 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     @Override
     public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData data, @Nullable RenderType renderType){
+        Long seed = data.get(SEED_PROPERTY);
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            if(seed != null)
+                random.setSeed(seed);
             this.original.collectParts(random, parts, data, renderType);
             return;
         }
         if(!this.hasNonSimpleModels){
-            this.models.forEach(model -> model.collectParts(random, parts, data, renderType));
+            for(BlockStateModel model : this.models){
+                if(seed != null)
+                    random.setSeed(seed);
+                model.collectParts(random, parts, ModelData.EMPTY, renderType);
+            }
             return;
         }
 
@@ -75,8 +83,11 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
                     model.collectParts(random, parts);
             }else{
                 ModelData subData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
-                if(state == null || model.getRenderTypes(state, random, subData).contains(renderType))
+                if(state == null || model.getRenderTypes(state, random, subData).contains(renderType)){
+                    if(seed != null)
+                        random.setSeed(seed);
                     model.collectParts(random, parts, subData, renderType);
+                }
                 i++;
             }
         }
@@ -93,14 +104,20 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     @Override
     public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+        Long seed = data.get(SEED_PROPERTY);
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            if(seed != null)
+                rand.setSeed(seed);
             return this.original.getRenderTypes(state, rand, data);
+        }
         if(!this.hasNonSimpleModels)
             return BlockStateModel.super.getRenderTypes(state, rand, data);
         ChunkRenderTypeSet renderTypes = this.hasSimpleModels ? BlockStateModel.super.getRenderTypes(state, rand, data) : ChunkRenderTypeSet.none();
         ModelData[] arr = data.get(DATA_PROPERTY);
         for(int i = 0; i < this.nonSimpleModels.size(); i++){
             ModelData subData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
+            if(seed != null)
+                rand.setSeed(seed);
             renderTypes = ChunkRenderTypeSet.union(this.nonSimpleModels.get(i).getRenderTypes(state, rand, subData), renderTypes);
         }
         return renderTypes;
@@ -108,12 +125,14 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
+        ModelData.Builder builder = ModelData.builder()
+            .with(SEED_PROPERTY, state.getSeed(pos));
         if(!this.hasNonSimpleModels)
-            return data;
+            return builder.build();
         ModelData[] arr = new ModelData[this.nonSimpleModels.size()];
         for(int i = 0; i < this.nonSimpleModels.size(); i++)
             arr[i] = this.nonSimpleModels.get(i).getModelData(level, pos, state, data);
-        return ModelData.builder().with(DATA_PROPERTY, arr).with(STATE_PROPERTY, state).build();
+        return builder.with(DATA_PROPERTY, arr).with(STATE_PROPERTY, state).build();
     }
 
     @Override

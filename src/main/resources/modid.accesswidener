@@ -3,6 +3,7 @@ accessWidener v1 named
 # AnimationMetadataSection
 accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frameHeight I
 accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frameWidth I
+accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frames Ljava/util/List;
 # BakedQuad
 accessible field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
@@ -91,14 +92,32 @@ accessible field net/minecraft/client/renderer/RenderType$CompositeState texture
 accessible field net/minecraft/client/renderer/texture/SpriteContents originalImage Lcom/mojang/blaze3d/platform/NativeImage;
 accessible field net/minecraft/client/renderer/texture/SpriteContents byMipLevel [Lcom/mojang/blaze3d/platform/NativeImage;
 accessible field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
-accessible method net/minecraft/client/renderer/texture/SpriteContents upload (IIII[Lcom/mojang/blaze3d/platform/NativeImage;)V
+accessible field net/minecraft/client/renderer/texture/SpriteContents metadata Lnet/minecraft/server/packs/resources/ResourceMetadata;
+mutable field net/minecraft/client/renderer/texture/SpriteContents metadata Lnet/minecraft/server/packs/resources/ResourceMetadata;
+extendable method net/minecraft/client/renderer/texture/SpriteContents createAnimatedTexture (Lnet/minecraft/client/resources/metadata/animation/FrameSize;IILnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;)Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
 mutable field net/minecraft/client/renderer/texture/SpriteContents byMipLevel [Lcom/mojang/blaze3d/platform/NativeImage;
 mutable field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
 # SpriteContents$AnimatedTexture
+accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture frames Ljava/util/List;
+accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture interpolateFrames Z
 accessible method net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Ljava/util/List;IZ)V
+extendable method net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture uploadFrame (III)V
 accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
+# SpriteContents$FrameInfo
+accessible field net/minecraft/client/renderer/texture/SpriteContents$FrameInfo index I
+accessible method net/minecraft/client/renderer/texture/SpriteContents$FrameInfo <init> (II)V
+accessible class net/minecraft/client/renderer/texture/SpriteContents$FrameInfo
+# SpriteContents$InterpolationData
+accessible method net/minecraft/client/renderer/texture/SpriteContents$InterpolationData <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;)V
+extendable method net/minecraft/client/renderer/texture/SpriteContents$InterpolationData getPixel (Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;IIII)I
+accessible class net/minecraft/client/renderer/texture/SpriteContents$InterpolationData
+# SpriteContents$Ticker
+accessible method net/minecraft/client/renderer/texture/SpriteContents$Ticker <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;Lnet/minecraft/client/renderer/texture/SpriteContents$InterpolationData;)V
+accessible class net/minecraft/client/renderer/texture/SpriteContents$Ticker
 # SpriteLoader
 mutable field net/minecraft/client/renderer/texture/SpriteLoader DEFAULT_METADATA_SECTIONS Ljava/util/Set;
+# Stitcher
+accessible field net/minecraft/client/renderer/texture/Stitcher mipLevel I
 # TextureAtlasSprite
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F

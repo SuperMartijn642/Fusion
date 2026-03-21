@@ -15,9 +15,7 @@ import net.minecraft.client.resources.metadata.animation.AnimationMetadataSectio
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Created 22/10/2024 by SuperMartijn642
@@ -118,24 +116,35 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         builder.emissive(base.isEmissive());
         builder.tinting(base.getTinting());
         // Rows
-        int rows;
         if(json.has("rows")){
             if(!json.get("rows").isJsonPrimitive() || !json.getAsJsonPrimitive("rows").isNumber())
                 throw new JsonParseException("Property 'rows' must be a number!");
-            rows = json.get("rows").getAsInt();
+            int rows = json.get("rows").getAsInt();
             if(rows < 1 || rows > MAX_SIZE)
                 throw new JsonParseException("Property 'rows' must be a number between 1 and 10!");
             builder.rows(rows);
         }
         // Columns
-        int columns;
         if(json.has("columns")){
             if(!json.get("columns").isJsonPrimitive() || !json.getAsJsonPrimitive("columns").isNumber())
                 throw new JsonParseException("Property 'columns' must be a number!");
-            columns = json.get("columns").getAsInt();
+            int columns = json.get("columns").getAsInt();
             if(columns < 1 || columns > MAX_SIZE)
                 throw new JsonParseException("Property 'columns' must be a number between 1 and 10!");
             builder.columns(columns);
+        }
+        // Randomness source
+        if(json.has("random_source")){
+            if(!json.get("random_source").isJsonPrimitive() || !json.getAsJsonPrimitive("random_source").isString())
+                throw new JsonParseException("Property 'random_source' must be a string!");
+            String randomSourceString = json.get("random_source").getAsString();
+            RandomTextureData.RandomnessSource randomSource;
+            try{
+                randomSource = RandomTextureData.RandomnessSource.valueOf(randomSourceString.toUpperCase(Locale.ROOT));
+            }catch(IllegalArgumentException e){
+                throw new JsonParseException("Property 'random_source' must be one of " + Arrays.toString(RandomTextureData.RandomnessSource.values()).toLowerCase(Locale.ROOT) + ", not '" + randomSourceString + "'!");
+            }
+            builder.randomSource(randomSource);
         }
         // Seed
         if(json.has("seed")){
@@ -156,6 +165,8 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         // Columns
         if(data.getColumns() != 1)
             json.addProperty("columns", data.getColumns());
+        if(data.getRandomSource() != RandomTextureData.RandomnessSource.POSITION_FACING)
+            json.addProperty("random_source", data.getRandomSource().toString().toLowerCase(Locale.ROOT));
         // Seed
         if(data.getSeed() != null)
             json.addProperty("seed", data.getSeed());
@@ -166,11 +177,18 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         if(side == null)
             return;
         RandomTextureData data = (RandomTextureData)sprite.getTexture().getCustomData();
-        // Determine which tile to use based on position and side
+        // Calculate seed
+        long seed = 1;
+        if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION)
+            seed = pos.asLong() + 1;
+        else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_FACING)
+            seed = (pos.asLong() + 1) * (side.ordinal() + 1);
+        else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_AXIS)
+            seed = (pos.asLong() + 1) * (side.getAxis().ordinal() + 1);
         if(data.getSeed() != null)
-            random.setSeed(data.getSeed() ^ ((pos.asLong() + 1) * (side.ordinal() + 1)));
-        else
-            random.setSeed((pos.asLong() + 1) * (side.ordinal() + 1));
+            seed ^= data.getSeed();
+        // Pick which tile to use
+        random.setSeed(seed);
         random.nextLong(); // Neighboring blocks may lead to similar seeds, hence generate long first to increase randomness
         int index = random.nextInt(sprite.getTexture().getSprites().size());
         // Adjust the quad's uv

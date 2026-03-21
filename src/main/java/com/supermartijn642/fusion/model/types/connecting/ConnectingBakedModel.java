@@ -7,15 +7,14 @@ import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.model.ItemBakedModel;
 import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
-import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
-import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSprite;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
-import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.LightTexture;
@@ -110,7 +109,7 @@ public class ConnectingBakedModel implements BakedModel {
     private final boolean shouldCheckOriginalItemRenderTypes, shouldCheckOriginalBlockRenderTypes;
     private final ItemBakedModel itemModel;
     private final List<QuadPredicates> predicates;
-    private final List<TextureAtlasSprite> sprites;
+    private final List<SpriteInstance> sprites;
     private final boolean hasSpecialQuads;
     private final boolean hasAmbientOcclusion;
     private final boolean isGui3d;
@@ -133,11 +132,11 @@ public class ConnectingBakedModel implements BakedModel {
         Map<RenderType,List<BakedQuad>> itemMesh = new HashMap<>();
         Set<RenderType> itemRenderTypes = new LinkedHashSet<>(), itemRenderTypesFabulous = new LinkedHashSet<>();
         HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
-        HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
+        HashMap<SpriteInstance,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
         OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
         for(ConnectingModelQuad quad : quads){
-            TextureType<?> textureType = quad.textureType();
+            TextureType<?,?> textureType = quad.textureType();
             int spriteIndex = -1;
             int predicateIndex = -1;
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times
@@ -151,12 +150,12 @@ public class ConnectingBakedModel implements BakedModel {
                 // Give each combination of direction, orientation, and predicate a unique index
                 predicateIndex = predicates.computeIfAbsent(new QuadPredicates(direction, orientation, predicate), o -> predicates.size());
                 // Give each sprite a unique index
-                spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
+                spriteIndex = sprites.computeIfAbsent(quad.spriteInstance(), o -> sprites.size());
             }
             // Tag quads which need additional processing
             if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
                 // Give each sprite a unique index
-                spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
+                spriteIndex = sprites.computeIfAbsent(quad.spriteInstance(), o -> sprites.size());
                 hasSpecialQuads = true;
             }
             // Submit the quads
@@ -202,7 +201,9 @@ public class ConnectingBakedModel implements BakedModel {
                 // As item mesh does not depend on state, we can run the connecting texture processing immediately
                 if(quad.hasConnectingTexture()){
                     mutableQuad.set(TextureOrientation.NORMAL_0.vertexIndexPermutation);
-                    boolean keepQuad = ConnectingTextureLayoutHandler.get(quad.getLayout()).processItemQuad(quadIndex, mutableQuad, (ConnectingTextureSprite)quad.bakedQuad().getSprite());
+                    SpriteInstance sprite = quad.spriteInstance();
+                    StitchedConnectingTextureData data = (StitchedConnectingTextureData)sprite.getTexture().getCustomData();
+                    boolean keepQuad = ConnectingTextureLayoutHandler.get(quad.getLayout()).processItemQuad(quadIndex, mutableQuad, sprite, data);
                     mutableQuad.resetPermutation();
                     if(!keepQuad)
                         continue;
@@ -316,14 +317,14 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random, ModelData data, @Nullable RenderType renderType){
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random, ModelData modelData, @Nullable RenderType renderType){
         List<TaggedBakedQuad> quads;
         if(renderType == null)
             quads = this.completeBlockMesh[cullIndex(cullDirection)];
         else{
             List<TaggedBakedQuad>[] mesh = this.blockMesh.get(renderType);
             quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
-            //noinspection deprecation
+            //noinspection removal
             if(this.shouldCheckOriginalBlockRenderTypes && state != null && ItemBlockRenderTypes.getRenderLayers(state).contains(renderType)){
                 mesh = this.blockMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
                 List<TaggedBakedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
@@ -351,9 +352,9 @@ public class ConnectingBakedModel implements BakedModel {
         }
 
         // Get the position from the model data
-        BlockPos pos = data.get(POSITION_PROPERTY);
+        BlockPos pos = modelData.get(POSITION_PROPERTY);
         // Get the predicate evaluations from the model data
-        List<TextureConnections> predicateEvaluations = data.get(PREDICATES_EVALUATION_PROPERTY);
+        List<TextureConnections> predicateEvaluations = modelData.get(PREDICATES_EVALUATION_PROPERTY);
         // If the predicate evaluations is absent, the connected textures cannot be updated, so just push the mesh
         if((predicateEvaluations == null || this.predicates.isEmpty()) && (pos == null || !this.hasSpecialQuads)){
             List<BakedQuad> bakedQuads = new ArrayList<>(quads.size());
@@ -369,16 +370,16 @@ public class ConnectingBakedModel implements BakedModel {
             // Process special texture type quads
             if(pos != null && (quad.textureType == DefaultTextureTypes.RANDOM || quad.textureType == DefaultTextureTypes.CONTINUOUS)){
                 // Get the sprite
-                TextureAtlasSprite sprite = this.sprites.get(quad.spriteIndex);
+                SpriteInstance sprite = this.sprites.get(quad.spriteIndex);
 
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad);
                 mutableQuad.resetPermutation();
                 if(quad.textureType == DefaultTextureTypes.RANDOM)
                     // Handle random texture type
-                    RandomTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getDirection(), random, (RandomTextureSprite)sprite);
+                    RandomTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getDirection(), random, sprite);
                 else
                     // Handle continuous texture type
-                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getDirection(), (ContinuousTextureSprite)sprite);
+                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getDirection(), sprite);
                 bakedQuads.add(mutableQuad.toBakedQuad());
             }
             // Process connecting textures
@@ -394,13 +395,14 @@ public class ConnectingBakedModel implements BakedModel {
                 TextureConnections connections = predicateEvaluations.get(predicateIndex);
 
                 // Get the sprite and the texture layout
-                TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
-                ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).data().getLayout();
+                SpriteInstance sprite = this.sprites.get(spriteIndex);
+                StitchedConnectingTextureData data = (StitchedConnectingTextureData)sprite.getTexture().getCustomData();
+                ConnectingTextureLayout layout = data.getLayout();
 
                 // Remap the quad's uv
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad);
                 mutableQuad.set(predicate.orientation.vertexIndexPermutation);
-                boolean keepQuad = ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, (ConnectingTextureSprite)sprite, connections);
+                boolean keepQuad = ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, sprite, data, connections);
                 if(keepQuad)
                     bakedQuads.add(mutableQuad.toBakedQuad());
             }else
@@ -451,7 +453,7 @@ public class ConnectingBakedModel implements BakedModel {
     public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData data){
         if(this.shouldCheckOriginalBlockRenderTypes){
             // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
-            //noinspection deprecation
+            //noinspection removal
             return ChunkRenderTypeSet.union(
                 ItemBlockRenderTypes.getRenderLayers(state),
                 this.blockRenderTypes
@@ -656,12 +658,12 @@ public class ConnectingBakedModel implements BakedModel {
 
     private static class TaggedBakedQuad {
         final BakedQuad bakedQuad;
-        final TextureType<?> textureType;
+        final TextureType<?,?> textureType;
         final int spriteIndex;
         final int predicateIndex;
         final int quadIndex;
 
-        private TaggedBakedQuad(BakedQuad bakedQuad, TextureType<?> textureType, int spriteIndex, int predicateIndex, int quadIndex){
+        private TaggedBakedQuad(BakedQuad bakedQuad, TextureType<?,?> textureType, int spriteIndex, int predicateIndex, int quadIndex){
             this.bakedQuad = bakedQuad;
             this.textureType = textureType;
             this.spriteIndex = spriteIndex;

@@ -14,6 +14,7 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
     private boolean emissive = false;
     private BaseTextureData.QuadTinting tinting;
     private int rows = 1, columns = 1;
+    private RandomTextureData.RandomnessSource randomSource = RandomTextureData.RandomnessSource.POSITION_FACING;
     private Long seed;
 
     @Override
@@ -51,6 +52,14 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
     }
 
     @Override
+    public RandomTextureData.Builder randomSource(RandomTextureData.RandomnessSource randomSource){
+        if(randomSource == null)
+            throw new IllegalArgumentException("Randomness source must not be null!");
+        this.randomSource = randomSource;
+        return this;
+    }
+
+    @Override
     public RandomTextureData.Builder seed(Long seed){
         this.seed = seed;
         return this;
@@ -58,6 +67,6 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
 
     @Override
     public RandomTextureData build(){
-        return new RandomTextureDataImpl(this.renderType, this.emissive, this.tinting, this.rows, this.columns, this.seed);
+        return new RandomTextureDataImpl(this.renderType, this.emissive, this.tinting, this.rows, this.columns, this.randomSource, this.seed);
     }
 }

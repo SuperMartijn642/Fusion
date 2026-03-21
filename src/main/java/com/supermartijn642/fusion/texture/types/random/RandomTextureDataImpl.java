@@ -11,12 +11,14 @@ import javax.annotation.Nullable;
 public class RandomTextureDataImpl extends BaseTextureDataImpl implements RandomTextureData {
 
     private final int rows, columns;
+    private final RandomnessSource randomSource;
     private final Long seed;
 
-    public RandomTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting, int rows, int columns, Long seed){
+    public RandomTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting, int rows, int columns, RandomnessSource randomSource, Long seed){
         super(renderType, emissive, tinting);
         this.rows = rows;
         this.columns = columns;
+        this.randomSource = randomSource;
         this.seed = seed;
     }
 
@@ -28,6 +30,11 @@ public class RandomTextureDataImpl extends BaseTextureDataImpl implements Random
     @Override
     public int getColumns(){
         return this.columns;
+    }
+
+    @Override
+    public RandomnessSource getRandomSource(){
+        return this.randomSource;
     }
 
     @Override

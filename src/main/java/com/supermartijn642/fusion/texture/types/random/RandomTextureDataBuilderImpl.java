@@ -35,7 +35,7 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
 
     @Override
     public RandomTextureData.Builder rows(int rows){
-        if(rows < 1 || rows > 10)
+        if(rows < 1 || rows > RandomTextureType.MAX_SIZE)
             throw new IllegalArgumentException("rows must be between 1 and 10");
         this.rows = rows;
         return this;
@@ -43,7 +43,7 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
 
     @Override
     public RandomTextureData.Builder columns(int columns){
-        if(columns < 1 || columns > 10)
+        if(columns < 1 || columns > RandomTextureType.MAX_SIZE)
             throw new IllegalArgumentException("columns must be between 1 and 10");
         this.columns = columns;
         return this;

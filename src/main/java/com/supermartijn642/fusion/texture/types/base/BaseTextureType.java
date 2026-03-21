@@ -68,11 +68,11 @@ public class BaseTextureType implements TextureType<BaseTextureData,BaseTextureD
     public JsonObject serialize(BaseTextureData value){
         JsonObject json = new JsonObject();
         if(value.getRenderType() != null)
-            json.addProperty("render_type", value.getRenderType().name().toLowerCase());
+            json.addProperty("render_type", value.getRenderType().name().toLowerCase(Locale.ROOT));
         if(value.isEmissive())
             json.addProperty("emissive", true);
         if(value.getTinting() != null)
-            json.addProperty("tinting", value.getTinting().name().toLowerCase());
+            json.addProperty("tinting", value.getTinting().name().toLowerCase(Locale.ROOT));
         return json;
     }
 }

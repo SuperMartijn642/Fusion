@@ -1,10 +1,10 @@
 package com.supermartijn642.fusion.mixin.embeddium;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.level.block.state.BlockState;
 import org.embeddedt.embeddium.api.render.chunk.BlockRenderContext;
 import org.embeddedt.embeddium.api.util.ColorARGB;
@@ -39,9 +39,9 @@ public class BlockRendererMixinEmbeddium {
     private void getBlockTint(BlockRenderContext ctx, ColorProvider<BlockState> colorProvider, BakedQuadView quad, CallbackInfoReturnable<int[]> ci){
         // In case texture has a custom tinting set, replace the original tinting
         if(((BakedQuad)quad).tintIndex == 39216){
-            TextureAtlasSprite sprite = quad.getSprite();
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(quad.getSprite());
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+                BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null){
                     int color = ColorARGB.toABGR(QuadTintingHelper.getColor(tinting, ctx.state(), ctx.world(), ctx.pos()));
                     Arrays.fill(this.quadColors, color | -16777216);

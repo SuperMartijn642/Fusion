@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.mixin.fabric;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.fabricmc.fabric.api.renderer.v1.model.SpriteFinder;
 import net.fabricmc.fabric.impl.client.indigo.renderer.helper.ColorHelper;
@@ -29,16 +30,10 @@ public class ItemRenderContextMixin {
     private void colorizeQuad(MutableQuadViewImpl quad, int colorIndex, CallbackInfo ci){
         // In case texture has a custom tinting set, replace the original tinting
         if(colorIndex == 39216){
-            TextureAtlasSprite sprite;
-            if(quad.tag() == 0)
-                sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad, 0);
-            else{
-                float u = ((quad.tag() >> 4) & 16383) / 16383f;
-                float v = (quad.tag() >> 18) / 16383f;
-                sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(u, v);
-            }
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureAtlasSprite sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad, 0);
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+                BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null){
                     int color = 0xFF000000 | QuadTintingHelper.getColor(tinting, null, null, null);
                     for(int i = 0; i < 4; i++)

@@ -3,10 +3,9 @@ package com.supermartijn642.fusion.model.types.base;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.model.MutableQuad;
-import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSprite;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
-import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -37,7 +36,7 @@ public class BaseBakedModel implements BlockStateModel {
     private final Map<Optional<ChunkSectionLayer>,List<TaggedBakedQuad>[]> blockMesh;
     private final Collection<ChunkSectionLayer> blockRenderTypes;
     private final boolean shouldCheckOriginalBlockRenderTypes;
-    private final List<TextureAtlasSprite> sprites;
+    private final List<SpriteInstance> sprites;
     private final boolean hasSpecialQuads;
     private final boolean hasAmbientOcclusion;
     private final TextureAtlasSprite particleIcon;
@@ -49,7 +48,7 @@ public class BaseBakedModel implements BlockStateModel {
         // Create the block mesh
         Map<Optional<ChunkSectionLayer>,List<TaggedBakedQuad>[]> blockMesh = new HashMap<>();
         Set<Optional<ChunkSectionLayer>> blockRenderTypes = new HashSet<>();
-        HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
+        HashMap<SpriteInstance,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
         MutableQuad mutableQuad = new MutableQuad();
         for(BaseModelQuad quad : quads){
@@ -60,7 +59,7 @@ public class BaseBakedModel implements BlockStateModel {
             int spriteIndex = -1;
             if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
                 // Give each sprite a unique index
-                spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().sprite(), o -> sprites.size());
+                spriteIndex = sprites.computeIfAbsent(quad.spriteInstance(), o -> sprites.size());
                 hasSpecialQuads = true;
             }
 
@@ -172,15 +171,15 @@ public class BaseBakedModel implements BlockStateModel {
             // Process special texture type quads
             if(quad.textureType == DefaultTextureTypes.RANDOM || quad.textureType == DefaultTextureTypes.CONTINUOUS){
                 // Get the sprite
-                TextureAtlasSprite sprite = this.sprites.get(quad.spriteIndex);
+                SpriteInstance sprite = this.sprites.get(quad.spriteIndex);
 
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad);
                 if(quad.textureType == DefaultTextureTypes.RANDOM)
                     // Handle random texture type
-                    RandomTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.direction(), random, (RandomTextureSprite)sprite);
+                    RandomTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.direction(), random, sprite);
                 else
                     // Handle continuous texture type
-                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.direction(), (ContinuousTextureSprite)sprite);
+                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.direction(), sprite);
                 bakedQuads.add(mutableQuad.toBakedQuad());
             }else
                 bakedQuads.add(quad.bakedQuad);
@@ -221,10 +220,10 @@ public class BaseBakedModel implements BlockStateModel {
 
     private static class TaggedBakedQuad {
         final BakedQuad bakedQuad;
-        final TextureType<?> textureType;
+        final TextureType<?,?> textureType;
         final int spriteIndex;
 
-        private TaggedBakedQuad(BakedQuad bakedQuad, TextureType<?> textureType, int spriteIndex){
+        private TaggedBakedQuad(BakedQuad bakedQuad, TextureType<?,?> textureType, int spriteIndex){
             this.bakedQuad = bakedQuad;
             this.textureType = textureType;
             this.spriteIndex = spriteIndex;

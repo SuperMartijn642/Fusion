@@ -180,8 +180,12 @@ public class BlockModelModifierBakedModel implements BakedModel {
         if(this.addNativeBlockRenderTypes)
             renderTypes = ChunkRenderTypeSet.union(renderTypes, BakedModel.super.getRenderTypes(state, random, data));
         if(this.hasNonSimpleModels){
-            for(BakedModel model : this.nonSimpleModels)
-                renderTypes = ChunkRenderTypeSet.union(renderTypes, model.getRenderTypes(state, random, data));
+            ModelData[] arr = data.get(DATA_PROPERTY);
+            for(int i = 0; i < this.nonSimpleModels.size(); i++){
+                BakedModel model = this.nonSimpleModels.get(i);
+                ModelData modelData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
+                renderTypes = ChunkRenderTypeSet.union(renderTypes, model.getRenderTypes(state, random, modelData));
+            }
         }
         return renderTypes;
     }

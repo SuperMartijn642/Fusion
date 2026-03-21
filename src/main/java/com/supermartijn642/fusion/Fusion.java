@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion;
 
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 
@@ -8,6 +9,12 @@ import net.minecraftforge.fml.common.Mod;
  */
 @Mod(modid = "@mod_id@", name = "@mod_name@", version = "@mod_version@", dependencies = "required-after:forge@@forge_dependency@", clientSideOnly = true)
 public class Fusion {
+
+    public static final String MODID = "fusion";
+
+    public static ResourceLocation identifier(String path){
+        return new ResourceLocation(MODID, path);
+    }
 
     public Fusion(){
         // Initialize Fusion stuff if this is on the client

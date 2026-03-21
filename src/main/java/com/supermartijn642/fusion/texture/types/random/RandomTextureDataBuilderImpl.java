@@ -12,7 +12,7 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
     private BaseTextureData.RenderType renderType;
     private boolean emissive = false;
     private BaseTextureData.QuadTinting tinting;
-    private int rows = 1, columns = 1, count;
+    private int rows = 1, columns = 1;
     private Long seed;
 
     @Override
@@ -50,14 +50,6 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
     }
 
     @Override
-    public RandomTextureData.Builder count(int count){
-        if(count < 1 || count > 100)
-            throw new IllegalArgumentException("count must be between 1 and 100");
-        this.count = count;
-        return this;
-    }
-
-    @Override
     public RandomTextureData.Builder seed(Long seed){
         this.seed = seed;
         return this;
@@ -65,8 +57,6 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
 
     @Override
     public RandomTextureData build(){
-        if(this.count > this.rows * this.columns)
-            throw new IllegalArgumentException("Count cannot be greater than rows * columns!");
-        return new RandomTextureDataImpl(this.renderType, this.emissive, this.tinting, this.rows, this.columns, this.count, this.seed);
+        return new RandomTextureDataImpl(this.renderType, this.emissive, this.tinting, this.rows, this.columns, this.seed);
     }
 }

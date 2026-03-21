@@ -218,6 +218,11 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
 
     @Override
     public TextureAtlasSprite getParticleTexture(@Nonnull IModelData data){
-        return this.original.getParticleTexture(data);
+        if(this.isOriginalSimpleModel)
+            return this.original.getParticleTexture(EmptyModelData.INSTANCE);
+        // Get appropriate model data
+        IModelData[] arr = data.getData(DATA_PROPERTY);
+        IModelData subData = arr == null || arr[0] == null ? EmptyModelData.INSTANCE : arr[0];
+        return this.original.getParticleTexture(subData);
     }
 }

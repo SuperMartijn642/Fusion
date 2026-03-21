@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.mixin.fabric;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
 import net.fabricmc.fabric.impl.client.indigo.renderer.render.AbstractTerrainRenderContext;
@@ -19,7 +20,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * Created 07/09/2024 by SuperMartijn642
  */
-@SuppressWarnings("UnstableApiUsage")
 @Mixin(AbstractTerrainRenderContext.class)
 public class AbstractTerrainRenderContextMixin {
 
@@ -35,16 +35,10 @@ public class AbstractTerrainRenderContextMixin {
     private void tintQuad(MutableQuadViewImpl quad, CallbackInfo ci){
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.tintIndex() == 39216){
-            TextureAtlasSprite sprite;
-            if(quad.tag() == 0)
-                sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks()).spriteFinder().find(quad);
-            else{
-                float u = ((quad.tag() >> 4) & 16383) / 16383f;
-                float v = (quad.tag() >> 18) / 16383f;
-                sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks()).spriteFinder().find(u, v);
-            }
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureAtlasSprite sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks()).spriteFinder().find(quad);
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+                BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null){
                     int tint = QuadTintingHelper.getColor(tinting, this.blockInfo.blockState, this.blockInfo.blockView, this.blockInfo.blockPos);
                     for(int i = 0; i < 4; i++)

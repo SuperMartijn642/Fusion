@@ -2,9 +2,10 @@ package com.supermartijn642.fusion.mixin;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.model.BakedQuad;
@@ -32,10 +33,11 @@ public class ModelBlockRendererMixin {
     )
     private int tintQuad(int blockColor, IBlockDisplayReader level, BlockState state, BlockPos pos, IVertexBuilder vertexConsumer, MatrixStack.Entry pose, BakedQuad quad, float red, float green, float blue, float alpha, int lighting1, int lighting2, int lighting3, int lighting4, int overlay){
         // In case texture has a custom tinting set, replace the original tinting
-        if(quad.tintIndex == 39216){
+        if(quad.getTintIndex() == 39216){
             TextureAtlasSprite sprite = quad.getSprite();
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData){
+                BaseTextureData.QuadTinting tinting = ((BaseTextureData)textureInstance.getCustomData()).getTinting();
                 if(tinting != null)
                     return QuadTintingHelper.getColor(tinting, state, level, pos);
             }

@@ -8,7 +8,7 @@ import net.minecraft.resources.data.IMetadataSectionSerializer;
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
-public class FusionTextureMetadataSection implements IMetadataSectionSerializer<Pair<TextureType<Object>,Object>> {
+public class FusionTextureMetadataSection implements IMetadataSectionSerializer<Pair<TextureType<Object,?>,Object>> {
 
     public static final FusionTextureMetadataSection INSTANCE = new FusionTextureMetadataSection();
 
@@ -18,7 +18,7 @@ public class FusionTextureMetadataSection implements IMetadataSectionSerializer<
     }
 
     @Override
-    public Pair<TextureType<Object>,Object> fromJson(JsonObject json){
+    public Pair<TextureType<Object,?>,Object> fromJson(JsonObject json){
         // Finalize the registry
         TextureTypeRegistryImpl.finalizeRegistration();
         // Get the texture type

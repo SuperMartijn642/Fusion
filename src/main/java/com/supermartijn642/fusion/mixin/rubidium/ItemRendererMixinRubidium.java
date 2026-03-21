@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.mixin.rubidium;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import me.jellysquid.mods.sodium.client.model.quad.ModelQuadView;
 import me.jellysquid.mods.sodium.client.util.color.ColorABGR;
 import me.jellysquid.mods.sodium.client.util.color.ColorARGB;
@@ -31,8 +32,9 @@ public class ItemRendererMixinRubidium {
         // In case texture has a custom tinting set, replace the original tinting
         if(((BakedQuad)quad).getTintIndex() == 39216){
             TextureAtlasSprite sprite = ((BakedQuad)quad).getSprite();
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData){
+                BaseTextureData.QuadTinting tinting = ((BaseTextureData)textureInstance.getCustomData()).getTinting();
                 if(tinting != null){
                     int color = QuadTintingHelper.getColor(tinting, null, null, null);
                     return this.multABGRInts(quad.getColor(vertex), ColorARGB.toABGR(color));

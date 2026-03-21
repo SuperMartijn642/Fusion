@@ -17,11 +17,11 @@ import java.util.Map;
  */
 public class TextureTypeRegistryImpl {
 
-    private static final Map<ResourceLocation,TextureType<?>> IDENTIFIER_TO_TEXTURE_TYPE = new HashMap<>();
-    private static final Map<TextureType<?>,ResourceLocation> TEXTURE_TYPE_TO_IDENTIFIER = new HashMap<>();
+    private static final Map<ResourceLocation,TextureType<?,?>> IDENTIFIER_TO_TEXTURE_TYPE = new HashMap<>();
+    private static final Map<TextureType<?,?>,ResourceLocation> TEXTURE_TYPE_TO_IDENTIFIER = new HashMap<>();
     private static boolean finalized = false;
 
-    public static synchronized void registerTextureType(ResourceLocation identifier, TextureType<?> textureType){
+    public static synchronized void registerTextureType(ResourceLocation identifier, TextureType<?,?> textureType){
         if(finalized)
             throw new RuntimeException("Texture types must be registered before textures get loaded!");
         if(IDENTIFIER_TO_TEXTURE_TYPE.containsKey(identifier))
@@ -33,7 +33,7 @@ public class TextureTypeRegistryImpl {
         TEXTURE_TYPE_TO_IDENTIFIER.put(textureType, identifier);
     }
 
-    public static <T> JsonObject serializeTextureData(TextureType<T> textureType, T textureData){
+    public static <T> JsonObject serializeTextureData(TextureType<T,?> textureType, T textureData){
         if(!finalized)
             throw new RuntimeException("Can only serialize texture data after registration has completed!");
         ResourceLocation identifier = TEXTURE_TYPE_TO_IDENTIFIER.get(textureType);
@@ -55,11 +55,11 @@ public class TextureTypeRegistryImpl {
         return json;
     }
 
-    public static <T> Pair<TextureType<T>,T> deserializeTextureData(JsonObject json){
+    public static <T> Pair<TextureType<T,?>,T> deserializeTextureData(JsonObject json){
         if(!finalized)
             throw new RuntimeException("Can only deserialize texture data after registration has completed!");
         //noinspection unchecked
-        TextureType<T> textureType = (TextureType<T>)DefaultTextureTypes.BASE;
+        TextureType<T,?> textureType = (TextureType<T,?>)DefaultTextureTypes.BASE;
         ResourceLocation identifier = getIdentifier(textureType);
         if(json.has("type")){
             JsonElement typeJson = json.getAsJsonObject().get("type");
@@ -69,7 +69,7 @@ public class TextureTypeRegistryImpl {
                 throw new JsonParseException("Property 'type' must be a valid identifier!");
             identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
             //noinspection unchecked
-            textureType = (TextureType<T>)IDENTIFIER_TO_TEXTURE_TYPE.get(identifier);
+            textureType = (TextureType<T,?>)IDENTIFIER_TO_TEXTURE_TYPE.get(identifier);
             if(textureType == null)
                 throw new JsonParseException("Unknown texture type '" + identifier + "'!");
         }
@@ -84,7 +84,7 @@ public class TextureTypeRegistryImpl {
         return Pair.of(textureType, textureData);
     }
 
-    public static ResourceLocation getIdentifier(TextureType<?> textureType){
+    public static ResourceLocation getIdentifier(TextureType<?,?> textureType){
         return TEXTURE_TYPE_TO_IDENTIFIER.get(textureType);
     }
 

@@ -1,19 +1,10 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.texture.TextureErrorException;
-import com.supermartijn642.fusion.api.texture.TextureType;
-import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
-import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
-import com.supermartijn642.fusion.texture.SpriteCreationContextImpl;
-import com.supermartijn642.fusion.texture.SpritePreparationContextImpl;
-import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
+import com.supermartijn642.fusion.texture.TextureAtlasMixinHelper;
+import com.supermartijn642.fusion.texture.TextureCreationHandler;
 import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.client.renderer.texture.PngSizeInfo;
 import net.minecraft.client.renderer.texture.Stitcher;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
@@ -25,9 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -37,7 +28,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class TextureAtlasMixin {
 
     @Unique
-    private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> fusionTextureMetadata = new HashMap<>();
+    private final ConcurrentLinkedQueue<Object> fusionDummyTextures = new ConcurrentLinkedQueue<>();
 
     @Inject(
         method = {
@@ -46,74 +37,59 @@ public class TextureAtlasMixin {
         },
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;<init>(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/client/renderer/texture/PngSizeInfo;Lnet/minecraft/client/resources/data/AnimationMetadataSection;)V",
+            target = "Lnet/minecraft/client/renderer/texture/PngSizeInfo;<init>(Ljava/lang/String;Ljava/io/InputStream;)V",
             shift = At.Shift.BEFORE
         ),
         cancellable = true,
         locals = LocalCapture.CAPTURE_FAILHARD,
         remap = false
     )
-    private void gatherMetadata(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<TextureAtlasSprite> queue, CallbackInfo ci, ResourceLocation location, IResource resource, Object object, PngSizeInfo pngInfo, AnimationMetadataSection animationMetadata){
-        // Get the fusion metadata
-        Pair<TextureType<Object>,Object> metadata = resource.getMetadata(FusionTextureMetadataSection.INSTANCE);
-        if(metadata != null){
-            synchronized(this.fusionTextureMetadata){
-                this.fusionTextureMetadata.put(identifier, metadata);
-            }
-            // Get the original frame size
-            com.mojang.datafixers.util.Pair<Integer,Integer> originalSize = animationMetadata == null ?
-                new com.mojang.datafixers.util.Pair<>(pngInfo.width, pngInfo.height) :
-                TextureAtlasSprite.getFrameSize(animationMetadata.frameWidth, animationMetadata.frameHeight, pngInfo.width, pngInfo.height);
-            // Adjust the frame size
-            Pair<Integer,Integer> newSize;
-            try{
-                newSize = metadata.left().getFrameSize(new SpritePreparationContextImpl(originalSize.getFirst(), originalSize.getSecond(), pngInfo.width, pngInfo.height, identifier, animationMetadata), metadata.right());
-            }catch(TextureErrorException e){
-                FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
-                ci.cancel();
-                return;
-            }catch(Exception e){
-                throw new RuntimeException("Encountered an exception whilst getting frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!", e);
-            }
-            if(newSize == null)
-                throw new RuntimeException("Received null frame size from texture type '" + TextureTypeRegistryImpl.getIdentifier(metadata.left()) + "' for texture '" + location + "'!");
-            // Replace the current size
-            TextureAtlasSprite sprite = new TextureAtlasSprite(identifier, newSize.left(), newSize.right());
-            sprite.metadata = animationMetadata;
-            queue.add(sprite);
+    private void handleFusionTextures(ResourceLocation identifier, IResourceManager resourceManager, ConcurrentLinkedQueue<TextureAtlasSprite> queue, CallbackInfo ci, ResourceLocation ignore, IResource resource){
+        if(TextureCreationHandler.onLoadTexture(identifier, resource, queue))
             ci.cancel();
-        }
     }
 
     @Inject(
-        method = "getLoadedSprites(Lnet/minecraft/resources/IResourceManager;Lnet/minecraft/client/renderer/texture/Stitcher;)Ljava/util/List;",
-        at = @At("RETURN"),
-        locals = LocalCapture.CAPTURE_FAILHARD
+        method = "getLoadedSprites",
+        at = @At("HEAD"),
+        cancellable = true
     )
-    private void getLoadedSprites(IResourceManager resourceManager, Stitcher stitcher, CallbackInfoReturnable<List<TextureAtlasSprite>> ci){
-        // Replace sprites
-        List<TextureAtlasSprite> textures = ci.getReturnValue();
-        if(textures != null){
-            for(int index = 0; index < textures.size(); index++){
-                TextureAtlasSprite texture = textures.get(index);
-                Pair<TextureType<Object>,Object> textureData = this.fusionTextureMetadata.get(texture.getName());
-                if(textureData != null){
-                    // Create the sprite
-                    TextureAtlasSprite newTexture;
-                    //noinspection DataFlowIssue
-                    try(SpriteCreationContextImpl context = new SpriteCreationContextImpl(texture, (AtlasTexture)(Object)this)){
-                        newTexture = textureData.left().createSprite(context, textureData.right());
-                    }catch(Exception e){
-                        throw new RuntimeException("Encountered an exception whilst initialising texture '" + texture.getName() + "' for texture type '" + TextureTypeRegistryImpl.getIdentifier(textureData.left()) + "'!", e);
-                    }
-                    if(newTexture == null)
-                        throw new RuntimeException("Received null texture from texture type '" + TextureTypeRegistryImpl.getIdentifier(textureData.left()) + "' for texture '" + texture.getName() + "'!");
-                    ((TextureAtlasSpriteExtension)newTexture).setFusionTextureType(textureData.left());
-                    // Replace the current texture
-                    textures.set(index, newTexture);
-                }
+    private void clearOldState(CallbackInfoReturnable<?> ci){
+        this.fusionDummyTextures.clear();
+    }
+
+    @Inject(
+        method = "getLoadedSprites",
+        at = @At("TAIL"),
+        cancellable = true
+    )
+    private void initializeTextures(IResourceManager resourceManager, Stitcher stitcher, CallbackInfoReturnable<List<TextureAtlasSprite>> ci){
+        //noinspection DataFlowIssue
+        AtlasTexture textureAtlas = (AtlasTexture)(Object)this;
+        ConcurrentLinkedQueue<TextureAtlasSprite> sprites = new ConcurrentLinkedQueue<>();
+        List<CompletableFuture<?>> tasks = new ArrayList<>();
+        for(Object dummySprites : this.fusionDummyTextures){
+            TextureCreationHandler.Result<CompletableFuture<Void>> result = TextureAtlasMixinHelper.onLoadSprite(dummySprites, textureAtlas, stitcher.getWidth(), stitcher.getHeight(), stitcher.mipLevel, sprites);
+            if(result != null){
+                ci.cancel();
+                if(result.value() != null)
+                    tasks.add(result.value());
             }
         }
-        this.fusionTextureMetadata.clear();
+        this.fusionDummyTextures.clear();
+        CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
+        ci.getReturnValue().addAll(sprites);
+    }
+
+    @Inject(
+        method = "load(Lnet/minecraft/resources/IResourceManager;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;)Z",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void ignoreDummyTextures(IResourceManager resourceManager, TextureAtlasSprite sprite, CallbackInfoReturnable<Boolean> ci){
+        if(TextureAtlasMixinHelper.isDummySprite(sprite)){
+            this.fusionDummyTextures.add(TextureAtlasMixinHelper.getDummyParent(sprite));
+            ci.cancel();
+        }
     }
 }

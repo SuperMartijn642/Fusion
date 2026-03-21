@@ -2,6 +2,8 @@ package com.supermartijn642.fusion.texture;
 
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
@@ -10,12 +12,25 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
  */
 public class SpriteHelperImpl {
 
-    public static TextureType<?> getTextureType(TextureAtlasSprite sprite){
-        TextureType<?> textureType = ((TextureAtlasSpriteExtension)sprite).getFusionTextureType();
-        if(textureType == null){
-            ((TextureAtlasSpriteExtension)sprite).setFusionTextureType(DefaultTextureTypes.VANILLA);
-            return DefaultTextureTypes.VANILLA;
-        }
-        return textureType;
+    public static TextureType<?,?> getTextureType(TextureAtlasSprite sprite){
+        TextureInstance<?> texture = getTextureInstance(sprite);
+        return texture == null ? DefaultTextureTypes.VANILLA : texture.getTextureType();
+    }
+
+    public static TextureInstance<?> getTextureInstance(TextureAtlasSprite sprite){
+        SpriteInstance spriteInstance = getSpriteInstance(sprite);
+        return spriteInstance == null ? null : spriteInstance.getTexture();
+    }
+
+    public static <X> TextureInstance<X> getTextureInstance(TextureType<?,X> type, TextureAtlasSprite sprite){
+        TextureInstance<?> texture = getTextureInstance(sprite);
+        if(texture != null && texture.getTextureType() == type)
+            //noinspection unchecked
+            return (TextureInstance<X>)texture;
+        return null;
+    }
+
+    public static SpriteInstance getSpriteInstance(TextureAtlasSprite sprite){
+        return ((TextureAtlasSpriteExtension)sprite).getFusionSpriteInstance();
     }
 }

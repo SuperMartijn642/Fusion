@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -31,13 +31,13 @@ public class VertexLighterFlatMixin implements VertexLighterFlatExtension {
         this.tinting = tinting;
     }
 
-    @ModifyVariable(
+    @ModifyArg(
         method = "processQuad",
         at = @At(
-            value = "INVOKE_ASSIGN",
-            target = "Lnet/minecraftforge/client/model/pipeline/BlockInfo;getColorMultiplier(I)I"
+            value = "INVOKE",
+            target = "Lnet/minecraftforge/client/model/pipeline/VertexLighterFlat;updateColor([F[FFFFFI)V"
         ),
-        ordinal = 0,
+        index = 6,
         remap = false
     )
     private int tintQuad(int multiplier){

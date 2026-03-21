@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -34,10 +35,11 @@ public class BlockModelRendererMixin {
     )
     private BakedQuad tintQuadAO(BakedQuad quad, IEnviromentBlockReader level, BlockState state, BlockPos pos, BufferBuilder vertexConsumer, List<BakedQuad> quads, float[] arr, BitSet bitSet, BlockModelRenderer.AmbientOcclusionFace occlusion){
         // In case texture has a custom tinting set, replace the original tinting
-        if(quad.tintIndex == 39216){
+        if(quad.getTintIndex() == 39216){
             TextureAtlasSprite sprite = quad.getSprite();
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData){
+                BaseTextureData.QuadTinting tinting = ((BaseTextureData)textureInstance.getCustomData()).getTinting();
                 if(tinting != null){
                     int color = QuadTintingHelper.getColor(tinting, state, level, pos);
                     float red = (float)(color >> 16 & 255) / 255.0F;
@@ -64,10 +66,11 @@ public class BlockModelRendererMixin {
     )
     private BakedQuad tintQuadFlat(BakedQuad quad, IEnviromentBlockReader level, BlockState state, BlockPos pos, int lightmap, boolean recalculateLight, BufferBuilder vertexConsumer){
         // In case texture has a custom tinting set, replace the original tinting
-        if(quad.tintIndex == 39216){
+        if(quad.getTintIndex() == 39216){
             TextureAtlasSprite sprite = quad.getSprite();
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData){
+                BaseTextureData.QuadTinting tinting = ((BaseTextureData)textureInstance.getCustomData()).getTinting();
                 if(tinting != null){
                     int color = QuadTintingHelper.getColor(tinting, state, level, pos);
                     float red = (float)(color >> 16 & 255) / 255.0F;

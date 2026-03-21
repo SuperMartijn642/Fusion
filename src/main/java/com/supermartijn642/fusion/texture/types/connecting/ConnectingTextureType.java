@@ -2,22 +2,118 @@ package com.supermartijn642.fusion.texture.types.connecting;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.texture.*;
+import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
+import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
-import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.client.resources.data.AnimationFrame;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
  */
-public class ConnectingTextureType implements TextureType<ConnectingTextureData> {
+public class ConnectingTextureType implements TextureType<ConnectingTextureData,StitchedConnectingTextureData> {
+
+    @Override
+    public void createTexture(TextureOutput<StitchedConnectingTextureData> output, TextureCreationContext context, ConnectingTextureData data) throws TextureErrorException{
+        ConnectingTextureLayoutHandler layout = ConnectingTextureLayoutHandler.get(data.getLayout());
+
+        // Calculate frame size
+        int frameWidth = context.getImageWidth(), frameHeight = context.getImageHeight();
+        int defaultTileSize = Math.min(frameWidth / layout.getWidth(), frameHeight / layout.getHeight());
+        AnimationMetadataSection animationMetadata = context.getAnimationMetadata();
+        if(data.getLayout() == ConnectingTextureLayout.FULL && frameWidth == frameHeight){ // Legacy full layout was a square image, so change the framing to the new aspect ratio
+            if(animationMetadata != null)
+                throw new TextureErrorException("Image must use the 'full' layouts 6 : 8 aspect ratio to support animation!");
+            frameHeight = frameHeight * 6 / 8;
+        }else if(animationMetadata != null){
+            if(animationMetadata.frameWidth < 0 && animationMetadata.frameHeight < 0){
+                // Use the expected aspect ratio for the layout
+                frameWidth = layout.getWidth() * defaultTileSize;
+                frameHeight = layout.getHeight() * defaultTileSize;
+            }else{
+                if(animationMetadata.frameWidth >= 0)
+                    frameWidth = animationMetadata.frameWidth;
+                if(animationMetadata.frameHeight >= 0)
+                    frameHeight = animationMetadata.frameHeight;
+            }
+        }
+
+        // Do frame size checks
+        if(frameWidth == 0 || frameHeight == 0)
+            throw new TextureErrorException("Image must not be empty!");
+        if(context.getImageWidth() % frameWidth != 0 || context.getImageHeight() % frameHeight != 0)
+            throw new TextureErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
+        if(frameWidth % layout.getWidth() != 0 || frameHeight % layout.getHeight() != 0)
+            throw new TextureErrorException("Image/frame size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of '" + data.getLayout().name().toLowerCase(Locale.ROOT) + "' layout's " + layout.getWidth() + " : " + layout.getHeight() + " aspect ratio!");
+
+        // Create animation data
+        int frameColumns = context.getImageWidth() / frameWidth;
+        int frameRows = context.getImageHeight() / frameHeight;
+        int tileWidth = frameWidth / layout.getWidth();
+        int tileHeight = frameHeight / layout.getHeight();
+        List<SpriteImageSource.AnimationFrame> frames = null;
+        if(animationMetadata != null){
+            if(!animationMetadata.frames.isEmpty()){
+                frames = new ArrayList<>(animationMetadata.frames.size());
+                for(AnimationFrame frame : animationMetadata.frames){
+                    int index = frame.getIndex();
+                    if(index >= frameRows * frameColumns)
+                        throw new TextureErrorException("Frame index " + index + " is greater than the number of frames in the image!");
+                    int x = tileWidth * (index % frameColumns);
+                    int y = tileHeight * (index / frameColumns);
+                    frames.add(SpriteImageSource.AnimationFrame.of(x, y, frame.isTimeUnknown() ? animationMetadata.getDefaultFrameTime() : frame.getTime()));
+                }
+            }else{
+                frames = new ArrayList<>(frameRows * frameColumns);
+                for(int row = 0; row < frameRows; row++){
+                    for(int column = 0; column < frameColumns; column++){
+                        frames.add(SpriteImageSource.AnimationFrame.of(column * tileWidth, row * tileHeight, animationMetadata.getDefaultFrameTime()));
+                    }
+                }
+            }
+            if(frameRows == 1 && frameColumns == 1) // If there is only a single frame, ignore the animation data but still validate it
+                frames = null;
+        }
+
+        // Create sprites
+        List<SpriteInstance> tiles = new ArrayList<>(layout.getWidth() * layout.getHeight());
+        try(NativeImage image = context.getImage()){
+            for(int y = 0; y < layout.getHeight(); y++){
+                for(int x = 0; x < layout.getWidth(); x++){
+                    tiles.add(null);
+                    // Skip empty tiles
+                    if((x != layout.defaultTileX() || y != layout.defaultTileY()) &&
+                        DummyTextureSpriteContents.isSubImageEmpty(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight)){
+                        continue;
+                    }
+                    NativeImage subImage = ImageHelper.createCropFramed(image, x * tileWidth, y * tileHeight, tileWidth, tileHeight, frameWidth, frameHeight, false);
+                    SpriteImageSource imageSource = frames == null ?
+                        SpriteImageSource.constant(subImage) :
+                        SpriteImageSource.animated(subImage, tileWidth, tileHeight, frames, animationMetadata.isInterpolatedFrames());
+                    int index = x + y * layout.getWidth();
+                    output.createSprite()
+                        .image(imageSource)
+                        .markDefaultSprite(x == layout.defaultTileX() && y == layout.defaultTileY())
+                        .setCreationCallback(s -> tiles.set(index, s))
+                        .submit();
+                }
+            }
+        }
+
+        // Set custom texture data
+        output.setCustomData(new StitchedConnectingTextureData(data, tiles));
+    }
 
     @Override
     public ConnectingTextureData deserialize(JsonObject json) throws JsonParseException{
@@ -52,54 +148,5 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
         if(data.getLayout() != ConnectingTextureLayout.FULL)
             json.addProperty("layout", data.getLayout().name().toLowerCase(Locale.ROOT));
         return json.size() == 0 ? null : json;
-    }
-
-    @Override
-    public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, ConnectingTextureData data){
-        // Legacy full layout was a square image, so change the framing to the new aspect ratio
-        if(data.getLayout() == ConnectingTextureLayout.FULL && context.getTextureWidth() == context.getTextureHeight())
-            return Pair.of(context.getTextureWidth(), context.getTextureHeight() * 6 / 8);
-
-        // Handle animation metadata
-        if(context.getAnimationMetadata() != null){
-            AnimationMetadataSection animation = context.getAnimationMetadata();
-            Pair<Integer,Integer> frameSize;
-            if(animation.frameWidth != -1 && animation.frameHeight != -1)
-                //noinspection SuspiciousNameCombination
-                frameSize = Pair.of(animation.frameWidth, animation.frameHeight);
-            else if(animation.frameWidth != -1)
-                frameSize = Pair.of(animation.frameWidth, context.getTextureHeight());
-            else if(animation.frameHeight != -1)
-                //noinspection SuspiciousNameCombination
-                frameSize = Pair.of(context.getTextureWidth(), animation.frameHeight);
-            else{
-                // Use the expected aspect ratio for the layout
-                ConnectingTextureLayoutHandler handler = ConnectingTextureLayoutHandler.get(data.getLayout());
-                int height = Math.min(context.getTextureWidth() / handler.getWidth() * handler.getHeight(), context.getTextureHeight());
-                //noinspection SuspiciousNameCombination
-                frameSize = Pair.of(context.getTextureWidth(), height);
-            }
-            // Do vanilla frame size check
-            if(context.getTextureWidth() % frameSize.left() != 0
-                || context.getTextureHeight() % frameSize.right() != 0)
-                throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size " + frameSize.left() + "x" + frameSize.right() + "!");
-            return frameSize;
-        }
-
-        return Pair.of(context.getTextureWidth(), context.getTextureHeight());
-    }
-
-    @Override
-    public TextureAtlasSprite createSprite(SpriteCreationContext context, ConnectingTextureData data){
-        ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(data.getLayout());
-        TextureAtlasSprite sprite = context.createOriginalSprite();
-        float startU = sprite.u0, startV = sprite.v0;
-        float tileWidth = (sprite.u1 - sprite.u0) / layoutHandler.getWidth();
-        float tileHeight = (sprite.v1 - sprite.v0) / layoutHandler.getHeight();
-        sprite.u1 = sprite.u0 + tileWidth * (layoutHandler.defaultTileX() + 1);
-        sprite.v1 = sprite.v0 + tileHeight * (layoutHandler.defaultTileY() + 1);
-        sprite.u0 = sprite.u0 + tileWidth * layoutHandler.defaultTileX();
-        sprite.v0 = sprite.v0 + tileHeight * layoutHandler.defaultTileY();
-        return new ConnectingTextureSprite(sprite, data, startU, startV);
     }
 }

@@ -2,22 +2,109 @@ package com.supermartijn642.fusion.texture.types.random;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.texture.*;
+import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
+import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.RandomTextureData;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.MutableQuad;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
+import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.client.resources.data.AnimationFrame;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
  * Created 22/10/2024 by SuperMartijn642
  */
-public class RandomTextureType implements TextureType<RandomTextureData> {
+public class RandomTextureType implements TextureType<RandomTextureData,RandomTextureData> {
+
+    @Override
+    public void createTexture(TextureOutput<RandomTextureData> output, TextureCreationContext context, RandomTextureData data) throws TextureErrorException{
+        // Calculate frame size
+        int frameWidth = context.getImageWidth(), frameHeight = context.getImageHeight();
+        int defaultTileSize = Math.min(context.getImageWidth() / data.getColumns(), context.getImageHeight() / data.getRows());
+        AnimationMetadataSection animationMetadata = context.getAnimationMetadata();
+        if(animationMetadata != null){
+            if(animationMetadata.frameWidth < 0 && animationMetadata.frameHeight < 0){
+                // Use the expected aspect ratio for the layout
+                frameWidth = data.getColumns() * defaultTileSize;
+                frameHeight = data.getRows() * defaultTileSize;
+            }else{
+                if(animationMetadata.frameWidth >= 0)
+                    frameWidth = animationMetadata.frameWidth;
+                if(animationMetadata.frameHeight >= 0)
+                    frameHeight = animationMetadata.frameHeight;
+            }
+        }
+
+        // Do frame size checks
+        if(frameWidth == 0 || frameHeight == 0)
+            throw new TextureErrorException("Image must not be empty!");
+        if(context.getImageWidth() % frameWidth != 0 || context.getImageHeight() % frameHeight != 0)
+            throw new TextureErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
+        if(frameWidth % data.getColumns() != 0 || frameHeight % data.getRows() != 0)
+            throw new TextureErrorException("Image/frame size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of number of columns " + data.getColumns() + " and rows " + data.getRows() + "!");
+
+        // Create animation data
+        int frameColumns = context.getImageWidth() / frameWidth;
+        int frameRows = context.getImageHeight() / frameHeight;
+        int tileWidth = frameWidth / data.getColumns();
+        int tileHeight = frameHeight / data.getRows();
+        List<SpriteImageSource.AnimationFrame> frames = null;
+        if(animationMetadata != null){
+            if(!animationMetadata.frames.isEmpty()){
+                frames = new ArrayList<>(animationMetadata.frames.size());
+                for(AnimationFrame frame : animationMetadata.frames){
+                    int index = frame.getIndex();
+                    if(index >= frameRows * frameColumns)
+                        throw new TextureErrorException("Frame index " + index + " is greater than the number of frames in the image!");
+                    int x = tileWidth * (index % frameColumns);
+                    int y = tileHeight * (index / frameColumns);
+                    frames.add(SpriteImageSource.AnimationFrame.of(x, y, frame.isTimeUnknown() ? animationMetadata.getDefaultFrameTime() : frame.getTime()));
+                }
+            }else{
+                frames = new ArrayList<>(frameRows * frameColumns);
+                for(int row = 0; row < frameRows; row++){
+                    for(int column = 0; column < frameColumns; column++){
+                        frames.add(SpriteImageSource.AnimationFrame.of(column * tileWidth, row * tileHeight, animationMetadata.getDefaultFrameTime()));
+                    }
+                }
+            }
+            if(frameRows == 1 && frameColumns == 1) // If there is only a single frame, ignore the animation data but still validate it
+                frames = null;
+        }
+
+        // Create sprites
+        int tiles = 0;
+        try(NativeImage image = context.getImage()){
+            for(int y = 0; y < data.getRows(); y++){
+                for(int x = 0; x < data.getColumns(); x++){
+                    // Skip empty tiles
+                    if(DummyTextureSpriteContents.isSubImageEmpty(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight))
+                        continue;
+                    NativeImage subImage = ImageHelper.createCropFramed(image, x * tileWidth, y * tileHeight, tileWidth, tileHeight, frameWidth, frameHeight, false);
+                    SpriteImageSource imageSource = frames == null ?
+                        SpriteImageSource.constant(subImage) :
+                        SpriteImageSource.animated(subImage, tileWidth, tileHeight, frames, animationMetadata.isInterpolatedFrames());
+                    output.createSprite()
+                        .image(imageSource)
+                        .submit();
+                    tiles++;
+                }
+            }
+        }
+        if(tiles == 0)
+            throw new TextureErrorException("Image is completely empty!");
+
+        // Set custom texture data
+        output.setCustomData(data);
+    }
 
     @Override
     public RandomTextureData deserialize(JsonObject json) throws JsonParseException{
@@ -29,7 +116,7 @@ public class RandomTextureType implements TextureType<RandomTextureData> {
         builder.emissive(base.isEmissive());
         builder.tinting(base.getTinting());
         // Rows
-        int rows = 1;
+        int rows;
         if(json.has("rows")){
             if(!json.get("rows").isJsonPrimitive() || !json.getAsJsonPrimitive("rows").isNumber())
                 throw new JsonParseException("Property 'rows' must be a number!");
@@ -39,7 +126,7 @@ public class RandomTextureType implements TextureType<RandomTextureData> {
             builder.rows(rows);
         }
         // Columns
-        int columns = 1;
+        int columns;
         if(json.has("columns")){
             if(!json.get("columns").isJsonPrimitive() || !json.getAsJsonPrimitive("columns").isNumber())
                 throw new JsonParseException("Property 'columns' must be a number!");
@@ -47,17 +134,6 @@ public class RandomTextureType implements TextureType<RandomTextureData> {
             if(columns < 1 || columns > 10)
                 throw new JsonParseException("Property 'columns' must be a number between 1 and 10!");
             builder.columns(columns);
-        }
-        // Count
-        if(json.has("count")){
-            if(!json.get("count").isJsonPrimitive() || !json.getAsJsonPrimitive("count").isNumber())
-                throw new JsonParseException("Property 'count' must be a number!");
-            int count = json.get("count").getAsInt();
-            if(count < 1 || count > 100)
-                throw new JsonParseException("Property 'count' must be a number between 1 and 100!");
-            if(count > rows * columns)
-                throw new IllegalArgumentException("Count cannot be greater than rows * columns!");
-            builder.count(count);
         }
         // Seed
         if(json.has("seed")){
@@ -78,82 +154,31 @@ public class RandomTextureType implements TextureType<RandomTextureData> {
         // Columns
         if(data.getColumns() != 1)
             json.addProperty("columns", data.getColumns());
-        // Count
-        if(data.getCount() != data.getRows() * data.getColumns())
-            json.addProperty("count", data.getCount());
         // Seed
         if(data.getSeed() != null)
             json.addProperty("seed", data.getSeed());
         return json;
     }
 
-    @Override
-    public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, RandomTextureData data){
-        // Handle animation metadata
-        if(context.getAnimationMetadata() != null){
-            AnimationMetadataSection animation = context.getAnimationMetadata();
-            Pair<Integer,Integer> frameSize;
-            if(animation.frameWidth != -1 && animation.frameHeight != -1)
-                //noinspection SuspiciousNameCombination
-                frameSize = Pair.of(animation.frameWidth, animation.frameHeight);
-            else if(animation.frameWidth != -1)
-                frameSize = Pair.of(animation.frameWidth, context.getTextureHeight());
-            else if(animation.frameHeight != -1)
-                //noinspection SuspiciousNameCombination
-                frameSize = Pair.of(context.getTextureWidth(), animation.frameHeight);
-            else{
-                // Use the expected aspect ratio for the layout
-                int height = Math.min(context.getTextureWidth() * data.getRows() / data.getColumns(), context.getTextureHeight());
-                //noinspection SuspiciousNameCombination
-                frameSize = Pair.of(context.getTextureWidth(), height);
-            }
-            // Do vanilla frame size check
-            if(context.getTextureWidth() % frameSize.left() != 0
-                || context.getTextureHeight() % frameSize.right() != 0)
-                throw new TextureErrorException("Image size " + context.getTextureWidth() + "x" + context.getTextureHeight() + " is not a multiple of frame size " + frameSize.left() + "x" + frameSize.right() + "!");
-            return frameSize;
-        }
-
-        // Verify aspect ratio corresponds to row/column count
-        int width = context.getTextureWidth();
-        int height = context.getTextureHeight();
-        if(width * data.getRows() / data.getColumns() != height)
-            throw new TextureErrorException("Image aspect ratio does not match row/column aspect ratio!");
-        //noinspection SuspiciousNameCombination
-        return Pair.of(width, height);
-    }
-
-    @Override
-    public TextureAtlasSprite createSprite(SpriteCreationContext context, RandomTextureData data){
-        TextureAtlasSprite sprite = context.createOriginalSprite();
-        sprite.u1 = sprite.u0 + (sprite.u1 - sprite.u0) / data.getColumns();
-        sprite.v1 = sprite.v0 + (sprite.v1 - sprite.v0) / data.getRows();
-        return new RandomTextureSprite(sprite, data);
-    }
-
-    public static void processQuad(MutableQuad quad, BlockPos pos, Direction side, Random random, RandomTextureSprite sprite){
+    public static void processQuad(MutableQuad quad, BlockPos pos, Direction side, Random random, SpriteInstance sprite){
         if(side == null)
             return;
-        RandomTextureData data = sprite.data();
+        RandomTextureData data = (RandomTextureData)sprite.getTexture().getCustomData();
         // Determine which tile to use based on position and side
         if(data.getSeed() != null)
             random.setSeed(data.getSeed() ^ ((pos.asLong() + 1) * (side.ordinal() + 1)));
         else
             random.setSeed((pos.asLong() + 1) * (side.ordinal() + 1));
         random.nextLong(); // Neighboring blocks may lead to similar seeds, hence generate long first to increase randomness
-        int x = random.nextInt(data.getColumns());
-        int y = random.nextInt(data.getRows());
+        int index = random.nextInt(sprite.getTexture().getSprites().size());
         // Adjust the quad's uv
-        if(x > 0 || y > 0){
-            float width = sprite.getU1() - sprite.getU0();
-            float height = sprite.getV1() - sprite.getV0();
-            for(int i = 0; i < 4; i++){
-                quad.uv(
-                    i,
-                    quad.u(i) + x * width,
-                    quad.v(i) + y * height
-                );
-            }
+        SpriteInstance newSprite = sprite.getTexture().getSprites().get(index);
+        for(int i = 0; i < 4; i++){
+            quad.uv(
+                i,
+                newSprite.getU0() + (quad.u(i) - sprite.getU0()) / (sprite.getU1() - sprite.getSprite().getU0()) * (newSprite.getU1() - newSprite.getU0()),
+                newSprite.getV0() + (quad.v(i) - sprite.getV0()) / (sprite.getV1() - sprite.getSprite().getV0()) * (newSprite.getV1() - newSprite.getV0())
+            );
         }
     }
 }

@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.model.types.connecting;
 import com.google.common.base.Suppliers;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
-import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -60,7 +60,7 @@ public class ConnectingItemModel implements ItemModel {
                 // As item mesh does not depend on state, we can run the connecting texture processing immediately
                 if(quad.hasConnectingTexture()){
                     mutableQuad.set(ConnectingBakedModel.TextureOrientation.NORMAL_0.vertexIndexPermutation);
-                    boolean keepQuad = ConnectingTextureLayoutHandler.get(quad.getLayout()).processItemQuad(quadIndex, mutableQuad, (ConnectingTextureSprite)quad.bakedQuad().sprite());
+                    boolean keepQuad = ConnectingTextureLayoutHandler.get(quad.getLayout()).processItemQuad(quadIndex, mutableQuad, quad.spriteInstance(), (StitchedConnectingTextureData)quad.spriteInstance().getTexture().getCustomData());
                     mutableQuad.resetPermutation();
                     if(!keepQuad)
                         continue;

@@ -1,14 +1,16 @@
 package com.supermartijn642.fusion.mixin.sodium;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -51,10 +53,13 @@ public class ItemRendererMixinSodium {
     )
     private static void captureQuads(ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource bufferSource, int combinedLight, int combinedOverlay, int[] colors, List<BakedQuad> quads, RenderType renderType, ItemStackRenderState.FoilType foilType, CallbackInfo ci){
         for(BakedQuad quad : quads){
-            //noinspection resource
-            if(quad.tintIndex() == 39216 && quad.sprite() instanceof BaseTextureSprite){
-                lastSubmittedQuads.set(quads.iterator());
-                break;
+            if(quad.tintIndex() == 39216){
+                TextureAtlasSprite sprite = quad.sprite();
+                TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+                if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+                    lastSubmittedQuads.set(quads.iterator());
+                    break;
+                }
             }
         }
     }
@@ -73,22 +78,24 @@ public class ItemRendererMixinSodium {
         Iterator<BakedQuad> quads = lastSubmittedQuads.get();
         if(quads == null)
             return;
-        BaseTextureSprite sprite = null;
+        BaseTextureData.QuadTinting tinting = null;
         while(quads.hasNext()){
             BakedQuad quad = quads.next();
             //noinspection resource
-            if(quad.tintIndex() == 39216 && quad.sprite() instanceof BaseTextureSprite s){
-                sprite = s;
-                break;
+            if(quad.tintIndex() == 39216){
+                TextureAtlasSprite sprite = quad.sprite();
+                TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+                if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+                    tinting = data.getTinting();
+                    break;
+                }
             }
         }
-        if(sprite == null)
+        if(tinting == null)
             return;
 
         // Calculate tinting
-        BaseTextureData.QuadTinting tinting = sprite.data().getTinting();
-        if(tinting != null)
-            ci.setReturnValue(QuadTintingHelper.getColor(tinting, null, null, null));
+        ci.setReturnValue(QuadTintingHelper.getColor(tinting, null, null, null));
     }
 
     @Inject(

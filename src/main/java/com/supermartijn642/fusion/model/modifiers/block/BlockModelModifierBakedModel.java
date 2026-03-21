@@ -63,6 +63,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
         }
     }
 
+    private static final ModelProperty<Long> SEED_PROPERTY = new ModelProperty<>();
     private static final ModelProperty<ModelData[]> DATA_PROPERTY = new ModelProperty<>();
 
     private final BakedModel original;
@@ -129,8 +130,12 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random, ModelData data, @Nullable RenderType renderType){
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+        Long seed = data.get(SEED_PROPERTY);
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            if(seed != null)
+                random.setSeed(seed);
             return this.original.getQuads(state, side, random, data, renderType);
+        }
         boolean addSimpleQuads = renderType == null
             || this.chunkRenderTypes.contains(renderType)
             || (this.addNativeBlockRenderTypes && BakedModel.super.getRenderTypes(state, random, data).contains(renderType));
@@ -141,8 +146,11 @@ public class BlockModelModifierBakedModel implements BakedModel {
         for(int i = 0; i < this.nonSimpleModels.size(); i++){
             BakedModel model = this.nonSimpleModels.get(i);
             ModelData modelData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
-            if(renderType == null || state == null || model.getRenderTypes(state, random, modelData).contains(renderType))
+            if(renderType == null || state == null || model.getRenderTypes(state, random, modelData).contains(renderType)){
+                if(seed != null)
+                    random.setSeed(seed);
                 quads.addAll(model.getQuads(state, side, random, modelData, renderType));
+            }
         }
         return quads;
     }
@@ -161,8 +169,12 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource random, ModelData data){
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+        Long seed = data.get(SEED_PROPERTY);
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            if(seed != null)
+                random.setSeed(seed);
             return this.original.getRenderTypes(state, random, data);
+        }
         ChunkRenderTypeSet renderTypes = this.chunkRenderTypes;
         if(this.addNativeBlockRenderTypes)
             renderTypes = ChunkRenderTypeSet.union(renderTypes, BakedModel.super.getRenderTypes(state, random, data));
@@ -171,6 +183,8 @@ public class BlockModelModifierBakedModel implements BakedModel {
             for(int i = 0; i < this.nonSimpleModels.size(); i++){
                 BakedModel model = this.nonSimpleModels.get(i);
                 ModelData modelData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
+                if(seed != null)
+                    random.setSeed(seed);
                 renderTypes = ChunkRenderTypeSet.union(renderTypes, model.getRenderTypes(state, random, modelData));
             }
         }
@@ -209,12 +223,14 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
+        ModelData.Builder builder = ModelData.builder()
+            .with(SEED_PROPERTY, state.getSeed(pos));
         if(!this.hasNonSimpleModels)
-            return data;
+            return builder.build();
         ModelData[] arr = new ModelData[this.nonSimpleModels.size()];
         for(int i = 0; i < this.nonSimpleModels.size(); i++)
             arr[i] = this.nonSimpleModels.get(i).getModelData(level, pos, state, data);
-        return ModelData.builder().with(DATA_PROPERTY, arr).build();
+        return builder.with(DATA_PROPERTY, arr).build();
     }
 
     @Override

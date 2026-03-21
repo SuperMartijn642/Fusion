@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.resources;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.supermartijn642.fusion.Fusion;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.extensions.PackExtension;
 import net.minecraft.ChatFormatting;
@@ -29,7 +30,7 @@ import java.util.function.Consumer;
  */
 public class MinimumVersionWarningScreen extends Screen {
 
-    private static final ResourceLocation FUSION_LOGO = new ResourceLocation("fusion", "textures/resourcepacks/fusion_icon.png");
+    private static final ResourceLocation FUSION_LOGO = Fusion.identifier("textures/resourcepacks/fusion_icon.png");
 
     private final PackSelectionModel.EntryBase pack;
     private final Consumer<Boolean> confirmation;

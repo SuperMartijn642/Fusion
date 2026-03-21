@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.util;
 
+import com.supermartijn642.fusion.Fusion;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -51,7 +52,7 @@ public class IdentifierUtil {
     public static ResourceLocation withFusionNamespace(String identifier){
         String[] parts = identifier.split(":");
         return parts.length == 1 ?
-            new ResourceLocation("fusion", parts[0]) :
+            Fusion.identifier(parts[0]) :
             new ResourceLocation(identifier);
     }
 

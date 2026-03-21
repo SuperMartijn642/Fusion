@@ -98,6 +98,8 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
         output.setCustomData(data);
     }
 
+    private static final int MAX_SIZE = 32; // Two chunks of size, blame resource packs if they blow up the texture atlas
+
     @Override
     public ContinuousTextureData deserialize(JsonObject json) throws JsonParseException{
         // Deserialize base properties
@@ -112,7 +114,7 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
             if(!json.get("rows").isJsonPrimitive() || !json.getAsJsonPrimitive("rows").isNumber())
                 throw new JsonParseException("Property 'rows' must be a number!");
             int rows = json.get("rows").getAsInt();
-            if(rows <= 0 || rows > 10)
+            if(rows <= 0 || rows > MAX_SIZE)
                 throw new JsonParseException("Property 'rows' must be greater than zero and less than 10!");
             builder.rows(rows);
         }
@@ -121,7 +123,7 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
             if(!json.get("columns").isJsonPrimitive() || !json.getAsJsonPrimitive("columns").isNumber())
                 throw new JsonParseException("Property 'columns' must be a number!");
             int columns = json.get("columns").getAsInt();
-            if(columns <= 0 || columns > 10)
+            if(columns <= 0 || columns > MAX_SIZE)
                 throw new JsonParseException("Property 'columns' must be greater than zero and less than 10!");
             builder.columns(columns);
         }

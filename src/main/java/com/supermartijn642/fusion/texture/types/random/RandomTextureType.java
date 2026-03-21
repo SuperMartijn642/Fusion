@@ -106,6 +106,8 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         output.setCustomData(data);
     }
 
+    public static final int MAX_SIZE = 10;
+
     @Override
     public RandomTextureData deserialize(JsonObject json) throws JsonParseException{
         // Deserialize base properties
@@ -121,7 +123,7 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
             if(!json.get("rows").isJsonPrimitive() || !json.getAsJsonPrimitive("rows").isNumber())
                 throw new JsonParseException("Property 'rows' must be a number!");
             rows = json.get("rows").getAsInt();
-            if(rows < 1 || rows > 10)
+            if(rows < 1 || rows > MAX_SIZE)
                 throw new JsonParseException("Property 'rows' must be a number between 1 and 10!");
             builder.rows(rows);
         }
@@ -131,7 +133,7 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
             if(!json.get("columns").isJsonPrimitive() || !json.getAsJsonPrimitive("columns").isNumber())
                 throw new JsonParseException("Property 'columns' must be a number!");
             columns = json.get("columns").getAsInt();
-            if(columns < 1 || columns > 10)
+            if(columns < 1 || columns > MAX_SIZE)
                 throw new JsonParseException("Property 'columns' must be a number between 1 and 10!");
             builder.columns(columns);
         }

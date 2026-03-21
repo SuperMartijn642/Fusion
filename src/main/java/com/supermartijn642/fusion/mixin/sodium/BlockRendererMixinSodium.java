@@ -2,9 +2,10 @@ package com.supermartijn642.fusion.mixin.sodium;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import me.jellysquid.mods.sodium.client.model.light.LightPipeline;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderContext;
@@ -38,8 +39,9 @@ public class BlockRendererMixinSodium {
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.tintIndex == 39216){
             TextureAtlasSprite sprite = quad.getSprite();
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+                BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null){
                     int color = ColorARGB.toABGR(QuadTintingHelper.getColor(tinting, ctx.state(), ctx.world(), ctx.pos()), 255);
                     colors.set(new int[]{color, color, color, color});

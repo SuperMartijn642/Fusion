@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.TerrainParticle;
 import net.minecraft.client.particle.TextureSheetParticle;
@@ -29,8 +30,9 @@ public abstract class TerrainParticleMixin extends TextureSheetParticle {
     )
     private void tintQuad(ClientLevel level, double x, double y, double z, double velocityX, double velocityY, double velocityZ, BlockState state, BlockPos pos, CallbackInfo ci){
         // If the texture has a custom tinting set, replace the original tinting
-        if(this.sprite instanceof BaseTextureSprite){
-            BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)this.sprite).data().getTinting();
+        TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(this.sprite);
+        if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+            BaseTextureData.QuadTinting tinting = data.getTinting();
             if(tinting != null){
                 int color = QuadTintingHelper.getColor(tinting, state, level, pos);
                 this.rCol = 0.6f * (color >> 16 & 0xFF) / 255f;

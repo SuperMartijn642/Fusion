@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,15 +13,15 @@ import org.spongepowered.asm.mixin.Unique;
 public class TextureAtlasSpriteMixin implements TextureAtlasSpriteExtension {
 
     @Unique
-    private TextureType<?> fusionType;
+    private SpriteInstance fusionSpriteInstance;
 
     @Override
-    public void setFusionTextureType(TextureType<?> type){
-        this.fusionType = type;
+    public void setFusionSpriteInstance(SpriteInstance instance){
+        this.fusionSpriteInstance = instance;
     }
 
     @Override
-    public TextureType<?> getFusionTextureType(){
-        return this.fusionType;
+    public SpriteInstance getFusionSpriteInstance(){
+        return this.fusionSpriteInstance;
     }
 }

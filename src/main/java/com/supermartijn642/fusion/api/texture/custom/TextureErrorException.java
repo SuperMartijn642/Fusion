@@ -1,4 +1,4 @@
-package com.supermartijn642.fusion.api.texture;
+package com.supermartijn642.fusion.api.texture.custom;
 
 /**
  * Created 13/10/2024 by SuperMartijn642

@@ -59,10 +59,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins(){
         List<String> mixins = new ArrayList<>();
-        if(this.isModernFixLoaded || this.isOptiFineLoaded){
-            mixins.add("modernfix.SimpleResourceMixin");
+        if(this.isModernFixLoaded || this.isOptiFineLoaded)
             mixins.add("modernfix.TextureAtlasMixinModernFix");
-        }
         if(this.isEmbeddiumLoaded){
             mixins.add("embeddium.BlockRendererMixinEmbeddium");
             mixins.add("embeddium.ItemRendererMixinEmbeddium");

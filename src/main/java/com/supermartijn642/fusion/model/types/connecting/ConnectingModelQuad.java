@@ -1,12 +1,10 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
-import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 
 /**
@@ -19,9 +17,7 @@ public class ConnectingModelQuad extends BaseModelQuad {
 
     public ConnectingModelQuad(BakedQuad bakedQuad, Direction cullDirection, Integer lightEmission, ConnectionPredicate connectionPredicate){
         super(bakedQuad, cullDirection, lightEmission);
-        TextureAtlasSprite sprite = bakedQuad.getSprite();
-        if(sprite instanceof ConnectingTextureSprite && ((ConnectingTextureSprite)sprite).data() != null){
-            ConnectingTextureData data = ((ConnectingTextureSprite)sprite).data();
+        if(this.spriteInstance() != null && this.spriteInstance().getTexture().getCustomData() instanceof StitchedConnectingTextureData data){
             this.predicate = connectionPredicate;
             this.layout = data.getLayout();
         }else{

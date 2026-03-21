@@ -9,14 +9,13 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RandomTextureDataImpl extends BaseTextureDataImpl implements RandomTextureData {
 
-    private final int rows, columns, count;
+    private final int rows, columns;
     private final Long seed;
 
-    public RandomTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting, int rows, int columns, int count, Long seed){
+    public RandomTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting, int rows, int columns, Long seed){
         super(renderType, emissive, tinting);
         this.rows = rows;
         this.columns = columns;
-        this.count = count;
         this.seed = seed;
     }
 
@@ -28,11 +27,6 @@ public class RandomTextureDataImpl extends BaseTextureDataImpl implements Random
     @Override
     public int getColumns(){
         return this.columns;
-    }
-
-    @Override
-    public int getCount(){
-        return this.count;
     }
 
     @Override

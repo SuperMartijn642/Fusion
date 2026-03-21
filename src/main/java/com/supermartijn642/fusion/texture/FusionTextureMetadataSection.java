@@ -14,17 +14,17 @@ import net.minecraft.server.packs.metadata.MetadataSectionType;
  */
 public class FusionTextureMetadataSection {
 
-    private static final Codec<Pair<TextureType<Object>,Object>> CODEC = CodecHelper.jsonSerializerToCodec(
+    private static final Codec<Pair<TextureType<Object,?>,Object>> CODEC = CodecHelper.jsonSerializerToCodec(
         FusionTextureMetadataSection::toJson,
         FusionTextureMetadataSection::fromJson
     );
-    public static final MetadataSectionType<Pair<TextureType<Object>,Object>> TYPE = new MetadataSectionType<>("fusion", CODEC);
+    public static final MetadataSectionType<Pair<TextureType<Object,?>,Object>> TYPE = new MetadataSectionType<>("fusion", CODEC);
 
-    private static JsonObject toJson(Pair<TextureType<Object>,Object> data){
+    private static JsonObject toJson(Pair<TextureType<Object,?>,Object> data){
         return TextureTypeRegistryImpl.serializeTextureData(data.left(), data.right());
     }
 
-    private static Pair<TextureType<Object>,Object> fromJson(JsonElement element){
+    private static Pair<TextureType<Object,?>,Object> fromJson(JsonElement element){
         if(!element.isJsonObject())
             throw new JsonParseException("Fusion metadata section must be an object!");
         // Finalize the registry

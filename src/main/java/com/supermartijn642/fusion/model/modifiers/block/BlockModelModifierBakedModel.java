@@ -164,12 +164,16 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     @Override
     public TextureAtlasSprite particleIcon(ModelData data){
-        return this.original.particleIcon(data);
+        if(this.isOriginalSimpleModel)
+            return this.original.particleIcon(ModelData.EMPTY);
+        // Get appropriate model data
+        ModelData[] arr = data.get(DATA_PROPERTY);
+        ModelData subData = arr == null || arr[0] == null ? ModelData.EMPTY : arr[0];
+        return this.original.particleIcon(subData);
     }
 
     @Override
     public TextureAtlasSprite particleIcon(){
-        //noinspection deprecation
-        return this.original.particleIcon();
+        return this.original.particleIcon(ModelData.EMPTY);
     }
 }

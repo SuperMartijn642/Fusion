@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.model.types.connecting;
 import com.google.common.base.Suppliers;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
-import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
@@ -65,7 +65,7 @@ public class ConnectingItemModel implements ItemModel {
                 if(layoutHandler != null){
                     mutableQuad.set(emitter);
                     mutableQuad.set(ConnectingBakedModel.TextureOrientation.NORMAL_0.vertexIndexPermutation);
-                    boolean keepQuad = layoutHandler.processItemQuad(quadIndex, mutableQuad, (ConnectingTextureSprite)quad.bakedQuad().sprite());
+                    boolean keepQuad = layoutHandler.processItemQuad(quadIndex, mutableQuad, quad.spriteInstance(), (StitchedConnectingTextureData)quad.spriteInstance().getTexture().getCustomData());
                     if(!keepQuad)
                         continue;
                 }

@@ -6,14 +6,13 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
-import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSprite;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
-import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
@@ -100,7 +99,7 @@ public class ConnectingBakedModel implements BlockStateModel {
 
     private final Mesh mesh;
     private final List<QuadPredicates> predicates;
-    private final List<TextureAtlasSprite> sprites;
+    private final List<SpriteInstance> sprites;
     private final boolean hasSpecialQuads;
     private final TextureAtlasSprite particleIcon;
 
@@ -111,7 +110,7 @@ public class ConnectingBakedModel implements BlockStateModel {
         MutableMesh builder = Renderer.get().mutableMesh();
         QuadEmitter emitter = builder.emitter();
         HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
-        HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
+        HashMap<SpriteInstance,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
         for(ConnectingModelQuad quad : quads){
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times
@@ -126,7 +125,7 @@ public class ConnectingBakedModel implements BlockStateModel {
                 // Give each combination of direction, orientation, and predicate a unique index
                 int predicateIndex = predicates.computeIfAbsent(new QuadPredicates(direction, orientation, predicate), o -> predicates.size());
                 // Give each sprite a unique index
-                int spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().sprite(), o -> sprites.size());
+                int spriteIndex = sprites.computeIfAbsent(quad.spriteInstance(), o -> sprites.size());
                 // Pack the predicate index and sprite index into the tag int
                 tag = 1 | (spriteIndex << 4) | (predicateIndex << 12);
             }
@@ -134,7 +133,7 @@ public class ConnectingBakedModel implements BlockStateModel {
             if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
                 int type = quad.textureType() == DefaultTextureTypes.RANDOM ? 2 : 3;
                 // Give each sprite a unique index
-                int spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().sprite(), o -> sprites.size());
+                int spriteIndex = sprites.computeIfAbsent(quad.spriteInstance(), o -> sprites.size());
                 // Pack the type and sprite index into the tag
                 tag = type | (spriteIndex << 4);
                 hasSpecialQuads = true;
@@ -262,23 +261,20 @@ public class ConnectingBakedModel implements BlockStateModel {
                         int spriteIndex = (tag >> 4) & ((1 << 8) - 1);
 
                         // Get the sprite
-                        TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
-
-                        // TODO fix this workaround
-                        quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 16383) << 4 | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 16383) << 18);
+                        SpriteInstance sprite = this.sprites.get(spriteIndex);
 
                         // Handle random texture type
                         if(type == 2){
                             mutableQuad.set(quad);
                             mutableQuad.resetPermutation();
-                            RandomTextureType.processQuad(mutableQuad, pos, quad.nominalFace(), random, (RandomTextureSprite)sprite);
+                            RandomTextureType.processQuad(mutableQuad, pos, quad.nominalFace(), random, sprite);
                             return true;
                         }
                         // Handle continuous texture type
                         if(type == 3){
                             mutableQuad.set(quad);
                             mutableQuad.resetPermutation();
-                            ContinuousTextureType.processQuad(mutableQuad, pos, quad.nominalFace(), (ContinuousTextureSprite)sprite);
+                            ContinuousTextureType.processQuad(mutableQuad, pos, quad.nominalFace(), sprite);
                             return true;
                         }
                     }
@@ -320,16 +316,14 @@ public class ConnectingBakedModel implements BlockStateModel {
                     }
 
                     // Get the sprite and the texture layout
-                    TextureAtlasSprite sprite = this.sprites.get(spriteIndex);
-                    ConnectingTextureLayout layout = ((ConnectingTextureSprite)sprite).data().getLayout();
-
-                    // TODO fix this workaround
-                    quad.tag((int)Math.floor((sprite.u1 + sprite.u0) / 2 * 16383) << 4 | (int)Math.floor((sprite.v1 + sprite.v0) / 2 * 16383) << 18);
+                    SpriteInstance sprite = this.sprites.get(spriteIndex);
+                    StitchedConnectingTextureData data = (StitchedConnectingTextureData)sprite.getTexture().getCustomData();
+                    ConnectingTextureLayout layout = data.getLayout();
 
                     // Remap the quad's uv
                     mutableQuad.set(quad);
                     mutableQuad.set(predicate.orientation.vertexIndexPermutation);
-                    return ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, (ConnectingTextureSprite)sprite, connections);
+                    return ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, sprite, data, connections);
                 }
                 return true;
             });

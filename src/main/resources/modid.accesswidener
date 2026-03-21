@@ -86,6 +86,7 @@ accessible field net/minecraft/client/renderer/rendertype/RenderType state Lnet/
 accessible field net/minecraft/client/renderer/texture/SpriteContents originalImage Lcom/mojang/blaze3d/platform/NativeImage;
 accessible field net/minecraft/client/renderer/texture/SpriteContents byMipLevel [Lcom/mojang/blaze3d/platform/NativeImage;
 accessible field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
+accessible field net/minecraft/client/renderer/texture/SpriteContents additionalMetadata Ljava/util/List;
 accessible field net/minecraft/client/renderer/texture/SpriteContents mipmapStrategy Lnet/minecraft/client/renderer/texture/MipmapStrategy;
 accessible field net/minecraft/client/renderer/texture/SpriteContents alphaCutoffBias F
 accessible field net/minecraft/client/renderer/texture/SpriteContents name Lnet/minecraft/resources/Identifier;
@@ -96,12 +97,16 @@ mutable field net/minecraft/client/renderer/texture/SpriteContents animatedTextu
 mutable field net/minecraft/client/renderer/texture/SpriteContents mipmapStrategy Lnet/minecraft/client/renderer/texture/MipmapStrategy;
 mutable field net/minecraft/client/renderer/texture/SpriteContents alphaCutoffBias F
 # SpriteContents$AnimatedTexture
+accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture frames Ljava/util/List;
+accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture interpolateFrames Z
 accessible method net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Ljava/util/List;IZ)V
 accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
 # SpriteContents$AnimationState
 accessible method net/minecraft/client/renderer/texture/SpriteContents$AnimationState <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;[Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
 # SpriteContents$FrameInfo
 accessible class net/minecraft/client/renderer/texture/SpriteContents$FrameInfo
+# Stitcher
+accessible field net/minecraft/client/renderer/texture/Stitcher mipLevel I
 # TextureAtlasSprite
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F

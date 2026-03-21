@@ -1,7 +1,8 @@
 package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.model.MutableQuad;
-import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 
 /**
@@ -16,7 +17,7 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
     }
 
     @Override
-    public boolean processBlockQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite, TextureConnections connections){
+    public boolean processBlockQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data, TextureConnections connections){
         // If the connections just happen to match an entire sprite, just use that and discard the auxiliary quads
         int fullSpriteIndex = -1;
         if(!connections.top && !connections.right && !connections.bottom && !connections.left)
@@ -32,12 +33,15 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
         if(fullSpriteIndex != -1){
             if(quadIndex != 0)
                 return false;
-            remapUVFullSprite(quad, fullSpriteIndex, sprite);
+            SpriteInstance newSprite = data.getTiles().get(fullSpriteIndex);
+            if(newSprite == null)
+                return false;
+            swapQuadSpriteUV(quad, currentSprite, newSprite);
             return true;
         }
 
         // Figure out how much to move each vertex towards corner quadIndex based on uv
-        float halfU = (sprite.getMaxU() + sprite.getMinU()) / 2, halfV = (sprite.getMaxV() + sprite.getMinV()) / 2;
+        float halfU = (currentSprite.getU1() + currentSprite.getU0()) / 2, halfV = (currentSprite.getV1() + currentSprite.getV0()) / 2;
         int nextCorner = (quadIndex + 1) % 4, oppositeCorner = (quadIndex + 2) % 4, lastCorner = (quadIndex + 3) % 4;
         boolean nextCornerIsSameU = Math.abs(quad.u(nextCorner) - quad.u(quadIndex)) / vertexDistance(quad, quadIndex, nextCorner) < Math.abs(quad.u(lastCorner) - quad.u(quadIndex)) / vertexDistance(quad, quadIndex, lastCorner);
         boolean nextCornerUVSmaller = nextCornerIsSameU ? quad.v(nextCorner) < quad.v(quadIndex) : quad.u(nextCorner) < quad.u(quadIndex);
@@ -85,6 +89,13 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
             );
         }
 
+        // Swap tiles
+        int tileIndex = getTileIndex(nextCornerIsSameU ? !nextCornerUVSmaller : !lastCornerUVSmaller, nextCornerIsSameU ? !lastCornerUVSmaller : !nextCornerUVSmaller, connections);
+        SpriteInstance newSprite = data.getTiles().get(tileIndex);
+        if(newSprite == null)
+            return false;
+        swapQuadSpriteUV(quad, currentSprite, newSprite);
+
         // Adjust the uv coordinates
         if(oppositeToNextPercentage > 0 || oppositeToLastPercentage > 0){
             float oppositeU = quad.u(oppositeCorner);
@@ -98,30 +109,24 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
                 oppositeV += (quad.v(lastCorner) - quad.v(oppositeCorner)) * oppositeToLastPercentage;
             }
             quad.uv(oppositeCorner, oppositeU, oppositeV);
-        }
+        }else
+            quad.uv(oppositeCorner, quad.u(oppositeCorner), quad.v(oppositeCorner));
         if(toNextCornerPercentage < 1){
             quad.uv(
                 nextCorner,
                 quad.u(quadIndex) + (quad.u(nextCorner) - quad.u(quadIndex)) * toNextCornerPercentage,
                 quad.v(quadIndex) + (quad.v(nextCorner) - quad.v(quadIndex)) * toNextCornerPercentage
             );
-        }
+        }else
+            quad.uv(nextCorner, quad.u(nextCorner), quad.v(nextCorner));
         if(toLastCornerPercentage < 1){
             quad.uv(
                 lastCorner,
                 quad.u(quadIndex) + (quad.u(lastCorner) - quad.u(quadIndex)) * toLastCornerPercentage,
                 quad.v(quadIndex) + (quad.v(lastCorner) - quad.v(quadIndex)) * toLastCornerPercentage
             );
-        }
-        if(sprite.rotated){
-            float vOffset = (sprite.getMaxV() - sprite.getMinV()) * getTileIndex(nextCornerIsSameU ? !nextCornerUVSmaller : !lastCornerUVSmaller, nextCornerIsSameU ? !lastCornerUVSmaller : !nextCornerUVSmaller, connections);
-            for(int i = 0; i < 4; i++)
-                quad.uv(i, quad.u(i), quad.v(i) + vOffset);
-        }else{
-            float uOffset = (sprite.getMaxU() - sprite.getMinU()) * getTileIndex(nextCornerIsSameU ? !nextCornerUVSmaller : !lastCornerUVSmaller, nextCornerIsSameU ? !lastCornerUVSmaller : !nextCornerUVSmaller, connections);
-            for(int i = 0; i < 4; i++)
-                quad.uv(i, quad.u(i) + uOffset, quad.v(i));
-        }
+        }else
+            quad.uv(lastCorner, quad.u(lastCorner), quad.v(lastCorner));
         return true;
     }
 
@@ -136,20 +141,6 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
         return CORNER_SPRITE_INDICES[index];
     }
 
-    private static void remapUVFullSprite(MutableQuad quad, int tileIndex, ConnectingTextureSprite sprite){
-        for(int i = 0; i < 4; i++){
-            if(sprite.rotated){
-                float height = sprite.getMaxV() - sprite.getMinV();
-                float v = sprite.getStartV() + quad.v(i) - sprite.getMinV() + height * tileIndex;
-                quad.uv(i, quad.u(i), v);
-            }else{
-                float width = sprite.getMaxU() - sprite.getMinU();
-                float u = sprite.getStartU() + quad.u(i) - sprite.getMinU() + width * tileIndex;
-                quad.uv(i, u, quad.v(i));
-            }
-        }
-    }
-
     private static double vertexDistance(MutableQuad quad, int v1, int v2){
         double xDiff = quad.x(v2) - quad.x(v1);
         double yDiff = quad.y(v2) - quad.y(v1);
@@ -158,7 +149,7 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
     }
 
     @Override
-    public boolean processItemQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite){
+    public boolean processItemQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data){
         return quadIndex == 0;
     }
 }

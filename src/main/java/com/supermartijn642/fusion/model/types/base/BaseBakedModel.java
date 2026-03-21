@@ -4,12 +4,11 @@ import com.google.common.collect.ImmutableList;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
 import com.supermartijn642.fusion.model.types.connecting.SurroundingBlockCache;
-import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureSprite;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
-import com.supermartijn642.fusion.texture.types.random.RandomTextureSprite;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -38,7 +37,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
     private final List<BakedQuad> itemMesh;
     private final List<BlockRenderLayer> blockRenderTypes;
     private final boolean shouldCheckOriginalBlockRenderTypes;
-    private final List<TextureAtlasSprite> sprites;
+    private final List<SpriteInstance> sprites;
     private final boolean hasSpecialQuads;
     private final boolean hasAmbientOcclusion;
     private final boolean isGui3d;
@@ -58,7 +57,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         List<TaggedBakedQuad>[][] blockMesh = new List[BlockRenderLayer.values().length + 1][];
         Set<BlockRenderLayer> blockRenderTypes = new LinkedHashSet<>();
         List<BakedQuad> itemMesh = new ArrayList<>();
-        HashMap<TextureAtlasSprite,Integer> sprites = new HashMap<>();
+        HashMap<SpriteInstance,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
         MutableQuad mutableQuad = new MutableQuad();
         for(BaseModelQuad quad : quads){
@@ -75,7 +74,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
             int spriteIndex = -1;
             if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
                 // Give each sprite a unique index
-                spriteIndex = sprites.computeIfAbsent(quad.bakedQuad().getSprite(), o -> sprites.size());
+                spriteIndex = sprites.computeIfAbsent(quad.spriteInstance(), o -> sprites.size());
                 hasSpecialQuads = true;
             }
 
@@ -168,16 +167,16 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
             // Process special texture type quads
             if(quad.textureType == DefaultTextureTypes.RANDOM || quad.textureType == DefaultTextureTypes.CONTINUOUS){
                 // Get the sprite
-                TextureAtlasSprite sprite = this.sprites.get(quad.spriteIndex);
+                SpriteInstance sprite = this.sprites.get(quad.spriteIndex);
 
                 mutableQuad.fillFromBakedQuad(quad.bakedQuad);
                 if(quad.textureType == DefaultTextureTypes.RANDOM){
                     // Handle random texture type
                     if(random == null) random = new Random();
-                    RandomTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getFace(), random, (RandomTextureSprite)sprite);
+                    RandomTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getFace(), random, sprite);
                 }else
                     // Handle continuous texture type
-                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getFace(), (ContinuousTextureSprite)sprite);
+                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getFace(), sprite);
                 bakedQuads.add(mutableQuad.toBakedQuad());
             }else
                 bakedQuads.add(quad.bakedQuad);
@@ -233,10 +232,10 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     private static class TaggedBakedQuad {
         final BakedQuad bakedQuad;
-        final TextureType<?> textureType;
+        final TextureType<?,?> textureType;
         final int spriteIndex;
 
-        private TaggedBakedQuad(BakedQuad bakedQuad, TextureType<?> textureType, int spriteIndex){
+        private TaggedBakedQuad(BakedQuad bakedQuad, TextureType<?,?> textureType, int spriteIndex){
             this.bakedQuad = bakedQuad;
             this.textureType = textureType;
             this.spriteIndex = spriteIndex;

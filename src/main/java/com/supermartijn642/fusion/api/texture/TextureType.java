@@ -1,40 +1,33 @@
 package com.supermartijn642.fusion.api.texture;
 
-import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.api.texture.custom.TextureCreationContext;
+import com.supermartijn642.fusion.api.texture.custom.TextureErrorException;
+import com.supermartijn642.fusion.api.texture.custom.TextureOutput;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.client.renderer.texture.Stitcher;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
+ * @param <T> Serializable properties to create the texture
+ * @param <X> Arbitrary data stored with the texture instance
  */
-public interface TextureType<T> extends Serializer<T> {
+public interface TextureType<T, X> extends Serializer<T> {
 
     /**
-     * Gets the size of a single frame. The returned size will be allocated in the relevant atlas.
-     * @param context context for calculating the frame size
+     * Creates the sprites from the custom texture data.
+     * @param output  output for the sprites and any custom data
+     * @param context context for creating the sprites
      * @param data    custom texture data
-     * @return the size to allocate to this sprite in the atlas
-     * @see SpritePreparationContext
+     * @throws TextureErrorException when there's a user error in the resource pack, for example an invalid configuration
      */
-    default Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, T data){
-        return context.getOriginalFrameSize();
-    }
+    void createTexture(TextureOutput<X> output, TextureCreationContext context, T data) throws TextureErrorException;
 
     /**
      * The {@link Stitcher} may rotate textures when stitching them onto the texture atlas.
      * If {@code false} is returned, this behaviour is prevented and the texture will not be rotated.
      * @return whether the texture is allowed to be rotated during atlas stitching
      */
-    default boolean allowRotation(){
+    default boolean allowRotation(){ // TODO remove this
         return true;
     }
-
-    /**
-     * Creates the sprite from the custom texture data.
-     * @param context context for creating the sprite
-     * @param data    custom texture data
-     * @see SpriteCreationContext
-     */
-    TextureAtlasSprite createSprite(SpriteCreationContext context, T data);
 }

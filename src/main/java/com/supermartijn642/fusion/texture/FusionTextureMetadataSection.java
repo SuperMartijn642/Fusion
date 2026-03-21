@@ -42,9 +42,9 @@ public class FusionTextureMetadataSection implements IMetadataSectionSerializer<
 
     public static class Data implements IMetadataSection {
 
-        public final Pair<TextureType<Object>,Object> pair;
+        public final Pair<TextureType<Object,?>,Object> pair;
 
-        public Data(Pair<TextureType<Object>,Object> pair){
+        public Data(Pair<TextureType<Object,?>,Object> pair){
             this.pair = pair;
         }
     }

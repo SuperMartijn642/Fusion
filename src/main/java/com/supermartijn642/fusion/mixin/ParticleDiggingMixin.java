@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleDigging;
@@ -37,8 +38,9 @@ public abstract class ParticleDiggingMixin extends Particle {
     )
     private void tintQuad(BlockPos pos, CallbackInfo ci){
         // If the texture has a custom tinting set, replace the original tinting
-        if(this.particleTexture instanceof BaseTextureSprite){
-            BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)this.particleTexture).data().getTinting();
+        TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(this.particleTexture);
+        if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData){
+            BaseTextureData.QuadTinting tinting = ((BaseTextureData)textureInstance.getCustomData()).getTinting();
             if(tinting != null){
                 int color = QuadTintingHelper.getColor(tinting, this.sourceState, this.world, pos);
                 this.particleRed *= (color >> 16 & 0xFF) / 255f;

@@ -26,7 +26,7 @@ public abstract class FusionTextureMetadataProvider extends ResourceGenerator {
 
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().setPrettyPrinting().create();
 
-    private final Map<ResourceLocation,Pair<TextureType<Object>,Object>> metadata = new HashMap<>();
+    private final Map<ResourceLocation,Pair<TextureType<Object,?>,Object>> metadata = new HashMap<>();
 
     /**
      * @param modid modid of the mod which creates the generator
@@ -37,9 +37,9 @@ public abstract class FusionTextureMetadataProvider extends ResourceGenerator {
 
     @Override
     public void save(){
-        for(Map.Entry<ResourceLocation,Pair<TextureType<Object>,Object>> entry : this.metadata.entrySet()){
+        for(Map.Entry<ResourceLocation,Pair<TextureType<Object,?>,Object>> entry : this.metadata.entrySet()){
             ResourceLocation location = entry.getKey();
-            Pair<TextureType<Object>,Object> metadata = entry.getValue();
+            Pair<TextureType<Object,?>,Object> metadata = entry.getValue();
             String extension = location.getResourcePath().endsWith(".mcmeta") ? "" : location.getResourcePath().lastIndexOf('.') > location.getResourcePath().lastIndexOf('/') ? ".mcmeta" : ".png.mcmeta";
             JsonObject json = new JsonObject();
             json.add("fusion", FusionTextureTypeRegistry.serializeTextureData(metadata.left(), metadata.right()));
@@ -58,9 +58,9 @@ public abstract class FusionTextureMetadataProvider extends ResourceGenerator {
      * @param textureType type of the texture
      * @param data        metadata to be serialized
      */
-    public final <T> void addTextureMetadata(ResourceLocation location, TextureType<T> textureType, T data){
+    public final <T> void addTextureMetadata(ResourceLocation location, TextureType<T,?> textureType, T data){
         //noinspection unchecked
-        Pair<TextureType<Object>,Object> previousValue = this.metadata.put(location, Pair.of((TextureType<Object>)textureType, (Object)data));
+        Pair<TextureType<Object,?>,Object> previousValue = this.metadata.put(location, Pair.of((TextureType<Object,?>)textureType, data));
         if(previousValue != null)
             throw new RuntimeException("Duplicate texture metadata for '" + location + "'!");
     }

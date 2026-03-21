@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.model;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.Fusion;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
@@ -52,7 +53,7 @@ public class ModelTypeRegistryImpl {
         }
 
         // Add the identifier
-        json.addProperty("loader", "fusion:model");
+        json.addProperty("loader", Fusion.identifier("model").toString());
         json.addProperty("type", identifier.toString());
         return json;
     }

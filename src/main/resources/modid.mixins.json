@@ -30,9 +30,8 @@
     "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
-    "ResourceMetadata\$BuilderMixin",
-    "SpriteContentsMixin",
     "SpriteLoaderMixin",
+    "SpriteResourceLoaderMixin",
     "TerrainParticleMixin",
     "TextureAtlasSpriteMixin",
     "WeightedBakedModelMixin"

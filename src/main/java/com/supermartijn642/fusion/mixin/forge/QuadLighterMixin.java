@@ -2,9 +2,10 @@ package com.supermartijn642.fusion.mixin.forge;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -41,10 +42,11 @@ public class QuadLighterMixin {
     )
     private float[] tintQuad(float[] color, VertexConsumer consumer, PoseStack.Pose pose, BakedQuad quad, int overlay){
         // If the texture has a custom tinting set, replace the original tinting
-        if(quad.tintIndex == 39216){
+        if(quad.getTintIndex() == 39216){
             TextureAtlasSprite sprite = quad.getSprite();
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+                BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null){
                     int packedColor = QuadTintingHelper.getColor(tinting, this.state, this.level, this.pos);
                     this.cachedTintColor[0] = ((packedColor >> 16) & 0xFF) / 255F;

@@ -148,7 +148,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
         }
         // If there's only simple models, return the cached quads
         if(!this.hasNonSimpleModels)
-            return side == null ? this.quads : this.culledQuads[side.ordinal()]
+            return side == null ? this.quads : this.culledQuads[side.ordinal()];
         // Start with quads from simple models
         List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
         // Gather quads from complex models

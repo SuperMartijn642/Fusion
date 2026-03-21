@@ -30,10 +30,9 @@
     "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
-    "ResourceMetadata\$BuilderMixin",
     "SingleVariantMixin",
-    "SpriteContentsMixin",
     "SpriteLoaderMixin",
+    "SpriteResourceLoaderMixin",
     "TerrainParticleMixin",
     "TextureAtlasSpriteMixin",
     "WeightedVariantsMixin"

@@ -78,6 +78,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
     private final BakedModel original;
     private final List<BakedModel> models;
     private final boolean showBreakingOverlay;
+    private final boolean isOriginalSimpleModel;
     private final boolean hasNonSimpleModels;
     private final List<BakedModel> nonSimpleModels;
     private final List<BakedQuad> quads;
@@ -127,6 +128,7 @@ public class BlockModelModifierBakedModel implements BakedModel {
                     fabulousItemRenderTypes.addAll(modelFabulousItemRenderTypes);
             }
         }
+        this.isOriginalSimpleModel = original.getClass().equals(SimpleBakedModel.class);
         this.hasNonSimpleModels = !nonSimpleModels.isEmpty();
         this.nonSimpleModels = nonSimpleModels.isEmpty() ? null : List.copyOf(nonSimpleModels);
         this.quads = List.copyOf(quads);
@@ -142,19 +144,31 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random, ModelData data, @Nullable RenderType renderType){
+        // Get model data properties
         Long seed = data.get(SEED_PROPERTY);
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
-            if(seed != null)
-                random.setSeed(seed);
-            return this.original.getQuads(state, side, random, data, renderType);
-        }
+        ModelData[] arr = data.get(DATA_PROPERTY);
+        // Check whether quads from simple models should be submitted
         boolean addSimpleQuads = renderType == null
             || this.chunkRenderTypes.contains(renderType)
             || (this.addNativeBlockRenderTypes && BakedModel.super.getRenderTypes(state, random, data).contains(renderType));
+        // When rendering breaking overlay, only submit the original model
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            if(this.isOriginalSimpleModel)
+                return addSimpleQuads ? this.original.getQuads(state, side, random, ModelData.EMPTY, null) : List.of();
+            ModelData subData = arr == null || arr[0] == null ? ModelData.EMPTY : arr[0];
+            if(renderType == null || state == null || this.original.getRenderTypes(state, random, subData).contains(renderType)){
+                if(seed != null)
+                    random.setSeed(seed);
+                return this.original.getQuads(state, side, random, subData, renderType);
+            }
+            return List.of();
+        }
+        // If there's only simple models, return the cached quads
         if(!this.hasNonSimpleModels)
-            return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : List.of();
-        ModelData[] arr = data.get(DATA_PROPERTY);
+            return side == null ? this.quads : this.culledQuads[side.ordinal()]
+        // Start with quads from simple models
         List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
+        // Gather quads from complex models
         for(int i = 0; i < this.nonSimpleModels.size(); i++){
             BakedModel model = this.nonSimpleModels.get(i);
             ModelData modelData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
@@ -181,24 +195,29 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource random, ModelData data){
+        // Get model data properties
         Long seed = data.get(SEED_PROPERTY);
+        ModelData[] arr = data.get(DATA_PROPERTY);
+        // When rendering breaking overlay, only submit the original model's render types
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            if(this.isOriginalSimpleModel)
+                return this.original.getRenderTypes(state, random, ModelData.EMPTY);
+            ModelData subData = arr == null || arr[0] == null ? ModelData.EMPTY : arr[0];
             if(seed != null)
                 random.setSeed(seed);
-            return this.original.getRenderTypes(state, random, data);
+            return this.original.getRenderTypes(state, random, subData);
         }
+        // Start with the render types from simple models
         ChunkRenderTypeSet renderTypes = this.chunkRenderTypes;
         if(this.addNativeBlockRenderTypes)
-            renderTypes = ChunkRenderTypeSet.union(renderTypes, BakedModel.super.getRenderTypes(state, random, data));
-        if(this.hasNonSimpleModels){
-            ModelData[] arr = data.get(DATA_PROPERTY);
-            for(int i = 0; i < this.nonSimpleModels.size(); i++){
-                BakedModel model = this.nonSimpleModels.get(i);
-                ModelData modelData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
-                if(seed != null)
-                    random.setSeed(seed);
-                renderTypes = ChunkRenderTypeSet.union(renderTypes, model.getRenderTypes(state, random, modelData));
-            }
+            renderTypes = ChunkRenderTypeSet.union(renderTypes, BakedModel.super.getRenderTypes(state, random, ModelData.EMPTY));
+        // Gather render types from complex models
+        for(int i = 0; i < this.nonSimpleModels.size(); i++){
+            BakedModel model = this.nonSimpleModels.get(i);
+            ModelData subData = arr == null || arr[i] == null ? ModelData.EMPTY : arr[i];
+            if(seed != null)
+                random.setSeed(seed);
+            renderTypes = ChunkRenderTypeSet.union(renderTypes, model.getRenderTypes(state, random, subData));
         }
         return renderTypes;
     }
@@ -230,10 +249,13 @@ public class BlockModelModifierBakedModel implements BakedModel {
 
     @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
+        // If there's only simple models, no need for model data
+        if(!this.hasNonSimpleModels)
+            return ModelData.EMPTY;
+        // Add seed and block state
         ModelData.Builder builder = ModelData.builder()
             .with(SEED_PROPERTY, state.getSeed(pos));
-        if(!this.hasNonSimpleModels)
-            return builder.build();
+        // Gather model data for complex models
         ModelData[] arr = new ModelData[this.nonSimpleModels.size()];
         for(int i = 0; i < this.nonSimpleModels.size(); i++)
             arr[i] = this.nonSimpleModels.get(i).getModelData(level, pos, state, data);

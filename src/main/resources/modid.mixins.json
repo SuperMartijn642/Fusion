@@ -27,7 +27,6 @@
     "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
-    "SpriteContentsMixin",
     "SpriteLoaderMixin",
     "SpriteResourceLoaderMixin",
     "TerrainParticleMixin",

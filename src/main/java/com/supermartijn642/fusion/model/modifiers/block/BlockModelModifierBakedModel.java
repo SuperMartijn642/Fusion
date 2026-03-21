@@ -242,6 +242,11 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
 
     @Override
     public TextureAtlasSprite getParticleIcon(@NotNull IModelData data){
-        return this.original.getParticleIcon(data);
+        if(this.isOriginalSimpleModel)
+            return this.original.getParticleIcon(EmptyModelData.INSTANCE);
+        // Get appropriate model data
+        IModelData[] arr = data.getData(DATA_PROPERTY);
+        IModelData subData = arr == null || arr[0] == null ? EmptyModelData.INSTANCE : arr[0];
+        return this.original.getParticleIcon(subData);
     }
 }

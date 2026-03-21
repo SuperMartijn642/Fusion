@@ -1,7 +1,8 @@
 package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.model.MutableQuad;
-import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 
 /**
@@ -9,17 +10,22 @@ import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
  */
 public class OverlayLayoutHandler extends ConnectingTextureLayoutHandler {
 
-    private final int[][][] uvs;
+    /**
+     * {@code indexMap[q][i]} specifies the tile index to use for quad {@code q} and connections index {@code i}
+     */
+    private final int[][] tileMapping;
 
     public OverlayLayoutHandler(){
         super(6, 3, 1, 1, 3);
 
         // Pre-compute all the tile locations
-        this.uvs = new int[4][(int)Math.pow(2, 8)][];
+        this.tileMapping = new int[4][(int)Math.pow(2, 8)];
         for(TextureConnections connections : TextureConnections.iterateAll()){
             int index = this.connectionsIndex(connections);
-            for(int quad = 0; quad < 4; quad++)
-                this.uvs[quad][index] = this.getTilePos(quad, connections);
+            for(int quad = 0; quad < 4; quad++){
+                int[] pos = this.getTilePos(quad, connections);
+                this.tileMapping[quad][index] = pos == null ? -1 : pos[0] + pos[1] * this.getWidth();
+            }
         }
     }
 
@@ -84,30 +90,23 @@ public class OverlayLayoutHandler extends ConnectingTextureLayoutHandler {
     }
 
     @Override
-    public boolean processBlockQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite, TextureConnections connections){
+    public boolean processBlockQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data, TextureConnections connections){
         // Get the correct tile position
-        int[] tile = this.uvs[quadIndex][this.connectionsIndex(connections)];
+        int tile = this.tileMapping[quadIndex][this.connectionsIndex(connections)];
         // If the quad is not needed, discard it
-        if(tile == null)
+        if(tile == -1)
+            return false;
+        // Discard quad if tile is empty
+        SpriteInstance newSprite = data.getTiles().get(tile);
+        if(newSprite == null)
             return false;
         // Adjust the quad's uv
-        adjustQuadUV(quad, tile[0], tile[1], sprite);
+        swapQuadSpriteUV(quad, currentSprite, newSprite);
         return true;
     }
 
     @Override
-    public boolean processItemQuad(int quadIndex, MutableQuad quad, ConnectingTextureSprite sprite){
+    public boolean processItemQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data){
         return false;
-    }
-
-    private static void adjustQuadUV(MutableQuad quad, int tileU, int tileV, ConnectingTextureSprite sprite){
-        for(int i = 0; i < 4; i++){
-            float width = sprite.getU1() - sprite.getU0();
-            float u = sprite.getStartU() + quad.u(i) - sprite.getU0() + width * tileU;
-
-            float height = sprite.getV1() - sprite.getV0();
-            float v = sprite.getStartV() + quad.v(i) - sprite.getV0() + height * tileV;
-            quad.uv(i, u, v);
-        }
     }
 }

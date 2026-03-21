@@ -33,6 +33,7 @@ import java.util.stream.IntStream;
  */
 public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
+    private static final ModelProperty<Long> SEED_PROPERTY = new ModelProperty<>();
     private static final ModelProperty<IModelData[]> DATA_PROPERTY = new ModelProperty<>();
 
     private final IBakedModel original;
@@ -80,8 +81,12 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
 
     @Override
     public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random random, @Nonnull IModelData data){
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+        Long seed = data.getData(SEED_PROPERTY);
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            if(seed != null)
+                random.setSeed(seed);
             return this.original.getQuads(state, side, random, data);
+        }
         RenderType renderType = MinecraftForgeClient.getRenderLayer();
         boolean addSimpleQuads = renderType == null || state == null || OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
         if(!this.hasNonSimpleModels)
@@ -90,8 +95,11 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
         List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
         for(int i = 0; i < this.nonSimpleModels.size(); i++){
             IBakedModel model = this.nonSimpleModels.get(i);
-            if(renderType == null || state == null || !(model instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType))
+            if(renderType == null || state == null || !(model instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType)){
+                if(seed != null)
+                    random.setSeed(seed);
                 quads.addAll(model.getQuads(state, side, random, arr == null || arr[i] == null ? EmptyModelData.INSTANCE : arr[i]));
+            }
         }
         return quads;
     }
@@ -142,12 +150,14 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
 
     @Override
     public IModelData getModelData(IBlockDisplayReader level, BlockPos pos, BlockState state, IModelData data){
+        ModelDataMap.Builder builder = new ModelDataMap.Builder()
+            .withInitial(SEED_PROPERTY, state.getSeed(pos));
         if(!this.hasNonSimpleModels)
-            return data;
+            return builder.build();
         IModelData[] arr = new IModelData[this.nonSimpleModels.size()];
         for(int i = 0; i < this.nonSimpleModels.size(); i++)
             arr[i] = this.nonSimpleModels.get(i).getModelData(level, pos, state, data);
-        return new ModelDataMap.Builder().withInitial(DATA_PROPERTY, arr).build();
+        return builder.withInitial(DATA_PROPERTY, arr).build();
     }
 
     @Override

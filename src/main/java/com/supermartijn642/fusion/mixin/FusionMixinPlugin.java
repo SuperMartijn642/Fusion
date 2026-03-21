@@ -55,10 +55,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins(){
         List<String> mixins = new ArrayList<>();
-        if(this.isModernFixLoaded){
-            mixins.add("modernfix.ResourceMetadataMixin");
+        if(this.isModernFixLoaded)
             mixins.add("modernfix.TextureAtlasMixinModernFix");
-        }
         if(this.isSodiumLoaded){
             mixins.add("sodium.BlockRendererMixinSodium");
             mixins.add("sodium.ItemRendererMixinSodium");

@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.resources;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.supermartijn642.fusion.Fusion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.PackLoadingManager;
 import net.minecraft.client.gui.screen.Screen;
@@ -18,7 +19,7 @@ import java.util.function.Consumer;
  */
 public class ResourcePackListTipRenderer {
 
-    private static final ResourceLocation FUSION_LOGO = new ResourceLocation("fusion", "textures/resourcepacks/fusion_icon_blurred.png");
+    private static final ResourceLocation FUSION_LOGO = Fusion.identifier("textures/resourcepacks/fusion_icon_blurred.png");
 
     public static void renderBackground(FusionPackMetadata metadata, boolean isVanillaCompatible, MatrixStack poseStack, int x, int y, int width, int height){
         if(isVanillaCompatible && !metadata.isMinVersionSatisfied())

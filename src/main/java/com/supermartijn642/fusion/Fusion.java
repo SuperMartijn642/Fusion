@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion;
 
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ExtensionPoint;
@@ -12,6 +13,12 @@ import org.apache.commons.lang3.tuple.Pair;
  */
 @Mod("fusion")
 public class Fusion {
+
+    public static final String MODID = "fusion";
+
+    public static ResourceLocation identifier(String path){
+        return new ResourceLocation(MODID, path);
+    }
 
     public Fusion(){
         // Accept any version from the server

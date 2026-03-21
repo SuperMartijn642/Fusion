@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.mixin.indium;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import link.infra.indium.renderer.mesh.MutableQuadViewImpl;
 import link.infra.indium.renderer.render.AbstractBlockRenderContext;
@@ -40,18 +41,13 @@ public class AbstractBlockRenderContextMixinIndium {
         // In case texture has a custom tinting set, replace the original tinting
         if(colorIndex == 39216){
             TextureAtlasSprite sprite = quad.cachedSprite();
-            if(!(sprite instanceof BaseTextureSprite)){
-                if(quad.tag() == 0)
-                    sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
-                else{
-                    float u = (quad.tag() & 65535) / 65535f;
-                    float v = (quad.tag() >> 16) / 65535f;
-                    sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(u, v);
-                }
+            if(sprite == null){
+                sprite = SpriteFinder.get(Minecraft.getInstance().getModelManager().getAtlas(TextureAtlases.getBlocks())).find(quad);
                 quad.cachedSprite(sprite);
             }
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+                BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null)
                     return QuadTintingHelper.getColor(tinting, this.blockInfo.blockState, this.blockInfo.blockView, this.blockInfo.blockPos);
             }

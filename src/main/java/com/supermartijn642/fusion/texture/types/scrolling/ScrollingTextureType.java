@@ -2,28 +2,70 @@ package com.supermartijn642.fusion.texture.types.scrolling;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.blaze3d.textures.GpuTexture;
-import com.supermartijn642.fusion.api.texture.SpriteCreationContext;
-import com.supermartijn642.fusion.api.texture.SpritePreparationContext;
 import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.SpriteImageSource;
+import com.supermartijn642.fusion.api.texture.custom.TextureCreationContext;
+import com.supermartijn642.fusion.api.texture.custom.TextureErrorException;
+import com.supermartijn642.fusion.api.texture.custom.TextureOutput;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
-import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
-import net.minecraft.client.renderer.texture.SpriteContents;
-import net.minecraft.client.renderer.texture.SpriteTicker;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.metadata.animation.FrameSize;
-import net.minecraft.server.packs.resources.ResourceMetadata;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
-import java.util.stream.IntStream;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
-public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
+public class ScrollingTextureType implements TextureType<ScrollingTextureData,BaseTextureData> {
+
+    @Override
+    public void createTexture(TextureOutput<BaseTextureData> output, TextureCreationContext context, ScrollingTextureData data) throws TextureErrorException{
+        // Can not be combined with vanilla animation data
+        if(context.getAnimationMetadata() != null)
+            throw new TextureErrorException("Can not be used in combination with vanilla animation data!");
+
+        // Validate frame size
+        if(context.getImageWidth() < data.getFrameWidth() || context.getImageHeight() < data.getFrameHeight())
+            throw new TextureErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is smaller than frame size " + data.getFrameWidth() + "x" + data.getFrameHeight() + "!");
+
+        // Calculate frame start and end
+        boolean reverse = data.getLoopType() == ScrollingTextureData.LoopType.REVERSE;
+        int startX = data.getStartPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getStartPosition() == ScrollingTextureData.Position.BOTTOM_LEFT ? 0 : context.getImageWidth() - data.getFrameWidth();
+        int startY = data.getStartPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getStartPosition() == ScrollingTextureData.Position.TOP_RIGHT ? 0 : context.getImageHeight() - data.getFrameHeight();
+        int endX = data.getEndPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getEndPosition() == ScrollingTextureData.Position.BOTTOM_LEFT ? 0 : context.getImageWidth() - data.getFrameWidth();
+        int endY = data.getEndPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getEndPosition() == ScrollingTextureData.Position.TOP_RIGHT ? 0 : context.getImageHeight() - data.getFrameHeight();
+
+        // Calculate all the frames
+        int stepCount = Math.max(Math.abs(endX - startX), Math.abs(endY - startY)) + 1;
+        int frameCount = reverse ? Math.max((stepCount - 1) * 2, 1) : stepCount;
+        List<SpriteImageSource.AnimationFrame> frames = new ArrayList<>(frameCount);
+        for(int index = 0; index < frameCount; index++){
+            float percentage = index < stepCount ?
+                stepCount > 1 ? (float)index / (stepCount - 1) : 0.5f :
+                stepCount > 1 ? 1 - (float)index / (stepCount - 1) : 0.5f;
+            int frameTime = (index == 0 && reverse) || index == stepCount - 1 ? data.getFrameTime() + data.getLoopPause() : data.getFrameTime();
+            frames.add(SpriteImageSource.AnimationFrame.of(
+                Math.round(startX + (endX - startX) * percentage),
+                Math.round(startY + (endY - startY) * percentage),
+                frameTime
+            ));
+        }
+
+        // Create the sprite
+        output.createSprite()
+            .image(SpriteImageSource.animated(
+                context.getImage(),
+                data.getFrameWidth(), data.getFrameHeight(),
+                frames,
+                false
+            ))
+            .submit();
+
+        // Set custom texture data
+        output.setCustomData(data);
+    }
 
     @Override
     public ScrollingTextureData deserialize(JsonObject json) throws JsonParseException{
@@ -117,121 +159,5 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
         if(data.getLoopPause() != 0)
             json.addProperty("loop_pause", data.getLoopPause());
         return json;
-    }
-
-    @Override
-    public Pair<Integer,Integer> getFrameSize(SpritePreparationContext context, ScrollingTextureData data){
-        if(context.getTextureWidth() < data.getFrameWidth() || context.getTextureHeight() < data.getFrameHeight())
-            throw new RuntimeException("Frame size must be smaller than the texture size!");
-        return Pair.of(data.getFrameWidth(), data.getFrameHeight());
-    }
-
-    @Override
-    public TextureAtlasSprite createSprite(SpriteCreationContext context, ScrollingTextureData data){
-        // Calculate frame start and end
-        boolean reverse = data.getLoopType() == ScrollingTextureData.LoopType.REVERSE;
-        int startX = data.getStartPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getStartPosition() == ScrollingTextureData.Position.BOTTOM_LEFT ? 0 : context.getTextureWidth() - data.getFrameWidth();
-        int startY = data.getStartPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getStartPosition() == ScrollingTextureData.Position.TOP_RIGHT ? 0 : context.getTextureHeight() - data.getFrameHeight();
-        int endX = data.getEndPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getEndPosition() == ScrollingTextureData.Position.BOTTOM_LEFT ? 0 : context.getTextureWidth() - data.getFrameWidth();
-        int endY = data.getEndPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getEndPosition() == ScrollingTextureData.Position.TOP_RIGHT ? 0 : context.getTextureHeight() - data.getFrameHeight();
-
-        // Calculate all the frames
-        int stepCount = Math.max(Math.abs(endX - startX), Math.abs(endY - startY)) + 1;
-        int frameCount = reverse ? Math.max((stepCount - 1) * 2, 1) : stepCount;
-        int[] xPositions = new int[frameCount];
-        int[] yPositions = new int[frameCount];
-        int[] frameTimes = new int[frameCount];
-        for(int index = 0; index < stepCount; index++){
-            float percentage = stepCount > 1 ? (float)index / (stepCount - 1) : 0.5f;
-            xPositions[index] = Math.round(startX + (endX - startX) * percentage);
-            yPositions[index] = Math.round(startY + (endY - startY) * percentage);
-            frameTimes[index] = data.getFrameTime();
-        }
-        frameTimes[stepCount - 1] += data.getLoopPause();
-        if(reverse){
-            for(int index = 1; index < stepCount - 1; index++){
-                float percentage = 1 - (float)index / (stepCount - 1);
-                xPositions[index + stepCount - 1] = Math.round(startX + (endX - startX) * percentage);
-                yPositions[index + stepCount - 1] = Math.round(startY + (endY - startY) * percentage);
-                frameTimes[index + stepCount - 1] = data.getFrameTime();
-            }
-            frameTimes[0] += data.getLoopPause();
-        }
-
-        // Finally create the new sprite
-        ScrollingSpriteContents contents = new ScrollingSpriteContents(context.createOriginalSprite().contents(), xPositions, yPositions, frameTimes);
-        return new BaseTextureSprite(
-            context.getTextureIdentifier(),
-            contents,
-            context.getAtlasWidth(),
-            context.getAtlasHeight(),
-            context.getSpritePositionX(),
-            context.getSpritePositionY(),
-            data
-        );
-    }
-
-    private static class ScrollingSpriteContents extends SpriteContents {
-
-        private final int[] xPositions, yPositions;
-        private final int[] frameTimes;
-        private int frame, tickCounter;
-
-        public ScrollingSpriteContents(SpriteContents original, int[] xPositions, int[] yPositions, int[] frameTimes){
-            super(original.name(), new FrameSize(original.width(), original.height()), original.originalImage, ResourceMetadata.EMPTY);
-            this.xPositions = xPositions;
-            this.yPositions = yPositions;
-            this.frameTimes = frameTimes;
-            this.byMipLevel = original.byMipLevel;
-            this.animatedTexture = new ScrollingAnimatedTexture();
-        }
-
-        private void tick(int x, int y, GpuTexture gpuTexture){
-            if(++this.tickCounter >= this.frameTimes[this.frame]){
-                this.frame = (this.frame + 1) % this.xPositions.length;
-                this.tickCounter = 0;
-                this.uploadFrame(x, y, this.frame, gpuTexture);
-            }
-        }
-
-        private void uploadFrame(int x, int y, int frame, GpuTexture gpuTexture){
-            this.upload(x, y, this.xPositions[frame], this.yPositions[frame], this.byMipLevel, gpuTexture);
-        }
-
-        @Override
-        public IntStream getUniqueFrames(){
-            return IntStream.of(1);
-        }
-
-        private class ScrollingAnimatedTexture extends SpriteContents.AnimatedTexture {
-
-            public ScrollingAnimatedTexture(){
-                super(Collections.emptyList(), 1, false);
-            }
-
-            @Override
-            public SpriteTicker createTicker(){
-                return new SpriteTicker() {
-                    @Override
-                    public void tickAndUpload(int x, int y, GpuTexture gpuTexture){
-                        ScrollingSpriteContents.this.tick(x, y, gpuTexture);
-                    }
-
-                    @Override
-                    public void close(){
-                    }
-                };
-            }
-
-            @Override
-            public void uploadFirstFrame(int x, int y, GpuTexture gpuTexture){
-                ScrollingSpriteContents.this.uploadFrame(x, y, 0, gpuTexture);
-            }
-
-            @Override
-            public IntStream getUniqueFrames(){
-                return ScrollingSpriteContents.this.getUniqueFrames();
-            }
-        }
     }
 }

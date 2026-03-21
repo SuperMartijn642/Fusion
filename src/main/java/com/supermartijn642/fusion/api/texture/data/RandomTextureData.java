@@ -19,8 +19,6 @@ public interface RandomTextureData extends BaseTextureData {
 
     int getColumns();
 
-    int getCount();
-
     @Nullable
     Long getSeed();
 
@@ -35,11 +33,6 @@ public interface RandomTextureData extends BaseTextureData {
          * Sets the number of columns of tiles in the image.
          */
         Builder columns(int columns);
-
-        /**
-         * Sets the number of tiles in the image. Can be omitted if the grid has no empty cells.
-         */
-        Builder count(int count);
 
         /**
          * Seed to use for randomness.

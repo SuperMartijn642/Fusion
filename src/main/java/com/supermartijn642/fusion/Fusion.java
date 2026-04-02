@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion;
 
+import net.minecraft.resources.Identifier;
 import net.minecraftforge.fml.IExtensionPoint;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -10,6 +11,12 @@ import net.minecraftforge.fml.loading.FMLEnvironment;
  */
 @Mod("fusion")
 public class Fusion {
+
+    public static final String MODID = "fusion";
+
+    public static Identifier identifier(String path){
+        return Identifier.fromNamespaceAndPath(MODID, path);
+    }
 
     public Fusion(FMLJavaModLoadingContext context){
         // Accept any version from the server

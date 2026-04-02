@@ -11,7 +11,6 @@ import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
-import net.minecraft.resources.Identifier;
 import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
@@ -26,51 +25,51 @@ import java.util.Optional;
  */
 public class FusionClient {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
+    public static final Logger LOGGER = LoggerFactory.getLogger(Fusion.MODID);
 
     public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
 
     public static void init(FMLJavaModLoadingContext context){
         // Register default texture types
-        FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "vanilla"), DefaultTextureTypes.VANILLA);
-        FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "base"), DefaultTextureTypes.BASE);
-        FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "connecting"), DefaultTextureTypes.CONNECTING);
-        FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "scrolling"), DefaultTextureTypes.SCROLLING);
-        FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "random"), DefaultTextureTypes.RANDOM);
-        FusionTextureTypeRegistry.registerTextureType(Identifier.fromNamespaceAndPath("fusion", "continuous"), DefaultTextureTypes.CONTINUOUS);
+        FusionTextureTypeRegistry.registerTextureType(Fusion.identifier("vanilla"), DefaultTextureTypes.VANILLA);
+        FusionTextureTypeRegistry.registerTextureType(Fusion.identifier("base"), DefaultTextureTypes.BASE);
+        FusionTextureTypeRegistry.registerTextureType(Fusion.identifier("connecting"), DefaultTextureTypes.CONNECTING);
+        FusionTextureTypeRegistry.registerTextureType(Fusion.identifier("scrolling"), DefaultTextureTypes.SCROLLING);
+        FusionTextureTypeRegistry.registerTextureType(Fusion.identifier("random"), DefaultTextureTypes.RANDOM);
+        FusionTextureTypeRegistry.registerTextureType(Fusion.identifier("continuous"), DefaultTextureTypes.CONTINUOUS);
         // Register default model types
-        FusionModelTypeRegistry.registerModelType(Identifier.fromNamespaceAndPath("fusion", "unknown"), DefaultModelTypes.UNKNOWN);
-        FusionModelTypeRegistry.registerModelType(Identifier.fromNamespaceAndPath("fusion", "vanilla"), DefaultModelTypes.VANILLA);
-        FusionModelTypeRegistry.registerModelType(Identifier.fromNamespaceAndPath("fusion", "base"), DefaultModelTypes.BASE);
-        FusionModelTypeRegistry.registerModelType(Identifier.fromNamespaceAndPath("fusion", "connecting"), DefaultModelTypes.CONNECTING);
+        FusionModelTypeRegistry.registerModelType(Fusion.identifier("unknown"), DefaultModelTypes.UNKNOWN);
+        FusionModelTypeRegistry.registerModelType(Fusion.identifier("vanilla"), DefaultModelTypes.VANILLA);
+        FusionModelTypeRegistry.registerModelType(Fusion.identifier("base"), DefaultModelTypes.BASE);
+        FusionModelTypeRegistry.registerModelType(Fusion.identifier("connecting"), DefaultModelTypes.CONNECTING);
         // Register default connection predicates
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "and"), AndConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "or"), OrConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "not"), NotConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "is_direction"), IsDirectionConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "is_face_visible"), IsFaceVisibleConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "is_same_block"), IsSameBlockConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "is_same_state"), IsSameStateConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "match_block"), MatchBlockConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "match_block_in_front"), MatchBlockInFrontConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "match_state"), MatchStateConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Identifier.fromNamespaceAndPath("fusion", "match_state_in_front"), MatchStateInFrontConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("and"), AndConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("or"), OrConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("not"), NotConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_direction"), IsDirectionConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_face_visible"), IsFaceVisibleConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_block"), IsSameBlockConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_state"), IsSameStateConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block"), MatchBlockConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block_in_front"), MatchBlockInFrontConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state"), MatchStateConnectionPredicate.SERIALIZER);
+        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state_in_front"), MatchStateInFrontConnectionPredicate.SERIALIZER);
         // Register default item model predicates
-        ItemPredicateRegistry.registerItemPredicate(Identifier.fromNamespaceAndPath("fusion", "and"), AndItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Identifier.fromNamespaceAndPath("fusion", "or"), OrItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Identifier.fromNamespaceAndPath("fusion", "not"), NotItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Identifier.fromNamespaceAndPath("fusion", "count"), CountItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Identifier.fromNamespaceAndPath("fusion", "durability"), DurabilityItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Identifier.fromNamespaceAndPath("fusion", "enchantment"), EnchantmentItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Identifier.fromNamespaceAndPath("fusion", "potion"), PotionItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("and"), AndItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("or"), OrItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("not"), NotItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("count"), CountItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("durability"), DurabilityItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("enchantment"), EnchantmentItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("potion"), PotionItemPredicate.SERIALIZER);
         // Register default entity model predicates
-        EntityModelPredicateRegistry.registerEntityModelPredicate(Identifier.fromNamespaceAndPath("fusion", "and"), AndEntityModelPredicate.SERIALIZER);
-        EntityModelPredicateRegistry.registerEntityModelPredicate(Identifier.fromNamespaceAndPath("fusion", "or"), OrEntityModelPredicate.SERIALIZER);
-        EntityModelPredicateRegistry.registerEntityModelPredicate(Identifier.fromNamespaceAndPath("fusion", "not"), NotEntityModelPredicate.SERIALIZER);
-        EntityModelPredicateRegistry.registerEntityModelPredicate(Identifier.fromNamespaceAndPath("fusion", "altitude"), AltitudeEntityModelPredicate.SERIALIZER);
-        EntityModelPredicateRegistry.registerEntityModelPredicate(Identifier.fromNamespaceAndPath("fusion", "is_baby"), BabyEntityModelPredicate.SERIALIZER);
-        EntityModelPredicateRegistry.registerEntityModelPredicate(Identifier.fromNamespaceAndPath("fusion", "biome"), BiomeEntityModelPredicate.SERIALIZER);
-        EntityModelPredicateRegistry.registerEntityModelPredicate(Identifier.fromNamespaceAndPath("fusion", "dimension"), DimensionEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("and"), AndEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("or"), OrEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("not"), NotEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("altitude"), AltitudeEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("is_baby"), BabyEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("biome"), BiomeEntityModelPredicate.SERIALIZER);
+        EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("dimension"), DimensionEntityModelPredicate.SERIALIZER);
 
         // Finalize registration
 
@@ -107,7 +106,7 @@ public class FusionClient {
 
     public static String getFusionVersion(){
         if(fusionVersion == null){
-            String version = ModList.get().getModContainerById("fusion").orElseThrow().getModInfo().getVersion().toString();
+            String version = ModList.get().getModContainerById(Fusion.MODID).orElseThrow().getModInfo().getVersion().toString();
             if(!version.matches("\\d+\\.\\d+\\.\\d+"))
                 version = version.substring(0, version.length() - version.replaceFirst("\\d+\\.\\d+\\.\\d+\\D", "").length() - 1);
             fusionVersion = version;

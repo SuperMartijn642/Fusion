@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.resources;
 
+import com.supermartijn642.fusion.Fusion;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,7 +17,7 @@ import java.util.function.Consumer;
  */
 public class ResourcePackListTipRenderer {
 
-    private static final Identifier FUSION_LOGO = Identifier.fromNamespaceAndPath("fusion", "textures/resourcepacks/fusion_icon_blurred.png");
+    private static final Identifier FUSION_LOGO = Fusion.identifier("textures/resourcepacks/fusion_icon_blurred.png");
 
     public static void renderBackground(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphics graphics, int x, int y, int width, int height){
         if(isVanillaCompatible && !metadata.isMinVersionSatisfied())

@@ -45,11 +45,13 @@ public class BlockModelModifierBakedModel implements BakedModel {
     public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
         RandomSource random = randomSupplier.get();
         long seed = random.nextLong();
+        // When rendering breaking overlay, only submit the original model
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
             random.setSeed(seed);
             this.original.emitBlockQuads(blockView, state, pos, randomSupplier, context);
             return;
         }
+        // Submit all models
         for(BakedModel model : this.models){
             random.setSeed(seed);
             model.emitBlockQuads(blockView, state, pos, randomSupplier, context);
@@ -60,11 +62,13 @@ public class BlockModelModifierBakedModel implements BakedModel {
     public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
         RandomSource random = randomSupplier.get();
         long seed = random.nextLong();
+        // When rendering breaking overlay, only submit the original model
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
             random.setSeed(seed);
             this.original.emitItemQuads(stack, randomSupplier, context);
             return;
         }
+        // Submit all models
         for(BakedModel model : this.models){
             random.setSeed(seed);
             model.emitItemQuads(stack, randomSupplier, context);
@@ -74,10 +78,12 @@ public class BlockModelModifierBakedModel implements BakedModel {
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random){
         long seed = random.nextLong();
+        // When rendering breaking overlay, only submit the original model
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
             random.setSeed(seed);
             return this.original.getQuads(state, side, random);
         }
+        // Collect quads for all models
         List<BakedQuad> quads = new ArrayList<>();
         for(BakedModel model : this.models){
             random.setSeed(seed);

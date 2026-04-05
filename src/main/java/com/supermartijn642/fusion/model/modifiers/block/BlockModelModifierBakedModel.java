@@ -27,26 +27,33 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
 
     public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models, boolean showBreakingOverlay){
         this.original = original;
-        this.models = List.copyOf(models);
+        this.models = new ArrayList<>(models.size() + 1);
+        this.models.add(original);
+        this.models.addAll(models);
         this.showBreakingOverlay = showBreakingOverlay;
     }
 
     @Override
     public void emitQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest){
+        long seed = random.nextLong();
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            random.setSeed(seed);
             this.original.emitQuads(emitter, blockView, pos, state, random, cullTest);
             return;
         }
-        this.original.emitQuads(emitter, blockView, pos, state, random, cullTest);
-        for(BlockStateModel model : this.models)
+        for(BlockStateModel model : this.models){
+            random.setSeed(seed);
             model.emitQuads(emitter, blockView, pos, state, random, cullTest);
+        }
     }
 
     @Override
     public @Nullable Object createGeometryKey(BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random){
         List<Object> keys = new ArrayList<>(this.models.size() + 2);
         keys.add(this);
+        long seed = random.nextLong();
         for(BlockStateModel model : this.models){
+            random.setSeed(seed);
             Object subKey = model.createGeometryKey(blockView, pos, state, random);
             if(subKey == null)
                 return null;
@@ -56,13 +63,12 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     }
 
     @Override
-    public void collectParts(RandomSource random, List<BlockModelPart> list){
-        this.original.collectParts(random, list);
-    }
-
-    @Override
-    public List<BlockModelPart> collectParts(RandomSource random){
-        return this.original.collectParts(random);
+    public void collectParts(RandomSource random, List<BlockModelPart> parts){
+        long seed = random.nextLong();
+        for(BlockStateModel model : this.models){
+            random.setSeed(seed);
+            model.collectParts(random, parts);
+        }
     }
 
     @Override

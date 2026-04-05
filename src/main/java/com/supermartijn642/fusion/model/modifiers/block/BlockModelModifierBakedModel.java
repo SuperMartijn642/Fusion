@@ -31,7 +31,9 @@ public class BlockModelModifierBakedModel implements BakedModel, FabricBakedMode
 
     public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models, boolean showBreakingOverlay){
         this.original = original;
-        this.models = List.copyOf(models);
+        this.models = new ArrayList<>(models.size() + 1);
+        this.models.add(original);
+        this.models.addAll(models);
         this.showBreakingOverlay = showBreakingOverlay;
     }
 
@@ -42,33 +44,46 @@ public class BlockModelModifierBakedModel implements BakedModel, FabricBakedMode
 
     @Override
     public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context){
+        Random random = randomSupplier.get();
+        long seed = random.nextLong();
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            random.setSeed(seed);
             ((FabricBakedModel)this.original).emitBlockQuads(blockView, state, pos, randomSupplier, context);
             return;
         }
-        ((FabricBakedModel)this.original).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-        for(BakedModel model : this.models)
+        for(BakedModel model : this.models){
+            random.setSeed(seed);
             ((FabricBakedModel)model).emitBlockQuads(blockView, state, pos, randomSupplier, context);
+        }
     }
 
     @Override
     public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context){
+        Random random = randomSupplier.get();
+        long seed = random.nextLong();
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            random.setSeed(seed);
             ((FabricBakedModel)this.original).emitItemQuads(stack, randomSupplier, context);
             return;
         }
-        ((FabricBakedModel)this.original).emitItemQuads(stack, randomSupplier, context);
-        for(BakedModel model : this.models)
+        for(BakedModel model : this.models){
+            random.setSeed(seed);
             ((FabricBakedModel)model).emitItemQuads(stack, randomSupplier, context);
+        }
     }
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random random){
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
+        long seed = random.nextLong();
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            random.setSeed(seed);
             return this.original.getQuads(state, side, random);
-        List<BakedQuad> quads = new ArrayList<>(this.original.getQuads(state, side, random));
-        for(BakedModel model : this.models)
+        }
+        List<BakedQuad> quads = new ArrayList<>();
+        for(BakedModel model : this.models){
+            random.setSeed(seed);
             quads.addAll(model.getQuads(state, side, random));
+        }
         return quads;
     }
 

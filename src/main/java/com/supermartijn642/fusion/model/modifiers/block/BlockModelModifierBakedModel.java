@@ -36,11 +36,13 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     @Override
     public void emitQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest){
         long seed = random.nextLong();
+        // When rendering breaking overlay, only submit the original model
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
             random.setSeed(seed);
             this.original.emitQuads(emitter, blockView, pos, state, random, cullTest);
             return;
         }
+        // Submit all models
         for(BlockStateModel model : this.models){
             random.setSeed(seed);
             model.emitQuads(emitter, blockView, pos, state, random, cullTest);
@@ -51,6 +53,7 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     public @Nullable Object createGeometryKey(BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random){
         List<Object> keys = new ArrayList<>(this.models.size() + 2);
         keys.add(this);
+        // Collect keys for all models
         long seed = random.nextLong();
         for(BlockStateModel model : this.models){
             random.setSeed(seed);
@@ -65,6 +68,13 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     @Override
     public void collectParts(RandomSource random, List<BlockModelPart> parts){
         long seed = random.nextLong();
+        // When rendering breaking overlay, only submit the original model
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            random.setSeed(seed);
+            this.original.collectParts(random, parts);
+            return;
+        }
+        // Submit all models
         for(BlockStateModel model : this.models){
             random.setSeed(seed);
             model.collectParts(random, parts);

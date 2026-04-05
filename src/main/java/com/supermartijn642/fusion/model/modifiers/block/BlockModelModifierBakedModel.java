@@ -46,9 +46,12 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     public @Nullable Object createGeometryKey(BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random){
         List<Object> keys = new ArrayList<>(this.models.size() + 2);
         keys.add(this);
-        keys.add(this.original.createGeometryKey(blockView, pos, state, random));
-        for(BlockStateModel model : this.models)
-            keys.add(model.createGeometryKey(blockView, pos, state, random));
+        for(BlockStateModel model : this.models){
+            Object subKey = model.createGeometryKey(blockView, pos, state, random);
+            if(subKey == null)
+                return null;
+            keys.add(subKey);
+        }
         return keys;
     }
 

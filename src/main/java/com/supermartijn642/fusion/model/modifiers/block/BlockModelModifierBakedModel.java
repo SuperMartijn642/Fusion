@@ -64,13 +64,21 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
 
     @Override
     public @Nonnull List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long random){
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
-            return this.original.getQuads(state, side, random);
+        // Check whether quads from simple models should be submitted
         BlockRenderLayer renderType = MinecraftForgeClient.getRenderLayer();
         boolean addSimpleQuads = renderType == null || state == null || OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
+        // When rendering breaking overlay, only submit the original model
+        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+            if(renderType == null || state == null || !(this.original instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)this.original).canRenderInLayer(state, renderType))
+                return this.original.getQuads(state, side, random);
+            return Collections.emptyList();
+        }
+        // If there's only simple models, return the cached quads
         if(!this.hasNonSimpleModels)
             return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : Collections.emptyList();
+        // Start with quads from simple models
         List<BakedQuad> quads = new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]);
+        // Gather quads from complex models
         for(IBakedModel model : this.nonSimpleModels){
             if(renderType == null || state == null || !(model instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType))
                 quads.addAll(model.getQuads(state, side, random));
@@ -85,8 +93,10 @@ public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTy
 
     @Override
     public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer){
+        // When rendering breaking overlay, only submit the original model's render types
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
             return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).canRenderInLayer(state, layer) : OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
+        // Check if any of the models can render in the layer
         for(IBakedModel model : this.models){
             if(model instanceof CustomRenderTypeBakedModel ?
                 ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :

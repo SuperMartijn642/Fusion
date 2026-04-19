@@ -27,7 +27,7 @@ public interface SpriteResourceLoaderMixin {
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     @Inject(
-        method = "method_52851(Ljava/util/Set;Lnet/minecraft/resources/Identifier;Lnet/minecraft/server/packs/resources/Resource;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
+        method = "lambda$create$0(Ljava/util/Set;Lnet/minecraft/resources/Identifier;Lnet/minecraft/server/packs/resources/Resource;)Lnet/minecraft/client/renderer/texture/SpriteContents;",
         at = @At(
             value = "INVOKE",
             target = "Ljava/util/Optional;isPresent()Z",

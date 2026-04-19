@@ -2,20 +2,19 @@ package com.supermartijn642.fusion.model.types.base;
 
 import com.google.common.base.Suppliers;
 import com.supermartijn642.fusion.FusionClient;
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import it.unimi.dsi.fastutil.ints.IntList;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.item.*;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4fc;
 import org.joml.Vector3fc;
 
 import java.util.List;
@@ -28,37 +27,33 @@ public class BaseItemModel implements ItemModel {
 
     private final List<ItemTintSource> tints;
     private final ModelRenderProperties properties;
+    private final Matrix4fc transformation;
     private final Mesh mesh;
     private final Supplier<Vector3fc[]> extents;
     private final boolean animated;
-    private final RenderType renderType;
 
-    public BaseItemModel(List<ItemTintSource> tints, List<BaseModelQuad> quads, ModelRenderProperties properties){
+    public BaseItemModel(List<ItemTintSource> tints, List<BaseModelQuad> quads, ModelRenderProperties properties, Matrix4fc transformation){
         this.tints = tints;
         this.properties = properties;
-        this.extents = Suppliers.memoize(() -> BlockModelWrapper.computeExtents(quads.stream().map(BaseModelQuad::bakedQuad).toList()));
+        this.transformation = transformation;
+        this.extents = Suppliers.memoize(() -> CuboidItemModelWrapper.computeExtents(quads.stream().map(BaseModelQuad::bakedQuad).toList()));
 
         // Create the item mesh
         MutableMesh builder = Renderer.get().mutableMesh();
         QuadEmitter emitter = builder.emitter();
-        boolean useBlockAtlas = false;
         for(BaseModelQuad quad : quads){
             emitter.fromBakedQuad(quad.bakedQuad());
             emitter.cullFace(quad.cullDirection());
             FusionClient.applyMaterialProperties(emitter, null, quad.renderType(), quad.emissive());
             emitter.emit();
-            // Use block atlas if there are quads using sprite from it
-            if(quad.bakedQuad().sprite().atlasLocation().equals(TextureAtlas.LOCATION_BLOCKS))
-                useBlockAtlas = true;
         }
         this.mesh = builder.immutableCopy();
-        this.renderType = useBlockAtlas ? Sheets.translucentBlockItemSheet() : Sheets.translucentItemSheet();
 
         // Check whether the quads contain animated textures
         boolean animated = false;
         for(BaseModelQuad quad : quads){
             //noinspection resource
-            if(quad.bakedQuad().sprite().contents().isAnimated()){
+            if(quad.bakedQuad().materialInfo().sprite().contents().isAnimated()){
                 animated = true;
                 break;
             }
@@ -71,22 +66,23 @@ public class BaseItemModel implements ItemModel {
         renderState.appendModelIdentityElement(this);
         ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
         if(stack.hasFoil()){
-            ItemStackRenderState.FoilType foil = BlockModelWrapper.hasSpecialAnimatedTexture(stack) ? ItemStackRenderState.FoilType.SPECIAL : ItemStackRenderState.FoilType.STANDARD;
+            ItemStackRenderState.FoilType foil = CuboidItemModelWrapper.hasSpecialAnimatedTexture(stack) ? ItemStackRenderState.FoilType.SPECIAL : ItemStackRenderState.FoilType.STANDARD;
             layer.setFoilType(foil);
             renderState.setAnimated();
             renderState.appendModelIdentityElement(foil);
         }
-        int tints = this.tints.size();
-        int[] tintValues = layer.prepareTintLayers(tints);
-        for(int j = 0; j < tints; j++){
-            int tint = this.tints.get(j).calculate(stack, level, owner == null ? null : owner.asLivingEntity());
-            tintValues[j] = tint;
-            renderState.appendModelIdentityElement(tint);
+        if(!this.tints.isEmpty()){
+            IntList tintValues = layer.tintLayers();
+            for(ItemTintSource tinting : this.tints){
+                int tint = tinting.calculate(stack, level, owner == null ? null : owner.asLivingEntity());
+                tintValues.add(tint);
+                renderState.appendModelIdentityElement(tint);
+            }
         }
         layer.setExtents(this.extents);
+        layer.setLocalTransform(this.transformation);
         this.properties.applyToLayer(layer, displayContext);
         this.mesh.outputTo(layer.emitter());
-        layer.setRenderType(this.renderType);
         if(this.animated)
             renderState.setAnimated();
     }

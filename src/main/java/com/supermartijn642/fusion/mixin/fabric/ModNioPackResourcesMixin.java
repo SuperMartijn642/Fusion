@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.mixin.fabric;
 import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.fabricmc.fabric.impl.resource.pack.ModNioPackResources;
-import net.minecraft.server.packs.AbstractPackResources;
+import net.minecraft.server.packs.resources.ResourceMetadata;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -40,7 +40,8 @@ public class ModNioPackResourcesMixin {
 
             Path overridesPath = null;
             try(InputStream stream = Files.newInputStream(metaPath)){
-                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.TYPE, stream, null);
+                ResourceMetadata resourceMetadata = ResourceMetadata.fromJsonStream(stream);
+                FusionPackMetadata metadata = resourceMetadata.getSection(FusionPackMetadataSection.TYPE).orElse(null);
                 if(metadata != null && metadata.hasOverridesFolder())
                     overridesPath = rootPath.resolve(metadata.getOverridesFolder());
             }catch(Exception ignore){

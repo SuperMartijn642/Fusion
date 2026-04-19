@@ -1,13 +1,14 @@
 package com.supermartijn642.fusion.model;
 
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,22 +37,27 @@ public class WrappedBakedModel implements BlockStateModel {
     }
 
     @Override
-    public List<BlockModelPart> collectParts(RandomSource random){
-        return this.original.collectParts(random);
-    }
-
-    @Override
-    public void collectParts(RandomSource random, List<BlockModelPart> list){
+    public void collectParts(RandomSource random, List<BlockStateModelPart> list){
         this.original.collectParts(random, list);
     }
 
     @Override
-    public TextureAtlasSprite particleIcon(){
-        return this.original.particleIcon();
+    public Material.Baked particleMaterial(){
+        return this.original.particleMaterial();
     }
 
     @Override
-    public TextureAtlasSprite particleSprite(BlockAndTintGetter blockView, BlockPos pos, BlockState state){
-        return this.original.particleSprite(blockView, pos, state);
+    public Material.Baked particleMaterial(BlockAndTintGetter level, BlockPos pos, BlockState state){
+        return this.original.particleMaterial(level, pos, state);
+    }
+
+    @Override
+    public @BakedQuad.MaterialFlags int materialFlags(){
+        return this.original.materialFlags();
+    }
+
+    @Override
+    public @BakedQuad.MaterialFlags int materialFlags(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
+        return this.original.materialFlags(level, pos, state, random);
     }
 }

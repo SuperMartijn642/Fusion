@@ -3,21 +3,23 @@ package com.supermartijn642.fusion.model.types.base;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,9 +43,10 @@ public class BaseBakedModel implements BlockStateModel {
     private final Mesh mesh;
     private final List<SpriteInstance> sprites;
     private final boolean hasSpecialQuads;
-    private final TextureAtlasSprite particleIcon;
+    private final Material.Baked particleIcon;
+    private final int materialFlags;
 
-    public BaseBakedModel(List<BaseModelQuad> quads, Boolean hasAmbientOcclusion, TextureAtlasSprite particleIcon){
+    public BaseBakedModel(List<BaseModelQuad> quads, Boolean hasAmbientOcclusion, Material.Baked particleIcon){
         this.particleIcon = particleIcon;
 
         // Create the block mesh
@@ -51,7 +54,9 @@ public class BaseBakedModel implements BlockStateModel {
         QuadEmitter emitter = builder.emitter();
         HashMap<SpriteInstance,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
+        int materialFlags = 0;
         for(BaseModelQuad quad : quads){
+            // Emit the quad
             emitter.fromBakedQuad(quad.bakedQuad());
             emitter.cullFace(quad.cullDirection());
             FusionClient.applyMaterialProperties(emitter, hasAmbientOcclusion, quad.renderType(), quad.emissive());
@@ -65,19 +70,20 @@ public class BaseBakedModel implements BlockStateModel {
                 hasSpecialQuads = true;
             }
             emitter.emit();
+            // Update material flags
+            if(quad.renderType() == null ? quad.renderType() == BaseTextureData.RenderType.TRANSLUCENT : quad.bakedQuad().materialInfo().layer().translucent())
+                materialFlags |= BakedQuad.FLAG_TRANSLUCENT;
+            if(quad.bakedQuad().materialInfo().sprite().contents().isAnimated())
+                materialFlags |= BakedQuad.FLAG_ANIMATED;
         }
         this.mesh = builder.immutableCopy();
         this.sprites = sprites.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
         this.hasSpecialQuads = hasSpecialQuads;
+        this.materialFlags = materialFlags;
     }
 
     @Override
-    public List<BlockModelPart> collectParts(RandomSource randomSource){
-        return List.of();
-    }
-
-    @Override
-    public void collectParts(RandomSource randomSource, List<BlockModelPart> list){
+    public void collectParts(RandomSource randomSource, List<BlockStateModelPart> list){
     }
 
     @Override
@@ -141,7 +147,12 @@ public class BaseBakedModel implements BlockStateModel {
     }
 
     @Override
-    public TextureAtlasSprite particleIcon(){
+    public Material.Baked particleMaterial(){
         return this.particleIcon;
+    }
+
+    @Override
+    public @BakedQuad.MaterialFlags int materialFlags(){
+        return this.materialFlags;
     }
 }

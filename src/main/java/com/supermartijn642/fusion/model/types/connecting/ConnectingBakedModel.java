@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
+import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
@@ -14,19 +15,19 @@ import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
-import net.fabricmc.fabric.api.renderer.v1.Renderer;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.minecraft.client.model.geom.builders.UVPair;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3fc;
@@ -101,9 +102,10 @@ public class ConnectingBakedModel implements BlockStateModel {
     private final List<QuadPredicates> predicates;
     private final List<SpriteInstance> sprites;
     private final boolean hasSpecialQuads;
-    private final TextureAtlasSprite particleIcon;
+    private final Material.Baked particleIcon;
+    private final int materialFlags;
 
-    public ConnectingBakedModel(List<ConnectingModelQuad> quads, Boolean hasAmbientOcclusion, TextureAtlasSprite particleIcon){
+    public ConnectingBakedModel(List<ConnectingModelQuad> quads, Boolean hasAmbientOcclusion, Material.Baked particleIcon){
         this.particleIcon = particleIcon;
 
         // Create block mesh from the quads
@@ -112,6 +114,7 @@ public class ConnectingBakedModel implements BlockStateModel {
         HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
         HashMap<SpriteInstance,Integer> sprites = new HashMap<>();
         boolean hasSpecialQuads = false;
+        int materialFlags = 0;
         for(ConnectingModelQuad quad : quads){
             // Some layouts need auxiliary quads, hence simply repeat the quad that many times
             Integer tag = null;
@@ -149,11 +152,17 @@ public class ConnectingBakedModel implements BlockStateModel {
                     emitter.tag(tag);
                 emitter.emit();
             }
+            // Update material flags
+            if(quad.renderType() == null ? quad.renderType() == BaseTextureData.RenderType.TRANSLUCENT : quad.bakedQuad().materialInfo().layer().translucent())
+                materialFlags |= BakedQuad.FLAG_TRANSLUCENT;
+            if(quad.bakedQuad().materialInfo().sprite().contents().isAnimated())
+                materialFlags |= BakedQuad.FLAG_ANIMATED;
         }
         this.mesh = builder.immutableCopy();
         this.predicates = predicates.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
         this.sprites = sprites.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
         this.hasSpecialQuads = hasSpecialQuads;
+        this.materialFlags = materialFlags;
     }
 
     private static TextureOrientation findOrientation(BakedQuad quad){
@@ -217,12 +226,7 @@ public class ConnectingBakedModel implements BlockStateModel {
     }
 
     @Override
-    public List<BlockModelPart> collectParts(RandomSource randomSource){
-        return List.of();
-    }
-
-    @Override
-    public void collectParts(RandomSource randomSource, List<BlockModelPart> list){
+    public void collectParts(RandomSource randomSource, List<BlockStateModelPart> list){
     }
 
     @Override
@@ -391,8 +395,13 @@ public class ConnectingBakedModel implements BlockStateModel {
     }
 
     @Override
-    public TextureAtlasSprite particleIcon(){
+    public Material.Baked particleMaterial(){
         return this.particleIcon;
+    }
+
+    @Override
+    public @BakedQuad.MaterialFlags int materialFlags(){
+        return this.materialFlags;
     }
 
     private static class QuadPredicates {

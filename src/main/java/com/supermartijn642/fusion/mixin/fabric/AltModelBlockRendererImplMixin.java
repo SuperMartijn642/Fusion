@@ -1,38 +1,44 @@
 package com.supermartijn642.fusion.mixin.fabric;
 
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import com.supermartijn642.fusion.util.TextureAtlases;
-import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
-import net.fabricmc.fabric.impl.client.indigo.renderer.render.AbstractTerrainRenderContext;
-import net.fabricmc.fabric.impl.client.indigo.renderer.render.BlockRenderInfo;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.impl.client.indigo.renderer.render.AltModelBlockRendererImpl;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import org.spongepowered.asm.mixin.Final;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
  * Created 07/09/2024 by SuperMartijn642
  */
-@Mixin(AbstractTerrainRenderContext.class)
-public class AbstractTerrainRenderContextMixin {
+@SuppressWarnings("UnstableApiUsage")
+@Mixin(AltModelBlockRendererImpl.class)
+public class AltModelBlockRendererImplMixin {
 
-    @Final
-    @Shadow(remap = false)
-    private BlockRenderInfo blockInfo;
+    @Shadow
+    private BlockAndTintGetter level;
+    @Shadow
+    private BlockPos pos;
+    @Shadow
+    private BlockState blockState;
 
-    @Inject(
+    @WrapWithCondition(
         method = "tintQuad",
-        at = @At("RETURN"),
-        remap = false
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/fabricmc/fabric/api/client/renderer/v1/mesh/MutableQuadView;multiplyColor(I)Lnet/fabricmc/fabric/api/client/renderer/v1/mesh/MutableQuadView;"
+        )
     )
-    private void tintQuad(MutableQuadViewImpl quad, CallbackInfo ci){
+    private boolean tintQuad(MutableQuadView quad, int originalTint){
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.tintIndex() == 39216){
             TextureAtlasSprite sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks()).spriteFinder().find(quad);
@@ -40,11 +46,12 @@ public class AbstractTerrainRenderContextMixin {
             if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
                 BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null){
-                    int tint = QuadTintingHelper.getColor(tinting, this.blockInfo.blockState, this.blockInfo.blockView, this.blockInfo.blockPos);
-                    for(int i = 0; i < 4; i++)
-                        quad.color(i, net.minecraft.util.ARGB.multiply(quad.color(i), tint));
+                    int tint = QuadTintingHelper.getInWorldColor(tinting, this.blockState, this.level, this.pos);
+                    quad.multiplyColor(tint);
                 }
             }
+            return false;
         }
+        return true;
     }
 }

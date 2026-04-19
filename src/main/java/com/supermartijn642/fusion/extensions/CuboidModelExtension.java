@@ -5,7 +5,7 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 /**
  * Created 30/04/2023 by SuperMartijn642
  */
-public interface BlockModelExtension {
+public interface CuboidModelExtension {
 
     ModelInstance<?> getFusionModel();
 

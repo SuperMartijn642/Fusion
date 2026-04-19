@@ -13,8 +13,8 @@ import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.renderer.v1.mesh.ShadeMode;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.ShadeMode;
 import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
@@ -82,10 +82,12 @@ public class FusionClient implements ClientModInitializer {
     public static void applyMaterialProperties(QuadEmitter emitter, Boolean ambientOcclusion, BaseTextureData.RenderType renderType, boolean emissive){
         emitter.shadeMode(ShadeMode.VANILLA);
         emitter.ambientOcclusion(ambientOcclusion == null ? TriState.DEFAULT : ambientOcclusion ? TriState.TRUE : TriState.FALSE);
-        ChunkSectionLayer layer = renderType == BaseTextureData.RenderType.OPAQUE ? ChunkSectionLayer.SOLID
-            : renderType == BaseTextureData.RenderType.CUTOUT ? ChunkSectionLayer.CUTOUT
-            : renderType == BaseTextureData.RenderType.TRANSLUCENT ? ChunkSectionLayer.TRANSLUCENT : null;
-        emitter.renderLayer(layer);
+        if(renderType != null){
+            ChunkSectionLayer layer = renderType == BaseTextureData.RenderType.OPAQUE ? ChunkSectionLayer.SOLID
+                : renderType == BaseTextureData.RenderType.CUTOUT ? ChunkSectionLayer.CUTOUT
+                : renderType == BaseTextureData.RenderType.TRANSLUCENT ? ChunkSectionLayer.TRANSLUCENT : null;
+            emitter.chunkLayer(layer);
+        }
         if(emissive)
             emitter.emissive(true).diffuseShade(true).ambientOcclusion(TriState.FALSE);
     }

@@ -1,14 +1,15 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.supermartijn642.fusion.FusionClient;
-import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     private final BlockStateModel original;
     private final List<BlockStateModel> models;
     private final boolean showBreakingOverlay;
+    private final int materialFlags;
 
     public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models, boolean showBreakingOverlay){
         this.original = original;
@@ -31,6 +33,11 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
         this.models.add(original);
         this.models.addAll(models);
         this.showBreakingOverlay = showBreakingOverlay;
+
+        int materialFlags = 0;
+        for(BlockStateModel model : this.models)
+            materialFlags |= model.materialFlags();
+        this.materialFlags = materialFlags;
     }
 
     @Override
@@ -66,7 +73,7 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     }
 
     @Override
-    public void collectParts(RandomSource random, List<BlockModelPart> parts){
+    public void collectParts(RandomSource random, List<BlockStateModelPart> parts){
         long seed = random.nextLong();
         // When rendering breaking overlay, only submit the original model
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
@@ -82,12 +89,25 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
     }
 
     @Override
-    public TextureAtlasSprite particleIcon(){
-        return this.original.particleIcon();
+    public Material.Baked particleMaterial(){
+        return this.original.particleMaterial();
     }
 
     @Override
-    public TextureAtlasSprite particleSprite(BlockAndTintGetter blockView, BlockPos pos, BlockState state){
-        return this.original.particleSprite(blockView, pos, state);
+    public Material.Baked particleMaterial(BlockAndTintGetter level, BlockPos pos, BlockState state){
+        return this.original.particleMaterial(level, pos, state);
+    }
+
+    @Override
+    public @BakedQuad.MaterialFlags int materialFlags(){
+        return this.materialFlags;
+    }
+
+    @Override
+    public @BakedQuad.MaterialFlags int materialFlags(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
+        int flags = this.materialFlags;
+        for(BlockStateModel model : this.models)
+            flags |= model.materialFlags(level, pos, state, random);
+        return flags;
     }
 }

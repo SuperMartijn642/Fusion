@@ -2,10 +2,13 @@ package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.SpriteIdentifier;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.*;
+import com.supermartijn642.fusion.api.model.ModelMaterial;
+import net.minecraft.client.renderer.block.dispatch.ModelState;
+import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.client.resources.model.geometry.UnbakedGeometry;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.resources.Identifier;
 
 import java.util.Map;
@@ -17,7 +20,7 @@ import java.util.function.Function;
 public class BlockModelBakingContextImpl implements BlockModelBakingContext {
 
     private final ModelBaker modelBaker;
-    private final Function<Material,TextureAtlasSprite> spriteGetter;
+    private final Function<Material,Material.Baked> materialBaker;
     private final ModelState modelState;
     private final Identifier modelIdentifier;
     private final Map<Identifier,UnbakedModel> dependencies;
@@ -27,9 +30,9 @@ public class BlockModelBakingContextImpl implements BlockModelBakingContext {
     private final ItemTransforms topLevelItemTransforms;
     private final UnbakedGeometry topLevelGeometry;
 
-    public BlockModelBakingContextImpl(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, Identifier modelIdentifier, Map<Identifier,UnbakedModel> dependencies, Map<String,Material> topLevelTextureReferences, boolean topLevelAmbientOcclusion, boolean topLevelUseBlockLighting, ItemTransforms topLevelItemTransforms, UnbakedGeometry topLevelGeometry){
+    public BlockModelBakingContextImpl(ModelBaker modelBaker, Function<Material,Material.Baked> materialBaker, ModelState modelState, Identifier modelIdentifier, Map<Identifier,UnbakedModel> dependencies, Map<String,Material> topLevelTextureReferences, boolean topLevelAmbientOcclusion, boolean topLevelUseBlockLighting, ItemTransforms topLevelItemTransforms, UnbakedGeometry topLevelGeometry){
         this.modelBaker = modelBaker;
-        this.spriteGetter = spriteGetter;
+        this.materialBaker = materialBaker;
         this.modelState = modelState;
         this.modelIdentifier = modelIdentifier;
         this.dependencies = dependencies;
@@ -46,13 +49,8 @@ public class BlockModelBakingContextImpl implements BlockModelBakingContext {
     }
 
     @Override
-    public TextureAtlasSprite getTexture(SpriteIdentifier identifier){
-        return this.spriteGetter.apply(identifier.toMaterial());
-    }
-
-    @Override
-    public TextureAtlasSprite getTexture(Identifier atlas, Identifier texture){
-        return this.spriteGetter.apply(new Material(atlas, texture));
+    public Material.Baked getMaterial(ModelMaterial identifier){
+        return this.materialBaker.apply(identifier.toMaterial());
     }
 
     @Override

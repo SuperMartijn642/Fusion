@@ -4,7 +4,7 @@ import com.supermartijn642.fusion.extensions.PackExtension;
 import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.ResourcePackListTipRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.MultiLineTextWidget;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
 import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
@@ -47,10 +47,10 @@ public class PackEntryMixin {
     }
 
     @Inject(
-        method = "renderContent",
+        method = "extractContent",
         at = @At("HEAD")
     )
-    private void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
+    private void renderBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
         if(this.metadata == null)
             return;
         //noinspection DataFlowIssue
@@ -59,14 +59,14 @@ public class PackEntryMixin {
     }
 
     @Inject(
-        method = "renderContent",
+        method = "extractContent",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V",
+            target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V",
             shift = At.Shift.AFTER
         )
     )
-    private void renderIcon(GuiGraphics graphics, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
+    private void renderIcon(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean isHovered, float partialTicks, CallbackInfo ci){
         if(this.metadata == null)
             return;
         //noinspection DataFlowIssue
@@ -75,7 +75,7 @@ public class PackEntryMixin {
     }
 
     @Inject(
-        method = "renderContent",
+        method = "extractContent",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/gui/screens/packs/PackSelectionModel$Entry;canSelect()Z",

@@ -38,7 +38,7 @@ public class ItemRenderContextMixinSodium {
             if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
                 BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null){
-                    int color = 0xFF000000 | QuadTintingHelper.getColor(tinting, null, null, null);
+                    int color = 0xFF000000 | QuadTintingHelper.getInWorldColor(tinting, null, null, null);
                     for(int i = 0; i < 4; i++)
                         quad.setColor(i, ColorMixer.mulComponentWise(color, quad.getColor(i)));
                     ci.cancel();

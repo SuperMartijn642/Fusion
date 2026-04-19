@@ -4,7 +4,7 @@ import com.google.gson.JsonObject;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.Pair;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.fabricmc.loader.api.metadata.ModMetadata;
@@ -30,12 +30,12 @@ public abstract class FusionTextureMetadataProvider implements DataProvider {
 
     private final Map<Identifier,Pair<TextureType<Object,?>,Object>> metadata = new HashMap<>();
     private final String modName;
-    private final FabricDataOutput output;
+    private final FabricPackOutput output;
 
     /**
      * @param modid modid of the mod which creates the generator
      */
-    public FusionTextureMetadataProvider(String modid, FabricDataOutput output){
+    public FusionTextureMetadataProvider(String modid, FabricPackOutput output){
         this.modName = FabricLoader.getInstance().getModContainer(modid).map(ModContainer::getMetadata).map(ModMetadata::getName).orElse(modid);
         this.output = output;
     }

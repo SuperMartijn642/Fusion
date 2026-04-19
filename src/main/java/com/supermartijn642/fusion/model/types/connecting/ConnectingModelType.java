@@ -16,13 +16,12 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelElement;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -62,7 +61,7 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
         Boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, null);
-        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
+        Material.Baked particleSprite = context.getMaterial(((BaseModelDataImpl)data).findParticleSprite(context));
         // Finally, create the model
         return new ConnectingBakedModel(
             quads,
@@ -79,8 +78,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         //noinspection unchecked,rawtypes
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
-        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, UnbakedModel.GuiLight.SIDE).lightLikeBlock();
+        Material.Baked particleSprite = context.getMaterial(((BaseModelDataImpl)data).findParticleSprite(context));
         ItemTransforms transforms = new ItemTransforms(
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND),
@@ -96,7 +95,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         return new ConnectingItemModel(
             context.getTintSources(),
             quads,
-            new ModelRenderProperties(usesBlockLight, particleSprite, transforms)
+            new ModelRenderProperties(usesBlockLight, particleSprite, transforms),
+            context.getTransformation().transformation().getMatrix()
         );
     }
 

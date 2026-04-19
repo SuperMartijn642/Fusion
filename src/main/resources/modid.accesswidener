@@ -1,17 +1,13 @@
-accessWidener v1 named
+classTweaker v1 official
 
-# BakedQuad
-accessible field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
-mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
-# BlockElement
-extendable class net/minecraft/client/renderer/block/model/BlockElement
-# BlockModel
-accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/google/gson/Gson;
-extendable class net/minecraft/client/renderer/block/model/BlockModel
-# BlockModelWrapper
-accessible method net/minecraft/client/renderer/item/BlockModelWrapper <init> (Ljava/util/List;Ljava/util/List;Lnet/minecraft/client/renderer/item/ModelRenderProperties;Ljava/util/function/Function;)V
-accessible method net/minecraft/client/renderer/item/BlockModelWrapper detectRenderType (Ljava/util/List;)Ljava/util/function/Function;
-accessible method net/minecraft/client/renderer/item/BlockModelWrapper hasSpecialAnimatedTexture (Lnet/minecraft/world/item/ItemStack;)Z
+# CuboidModel
+accessible field net/minecraft/client/resources/model/cuboid/CuboidModel GSON Lcom/google/gson/Gson;
+extendable class net/minecraft/client/resources/model/cuboid/CuboidModel
+# CuboidModelElement
+extendable class net/minecraft/client/resources/model/cuboid/CuboidModelElement
+# CuboidItemModelWrapper
+accessible method net/minecraft/client/renderer/item/CuboidItemModelWrapper <init> (Ljava/util/List;Lnet/minecraft/client/resources/model/geometry/QuadCollection;Lnet/minecraft/client/renderer/item/ModelRenderProperties;Lorg/joml/Matrix4fc;)V
+accessible method net/minecraft/client/renderer/item/CuboidItemModelWrapper hasSpecialAnimatedTexture (Lnet/minecraft/world/item/ItemStack;)Z
 # EnchantmentHelper
 accessible method net/minecraft/world/item/enchantment/EnchantmentHelper getComponentType (Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/core/component/DataComponentType;
 # EntityModelSet
@@ -22,23 +18,19 @@ accessible field net/minecraft/server/packs/FilePackResources LOGGER Lorg/slf4j/
 accessible field net/minecraft/server/packs/FilePackResources$SharedZipFileAccess file Ljava/io/File;
 accessible method net/minecraft/server/packs/FilePackResources$SharedZipFileAccess getOrCreateZipFile ()Ljava/util/zip/ZipFile;
 accessible class net/minecraft/server/packs/FilePackResources$SharedZipFileAccess
-# ItemModelGenerator
-accessible method net/minecraft/client/renderer/block/model/ItemModelGenerator processFrames (ILjava/lang/String;Lnet/minecraft/client/renderer/texture/SpriteContents;)Ljava/util/List;
-# ItemTransform$Deserializer
-accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_ROTATION Lorg/joml/Vector3f; # DEFAULT_ROTATION
-accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_TRANSLATION Lorg/joml/Vector3f; # DEFAULT_TRANSLATION
-accessible field net/minecraft/client/renderer/block/model/ItemTransform$Deserializer DEFAULT_SCALE Lorg/joml/Vector3f; # DEFAULT_SCALE
-accessible class net/minecraft/client/renderer/block/model/ItemTransform$Deserializer
+# ItemModelGenerator$ItemLayerKey
+accessible method net/minecraft/client/resources/model/cuboid/ItemModelGenerator$ItemLayerKey <init> (Lnet/minecraft/client/resources/model/sprite/Material$Baked;Lnet/minecraft/client/renderer/block/dispatch/ModelState;I)V
+accessible class net/minecraft/client/resources/model/cuboid/ItemModelGenerator$ItemLayerKey
 # LayerDefinition
 accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init> (Lnet/minecraft/client/model/geom/builders/MeshDefinition;Lnet/minecraft/client/model/geom/builders/MaterialDefinition;)V
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
 # ModelBakery$ModelBakerImpl
-accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/SpriteGetter;Lnet/minecraft/client/resources/model/ModelBaker$PartCache;Lnet/minecraft/client/resources/model/ModelBakery$MissingModels;)V
+accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/sprite/MaterialBaker;Lnet/minecraft/client/resources/model/ModelBaker$Interner;Lnet/minecraft/client/resources/model/ModelBakery$MissingModels;)V
 accessible class net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl
-# ModelBakery$PartCacheImpl
-accessible method net/minecraft/client/resources/model/ModelBakery$PartCacheImpl <init> ()V
-accessible class net/minecraft/client/resources/model/ModelBakery$PartCacheImpl
+# ModelBakery$InternerImpl
+accessible method net/minecraft/client/resources/model/ModelBakery$InternerImpl <init> ()V
+accessible class net/minecraft/client/resources/model/ModelBakery$InternerImpl
 # ModelDiscovery$ModelWrapper
 accessible class net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper
 # ModelLayers
@@ -118,11 +110,11 @@ mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
 # TextureSlots
-accessible field net/minecraft/client/renderer/block/model/TextureSlots resolvedValues Ljava/util/Map;
-accessible method net/minecraft/client/renderer/block/model/TextureSlots <init> (Ljava/util/Map;)V
+accessible field net/minecraft/client/resources/model/sprite/TextureSlots resolvedValues Ljava/util/Map;
+accessible method net/minecraft/client/resources/model/sprite/TextureSlots <init> (Ljava/util/Map;)V
 # TextureSlots$Reference
-accessible class net/minecraft/client/renderer/block/model/TextureSlots$Reference
+accessible class net/minecraft/client/resources/model/sprite/TextureSlots$Reference
 # TextureSlots$Value
-accessible class net/minecraft/client/renderer/block/model/TextureSlots$Value
+accessible class net/minecraft/client/resources/model/sprite/TextureSlots$Value
 # TransferableSelectionList
 accessible field net/minecraft/client/gui/screens/packs/TransferableSelectionList screen Lnet/minecraft/client/gui/screens/packs/PackSelectionScreen;

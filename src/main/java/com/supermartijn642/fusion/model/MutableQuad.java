@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.model;
 
-import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
+import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
 import org.joml.Vector3fc;
 
 /**

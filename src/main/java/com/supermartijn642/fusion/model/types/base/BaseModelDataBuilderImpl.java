@@ -1,11 +1,11 @@
 package com.supermartijn642.fusion.model.types.base;
 
+import com.supermartijn642.fusion.api.model.ModelMaterial;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.api.model.data.BaseModelDataBuilder;
-import com.supermartijn642.fusion.util.TextureAtlases;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.TextureSlots;
-import net.minecraft.client.resources.model.Material;
+import com.supermartijn642.fusion.api.util.Either;
+import net.minecraft.client.resources.model.cuboid.CuboidModel;
+import net.minecraft.client.resources.model.sprite.TextureSlots;
 import net.minecraft.resources.Identifier;
 
 import java.util.*;
@@ -16,7 +16,7 @@ import java.util.*;
 public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelDataBuilderImpl,BaseModelData> {
 
     private final Set<Identifier> parents = new LinkedHashSet<>(); // This should maintain insertion order
-    private final Map<String,String> textures = new HashMap<>();
+    private final Map<String,Either<String,ModelMaterial>> textures = new HashMap<>();
 
     @Override
     public BaseModelDataBuilderImpl parent(Identifier parent){
@@ -30,28 +30,28 @@ public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelD
     }
 
     @Override
-    public BaseModelDataBuilderImpl texture(String key, String reference){
+    public BaseModelDataBuilderImpl material(String key, String reference){
         if(!key.matches("[a-zA-Z_]*"))
             throw new IllegalArgumentException("Texture reference must only contain characters [a-zA-Z_]!");
 
-        // Prepend '#' character
-        if(reference.charAt(0) != '#')
-            reference = '#' + reference;
+        // Remove '#' character
+        if(reference.charAt(0) == '#')
+            reference = reference.substring(1);
         if(this.textures.containsKey(key))
             throw new RuntimeException("Duplicate texture entry for key '" + key + "': '" + this.textures.get(key) + "' and '" + reference + "'!");
 
-        this.textures.put(key, reference);
+        this.textures.put(key, Either.left(reference));
         return this;
     }
 
     @Override
-    public BaseModelDataBuilderImpl texture(String key, Identifier texture){
+    public BaseModelDataBuilderImpl material(String key, Identifier texture, boolean forceTranslucent){
         if(!key.matches("[a-zA-Z_]*"))
             throw new IllegalArgumentException("Texture reference must only contain characters [a-zA-Z_]!");
         if(this.textures.containsKey(key))
             throw new RuntimeException("Duplicate texture entry for key '" + key + "': '" + this.textures.get(key) + "' and '" + texture + "'!");
 
-        this.textures.put(key, texture.toString());
+        this.textures.put(key, Either.right(ModelMaterial.of(texture, forceTranslucent)));
         return this;
     }
 
@@ -62,12 +62,12 @@ public class BaseModelDataBuilderImpl implements BaseModelDataBuilder<BaseModelD
         Identifier parent = parents.isEmpty() ? null : parents.get(0);
         TextureSlots.Data.Builder textures = new TextureSlots.Data.Builder();
         this.textures.forEach((key, value) -> {
-            if(value.charAt(0) == '#')
-                textures.addReference(key, value.substring(1));
+            if(value.isLeft())
+                textures.addReference(key, value.left());
             else
-                textures.addTexture(key, new Material(TextureAtlases.getBlocks(), Identifier.parse(value)));
+                textures.addTexture(key, value.right().toMaterial());
         });
-        BlockModel vanillaModel = new BlockModel(null, null, null, null, textures.build(), parent);
+        CuboidModel vanillaModel = new CuboidModel(null, null, null, null, textures.build(), parent);
         return new BaseModelDataImpl(vanillaModel, parents, Collections.emptyList());
     }
 }

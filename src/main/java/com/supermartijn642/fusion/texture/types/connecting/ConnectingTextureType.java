@@ -27,6 +27,8 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
     @Override
     public void createTexture(TextureOutput<StitchedConnectingTextureData> output, TextureCreationContext context, ConnectingTextureData data) throws TextureErrorException{
         ConnectingTextureLayoutHandler layout = ConnectingTextureLayoutHandler.get(data.getLayout());
+        int imageWidth = context.getImageWidth(), imageHeight = context.getImageHeight();
+        NativeImage image = context.getImage();
 
         // Calculate frame size
         int frameWidth = context.getImageWidth(), frameHeight = context.getImageHeight();
@@ -36,6 +38,8 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             if(animationMetadata != null)
                 throw new TextureErrorException("Image must use the 'full' layouts 6 : 8 aspect ratio to support animation!");
             frameHeight = frameHeight * 6 / 8;
+            imageHeight = imageHeight * 6 / 8;
+            image = ImageHelper.createCrop(image, 0, 0, imageWidth, imageHeight, true);
         }else if(animationMetadata != null){
             if(animationMetadata.frameWidth < 0 && animationMetadata.frameHeight < 0){
                 // Use the expected aspect ratio for the layout
@@ -52,14 +56,14 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         // Do frame size checks
         if(frameWidth == 0 || frameHeight == 0)
             throw new TextureErrorException("Image must not be empty!");
-        if(context.getImageWidth() % frameWidth != 0 || context.getImageHeight() % frameHeight != 0)
-            throw new TextureErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
+        if(imageWidth % frameWidth != 0 || imageHeight % frameHeight != 0)
+            throw new TextureErrorException("Image size " + imageWidth + "x" + imageHeight + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
         if(frameWidth % layout.getWidth() != 0 || frameHeight % layout.getHeight() != 0)
-            throw new TextureErrorException("Image/frame size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of '" + data.getLayout().name().toLowerCase(Locale.ROOT) + "' layout's " + layout.getWidth() + " : " + layout.getHeight() + " aspect ratio!");
+            throw new TextureErrorException("Image/frame size " + frameWidth + "x" + frameHeight + " is not a multiple of '" + data.getLayout().name().toLowerCase(Locale.ROOT) + "' layout's " + layout.getWidth() + " : " + layout.getHeight() + " aspect ratio!");
 
         // Create animation data
-        int frameColumns = context.getImageWidth() / frameWidth;
-        int frameRows = context.getImageHeight() / frameHeight;
+        int frameColumns = imageWidth / frameWidth;
+        int frameRows = imageHeight / frameHeight;
         int tileWidth = frameWidth / layout.getWidth();
         int tileHeight = frameHeight / layout.getHeight();
         List<SpriteImageSource.AnimationFrame> frames = null;
@@ -88,13 +92,13 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
 
         // Create sprites
         List<SpriteInstance> tiles = new ArrayList<>(layout.getWidth() * layout.getHeight());
-        try(NativeImage image = context.getImage()){
+        try(NativeImage n = image){
             for(int y = 0; y < layout.getHeight(); y++){
                 for(int x = 0; x < layout.getWidth(); x++){
                     tiles.add(null);
                     // Skip empty tiles
                     if((x != layout.defaultTileX() || y != layout.defaultTileY()) &&
-                        DummyTextureSpriteContents.isSubImageEmpty(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight)){
+                        DummyTextureSpriteContents.isSubImageEmpty(image, x * tileWidth, y * tileHeight, tileWidth, tileHeight)){
                         continue;
                     }
                     NativeImage subImage = ImageHelper.createCropFramed(image, x * tileWidth, y * tileHeight, tileWidth, tileHeight, frameWidth, frameHeight, false);

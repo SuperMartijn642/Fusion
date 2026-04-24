@@ -34,7 +34,9 @@ dependencies {
     // Forge
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     // SpongePowered Mixin
-    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+    annotationProcessor "org.spongepowered:mixin:0.8.7:processor"
+    // Mixin Extras
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:0.5.0"))
 
     // Just Enough Items
 //    runtimeOnly "curse.maven:jei-238222:${project.just_enough_items_file}"

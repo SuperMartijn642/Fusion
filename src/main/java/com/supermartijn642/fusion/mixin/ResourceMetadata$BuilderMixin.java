@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -51,14 +50,7 @@ public class ResourceMetadata$BuilderMixin implements ResourceMetadataExtension 
         // Forge's version of Mixin doesn't allow for mixins into static interface methods, so this is the best we can do
 
         // Make sure we always pass vanilla's frame size checks
-        if(this.intervene && serializer == AnimationMetadataSection.SERIALIZER && this.map.containsKey(FusionTextureMetadataSection.INSTANCE)){
-            ci.setReturnValue(Optional.of(new AnimationMetadataSection(
-                List.of(),
-                16,
-                16,
-                1,
-                false
-            )));
-        }
+        if(this.intervene && serializer == AnimationMetadataSection.SERIALIZER && this.map.containsKey(FusionTextureMetadataSection.INSTANCE))
+            ci.setReturnValue(Optional.of(AnimationMetadataSection.EMPTY));
     }
 }

@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.mixin.rubidium;
 
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
-import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import me.jellysquid.mods.sodium.client.model.quad.ModelQuadView;
 import me.jellysquid.mods.sodium.client.util.color.ColorARGB;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -30,9 +31,10 @@ public class ItemRendererMixinRubidium {
     private int renderQuadList(ModelQuadView quad, int vertex){
         // In case texture has a custom tinting set, replace the original tinting
         if(((BakedQuad)quad).getTintIndex() == 39216){
-            TextureAtlasSprite sprite = ((BakedQuad)quad).getSprite();
-            if(sprite instanceof BaseTextureSprite){
-                BaseTextureData.QuadTinting tinting = ((BaseTextureSprite)sprite).data().getTinting();
+            TextureAtlasSprite sprite = quad.getSprite();
+            TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(sprite);
+            if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
+                BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null){
                     int color = QuadTintingHelper.getColor(tinting, null, null, null);
                     return this.multARGBInts(quad.getColor(vertex), ColorARGB.toABGR(color));
@@ -47,7 +49,7 @@ public class ItemRendererMixinRubidium {
      * Copied from Rubidium
      */
     @Unique
-    private int multARGBInts(int colorA, int colorB) {
+    private int multARGBInts(int colorA, int colorB){
         int a = (int)((float)ColorARGB.unpackAlpha(colorA) / 255.0F * ((float)ColorARGB.unpackAlpha(colorB) / 255.0F) * 255.0F);
         int b = (int)((float)ColorARGB.unpackBlue(colorA) / 255.0F * ((float)ColorARGB.unpackBlue(colorB) / 255.0F) * 255.0F);
         int g = (int)((float)ColorARGB.unpackGreen(colorA) / 255.0F * ((float)ColorARGB.unpackGreen(colorB) / 255.0F) * 255.0F);

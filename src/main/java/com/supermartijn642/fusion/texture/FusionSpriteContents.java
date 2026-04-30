@@ -114,6 +114,7 @@ public class FusionSpriteContents extends SpriteContents {
             int overflow = sourceY + height - this.imageHeight;
             this.uploadToTexture(destinationX, destinationY, sourceX, sourceY, width, height - overflow);
             this.uploadToTexture(destinationX, destinationY + height - overflow, sourceX, 0, width, overflow);
+            return;
         }
         for(int mipLevel = 0; mipLevel < this.byMipLevel.length; mipLevel++)
             this.byMipLevel[mipLevel].upload(mipLevel, destinationX >> mipLevel, destinationY >> mipLevel, sourceX >> mipLevel, sourceY >> mipLevel, width >> mipLevel, height >> mipLevel, false);

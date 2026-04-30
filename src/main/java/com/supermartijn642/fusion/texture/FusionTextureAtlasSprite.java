@@ -111,6 +111,7 @@ public class FusionTextureAtlasSprite extends TextureAtlasSprite {
             int overflow = sourceY + height - this.imageHeight;
             this.uploadToTexture(destinationX, destinationY, sourceX, sourceY, width, height - overflow);
             this.uploadToTexture(destinationX, destinationY + height - overflow, sourceX, 0, width, overflow);
+            return;
         }
         for(int mipLevel = 0; mipLevel < this.mainImage.length; mipLevel++)
             this.mainImage[mipLevel].upload(mipLevel, destinationX >> mipLevel, destinationY >> mipLevel, sourceX >> mipLevel, sourceY >> mipLevel, width >> mipLevel, height >> mipLevel, this.mainImage.length > 1, false);

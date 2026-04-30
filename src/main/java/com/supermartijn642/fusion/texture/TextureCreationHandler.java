@@ -55,15 +55,15 @@ public class TextureCreationHandler {
         }catch(TextureErrorException e){
             FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
             image.close();
-            return null;
+            return Result.empty();
         }catch(Exception e){
             FusionClient.LOGGER.error("Encountered an exception whilst creating texture for type '{}' for texture '{}'!", TextureTypeRegistryImpl.getIdentifier(textureType), identifier, e);
             image.close();
-            return null;
+            return Result.empty();
         }
         if(output.getSprites().isEmpty()){
             image.close();
-            return null;
+            return Result.empty();
         }
         List<SpriteBuilderImpl> sprites = output.getSprites();
         Object customData = output.getCustomData();
@@ -83,7 +83,7 @@ public class TextureCreationHandler {
                 if(sprite.getName() != null && !names.add(sprite.getName())){
                     FusionClient.LOGGER.error("Received duplicate sprite name '{}' from texture type '{}' for texture '{}'!", sprite.getName(), TextureTypeRegistryImpl.getIdentifier(textureType), identifier);
                     image.close();
-                    return null;
+                    return Result.empty();
                 }
             }
             if(!hasDefaultSprite){
@@ -225,5 +225,8 @@ public class TextureCreationHandler {
     }
 
     public record Result<T>(T value) {
+        static <T> Result<T> empty(){
+            return new Result<>(null);
+        }
     }
 }

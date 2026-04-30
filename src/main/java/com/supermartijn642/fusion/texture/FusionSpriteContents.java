@@ -124,6 +124,7 @@ public class FusionSpriteContents extends SpriteContents {
             int overflow = sourceY + height - this.imageHeight;
             this.uploadToTexture(destination, mipLevel, destinationX, destinationY, sourceX, sourceY, width, height - overflow);
             this.uploadToTexture(destination, mipLevel, destinationX, destinationY + height - overflow, sourceX, 0, width, overflow);
+            return;
         }
         RenderSystem.getDevice().createCommandEncoder().writeToTexture(destination, this.byMipLevel[mipLevel], mipLevel, 0, destinationX >> mipLevel, destinationY >> mipLevel, width >> mipLevel, height >> mipLevel, sourceX >> mipLevel, sourceY >> mipLevel);
     }

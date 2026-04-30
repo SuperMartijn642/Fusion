@@ -59,6 +59,6 @@ public class IdentifierUtil {
      * Creates a new identifier with the same namespace and the same path with the given suffix appended.
      */
     public static ResourceLocation withSuffix(ResourceLocation identifier, String suffix){
-        return new ResourceLocation(identifier.getNamespace(), identifier.getPath() + suffix);
+        return new ResourceLocation(identifier.getResourceDomain(), identifier.getResourcePath() + suffix);
     }
 }

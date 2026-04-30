@@ -8,12 +8,12 @@ import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ContinuousTextureData;
 import com.supermartijn642.fusion.model.MutableQuad;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.resources.data.AnimationFrame;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,7 +62,7 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
         // Create a sprite consisting of just the first tile
         int tileWidth = frameWidth / data.getColumns();
         int tileHeight = frameHeight / data.getRows();
-        NativeImage defaultTileImage = ImageHelper.createCropFramed(context.getImage(), 0, 0, tileWidth, tileHeight, frameWidth, frameHeight, false);
+        BufferedImage defaultTileImage = ImageHelper.createCropFramed(context.getImage(), 0, 0, tileWidth, tileHeight, frameWidth, frameHeight);
         SpriteImageSource defaultTileImageSource;
         if(animationMetadata == null)
             defaultTileImageSource = SpriteImageSource.constant(defaultTileImage);
@@ -70,24 +70,24 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
             List<SpriteImageSource.AnimationFrame> frames;
             int frameColumns = context.getImageWidth() / frameWidth;
             int frameRows = context.getImageHeight() / frameHeight;
-            if(animationMetadata.frames.isEmpty()){
+            if(animationMetadata.animationFrames.isEmpty()){
                 frames = new ArrayList<>(frameColumns * frameRows);
                 for(int row = 0; row < frameRows; row++){
                     for(int column = 0; column < frameColumns; column++){
-                        frames.add(SpriteImageSource.AnimationFrame.of(column * tileWidth, row * tileHeight, animationMetadata.getDefaultFrameTime()));
+                        frames.add(SpriteImageSource.AnimationFrame.of(column * tileWidth, row * tileHeight, animationMetadata.getFrameTime()));
                     }
                 }
             }else{
-                frames = new ArrayList<>(animationMetadata.frames.size());
-                for(AnimationFrame frame : animationMetadata.frames){
+                frames = new ArrayList<>(animationMetadata.animationFrames.size());
+                for(AnimationFrame frame : animationMetadata.animationFrames){
                     frames.add(SpriteImageSource.AnimationFrame.of(
-                        (frame.getIndex() % frameColumns) * tileWidth,
-                        frame.getIndex() / frameColumns * tileHeight,
-                        frame.isTimeUnknown() ? animationMetadata.getDefaultFrameTime() : frame.getTime()
+                        (frame.getFrameIndex() % frameColumns) * tileWidth,
+                        frame.getFrameIndex() / frameColumns * tileHeight,
+                        frame.hasNoTime() ? animationMetadata.getFrameTime() : frame.getFrameTime()
                     ));
                 }
             }
-            defaultTileImageSource = SpriteImageSource.animated(defaultTileImage, tileWidth, tileHeight, frames, animationMetadata.isInterpolatedFrames());
+            defaultTileImageSource = SpriteImageSource.animated(defaultTileImage, tileWidth, tileHeight, frames, animationMetadata.isInterpolate());
         }
         output.createSprite()
             .image(defaultTileImageSource)

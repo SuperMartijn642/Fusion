@@ -2,9 +2,9 @@ package com.supermartijn642.fusion.texture.custom;
 
 import com.supermartijn642.fusion.api.texture.custom.SpriteImageSource;
 import com.supermartijn642.fusion.api.texture.custom.TextureErrorException;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class SpriteImageSourceImpl implements SpriteImageSource {
 
-    public static SpriteImageSource constant(NativeImage image){
+    public static SpriteImageSource constant(BufferedImage image){
         return animated(
             image,
             image.getWidth(),
@@ -24,7 +24,7 @@ public class SpriteImageSourceImpl implements SpriteImageSource {
         );
     }
 
-    public static SpriteImageSource animated(NativeImage image, int frameWidth, int frameHeight, List<AnimationFrame> frames, boolean interpolateFrames){
+    public static SpriteImageSource animated(BufferedImage image, int frameWidth, int frameHeight, List<AnimationFrame> frames, boolean interpolateFrames){
         // Wrap uvs to be within the image bounds
         frames = new ArrayList<>(frames);
         for(int i = 0; i < frames.size(); i++){
@@ -41,12 +41,12 @@ public class SpriteImageSourceImpl implements SpriteImageSource {
         return new SpriteImageSourceImpl(image, frameWidth, frameHeight, frames, interpolateFrames);
     }
 
-    public static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata){
+    public static SpriteImageSource vanilla(BufferedImage image, AnimationMetadataSection vanillaMetadata){
         int defaultSize = Math.min(image.getWidth(), image.getHeight());
         return vanilla(image, vanillaMetadata, defaultSize, defaultSize);
     }
 
-    public static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata, int defaultFrameWidth, int defaultFrameHeight){
+    public static SpriteImageSource vanilla(BufferedImage image, AnimationMetadataSection vanillaMetadata, int defaultFrameWidth, int defaultFrameHeight){
         if(vanillaMetadata == null)
             return constant(image);
 
@@ -68,37 +68,37 @@ public class SpriteImageSourceImpl implements SpriteImageSource {
 
         // Convert to Fusion frame info
         int frameColumns = image.getWidth() / frameWidth, frameRows = image.getHeight() / frameHeight;
-        if(vanillaMetadata.frames.isEmpty()){
+        if(vanillaMetadata.animationFrames.isEmpty()){
             List<AnimationFrame> frames = new ArrayList<>(frameRows * frameColumns);
             for(int row = 0; row < frameRows; row++){
                 for(int column = 0; column < frameColumns; column++){
-                    frames.add(AnimationFrame.of(column * frameWidth, row * frameHeight, vanillaMetadata.getDefaultFrameTime()));
+                    frames.add(AnimationFrame.of(column * frameWidth, row * frameHeight, vanillaMetadata.getFrameTime()));
                 }
             }
-            return animated(image, frameWidth, frameHeight, frames, vanillaMetadata.isInterpolatedFrames());
+            return animated(image, frameWidth, frameHeight, frames, vanillaMetadata.isInterpolate());
         }
-        List<AnimationFrame> frames = new ArrayList<>(vanillaMetadata.frames.size());
-        for(net.minecraft.client.resources.data.AnimationFrame frame : vanillaMetadata.frames){
+        List<AnimationFrame> frames = new ArrayList<>(vanillaMetadata.animationFrames.size());
+        for(net.minecraft.client.resources.data.AnimationFrame frame : vanillaMetadata.animationFrames){
             frames.add(AnimationFrame.of(
-                (frame.getIndex() % frameColumns) * frameWidth,
-                frame.getIndex() / frameRows * frameHeight,
-                frame.isTimeUnknown() ? vanillaMetadata.getDefaultFrameTime() : frame.getTime()
+                (frame.getFrameIndex() % frameColumns) * frameWidth,
+                frame.getFrameIndex() / frameRows * frameHeight,
+                frame.hasNoTime() ? vanillaMetadata.getFrameTime() : frame.getFrameTime()
             ));
         }
-        return animated(image, frameWidth, frameHeight, frames, vanillaMetadata.isInterpolatedFrames());
+        return animated(image, frameWidth, frameHeight, frames, vanillaMetadata.isInterpolate());
     }
 
     public static AnimationFrame frame(int u, int v, int time){
         return new Frame(u, v, time);
     }
 
-    private final NativeImage image;
+    private final BufferedImage image;
     private final int frameWidth;
     private final int frameHeight;
     private final List<AnimationFrame> frames;
     private final boolean interpolateFrames;
 
-    private SpriteImageSourceImpl(NativeImage image, int frameWidth, int frameHeight, List<AnimationFrame> frames, boolean interpolateFrames){
+    private SpriteImageSourceImpl(BufferedImage image, int frameWidth, int frameHeight, List<AnimationFrame> frames, boolean interpolateFrames){
         this.image = image;
         this.frameWidth = frameWidth;
         this.frameHeight = frameHeight;
@@ -106,7 +106,7 @@ public class SpriteImageSourceImpl implements SpriteImageSource {
         this.interpolateFrames = interpolateFrames;
     }
 
-    public NativeImage getImage(){
+    public BufferedImage getImage(){
         return this.image;
     }
 

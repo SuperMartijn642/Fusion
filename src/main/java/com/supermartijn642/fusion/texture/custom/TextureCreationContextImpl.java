@@ -1,24 +1,22 @@
 package com.supermartijn642.fusion.texture.custom;
 
 import com.supermartijn642.fusion.api.texture.custom.TextureCreationContext;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
+import java.awt.image.BufferedImage;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
-public class TextureCreationContextImpl implements TextureCreationContext, AutoCloseable {
+public class TextureCreationContextImpl implements TextureCreationContext {
 
     private final ResourceLocation identifier;
-    private final NativeImage image;
+    private final BufferedImage image;
     private final AnimationMetadataSection animationMetadata;
 
-    private boolean imageRequested = false;
-
-    public TextureCreationContextImpl(ResourceLocation identifier, NativeImage image, AnimationMetadataSection animationMetadata){
+    public TextureCreationContextImpl(ResourceLocation identifier, BufferedImage image, AnimationMetadataSection animationMetadata){
         this.identifier = identifier;
         this.image = image;
         this.animationMetadata = animationMetadata;
@@ -30,8 +28,7 @@ public class TextureCreationContextImpl implements TextureCreationContext, AutoC
     }
 
     @Override
-    public NativeImage getImage(){
-        this.imageRequested = true;
+    public BufferedImage getImage(){
         return this.image;
     }
 
@@ -49,11 +46,5 @@ public class TextureCreationContextImpl implements TextureCreationContext, AutoC
     @Nullable
     public AnimationMetadataSection getAnimationMetadata(){
         return this.animationMetadata;
-    }
-
-    @Override
-    public void close(){
-        if(!this.imageRequested)
-            this.image.close();
     }
 }

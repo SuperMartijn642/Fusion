@@ -37,21 +37,21 @@ public class SpriteInstanceImpl implements SpriteInstance {
 
     @Override
     public float getU0(){
-        return this.sprite.getU0();
+        return this.sprite.getMinU();
     }
 
     @Override
     public float getU1(){
-        return this.sprite.getU1();
+        return this.sprite.getMaxU();
     }
 
     @Override
     public float getV0(){
-        return this.sprite.getV0();
+        return this.sprite.getMinV();
     }
 
     @Override
     public float getV1(){
-        return this.sprite.getV1();
+        return this.sprite.getMaxV();
     }
 }

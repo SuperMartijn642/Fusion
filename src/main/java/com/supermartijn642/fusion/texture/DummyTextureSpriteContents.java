@@ -7,11 +7,12 @@ import com.supermartijn642.fusion.texture.custom.AllocatedSpriteImpl;
 import com.supermartijn642.fusion.texture.custom.SpriteBuilderImpl;
 import com.supermartijn642.fusion.texture.custom.SpriteImageSourceImpl;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.texture.NativeImage;
+import net.minecraft.client.renderer.texture.PngSizeInfo;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.resources.IResource;
+import net.minecraft.client.resources.IResource;
 import net.minecraft.util.ResourceLocation;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,14 +23,14 @@ import java.util.function.Consumer;
  */
 public class DummyTextureSpriteContents {
 
-    public static boolean isSubImageEmpty(NativeImage image, int x, int y, int width, int height){
+    public static boolean isSubImageEmpty(BufferedImage image, int x, int y, int width, int height){
         if(x < 0 || y < 0 || x + width > image.getWidth() || y + height > image.getHeight())
             throw new IllegalArgumentException("Given area extends past given sprite contents!");
-        if(!image.format().hasAlpha() || (image.format() != NativeImage.PixelFormat.RGB && image.format() != NativeImage.PixelFormat.RGBA))
+        if(image.getType() != BufferedImage.TYPE_INT_ARGB)
             return false;
         for(int xx = 0; xx < width; xx++){
             for(int yy = 0; yy < height; yy++){
-                if(image.getLuminanceOrAlpha(xx + x, yy + y) != 0)
+                if(((image.getRGB(xx, yy) >> 24) & 255) != 0)
                     return false;
             }
         }
@@ -105,10 +106,14 @@ public class DummyTextureSpriteContents {
     public class Child extends TextureAtlasSprite {
 
         private final SpriteBuilderImpl spriteBuilder;
+        private final ResourceLocation identifier;
         private AllocatedSprite allocation;
 
         public Child(ResourceLocation identifier, int width, int height, SpriteBuilderImpl spriteBuilder){
-            super(identifier, width, height);
+            super(identifier.toString());
+            this.identifier = identifier;
+            this.width = width;
+            this.height = height;
             this.spriteBuilder = spriteBuilder;
         }
 
@@ -125,10 +130,12 @@ public class DummyTextureSpriteContents {
         }
 
         @Override
-        public void init(int atlasWidth, int atlasHeight, int x, int y){
-            super.init(atlasWidth, atlasHeight, x, y);
+        public void initSprite(int atlasWidth, int atlasHeight, int x, int y, boolean rotated){
+            if(rotated)
+                throw new IllegalStateException("Dummy sprites should not be rotated!");
+            super.initSprite(atlasWidth, atlasHeight, x, y, false);
             this.allocation = new AllocatedSpriteImpl(
-                this.getName(),
+                this.identifier,
                 x, y, this.width, this.height,
                 (float)x / atlasWidth, (float)(x + this.width) / atlasWidth,
                 (float)y / atlasHeight, (float)(y + this.height) / atlasHeight
@@ -136,7 +143,12 @@ public class DummyTextureSpriteContents {
         }
 
         @Override
-        public void loadData(IResource resource, int mipmapLevels){
+        public void loadSprite(PngSizeInfo sizeInfo, boolean hasAnimation){
+            throw new IllegalStateException("Dummy sprites should not be loaded!");
+        }
+
+        @Override
+        public void loadSpriteFrames(IResource resource, int mipmapLevels){
             throw new IllegalStateException("Dummy sprites should not be loaded!");
         }
     }

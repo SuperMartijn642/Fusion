@@ -14,12 +14,10 @@ import java.util.Set;
  */
 public class FusionMixinPlugin implements IMixinConfigPlugin {
 
-    private boolean isVintageFixLoaded;
     private boolean isVintagiumLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
-        this.isVintageFixLoaded = isClassAvailable("org.embeddedt.vintagefix.VintageFix");
         this.isVintagiumLoaded = isClassAvailable("me.jellysquid.mods.sodium.client.SodiumClientMod") || isClassAvailable("io.themade4.relictium.Relictium");
     }
 
@@ -39,8 +37,6 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName){
-        if(this.isVintageFixLoaded && mixinClassName.endsWith(".TextureAtlasMixin"))
-            return false;
         return true;
     }
 
@@ -51,8 +47,6 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins(){
         List<String> mixins = new ArrayList<>();
-        if(this.isVintageFixLoaded)
-            mixins.add("vintagefix.TextureAtlasMixinVintageFix");
         if(this.isVintagiumLoaded)
             mixins.add("vintagium.BlockRendererMixinVintagium");
         return mixins;

@@ -1,10 +1,10 @@
 package com.supermartijn642.fusion.api.texture.custom;
 
 
-import net.minecraft.client.renderer.texture.NativeImage;
+import java.awt.image.BufferedImage;
 
 /**
- * Contains utility methods for manipulating {@link NativeImage}s.
+ * Contains utility methods for manipulating {@link BufferedImage}s.
  * <p>
  * Created 23/03/2026 by SuperMartijn642
  */
@@ -13,17 +13,17 @@ public final class ImageHelper {
     /**
      * Create an empty image with the given width and height.
      */
-    public static NativeImage createEmpty(int width, int height){
+    public static BufferedImage createEmpty(int width, int height){
         if(width <= 0 || height <= 0)
             throw new IllegalArgumentException("Width and height must be positive!");
-        return new NativeImage(width, height, true);
+        return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
     /**
      * Creates a copy of the given image.
      */
-    public static NativeImage createCopy(NativeImage image){
-        NativeImage copy = createEmpty(image.getWidth(), image.getHeight());
+    public static BufferedImage createCopy(BufferedImage image){
+        BufferedImage copy = createEmpty(image.getWidth(), image.getHeight());
         copyArea(image, copy, 0, 0, 0, 0, image.getWidth(), image.getHeight());
         return copy;
     }
@@ -31,17 +31,12 @@ public final class ImageHelper {
     /**
      * Creates a copy of the given image with the size and pixel data of the specified area.
      */
-    public static NativeImage createCrop(NativeImage image, int x, int y, int width, int height, boolean closeOriginal){
-        if(closeOriginal){
-            try(NativeImage n = image){
-                return createCrop(image, x, y, width, height, false);
-            }
-        }
+    public static BufferedImage createCrop(BufferedImage image, int x, int y, int width, int height){
         if(width < 0 || height < 0)
             throw new IllegalArgumentException("Width and height must be positive!");
         if(x + width > image.getWidth() || y + height > image.getHeight())
             throw new IllegalArgumentException("Given area exceeds given image size!");
-        NativeImage cropped = createEmpty(width, height);
+        BufferedImage cropped = createEmpty(width, height);
         copyArea(image, cropped, x, y, 0, 0, width, height);
         return cropped;
     }
@@ -49,12 +44,7 @@ public final class ImageHelper {
     /**
      * Creates a copy of the given image with the pixel data of the specified area in each frame.
      */
-    public static NativeImage createCropFramed(NativeImage image, int x, int y, int width, int height, int frameWidth, int frameHeight, boolean closeOriginal){
-        if(closeOriginal){
-            try(NativeImage n = image){
-                return createCropFramed(image, x, y, width, height, frameWidth, frameHeight, false);
-            }
-        }
+    public static BufferedImage createCropFramed(BufferedImage image, int x, int y, int width, int height, int frameWidth, int frameHeight){
         if(width < 0 || height < 0)
             throw new IllegalArgumentException("Width and height must be positive!");
         if(x + width > image.getWidth() || y + height > image.getHeight())
@@ -65,7 +55,7 @@ public final class ImageHelper {
             throw new IllegalArgumentException("Image size must be a multiple of frame width and height!");
         int frameColumns = image.getWidth() / frameWidth;
         int frameRows = image.getHeight() / frameHeight;
-        NativeImage cropped = createEmpty(width * frameColumns, height * frameRows);
+        BufferedImage cropped = createEmpty(width * frameColumns, height * frameRows);
         for(int row = 0; row < frameRows; row++){
             for(int column = 0; column < frameColumns; column++){
                 copyArea(
@@ -89,14 +79,14 @@ public final class ImageHelper {
      * @param width  width of the area to copy
      * @param height height of the area to copy
      */
-    public static void copyArea(NativeImage from, NativeImage to, int fromX, int fromY, int toX, int toY, int width, int height){
+    public static void copyArea(BufferedImage from, BufferedImage to, int fromX, int fromY, int toX, int toY, int width, int height){
         if(width < 0 || height < 0)
             throw new IllegalArgumentException("Width and height must be positive!");
         if(fromX + width > from.getWidth() || fromY + height > from.getHeight() || toX + width > to.getWidth() || toY + height > to.getHeight())
             throw new IllegalArgumentException("Given area exceeds given image size!");
         for(int u = 0; u < width; u++){
             for(int v = 0; v < height; v++){
-                to.setPixelRGBA(toX + u, toY + v, from.getPixelRGBA(fromX + u, fromY + v));
+                to.setRGB(toX + u, toY + v, from.getRGB(fromX + u, fromY + v));
             }
         }
     }

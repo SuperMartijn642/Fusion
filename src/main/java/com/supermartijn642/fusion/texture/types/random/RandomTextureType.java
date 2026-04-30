@@ -9,11 +9,12 @@ import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.RandomTextureData;
 import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.resources.data.AnimationFrame;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -57,21 +58,21 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         int tileHeight = frameHeight / data.getRows();
         List<SpriteImageSource.AnimationFrame> frames = null;
         if(animationMetadata != null){
-            if(!animationMetadata.frames.isEmpty()){
-                frames = new ArrayList<>(animationMetadata.frames.size());
-                for(AnimationFrame frame : animationMetadata.frames){
-                    int index = frame.getIndex();
+            if(!animationMetadata.animationFrames.isEmpty()){
+                frames = new ArrayList<>(animationMetadata.animationFrames.size());
+                for(AnimationFrame frame : animationMetadata.animationFrames){
+                    int index = frame.getFrameIndex();
                     if(index >= frameRows * frameColumns)
                         throw new TextureErrorException("Frame index " + index + " is greater than the number of frames in the image!");
                     int x = tileWidth * (index % frameColumns);
                     int y = tileHeight * (index / frameColumns);
-                    frames.add(SpriteImageSource.AnimationFrame.of(x, y, frame.isTimeUnknown() ? animationMetadata.getDefaultFrameTime() : frame.getTime()));
+                    frames.add(SpriteImageSource.AnimationFrame.of(x, y, frame.hasNoTime() ? animationMetadata.getFrameTime() : frame.getFrameTime()));
                 }
             }else{
                 frames = new ArrayList<>(frameRows * frameColumns);
                 for(int row = 0; row < frameRows; row++){
                     for(int column = 0; column < frameColumns; column++){
-                        frames.add(SpriteImageSource.AnimationFrame.of(column * tileWidth, row * tileHeight, animationMetadata.getDefaultFrameTime()));
+                        frames.add(SpriteImageSource.AnimationFrame.of(column * tileWidth, row * tileHeight, animationMetadata.getFrameTime()));
                     }
                 }
             }
@@ -81,21 +82,19 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
 
         // Create sprites
         int tiles = 0;
-        try(NativeImage image = context.getImage()){
-            for(int y = 0; y < data.getRows(); y++){
-                for(int x = 0; x < data.getColumns(); x++){
-                    // Skip empty tiles
-                    if(DummyTextureSpriteContents.isSubImageEmpty(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight))
-                        continue;
-                    NativeImage subImage = ImageHelper.createCropFramed(image, x * tileWidth, y * tileHeight, tileWidth, tileHeight, frameWidth, frameHeight, false);
-                    SpriteImageSource imageSource = frames == null ?
-                        SpriteImageSource.constant(subImage) :
-                        SpriteImageSource.animated(subImage, tileWidth, tileHeight, frames, animationMetadata.isInterpolatedFrames());
-                    output.createSprite()
-                        .image(imageSource)
-                        .submit();
-                    tiles++;
-                }
+        for(int y = 0; y < data.getRows(); y++){
+            for(int x = 0; x < data.getColumns(); x++){
+                // Skip empty tiles
+                if(DummyTextureSpriteContents.isSubImageEmpty(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight))
+                    continue;
+                BufferedImage subImage = ImageHelper.createCropFramed(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight, frameWidth, frameHeight);
+                SpriteImageSource imageSource = frames == null ?
+                    SpriteImageSource.constant(subImage) :
+                    SpriteImageSource.animated(subImage, tileWidth, tileHeight, frames, animationMetadata.isInterpolate());
+                output.createSprite()
+                    .image(imageSource)
+                    .submit();
+                tiles++;
             }
         }
         if(tiles == 0)
@@ -159,7 +158,7 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         return json;
     }
 
-    public static void processQuad(MutableQuad quad, BlockPos pos, Direction side, Random random, SpriteInstance sprite){
+    public static void processQuad(MutableQuad quad, BlockPos pos, EnumFacing side, Random random, SpriteInstance sprite){
         if(side == null)
             return;
         RandomTextureData data = (RandomTextureData)sprite.getTexture().getCustomData();
@@ -175,8 +174,8 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         for(int i = 0; i < 4; i++){
             quad.uv(
                 i,
-                newSprite.getU0() + (quad.u(i) - sprite.getU0()) / (sprite.getU1() - sprite.getSprite().getU0()) * (newSprite.getU1() - newSprite.getU0()),
-                newSprite.getV0() + (quad.v(i) - sprite.getV0()) / (sprite.getV1() - sprite.getSprite().getV0()) * (newSprite.getV1() - newSprite.getV0())
+                newSprite.getU0() + (quad.u(i) - sprite.getU0()) / (sprite.getU1() - sprite.getU0()) * (newSprite.getU1() - newSprite.getU0()),
+                newSprite.getV0() + (quad.v(i) - sprite.getV0()) / (sprite.getV1() - sprite.getV0()) * (newSprite.getV1() - newSprite.getV0())
             );
         }
     }

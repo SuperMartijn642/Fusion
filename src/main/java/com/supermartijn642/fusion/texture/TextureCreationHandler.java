@@ -7,19 +7,23 @@ import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import com.supermartijn642.fusion.texture.custom.*;
-import net.minecraft.client.renderer.texture.AtlasTexture;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureUtil;
+import net.minecraft.client.resources.IResource;
+import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
-import net.minecraft.crash.ReportedException;
-import net.minecraft.resources.IResource;
+import net.minecraft.util.ReportedException;
 import net.minecraft.util.ResourceLocation;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -35,12 +39,23 @@ public class TextureCreationHandler {
      * 3. Once all dummy sprites have their region, we actually create our custom sprites
      */
 
-    public static boolean onLoadTexture(ResourceLocation identifier, IResource resource, Queue<TextureAtlasSprite> queue){
+    public static boolean onLoadTexture(ResourceLocation identifier, ResourceLocation location, IResourceManager resourceManager, Consumer<TextureAtlasSprite> queue){
+        try(IResource resource = resourceManager.getResource(location)){
+            return onLoadTexture(identifier, resource, queue);
+        }catch(IOException ignore){
+            // Let vanilla handle this
+            return false;
+        }
+    }
+
+    private static boolean onLoadTexture(ResourceLocation identifier, IResource resource, Consumer<TextureAtlasSprite> queue){
         // Get the fusion metadata
-        Pair<TextureType<Object,Object>,Object> metadata;
+        Pair<TextureType<Object,Object>,Object> metadata = null;
         try{
-            //noinspection unchecked,rawtypes
-            metadata = (Pair)resource.getMetadata(FusionTextureMetadataSection.INSTANCE);
+            FusionTextureMetadataSection.Data data = resource.getMetadata(FusionTextureMetadataSection.INSTANCE.getSectionName());
+            if(data != null)
+                //noinspection unchecked,rawtypes
+                metadata = (Pair)data.pair;
         }catch(JsonParseException e){
             FusionClient.LOGGER.error("Error parsing Fusion metadata for texture '{}': {}", identifier, e.getMessage());
             return true;
@@ -63,16 +78,16 @@ public class TextureCreationHandler {
         // Get vanilla animation metadata
         AnimationMetadataSection animationMetadata;
         try{
-            animationMetadata = resource.getMetadata(AnimationMetadataSection.SERIALIZER);
+            animationMetadata = resource.getMetadata("animation");
         }catch(Exception e){
             FusionClient.LOGGER.error("Unable to parse animation metadata for texture '{}':", identifier, e);
             return true;
         }
 
         // Read image
-        NativeImage image;
+        BufferedImage image;
         try(InputStream stream = resource.getInputStream()){
-            image = NativeImage.read(stream);
+            image = TextureUtil.readBufferedImage(stream);
         }catch(Exception e){
             FusionClient.LOGGER.error("Encountered an exception reading image for texture '{}'!", identifier, e);
             return true;
@@ -80,22 +95,19 @@ public class TextureCreationHandler {
 
         // Create texture
         TextureOutputImpl output = new TextureOutputImpl();
-        try(TextureCreationContextImpl context = new TextureCreationContextImpl(identifier, image, animationMetadata)){
+        TextureCreationContextImpl context = new TextureCreationContextImpl(identifier, image, animationMetadata);
+        try{
             textureType.createTexture(output, context, textureData);
             output.checkFinished();
         }catch(TextureErrorException e){
             FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
-            image.close();
             return true;
         }catch(Exception e){
             FusionClient.LOGGER.error("Encountered an exception whilst creating texture for type '{}' for texture '{}'!", TextureTypeRegistryImpl.getIdentifier(textureType), identifier, e);
-            image.close();
             return true;
         }
-        if(output.getSprites().isEmpty()){
-            image.close();
+        if(output.getSprites().isEmpty())
             return true;
-        }
         List<SpriteBuilderImpl> sprites = output.getSprites();
         Object customData = output.getCustomData();
         Consumer<TextureInstance<Object>> textureCreationCallback = output.getCallback();
@@ -113,7 +125,6 @@ public class TextureCreationHandler {
                 }
                 if(sprite.getName() != null && !names.add(sprite.getName())){
                     FusionClient.LOGGER.error("Received duplicate sprite name '{}' from texture type '{}' for texture '{}'!", sprite.getName(), TextureTypeRegistryImpl.getIdentifier(textureType), identifier);
-                    image.close();
                     return true;
                 }
             }
@@ -140,19 +151,14 @@ public class TextureCreationHandler {
             sprites,
             textureCreationCallback
         );
-        queue.addAll(parent.createChildren());
+        parent.createChildren().forEach(queue);
         return true;
     }
 
-    public static Result<CompletableFuture<Void>> onLoadSprite(DummyTextureSpriteContents dummySprites, AtlasTexture textureAtlas, int atlasWidth, int atlasHeight, int mipmapLevels, Queue<TextureAtlasSprite> queue){
-        if(!dummySprites.hasAllAllocations())
+    public static void onLoadSprite(DummyTextureSpriteContents contents, int atlasWidth, int atlasHeight, int mipmapLevels, Consumer<TextureAtlasSprite> queue){
+        if(!contents.hasAllAllocations())
             throw new IllegalStateException("Texture sprites have not been allocated!");
 
-        // If all child sprites have been allocated, create the texture
-        return new Result<>(CompletableFuture.runAsync(() -> createTexture(dummySprites, textureAtlas, atlasWidth, atlasHeight, mipmapLevels, queue)));
-    }
-
-    private static void createTexture(DummyTextureSpriteContents contents, AtlasTexture textureAtlas, int atlasWidth, int atlasHeight, int mipmapLevels, Queue<TextureAtlasSprite> queue){
         // Create the custom sprites
         List<TextureAtlasSprite> sprites = new ArrayList<>(contents.spriteBuilders().size());
         SpriteConstructionContext context = null;
@@ -163,7 +169,6 @@ public class TextureCreationHandler {
             if(constructor == null){
                 sprite = new FusionTextureAtlasSprite(
                     child.allocation(),
-                    textureAtlas,
                     (SpriteImageSourceImpl)spriteBuilder.getImageSource(),
                     mipmapLevels
                 );
@@ -172,32 +177,31 @@ public class TextureCreationHandler {
                 if(context == null){
                     context = new SpriteConstructionContextImpl(
                         atlasWidth, atlasHeight,
-                        textureAtlas,
                         mipmapLevels
                     );
                 }
                 try{
                     sprite = constructor.create(allocation, context);
                 }catch(Exception e){
-                    FusionClient.LOGGER.error("Encountered an exception whilst creating sprite '{}' for texture type '{}'!", child.getName(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), e);
+                    FusionClient.LOGGER.error("Encountered an exception whilst creating sprite '{}' for texture type '{}'!", child.getIconName(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), e);
                     return;
                 }
-                if(!child.getName().equals(sprite.getName())){
-                    FusionClient.LOGGER.error("Sprite constructor for sprite '{}' from texture type '{}' returned sprite with incorrect identifier '{}'!", child.getName(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), sprite.getName());
+                if(!child.getIconName().equals(sprite.getIconName())){
+                    FusionClient.LOGGER.error("Sprite constructor for sprite '{}' from texture type '{}' returned sprite with incorrect identifier '{}'!", child.getIconName(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), sprite.getIconName());
                     return;
                 }
             }
             sprites.add(sprite);
             // Copy vanilla mipmap generation behaviour
             try{
-                sprite.applyMipmapping(mipmapLevels);
+                sprite.generateMipmaps(mipmapLevels);
             }catch(Throwable throwable){
-                CrashReport crashreport = CrashReport.forThrowable(throwable, "Applying mipmap");
-                CrashReportCategory crashreportcategory = crashreport.addCategory("Sprite being mipmapped");
-                crashreportcategory.setDetail("Sprite name", () -> sprite.getName().toString());
-                crashreportcategory.setDetail("Sprite size", () -> sprite.getWidth() + " x " + sprite.getHeight());
-                crashreportcategory.setDetail("Sprite frames", () -> sprite.getFrameCount() + " frames");
-                crashreportcategory.setDetail("Mipmap levels", mipmapLevels);
+                CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Applying mipmap");
+                CrashReportCategory crashreportcategory = crashreport.makeCategory("Sprite being mipmapped");
+                crashreportcategory.addDetail("Sprite name", sprite::getIconName);
+                crashreportcategory.addDetail("Sprite size", () -> sprite.getIconWidth() + " x " + sprite.getIconHeight());
+                crashreportcategory.addDetail("Sprite frames", () -> sprite.getFrameCount() + " frames");
+                crashreportcategory.addCrashSection("Mipmap levels", mipmapLevels);
                 throw new ReportedException(crashreport);
             }
         }
@@ -211,7 +215,7 @@ public class TextureCreationHandler {
         // Create sprite instances
         List<SpriteInstance> spriteInstances = new ArrayList<>(sprites.size());
         for(TextureAtlasSprite sprite : sprites){
-            SpriteInstanceImpl spriteInstance = new SpriteInstanceImpl(textureInstance, sprite, sprite.getName());
+            SpriteInstanceImpl spriteInstance = new SpriteInstanceImpl(textureInstance, sprite, new ResourceLocation(sprite.getIconName()));
             ((TextureAtlasSpriteExtension)sprite).setFusionSpriteInstance(spriteInstance);
             spriteInstances.add(spriteInstance);
         }
@@ -239,20 +243,17 @@ public class TextureCreationHandler {
             }
         }
 
+        // Upload sprites to atlas
+        for(TextureAtlasSprite sprite : sprites){
+            try{
+                TextureUtil.uploadTextureMipmap(sprite.getFrameTextureData(0), sprite.getIconWidth(), sprite.getIconHeight(), sprite.getOriginX(), sprite.getOriginY(), false, false);
+            }catch(Exception e){
+                FusionClient.LOGGER.error("Encountered an exception whilst uploading sprite '{}' from texture type '{}'!", sprite.getIconName(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), e);
+                return;
+            }
+        }
+
         // Add the sprites
-        queue.addAll(sprites);
-    }
-
-    public static class Result<T> {
-
-        private final T value;
-
-        public Result(T value){
-            this.value = value;
-        }
-
-        public T value(){
-            return this.value;
-        }
+        sprites.forEach(queue);
     }
 }

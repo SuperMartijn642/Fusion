@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import net.minecraft.client.renderer.texture.Stitcher;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import org.spongepowered.asm.mixin.Mixin;
@@ -23,7 +23,7 @@ public class StitcherHolderMixin {
         at = @At("TAIL")
     )
     private void init(TextureAtlasSprite sprite, int mipmapLevel, CallbackInfo ci){
-        this.preventRotating = !SpriteHelper.getTextureType(sprite).allowRotation();
+        this.preventRotating = sprite instanceof DummyTextureSpriteContents.Child;
     }
 
     @Inject(

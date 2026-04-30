@@ -10,10 +10,10 @@ import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.resources.data.AnimationFrame;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -64,21 +64,21 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         int tileHeight = frameHeight / layout.getHeight();
         List<SpriteImageSource.AnimationFrame> frames = null;
         if(animationMetadata != null){
-            if(!animationMetadata.frames.isEmpty()){
-                frames = new ArrayList<>(animationMetadata.frames.size());
-                for(AnimationFrame frame : animationMetadata.frames){
-                    int index = frame.getIndex();
+            if(!animationMetadata.animationFrames.isEmpty()){
+                frames = new ArrayList<>(animationMetadata.animationFrames.size());
+                for(AnimationFrame frame : animationMetadata.animationFrames){
+                    int index = frame.getFrameIndex();
                     if(index >= frameRows * frameColumns)
                         throw new TextureErrorException("Frame index " + index + " is greater than the number of frames in the image!");
                     int x = tileWidth * (index % frameColumns);
                     int y = tileHeight * (index / frameColumns);
-                    frames.add(SpriteImageSource.AnimationFrame.of(x, y, frame.isTimeUnknown() ? animationMetadata.getDefaultFrameTime() : frame.getTime()));
+                    frames.add(SpriteImageSource.AnimationFrame.of(x, y, frame.hasNoTime() ? animationMetadata.getFrameTime() : frame.getFrameTime()));
                 }
             }else{
                 frames = new ArrayList<>(frameRows * frameColumns);
                 for(int row = 0; row < frameRows; row++){
                     for(int column = 0; column < frameColumns; column++){
-                        frames.add(SpriteImageSource.AnimationFrame.of(column * tileWidth, row * tileHeight, animationMetadata.getDefaultFrameTime()));
+                        frames.add(SpriteImageSource.AnimationFrame.of(column * tileWidth, row * tileHeight, animationMetadata.getFrameTime()));
                     }
                 }
             }
@@ -88,26 +88,24 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
 
         // Create sprites
         List<SpriteInstance> tiles = new ArrayList<>(layout.getWidth() * layout.getHeight());
-        try(NativeImage image = context.getImage()){
-            for(int y = 0; y < layout.getHeight(); y++){
-                for(int x = 0; x < layout.getWidth(); x++){
-                    tiles.add(null);
-                    // Skip empty tiles
-                    if((x != layout.defaultTileX() || y != layout.defaultTileY()) &&
-                        DummyTextureSpriteContents.isSubImageEmpty(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight)){
-                        continue;
-                    }
-                    NativeImage subImage = ImageHelper.createCropFramed(image, x * tileWidth, y * tileHeight, tileWidth, tileHeight, frameWidth, frameHeight, false);
-                    SpriteImageSource imageSource = frames == null ?
-                        SpriteImageSource.constant(subImage) :
-                        SpriteImageSource.animated(subImage, tileWidth, tileHeight, frames, animationMetadata.isInterpolatedFrames());
-                    int index = x + y * layout.getWidth();
-                    output.createSprite()
-                        .image(imageSource)
-                        .markDefaultSprite(x == layout.defaultTileX() && y == layout.defaultTileY())
-                        .setCreationCallback(s -> tiles.set(index, s))
-                        .submit();
+        for(int y = 0; y < layout.getHeight(); y++){
+            for(int x = 0; x < layout.getWidth(); x++){
+                tiles.add(null);
+                // Skip empty tiles
+                if((x != layout.defaultTileX() || y != layout.defaultTileY()) &&
+                    DummyTextureSpriteContents.isSubImageEmpty(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight)){
+                    continue;
                 }
+                BufferedImage subImage = ImageHelper.createCropFramed(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight, frameWidth, frameHeight);
+                SpriteImageSource imageSource = frames == null ?
+                    SpriteImageSource.constant(subImage) :
+                    SpriteImageSource.animated(subImage, tileWidth, tileHeight, frames, animationMetadata.isInterpolate());
+                int index = x + y * layout.getWidth();
+                output.createSprite()
+                    .image(imageSource)
+                    .markDefaultSprite(x == layout.defaultTileX() && y == layout.defaultTileY())
+                    .setCreationCallback(s -> tiles.set(index, s))
+                    .submit();
             }
         }
 

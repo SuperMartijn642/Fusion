@@ -1,11 +1,11 @@
 package com.supermartijn642.fusion.api.texture.custom;
 
 
-import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
+import java.awt.image.BufferedImage;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
@@ -19,9 +19,8 @@ public interface TextureCreationContext {
 
     /**
      * Gets the image loaded from the texture file.
-     * Note that if this is called, responsibility for closing the image lies with the caller.
      */
-    NativeImage getImage();
+    BufferedImage getImage();
 
     /**
      * Gets the width of the texture.

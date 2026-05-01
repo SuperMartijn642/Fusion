@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class DummyTextureSpriteContents extends SpriteContents {
 
-    private static final NativeImage EMPTY_IMAGE = new NativeImage(NativeImage.Format.RGBA, 1, 1, false, 0);
+    private static final NativeImage EMPTY_IMAGE = new NativeImage(1, 1, true);
 
     public static boolean isSubImageEmpty(NativeImage image, int x, int y, int width, int height){
         if(x < 0 || y < 0 || x + width > image.getWidth() || y + height > image.getHeight())

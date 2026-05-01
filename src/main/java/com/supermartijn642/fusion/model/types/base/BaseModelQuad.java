@@ -1,11 +1,15 @@
 package com.supermartijn642.fusion.model.types.base;
 
+import com.mojang.blaze3d.platform.Transparency;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import com.supermartijn642.fusion.model.quad.MutableQuad;
+import com.supermartijn642.fusion.model.quad.MutableQuadImpl;
+import com.supermartijn642.fusion.model.quad.QuadAccess;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.Direction;
 
 /**
@@ -13,29 +17,33 @@ import net.minecraft.core.Direction;
  */
 public class BaseModelQuad {
 
-    private final BakedQuad bakedQuad;
+    private final QuadAccess quad;
     private final SpriteInstance spriteInstance;
     private final Direction cullDirection;
-    private final BaseTextureData.RenderType renderType;
-    private final boolean emissive;
 
     public BaseModelQuad(BakedQuad bakedQuad, Direction cullDirection){
-        this.spriteInstance = SpriteHelper.getSpriteInstance(bakedQuad.sprite());
+        this.spriteInstance = SpriteHelper.getSpriteInstance(bakedQuad.materialInfo().sprite());
         this.cullDirection = cullDirection;
+        // Update quad properties from base texture data
+        MutableQuad quad = new MutableQuadImpl();
+        quad.copyBakedQuad(bakedQuad);
         if(this.spriteInstance != null && this.spriteInstance.getTexture().getCustomData() instanceof BaseTextureData data){
-            this.renderType = data.getRenderType();
-            this.emissive = data.isEmissive();
-            if(data.getTinting() != null) // Create an identical quad, but with tint index '39216'
-                bakedQuad = new BakedQuad(bakedQuad.position0(), bakedQuad.position1(), bakedQuad.position2(), bakedQuad.position3(), bakedQuad.packedUV0(), bakedQuad.packedUV1(), bakedQuad.packedUV2(), bakedQuad.packedUV3(), 39216, bakedQuad.direction(), bakedQuad.sprite(), bakedQuad.shade(), bakedQuad.lightEmission(), bakedQuad.bakedNormals(), bakedQuad.bakedColors(), bakedQuad.hasAmbientOcclusion());
-        }else{
-            this.renderType = null;
-            this.emissive = false;
+            if(data.getRenderType() != null){
+                Transparency transparency = data.getRenderType() == BaseTextureData.RenderType.TRANSLUCENT ? Transparency.TRANSLUCENT :
+                    data.getRenderType() == BaseTextureData.RenderType.CUTOUT ? Transparency.TRANSPARENT :
+                        Transparency.NONE;
+                quad.transparency(transparency);
+            }
+            if(data.isEmissive())
+                quad.emissive(true);
+            if(data.getTinting() != null)
+                quad.tintIndex(39216);
         }
-        this.bakedQuad = bakedQuad;
+        this.quad = quad;
     }
 
-    public BakedQuad bakedQuad(){
-        return this.bakedQuad;
+    public QuadAccess quad(){
+        return this.quad;
     }
 
     public SpriteInstance spriteInstance(){
@@ -48,13 +56,5 @@ public class BaseModelQuad {
 
     public Direction cullDirection(){
         return this.cullDirection;
-    }
-
-    public BaseTextureData.RenderType renderType(){
-        return this.renderType;
-    }
-
-    public boolean emissive(){
-        return this.emissive;
     }
 }

@@ -10,9 +10,12 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelElement;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
-import net.minecraft.client.renderer.block.model.*;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.cuboid.*;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.geometry.QuadCollection;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.resources.model.sprite.TextureSlots;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 
@@ -27,7 +30,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
 
     private final Map<String,Either<ConnectionPredicate,String>> connections;
 
-    public ConnectingModelDataImpl(BlockModel model, List<Identifier> parents, List<ConnectingModelElement> elements, Map<String,Either<ConnectionPredicate,String>> connections){
+    public ConnectingModelDataImpl(CuboidModel model, List<Identifier> parents, List<ConnectingModelElement> elements, Map<String,Either<ConnectionPredicate,String>> connections){
         //noinspection rawtypes,unchecked
         super(model, parents, (List)elements);
         this.connections = Map.copyOf(connections);
@@ -65,42 +68,38 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
         modelStack.addLast(model);
 
         // If the model has elements, bake them
+        List<CuboidModelElement> vanillaElements = null;
+        List<? extends BaseModelElement> customElements = null;
         if(model.getModelType() == DefaultModelTypes.BASE || model.getModelType() == DefaultModelTypes.CONNECTING){
-            List<? extends BaseModelElement> elements = ((BaseModelDataImpl)model.getModelData()).getElements();
-            if(elements != null && !elements.isEmpty()){
-                // Bake the faces of each element
-                for(BaseModelElement element : elements){
-                    for(Direction direction : element.original.faces().keySet()){
-                        BlockElementFace face = element.original.faces().get(direction);
-                        TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                        BakedQuad quad = FaceBakery.bakeQuad(context.getModelBaker().parts(), element.original.from(), element.original.to(), face, sprite, direction, context.getTransformation(), element.original.rotation(), element.original.shade(), element.original.lightEmission());
-                        Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().transformation().getMatrix(), face.cullForDirection()) : null;
-                        String connectionsKey = element instanceof ConnectingModelElement && ((ConnectingModelElement)element).faceConnectionKeys.containsKey(direction) ? ((ConnectingModelElement)element).faceConnectionKeys.get(direction) : face.texture();
-                        ConnectionPredicate predicate = this.resolveConnectionKey(context, modelStack, connectionsKey);
+            customElements = ((BaseModelDataImpl)model.getModelData()).getElements();
+            vanillaElements = customElements.stream().map(e -> e.original).toList();
+        }else{
+            UnbakedModel vanillaModel = model.getAsVanillaModel();
+            if(vanillaModel instanceof ItemModelGenerator){
+                // Special case layered item models
+                ConnectionPredicate predicate = this.resolveConnectionKey(context, modelStack, ConnectingModelType.DEFAULT_CONNECTION_KEY);
+                QuadCollection quads = this.generateItemModel(context, modelStack);
+                for(Direction cullDirection : Direction.values()){
+                    for(BakedQuad quad : quads.getQuads(cullDirection)){
                         output.accept(new ConnectingModelQuad(quad, cullDirection, predicate));
                     }
                 }
-                // If the model had elements, ignore parent models' elements
-                modelStack.pop();
-                return;
-            }
+                for(BakedQuad quad : quads.getQuads(null))
+                    output.accept(new ConnectingModelQuad(quad, null, predicate));
+            }else if(vanillaModel != null && vanillaModel.geometry() instanceof UnbakedCuboidGeometry geometry)
+                vanillaElements = geometry.elements();
         }
-
-        List<? extends BlockElement> elements = null;
-        UnbakedModel vanillaModel = model.getAsVanillaModel();
-        if(vanillaModel instanceof ItemModelGenerator)
-            elements = this.generateItemModel(context, modelStack);
-        else if(vanillaModel != null && vanillaModel.geometry() instanceof SimpleUnbakedGeometry geometry)
-            elements = geometry.elements();
-        if(elements != null && !elements.isEmpty()){
+        if(vanillaElements != null && !vanillaElements.isEmpty()){
             // Bake the faces of each element
-            for(BlockElement element : elements){
+            for(int i = 0; i < vanillaElements.size(); i++){
+                CuboidModelElement element = vanillaElements.get(i);
+                BaseModelElement customElement = customElements != null && i < customElements.size() ? customElements.get(i) : null;
                 for(Direction direction : element.faces().keySet()){
-                    BlockElementFace face = element.faces().get(direction);
-                    TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                    BakedQuad quad = FaceBakery.bakeQuad(context.getModelBaker().parts(), element.from(), element.to(), face, sprite, direction, context.getTransformation(), element.rotation(), element.shade(), element.lightEmission());
+                    CuboidFace face = element.faces().get(direction);
+                    Material.Baked sprite = context.getMaterial(this.resolveMaterial(context, modelStack, face.texture()));
+                    BakedQuad quad = FaceBakery.bakeQuad(context.getModelBaker(), element.from(), element.to(), face, sprite, direction, context.getTransformation(), element.rotation(), element.shade(), element.lightEmission());
                     Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().transformation().getMatrix(), face.cullForDirection()) : null;
-                    String connectionsKey = face.texture();
+                    String connectionsKey = customElement instanceof ConnectingModelElement && ((ConnectingModelElement)customElement).faceConnectionKeys.containsKey(direction) ? ((ConnectingModelElement)customElement).faceConnectionKeys.get(direction) : face.texture();
                     ConnectionPredicate predicate = this.resolveConnectionKey(context, modelStack, connectionsKey);
                     output.accept(new ConnectingModelQuad(quad, cullDirection, predicate));
                 }
@@ -153,7 +152,7 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
                     TextureSlots.SlotContents material = vanillaModel.textureSlots().values().get(currentKey);
                     if(material != null){
                         newKey = material instanceof TextureSlots.Value ?
-                            ((TextureSlots.Value)material).material().texture().toString() :
+                            ((TextureSlots.Value)material).material().sprite().toString() :
                             ((TextureSlots.Reference)material).target();
                         break;
                     }

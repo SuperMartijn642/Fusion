@@ -6,8 +6,12 @@ import com.supermartijn642.fusion.extensions.PackResourcesExtension;
 import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.*;
+import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.server.packs.resources.IoSupplier;
+import net.minecraft.server.packs.resources.ResourceMetadata;
 import net.minecraft.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -28,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -60,9 +65,8 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         if(Files.exists(path)){
             String overridesFolder;
             try(InputStream stream = Files.newInputStream(path)){
-                //noinspection DataFlowIssue
-                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.TYPE, stream, null);
-                overridesFolder = metadata != null ? metadata.getOverridesFolder() : null;
+                Optional<FusionPackMetadata> metadata = ResourceMetadata.fromJsonStream(stream).getSection(FusionPackMetadataSection.TYPE);
+                overridesFolder = metadata.map(FusionPackMetadata::getOverridesFolder).orElse(null);
             }catch(IOException | NullPointerException ignored){
                 return;
             }

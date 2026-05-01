@@ -92,7 +92,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
 
         // Create sprites
         List<SpriteInstance> tiles = new ArrayList<>(layout.getWidth() * layout.getHeight());
-        try(NativeImage n = image){
+        try(NativeImage _ = image){
             for(int y = 0; y < layout.getHeight(); y++){
                 for(int x = 0; x < layout.getWidth(); x++){
                     tiles.add(null);

@@ -8,7 +8,7 @@ import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.RandomTextureData;
-import com.supermartijn642.fusion.model.MutableQuad;
+import com.supermartijn642.fusion.model.quad.MutableQuad;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import net.minecraft.client.resources.metadata.animation.AnimationFrame;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;

@@ -1,18 +1,18 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import com.supermartijn642.fusion.model.quad.MutableQuad;
+import com.supermartijn642.fusion.model.quad.MutableQuadImpl;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.TriState;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -35,21 +35,21 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         BlockStateProperties.EAST
     };
 
-    private final MutableQuad helperMutableQuad = new MutableQuad();
+    private final MutableQuad helperMutableQuad = new MutableQuadImpl();
 
     public PaneCullingBakedModel(BlockStateModel original){
         super(original);
     }
 
     @Override
-    public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockModelPart> parts){
+    public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockStateModelPart> parts){
         if(state == null){
-            parts.addAll(super.collectParts(level, pos, state, random));
+            super.collectParts(level, pos, state, random, parts);
             return;
         }
         // If state has no side properties, then there's nothing to be culled
         if(!state.hasProperty(BlockStateProperties.NORTH) && !state.hasProperty(BlockStateProperties.SOUTH) && !state.hasProperty(BlockStateProperties.WEST) && !state.hasProperty(BlockStateProperties.EAST)){
-            parts.addAll(super.collectParts(level, pos, state, random));
+            super.collectParts(level, pos, state, random, parts);
             return;
         }
 
@@ -61,17 +61,19 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         if(below.getBlock() != state.getBlock())
             below = null;
         if(above == null && below == null){
-            parts.addAll(super.collectParts(level, pos, state, random));
+            super.collectParts(level, pos, state, random, parts);
             return;
         }
         Pair<BlockState,BlockState> neighbors = Pair.of(above, below);
 
         // Wrap the parts with a quad filter
-        for(BlockModelPart part : super.collectParts(level, pos, state, random))
+        List<BlockStateModelPart> originalParts = new ArrayList<>();
+        super.collectParts(level, pos, state, random, originalParts);
+        for(BlockStateModelPart part : originalParts)
             parts.add(new FilteringModelPart(part, neighbors));
     }
 
-    private List<BakedQuad> getQuads(BlockModelPart part, Pair<BlockState,BlockState> neighbors, @Nullable Direction cullDirection){
+    private List<BakedQuad> getQuads(BlockStateModelPart part, Pair<BlockState,BlockState> neighbors, @Nullable Direction cullDirection){
         // Filter out certain quads
         List<BakedQuad> quads = part.getQuads(cullDirection);
         List<BakedQuad> culledQuads = new ArrayList<>(quads.size());
@@ -90,7 +92,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
 
         // Find the center of the quad
         MutableQuad quad = this.helperMutableQuad;
-        quad.fillFromBakedQuad(bakedQuad);
+        quad.copyBakedQuad(bakedQuad);
         float centerX = (quad.x(0) + quad.x(1) + quad.x(2) + quad.x(3)) / 4;
         float centerZ = (quad.z(0) + quad.z(1) + quad.z(2) + quad.z(3)) / 4;
         // If the quad's center is roughly at the center of the block, assume it is the middle part of the glass pane
@@ -114,12 +116,12 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         );
     }
 
-    private class FilteringModelPart implements BlockModelPart {
+    private class FilteringModelPart implements BlockStateModelPart {
 
-        private final BlockModelPart original;
+        private final BlockStateModelPart original;
         private final Pair<BlockState,BlockState> neighbors;
 
-        private FilteringModelPart(BlockModelPart original, Pair<BlockState,BlockState> neighbors){
+        private FilteringModelPart(BlockStateModelPart original, Pair<BlockState,BlockState> neighbors){
             this.original = original;
             this.neighbors = neighbors;
         }
@@ -135,13 +137,13 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         }
 
         @Override
-        public TextureAtlasSprite particleIcon(){
-            return this.original.particleIcon();
+        public Material.Baked particleMaterial(){
+            return this.original.particleMaterial();
         }
 
         @Override
-        public ChunkSectionLayer getRenderType(BlockState state){
-            return this.original.getRenderType(state);
+        public @BakedQuad.MaterialFlags int materialFlags(){
+            return this.original.materialFlags();
         }
 
         @Override

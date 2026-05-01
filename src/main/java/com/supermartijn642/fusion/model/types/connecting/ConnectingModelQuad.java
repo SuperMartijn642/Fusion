@@ -4,7 +4,7 @@ import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
 import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
-import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.Direction;
 
 /**

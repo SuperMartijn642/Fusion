@@ -35,7 +35,7 @@ public abstract class BlockRendererMixinSodium extends AbstractBlockRenderContex
             if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
                 BaseTextureData.QuadTinting tinting = data.getTinting();
                 if(tinting != null){
-                    int color = -16777216 | QuadTintingHelper.getColor(tinting, this.state, this.level, this.pos);
+                    int color = -16777216 | QuadTintingHelper.getInWorldColor(tinting, this.state, this.slice, this.pos);
                     for(int i = 0; i < 4; ++i)
                         quad.setColor(i, ColorMixer.mulComponentWise(color, quad.getColor(i)));
                     ci.cancel();

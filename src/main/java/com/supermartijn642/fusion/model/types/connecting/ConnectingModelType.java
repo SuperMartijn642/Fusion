@@ -16,20 +16,15 @@ import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import com.supermartijn642.fusion.model.types.base.BaseModelElement;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.neoforged.neoforge.client.RenderTypeGroup;
-import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -65,16 +60,13 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         //noinspection unchecked,rawtypes
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, true);
-        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
-        RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
-        ChunkSectionLayer neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.block();
+        Boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, null);
+        Material.Baked particleSprite = context.getMaterial(((BaseModelDataImpl)data).findParticleSprite(context));
         // Finally, create the model
         return new ConnectingBakedModel(
             quads,
             ambientOcclusion,
-            particleSprite,
-            neoforgeRenderType
+            particleSprite
         );
     }
 
@@ -86,8 +78,8 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
         //noinspection unchecked,rawtypes
         List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
-        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, UnbakedModel.GuiLight.SIDE).lightLikeBlock();
+        Material.Baked particleSprite = context.getMaterial(((BaseModelDataImpl)data).findParticleSprite(context));
         //noinspection deprecation
         ItemTransforms transforms = new ItemTransforms(
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
@@ -100,16 +92,12 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.ON_SHELF)
         );
-        RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
-        RenderType neoforgeItemRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entityItem();
-        RenderType neoforgeBlockRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entityBlock();
         // Finally, create the model
         return new ConnectingItemModel(
             context.getTintSources(),
             quads,
             new ModelRenderProperties(usesBlockLight, particleSprite, transforms),
-            neoforgeItemRenderType,
-            neoforgeBlockRenderType
+            context.getTransformation().transformation().getMatrix()
         );
     }
 

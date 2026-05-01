@@ -35,7 +35,7 @@ public abstract class TerrainParticleMixin extends SingleQuadParticle {
         if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData data){
             BaseTextureData.QuadTinting tinting = data.getTinting();
             if(tinting != null){
-                int color = QuadTintingHelper.getColor(tinting, state, level, pos);
+                int color = QuadTintingHelper.getParticleColor(tinting, state, level, pos);
                 this.rCol = 0.6f * (color >> 16 & 0xFF) / 255f;
                 this.gCol = 0.6f * (color >> 8 & 0xFF) / 255f;
                 this.bCol = 0.6f * (color & 0xFF) / 255f;

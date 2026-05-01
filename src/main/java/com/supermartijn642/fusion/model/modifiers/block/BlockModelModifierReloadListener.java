@@ -1,7 +1,10 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
@@ -9,9 +12,9 @@ import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.block.model.SingleVariant;
-import net.minecraft.client.renderer.block.model.Variant;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.SingleVariant;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,7 +34,6 @@ import java.util.stream.Stream;
  */
 public class BlockModelModifierReloadListener {
 
-    private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/model_modifiers/blocks";
     private static final FileToIdConverter ID_CONVERTER = FileToIdConverter.json(LOCATION);
 

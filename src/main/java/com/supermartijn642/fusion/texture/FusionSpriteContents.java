@@ -11,6 +11,7 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.custom.SpriteImageSourceImpl;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.client.resources.metadata.texture.TextureMetadataSection;
@@ -75,8 +76,8 @@ public class FusionSpriteContents extends SpriteContents {
     }
 
     @Override
-    public IntStream getUniqueFrames(){
-        return IntStream.range(0, this.uniqueFrames.size());
+    public IntList getUniqueFrames(){
+        return IntList.of(IntStream.range(0, this.uniqueFrames.size()).toArray());
     }
 
     @Override
@@ -86,7 +87,7 @@ public class FusionSpriteContents extends SpriteContents {
         GpuBufferSlice[] gpuBufferSlices = new GpuBufferSlice[this.byMipLevel.length];
 
         // Create a gpu texture for each unique frame
-        for(int uniqueFrameIndex : this.getUniqueFrames().toArray()){
+        for(int uniqueFrameIndex : this.getUniqueFrames()){
             GpuTexture gpuTexture = gpuDevice.createTexture(
                 () -> this.name + " animation frame " + uniqueFrameIndex,
                 5,
@@ -94,7 +95,7 @@ public class FusionSpriteContents extends SpriteContents {
                 this.frameWidth,
                 this.frameHeight,
                 1,
-                this.byMipLevel.length + 1
+                this.byMipLevel.length
             );
             for(int mipLevel = 0; mipLevel < this.byMipLevel.length; mipLevel++)
                 this.uploadUniqueFrame(gpuTexture, mipLevel, uniqueFrameIndex);

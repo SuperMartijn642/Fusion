@@ -10,12 +10,15 @@ import com.supermartijn642.fusion.api.model.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.block.model.*;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.cuboid.CuboidModel;
+import net.minecraft.client.resources.model.cuboid.CuboidModelElement;
+import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.client.resources.model.cuboid.UnbakedCuboidGeometry;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
@@ -52,15 +55,13 @@ public class BaseModelType implements ModelType<BaseModelData> {
         // Bake the quads
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, true);
-        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
-        ChunkSectionLayer forgeRenderType = context.getForgeContext() != null ? context.getForgeContext().getRenderType().block() : null;
+        Boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, null);
+        Material.Baked particleSprite = context.getMaterial(((BaseModelDataImpl)data).findParticleSprite(context));
         // Finally, create the model
         return new BaseBakedModel(
             quads,
             ambientOcclusion,
-            particleSprite,
-            forgeRenderType
+            particleSprite
         );
     }
 
@@ -71,8 +72,8 @@ public class BaseModelType implements ModelType<BaseModelData> {
         // Bake the quads
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
-        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, UnbakedModel.GuiLight.SIDE).lightLikeBlock();
+        Material.Baked particleSprite = context.getMaterial(((BaseModelDataImpl)data).findParticleSprite(context));
         //noinspection deprecation
         ItemTransforms transforms = new ItemTransforms(
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
@@ -89,14 +90,15 @@ public class BaseModelType implements ModelType<BaseModelData> {
         return new BaseItemModel(
             context.getTintSources(),
             quads,
-            new ModelRenderProperties(usesBlockLight, particleSprite, transforms)
+            new ModelRenderProperties(usesBlockLight, particleSprite, transforms),
+            context.getTransformation().transformation().getMatrix()
         );
     }
 
     @Override
     public BaseModelData deserialize(JsonObject json) throws JsonParseException{
         // Deserialize the vanilla model attributes
-        BlockModel model = DefaultModelTypes.VANILLA.deserialize(json);
+        CuboidModel model = DefaultModelTypes.VANILLA.deserialize(json);
         // Read parents
         if(json.has("parent") && json.has("parents"))
             throw new JsonParseException("Model can only have either 'parent' or 'parents', not both!");
@@ -122,14 +124,14 @@ public class BaseModelType implements ModelType<BaseModelData> {
                 parents.add(Identifier.parse(parent));
             }
             if(!parents.isEmpty())
-                model = new BlockModel(model.geometry(), model.guiLight(), model.ambientOcclusion(), model.transforms(), model.textureSlots(), parents.get(0), model.forgeData());
+                model = new CuboidModel(model.geometry(), model.guiLight(), model.ambientOcclusion(), model.transforms(), model.textureSlots(), parents.get(0));
         }
         List<BaseModelElement> elements = List.of();
-        if(model.geometry() instanceof SimpleUnbakedGeometry(
-            List<net.minecraft.client.renderer.block.model.BlockElement> vanillaElements
+        if(model.geometry() instanceof UnbakedCuboidGeometry(
+            List<CuboidModelElement> vanillaElements
         )){
             elements = new ArrayList<>(vanillaElements.size());
-            for(BlockElement element : vanillaElements)
+            for(CuboidModelElement element : vanillaElements)
                 elements.add(new BaseModelElement(element.from(), element.to(), element.faces(), element.rotation(), element.shade(), element.lightEmission()));
         }
         return new BaseModelDataImpl(model, parents, elements);

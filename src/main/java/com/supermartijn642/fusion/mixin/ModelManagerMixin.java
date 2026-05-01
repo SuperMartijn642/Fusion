@@ -1,12 +1,13 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.supermartijn642.fusion.model.FusionBlockModel;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
-import net.minecraft.client.resources.model.*;
+import net.minecraft.client.resources.model.ModelDiscovery;
+import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.util.profiling.Zone;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,7 +23,7 @@ import java.util.Map;
 public class ModelManagerMixin {
 
     @Inject(
-        method = "lambda$loadBlockModels$5(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",
+        method = "lambda$loadBlockModels$0(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",
         at = @At("HEAD")
     )
     private static void reloadModelModifiers(ResourceManager resourceManager, CallbackInfoReturnable<Map<?,?>> ci){
@@ -31,15 +32,14 @@ public class ModelManagerMixin {
     }
 
     @Inject(
-        method = "discoverModelDependencies",
+        method = "discoverModelDependencies(Ljava/util/Map;Lnet/minecraft/client/resources/model/BlockStateModelLoader$LoadedModels;Lnet/minecraft/client/resources/model/ClientItemInfoLoader$LoadedClientInfos;)Lnet/minecraft/client/resources/model/ModelManager$ResolvedModels;",
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/resources/model/ModelManager$ResolvedModels;<init>(Lnet/minecraft/client/resources/model/ResolvedModel;Ljava/util/Map;)V",
             shift = At.Shift.BEFORE
-        ),
-        locals = LocalCapture.CAPTURE_FAILHARD
+        )
     )
-    private static void registerBlockModelOverlays(Map<Identifier,UnbakedModel> models, BlockStateModelLoader.LoadedModels loadedModels, ClientItemInfoLoader.LoadedClientInfos clientInfos, CallbackInfoReturnable<ModelDiscovery> ci, Zone zone, ModelDiscovery modelDiscovery){
+    private static void registerBlockModelOverlays(CallbackInfoReturnable<ModelDiscovery> ci, @Local ModelDiscovery modelDiscovery){
         modelDiscovery.addRoot(resolver -> {
             BlockModelModifierReloadListener.INSTANCE.registerOverlays(resolver);
             ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver);
@@ -47,10 +47,10 @@ public class ModelManagerMixin {
     }
 
     @Inject(
-        method = "lambda$loadBlockModels$6(Ljava/util/Map$Entry;)Lcom/mojang/datafixers/util/Pair;",
+        method = "lambda$loadBlockModels$2(Ljava/util/Map$Entry;)Lcom/mojang/datafixers/util/Pair;",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/block/model/BlockModel;fromStream(Ljava/io/Reader;)Lnet/minecraft/client/renderer/block/model/BlockModel;",
+            target = "Lnet/minecraft/client/resources/model/cuboid/CuboidModel;fromStream(Ljava/io/Reader;)Lnet/minecraft/client/resources/model/cuboid/CuboidModel;",
             shift = At.Shift.BEFORE
         ),
         locals = LocalCapture.CAPTURE_FAILHARD

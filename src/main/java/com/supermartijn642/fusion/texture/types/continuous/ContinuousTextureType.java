@@ -8,7 +8,7 @@ import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ContinuousTextureData;
-import com.supermartijn642.fusion.model.MutableQuad;
+import com.supermartijn642.fusion.model.quad.MutableQuad;
 import net.minecraft.client.resources.metadata.animation.AnimationFrame;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.core.BlockPos;

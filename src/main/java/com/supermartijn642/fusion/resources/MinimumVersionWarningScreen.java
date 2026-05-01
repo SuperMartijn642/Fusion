@@ -7,15 +7,15 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ActiveTextCollector;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.TextAlignment;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineLabel;
-import net.minecraft.client.gui.render.state.GuiTextRenderState;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.state.gui.GuiTextRenderState;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
@@ -96,8 +96,8 @@ public class MinimumVersionWarningScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks){
-        super.render(graphics, mouseX, mouseY, partialTicks);
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTicks){
+        super.extractRenderState(graphics, mouseX, mouseY, partialTicks);
         Matrix3x2fStack poseStack = graphics.pose();
         poseStack.pushMatrix();
         poseStack.translate(this.width / 2f, this.height / 2f - 110);
@@ -105,7 +105,7 @@ public class MinimumVersionWarningScreen extends Screen {
         // Title
         int titleLeft = -(this.titleWidth + 17) / 2;
         graphics.blit(FUSION_LOGO, titleLeft, 0, 0, 0, 12, 12, 12, 12);
-        graphics.drawString(this.font, this.title, titleLeft + 17, 2, -1);
+        graphics.text(this.font, this.title, titleLeft + 17, 2, -1);
 
         // Content
         poseStack.popMatrix();
@@ -115,7 +115,7 @@ public class MinimumVersionWarningScreen extends Screen {
 
         graphics.fill(-98, 0, 98, 36, ARGB.color(70, 255, 255, 255));
         graphics.blit(RenderPipelines.GUI_TEXTURED, this.pack.getIconTexture(), -96, 2, 0, 0, 32, 32, 32, 32);
-        graphics.drawString(this.font, this.packName, -62, 3, ARGB.color(255, 16777215));
+        graphics.text(this.font, this.packName, -62, 3, ARGB.color(255, 16777215));
         ActiveTextCollector dummyTextCollector = graphics.textRenderer();
         this.packDescription.visitLines(TextAlignment.LEFT, -62, 14, 10, new ActiveTextCollector() { // I want not-white text, so now I have to do this garbage
             @Override
@@ -135,7 +135,7 @@ public class MinimumVersionWarningScreen extends Screen {
                     Minecraft.getInstance().font, text, parameters.pose(), left, y, ARGB.color(parameters.opacity(), -8355712), 0, true, true, parameters.scissor()
                 );
                 if(ARGB.as8BitChannel(parameters.opacity()) != 0)
-                    graphics.guiRenderState.submitText(textRenderState);
+                    graphics.guiRenderState.addText(textRenderState);
 
                 ActiveTextCollector.findElementUnderCursor(textRenderState, mouseX, mouseY, s -> {});
             }
@@ -146,7 +146,7 @@ public class MinimumVersionWarningScreen extends Screen {
             }
         });
 
-        graphics.hLine(-115, 115, 44, ARGB.color(255, 255, 255));
+        graphics.horizontalLine(-115, 115, 44, ARGB.color(255, 255, 255));
 
         int textLeft = -Math.max(this.headerMessage.getWidth(), this.confirmationMessage.getWidth()) / 2;
         this.headerMessage.visitLines(TextAlignment.LEFT, textLeft, 54, 10, graphics.textRenderer());
@@ -154,13 +154,13 @@ public class MinimumVersionWarningScreen extends Screen {
         this.confirmationMessage.visitLines(TextAlignment.LEFT, textLeft, 58 + textHeight, 10, graphics.textRenderer());
         textHeight += this.confirmationMessage.getLineCount() * 10;
 
-        graphics.hLine(-115, 115, 66 + textHeight, ARGB.color(255, 255, 255));
+        graphics.horizontalLine(-115, 115, 66 + textHeight, ARGB.color(255, 255, 255));
 
         textLeft = -(this.versionLabelTextWidth + 5 + this.versionTextWidth) / 2;
-        graphics.drawString(this.font, this.currentVersionLabel, textLeft, 76 + textHeight, ARGB.color(180, 180, 180));
-        graphics.drawString(this.font, this.requiredVersionLabel, textLeft, 88 + textHeight, ARGB.color(180, 180, 180));
-        graphics.drawString(this.font, this.currentVersion, textLeft + this.versionLabelTextWidth + 5, 76 + textHeight, ARGB.color(255, 16777215));
-        graphics.drawString(this.font, this.requiredVersion, textLeft + this.versionLabelTextWidth + 5, 88 + textHeight, ARGB.color(255, 16777215));
+        graphics.text(this.font, this.currentVersionLabel, textLeft, 76 + textHeight, ARGB.color(180, 180, 180));
+        graphics.text(this.font, this.requiredVersionLabel, textLeft, 88 + textHeight, ARGB.color(180, 180, 180));
+        graphics.text(this.font, this.currentVersion, textLeft + this.versionLabelTextWidth + 5, 76 + textHeight, ARGB.color(255, 16777215));
+        graphics.text(this.font, this.requiredVersion, textLeft + this.versionLabelTextWidth + 5, 88 + textHeight, ARGB.color(255, 16777215));
 
         poseStack.popMatrix();
     }

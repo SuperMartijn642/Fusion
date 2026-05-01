@@ -37,7 +37,7 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
      * @param modid modid of the mod which creates the generator
      */
     public FusionBlockModelModifierProvider(String modid, PackOutput output){
-        this.modName = ModList.get().getModContainerById(modid).map(ModContainer::getModInfo).map(IModInfo::getDisplayName).orElse(modid);
+        this.modName = ModList.getModContainerById(modid).map(ModContainer::getModInfo).map(IModInfo::getDisplayName).orElse(modid);
         this.output = output;
     }
 

@@ -1,11 +1,11 @@
 package com.supermartijn642.fusion.mixin;
 
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.resources.model.WeightedVariants;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.WeightedVariants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.random.WeightedList;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
 import net.minecraftforge.client.extensions.IForgeBlockStateModel;

@@ -37,18 +37,9 @@ public abstract class FusionModelProvider implements DataProvider {
      * @param modid modid of the mod which creates the generator
      */
     public FusionModelProvider(String modid, PackOutput output, ExistingFileHelper existingFileHelper){
-        this.modName = ModList.get().getModContainerById(modid).map(ModContainer::getModInfo).map(IModInfo::getDisplayName).orElse(modid);
+        this.modName = ModList.getModContainerById(modid).map(ModContainer::getModInfo).map(IModInfo::getDisplayName).orElse(modid);
         this.output = output;
         this.existingFileHelper = existingFileHelper;
-    }
-
-    /**
-     * @param modid modid of the mod which creates the generator
-     * @deprecated Use {@link #FusionModelProvider(String, PackOutput, ExistingFileHelper)} which includes the existing file helper
-     */
-    @Deprecated
-    public FusionModelProvider(String modid, PackOutput output){
-        this(modid, output, null);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.util;
 
-import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 
 /**
@@ -8,8 +8,7 @@ import net.minecraft.resources.Identifier;
  */
 public class TextureAtlases {
 
-    @SuppressWarnings("deprecation")
-    private static final Identifier BLOCKS = TextureAtlas.LOCATION_BLOCKS;
+    private static final Identifier BLOCKS = AtlasIds.BLOCKS;
 
     public static Identifier getBlocks(){
         return BLOCKS;

@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
-import net.minecraft.client.resources.model.AtlasManager;
+import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

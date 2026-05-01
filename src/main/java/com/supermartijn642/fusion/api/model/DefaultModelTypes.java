@@ -8,8 +8,8 @@ import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.model.types.base.BaseModelType;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelType;
 import com.supermartijn642.fusion.model.types.vanilla.VanillaModelType;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.cuboid.CuboidModel;
 
 /**
  * Contains references to the default model types provided by Fusion.
@@ -19,9 +19,9 @@ import net.minecraft.client.resources.model.UnbakedModel;
 public class DefaultModelTypes {
 
     /**
-     * Model type used for vanilla {@link BlockModel} instances.
+     * Model type used for vanilla {@link CuboidModel} instances.
      */
-    public static final ModelType<BlockModel> VANILLA = new VanillaModelType();
+    public static final ModelType<CuboidModel> VANILLA = new VanillaModelType();
     /**
      * Model type used for any unknown models added by other mods.
      */

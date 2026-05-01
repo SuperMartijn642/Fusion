@@ -1,12 +1,11 @@
 package com.supermartijn642.fusion.mixin;
 
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.block.model.multipart.MultiPartModel;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.block.dispatch.multipart.MultiPartModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.extensions.IForgeBlockStateModel;
 import net.minecraftforge.client.model.data.ModelData;
@@ -42,7 +41,7 @@ public class MultiPartModelMixin implements IForgeBlockStateModel {
     private List<BlockStateModel> models;
 
     @Override
-    public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData modelData, ChunkSectionLayer renderType){
+    public void collectParts(RandomSource random, List<BlockStateModelPart> parts, ModelData modelData){
         if(this.models == null)
             this.models = this.shared.selectModels(this.blockState);
 
@@ -53,7 +52,7 @@ public class MultiPartModelMixin implements IForgeBlockStateModel {
         for(BlockStateModel model : this.models){
             random.setSeed(i);
             ModelData subData = subModelData.getOrDefault(model, ModelData.EMPTY);
-            model.collectParts(random, parts, subData, renderType);
+            model.collectParts(random, parts, subData);
         }
     }
 

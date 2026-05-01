@@ -8,12 +8,9 @@ import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
-import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
-import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
-import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,9 +73,6 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> TextureTypeRegistryImpl.finalizeRegistration()); TODO
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModelTypeRegistryImpl.finalizeRegistration());
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
-
-        // Integration with FramedBlocks
-        InterModEnqueueEvent.getBus(context.getModBusGroup()).addListener(event -> InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.BLOCK_CACHE_PROPERTY));
     }
 
     public static Optional<ChunkSectionLayer> getChunkLayer(BaseTextureData.RenderType renderType){
@@ -106,7 +100,7 @@ public class FusionClient {
 
     public static String getFusionVersion(){
         if(fusionVersion == null){
-            String version = ModList.get().getModContainerById(Fusion.MODID).orElseThrow().getModInfo().getVersion().toString();
+            String version = ModList.getModContainerById(Fusion.MODID).orElseThrow().getModInfo().getVersion().toString();
             if(!version.matches("\\d+\\.\\d+\\.\\d+"))
                 version = version.substring(0, version.length() - version.replaceFirst("\\d+\\.\\d+\\.\\d+\\D", "").length() - 1);
             fusionVersion = version;

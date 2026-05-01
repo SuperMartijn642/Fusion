@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.supermartijn642.fusion.entity.EntityModelModifierManager;
 import com.supermartijn642.fusion.entity.EntityModelModifierReloadListener;
 import com.supermartijn642.fusion.entity.model.FusionModelPart;
@@ -25,15 +26,13 @@ import java.util.*;
 @Mixin(EntityModelSet.class)
 public class EntityModelSetMixin {
 
-    @Inject(
+    @ModifyReturnValue(
         method = "bakeLayer",
-        at = @At("RETURN"),
-        cancellable = true
+        at = @At("RETURN")
     )
-    private void trackBakedModel(ModelLayerLocation location, CallbackInfoReturnable<ModelPart> ci){
-        FusionModelPart fusionModelPart = EntityModelModifierManager.handleModelBake(location, ci.getReturnValue());
-        if(fusionModelPart != null)
-            ci.setReturnValue(fusionModelPart);
+    private ModelPart trackBakedModel(ModelPart part, ModelLayerLocation location){
+        FusionModelPart fusionModelPart = EntityModelModifierManager.handleModelBake(location, part);
+        return fusionModelPart == null ? part : fusionModelPart;
     }
 
     @Inject(

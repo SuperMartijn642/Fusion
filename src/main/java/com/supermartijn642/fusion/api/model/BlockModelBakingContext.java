@@ -1,14 +1,11 @@
 package com.supermartijn642.fusion.api.model;
 
-import com.supermartijn642.fusion.util.TextureAtlases;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.client.resources.model.ModelBaker;
-import net.minecraft.client.resources.model.ModelState;
-import net.minecraft.client.resources.model.UnbakedGeometry;
+import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.client.resources.model.geometry.UnbakedGeometry;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.resources.Identifier;
-import net.minecraftforge.client.model.geometry.IGeometryBakingContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -27,24 +24,7 @@ public interface BlockModelBakingContext {
      * Gets the sprite for the given material.
      * @param identifier identifier for the sprite
      */
-    TextureAtlasSprite getTexture(SpriteIdentifier identifier);
-
-    /**
-     * Gets the sprite for the given atlas and texture.
-     * @param atlas   atlas which the texture is stitched to
-     * @param texture texture identifier
-     */
-    default TextureAtlasSprite getTexture(Identifier atlas, Identifier texture){
-        return this.getTexture(SpriteIdentifier.of(atlas, texture));
-    }
-
-    /**
-     * Gets the sprite for the given texture on the block atlas.
-     * @param texture texture identifier
-     */
-    default TextureAtlasSprite getBlockTexture(Identifier texture){
-        return this.getTexture(TextureAtlases.getBlocks(), texture);
-    }
+    Material.Baked getMaterial(ModelMaterial identifier);
 
     /**
      * @return the transformations which should be applied to the model
@@ -89,9 +69,4 @@ public interface BlockModelBakingContext {
      * Get the resolved geometry for the model stack.
      */
     UnbakedGeometry getTopLevelGeometry();
-
-    /**
-     * Gets the baking context used for Forge's API.
-     */
-    IGeometryBakingContext getForgeContext();
 }

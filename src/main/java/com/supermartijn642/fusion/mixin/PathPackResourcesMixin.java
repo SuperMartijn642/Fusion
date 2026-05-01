@@ -1,12 +1,17 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.google.common.collect.Sets;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.supermartijn642.fusion.extensions.PackResourcesExtension;
+import com.supermartijn642.fusion.resources.FusionPackMetadata;
+import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.server.packs.resources.IoSupplier;
+import net.minecraft.server.packs.resources.ResourceMetadata;
 import net.minecraft.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -17,6 +22,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.IOException;
@@ -26,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -50,6 +57,25 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
     }
 
     @Inject(
+        method = "<init>",
+        at = @At("RETURN")
+    )
+    private void init(PackLocationInfo info, Path root, CallbackInfo ci){
+        Path path = root.resolve("pack.mcmeta");
+        if(Files.exists(path)){
+            String overridesFolder;
+            try(InputStream stream = Files.newInputStream(path)){
+                Optional<FusionPackMetadata> metadata = ResourceMetadata.fromJsonStream(stream).getSection(FusionPackMetadataSection.TYPE);
+                overridesFolder = metadata.map(FusionPackMetadata::getOverridesFolder).orElse(null);
+            }catch(IOException | NullPointerException ignored){
+                return;
+            }
+            if(overridesFolder != null)
+                this.setFusionOverridesFolder(overridesFolder);
+        }
+    }
+
+    @Inject(
         method = "getResource(Lnet/minecraft/server/packs/PackType;Lnet/minecraft/resources/Identifier;)Lnet/minecraft/server/packs/resources/IoSupplier;",
         at = @At("HEAD"),
         cancellable = true
@@ -66,17 +92,16 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         }).ifPresent(ci::setReturnValue);
     }
 
-    @Inject(
+    @ModifyReturnValue(
         method = "getNamespaces",
-        at = @At("RETURN"),
-        cancellable = true
+        at = @At("RETURN")
     )
-    private void getNamespaces(PackType type, CallbackInfoReturnable<Set<String>> ci){
+    private Set<String> getNamespaces(Set<String> namespaces, PackType type){
         if(this.overridesFolderRoot == null)
-            return;
+            return namespaces;
 
         // Add namespaces from the overrides folder
-        HashSet<String> namespaces = Sets.newHashSet(ci.getReturnValue());
+        namespaces = Sets.newHashSet(namespaces);
         Path typeFolder = this.overridesFolderRoot.resolve(type.getDirectory());
         try(DirectoryStream<Path> stream = Files.newDirectoryStream(typeFolder)){
             for(Path directory : stream){
@@ -91,7 +116,7 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         }catch(IOException e){
             LOGGER.error("Failed to list path {}", typeFolder, e);
         }
-        ci.setReturnValue(namespaces);
+        return namespaces;
     }
 
     @ModifyVariable(

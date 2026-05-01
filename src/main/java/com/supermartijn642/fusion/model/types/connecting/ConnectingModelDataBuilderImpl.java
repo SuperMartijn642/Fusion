@@ -34,14 +34,20 @@ public class ConnectingModelDataBuilderImpl implements ConnectingModelDataBuilde
     }
 
     @Override
-    public ConnectingModelDataBuilder texture(String key, String reference){
-        this.baseModel.texture(key, reference);
+    public ConnectingModelDataBuilder material(String key, String reference){
+        this.baseModel.material(key, reference);
         return this;
     }
 
     @Override
-    public ConnectingModelDataBuilder texture(String key, Identifier texture){
-        this.baseModel.texture(key, texture);
+    public ConnectingModelDataBuilder material(String key, Identifier texture){
+        this.baseModel.material(key, texture);
+        return this;
+    }
+
+    @Override
+    public ConnectingModelDataBuilder material(String key, Identifier texture, boolean forceTranslucent){
+        this.baseModel.material(key, texture, forceTranslucent);
         return this;
     }
 

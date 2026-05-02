@@ -3,20 +3,20 @@ package com.supermartijn642.fusion.model.types.vanilla;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
-import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.resources.model.cuboid.CuboidModel;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
  */
-public class VanillaModelType extends UnknownModelType<BlockModel> {
+public class VanillaModelType extends UnknownModelType<CuboidModel> {
 
     @Override
-    public BlockModel deserialize(JsonObject json) throws JsonParseException{
-        return BlockModel.GSON.fromJson(json, BlockModel.class);
+    public CuboidModel deserialize(JsonObject json) throws JsonParseException{
+        return CuboidModel.GSON.fromJson(json, CuboidModel.class);
     }
 
     @Override
-    public JsonObject serialize(BlockModel value){
+    public JsonObject serialize(CuboidModel value){
         return (JsonObject)VanillaModelSerializer.GSON.toJsonTree(value);
     }
 }

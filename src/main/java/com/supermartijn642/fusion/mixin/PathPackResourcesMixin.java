@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.*;
 import net.minecraft.server.packs.resources.IoSupplier;
+import net.minecraft.server.packs.resources.ResourceMetadata;
 import net.minecraft.util.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -60,9 +61,8 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
         if(Files.exists(path)){
             String overridesFolder;
             try(InputStream stream = Files.newInputStream(path)){
-                //noinspection DataFlowIssue
-                FusionPackMetadata metadata = AbstractPackResources.getMetadataFromStream(FusionPackMetadataSection.TYPE, stream, null);
-                overridesFolder = metadata != null ? metadata.getOverridesFolder() : null;
+                ResourceMetadata metadata = ResourceMetadata.fromJsonStream(stream);
+                overridesFolder = metadata.getSection(FusionPackMetadataSection.TYPE).map(FusionPackMetadata::getOverridesFolder).orElse(null);
             }catch(IOException | NullPointerException ignored){
                 return;
             }
@@ -89,7 +89,7 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
     }
 
     @ModifyReturnValue(
-        method = "getNamespaces",
+        method = "getNamespaces(Lnet/minecraft/server/packs/PackType;)Ljava/util/Set;",
         at = @At("RETURN")
     )
     private Set<String> getNamespaces(Set<String> namespaces, PackType type){
@@ -116,7 +116,7 @@ public class PathPackResourcesMixin implements PackResourcesExtension {
     }
 
     @ModifyVariable(
-        method = "listResources",
+        method = "listResources(Lnet/minecraft/server/packs/PackType;Ljava/lang/String;Ljava/lang/String;Lnet/minecraft/server/packs/PackResources$ResourceOutput;)V",
         at = @At("HEAD"),
         ordinal = 0
     )

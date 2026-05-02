@@ -6,9 +6,9 @@ import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadLi
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.PlayerSkinRenderCache;
 import net.minecraft.client.renderer.item.ItemModel;
-import net.minecraft.client.resources.model.MaterialSet;
 import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.SpriteGetter;
+import net.minecraft.client.resources.model.sprite.MaterialBaker;
+import net.minecraft.client.resources.model.sprite.SpriteGetter;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,7 +29,7 @@ public class ModelBakeryMixin {
     private EntityModelSet entityModelSet;
     @Final
     @Shadow
-    private MaterialSet materials;
+    private SpriteGetter sprites;
     @Final
     @Shadow
     private PlayerSkinRenderCache playerSkinRenderCache;
@@ -38,7 +38,7 @@ public class ModelBakeryMixin {
         method = "bakeModels",
         at = @At("RETURN")
     )
-    private CompletableFuture<ModelBakery.BakingResult> applyBlockModelOverlays(CompletableFuture<ModelBakery.BakingResult> future, SpriteGetter textureGetter, Executor executor){
+    private CompletableFuture<ModelBakery.BakingResult> applyBlockModelOverlays(CompletableFuture<ModelBakery.BakingResult> future, MaterialBaker materials, Executor taskExecutor){
         // Ignore non-vanilla model bakeries
         //noinspection ConstantValue,EqualsBetweenInconvertibleTypes
         if(!this.getClass().equals(ModelBakery.class))
@@ -59,12 +59,12 @@ public class ModelBakeryMixin {
             }
 
             // Apply Fusion model modifiers
-            ModelBakery.ModelBakerImpl resolver = ((ModelBakery)(Object)this).new ModelBakerImpl(textureGetter, new ModelBakery.PartCacheImpl(), results.missingModels());
+            ModelBakery.ModelBakerImpl resolver = ((ModelBakery)(Object)this).new ModelBakerImpl(materials, new ModelBakery.InternerImpl(), results.missingModels());
             BlockModelModifierReloadListener.INSTANCE.applyOverlays(results, resolver);
             ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(results, new ItemModel.BakingContext(
                 resolver,
                 this.entityModelSet,
-                this.materials,
+                this.sprites,
                 this.playerSkinRenderCache,
                 results.missingModels().item(),
                 null

@@ -10,8 +10,8 @@ public class ContinuousTextureDataImpl extends BaseTextureDataImpl implements Co
 
     private final int rows, columns;
 
-    public ContinuousTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting, int rows, int columns){
-        super(renderType, emissive, tinting);
+    public ContinuousTextureDataImpl(boolean emissive, QuadTinting tinting, int rows, int columns){
+        super(emissive, tinting);
         this.rows = rows;
         this.columns = columns;
     }

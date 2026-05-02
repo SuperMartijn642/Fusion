@@ -86,27 +86,6 @@ public class FusionClient {
 //        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
     }
 
-    public static Optional<ChunkSectionLayer> getChunkLayer(BaseTextureData.RenderType renderType){
-        if(renderType == null)
-            return Optional.empty();
-        ChunkSectionLayer material;
-        //noinspection EnhancedSwitchMigration
-        switch(renderType){
-            case OPAQUE:
-                material = ChunkSectionLayer.SOLID;
-                break;
-            case CUTOUT:
-                material = ChunkSectionLayer.CUTOUT;
-                break;
-            case TRANSLUCENT:
-                material = ChunkSectionLayer.TRANSLUCENT;
-                break;
-            default:
-                throw new AssertionError();
-        }
-        return Optional.of(material);
-    }
-
     private static String fusionVersion;
 
     public static String getFusionVersion(){

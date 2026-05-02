@@ -4,11 +4,12 @@ import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4fc;
 
 import java.util.Collection;
 import java.util.List;
@@ -52,8 +53,8 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public ItemModel bakeItemModel(ItemModelBakingContext context){
-        return this.modelType.bakeItemModel(context, this.modelData);
+    public ItemModel bakeItemModel(ItemModelBakingContext context, Matrix4fc transformation){
+        return this.modelType.bakeItemModel(context, this.modelData, transformation);
     }
 
     @Override

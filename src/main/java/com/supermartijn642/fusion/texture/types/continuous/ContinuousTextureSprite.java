@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.texture.types.continuous;
 
+import com.mojang.blaze3d.platform.Transparency;
 import com.supermartijn642.fusion.api.texture.data.ContinuousTextureData;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -29,5 +30,11 @@ public class ContinuousTextureSprite extends BaseTextureSprite {
     @Override
     public ContinuousTextureData data(){
         return (ContinuousTextureData)super.data();
+    }
+
+    @Override
+    public Transparency computeTransparency(float u0, float v0, float u1, float v1){
+        ContinuousTextureData data = this.data();
+        return computeTiledTransparency(this, u0, v0, u1, v1, data.getColumns(), data.getRows());
     }
 }

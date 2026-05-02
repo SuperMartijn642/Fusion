@@ -13,8 +13,8 @@ public class ScrollingTextureDataImpl extends BaseTextureDataImpl implements Scr
     private final ScrollingTextureData.LoopType loopType;
     private final int loopPause;
 
-    public ScrollingTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting, Position startPosition, Position endPosition, int frameTime, int frameWidth, int frameHeight, LoopType loopType, int loopPause){
-        super(renderType, emissive, tinting);
+    public ScrollingTextureDataImpl(boolean emissive, QuadTinting tinting, Position startPosition, Position endPosition, int frameTime, int frameWidth, int frameHeight, LoopType loopType, int loopPause){
+        super(emissive, tinting);
         this.startPosition = startPosition;
         this.endPosition = endPosition;
         this.frameTime = frameTime;

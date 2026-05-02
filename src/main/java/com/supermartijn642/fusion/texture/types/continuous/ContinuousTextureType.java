@@ -24,7 +24,6 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData>
         BaseTextureData base = DefaultTextureTypes.BASE.deserialize(json);
         // Copy base properties
         ContinuousTextureData.Builder builder = ContinuousTextureData.builder();
-        builder.renderType(base.getRenderType());
         builder.emissive(base.isEmissive());
         builder.tinting(base.getTinting());
         // Rows

@@ -3,9 +3,10 @@ package com.supermartijn642.fusion.model.types.base;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.Direction;
 
 /**
@@ -16,22 +17,21 @@ public class BaseModelQuad {
     private final BakedQuad bakedQuad;
     private final TextureType<?> textureType;
     private final Direction cullDirection;
-    private final BaseTextureData.RenderType renderType;
     private final boolean emissive;
+    private final int tintIndex;
 
     public BaseModelQuad(BakedQuad bakedQuad, Direction cullDirection){
-        this.textureType = SpriteHelper.getTextureType(bakedQuad.sprite());
+        BakedQuad.MaterialInfo materialInfo = bakedQuad.materialInfo();
+        TextureAtlasSprite sprite = materialInfo.sprite();
+        this.textureType = SpriteHelper.getTextureType(sprite);
         this.cullDirection = cullDirection;
-        TextureAtlasSprite sprite = bakedQuad.sprite();
         if(sprite instanceof BaseTextureSprite && ((BaseTextureSprite)sprite).data() != null){
             BaseTextureData data = ((BaseTextureSprite)sprite).data();
-            this.renderType = data.getRenderType();
             this.emissive = data.isEmissive();
-            if(data.getTinting() != null) // Create an identical quad, but with tint index '39216'
-                bakedQuad = new BakedQuad(bakedQuad.position0(), bakedQuad.position1(), bakedQuad.position2(), bakedQuad.position3(), bakedQuad.packedUV0(), bakedQuad.packedUV1(), bakedQuad.packedUV2(), bakedQuad.packedUV3(), 39216, bakedQuad.direction(), bakedQuad.sprite(), bakedQuad.shade(), bakedQuad.lightEmission(), bakedQuad.bakedNormals(), bakedQuad.bakedColors(), bakedQuad.hasAmbientOcclusion());
+            this.tintIndex = data.getTinting() != null ? 39216 : bakedQuad.materialInfo().tintIndex();
         }else{
-            this.renderType = null;
             this.emissive = false;
+            this.tintIndex = bakedQuad.materialInfo().tintIndex();
         }
         this.bakedQuad = bakedQuad;
     }
@@ -48,11 +48,13 @@ public class BaseModelQuad {
         return this.cullDirection;
     }
 
-    public BaseTextureData.RenderType renderType(){
-        return this.renderType;
-    }
-
     public boolean emissive(){
         return this.emissive;
+    }
+
+    public void fill(MutableQuad mutableQuad){
+        mutableQuad.fillFromBakedQuad(this.bakedQuad);
+        mutableQuad.emissive(this.emissive);
+        mutableQuad.tintIndex(this.tintIndex);
     }
 }

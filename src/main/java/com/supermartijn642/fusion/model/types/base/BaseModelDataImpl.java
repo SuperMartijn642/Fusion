@@ -5,17 +5,18 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.SpriteIdentifier;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
-import net.minecraft.client.renderer.block.model.*;
-import net.minecraft.client.renderer.texture.SpriteContents;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.QuadCollection;
-import net.minecraft.client.resources.model.UnbakedGeometry;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.cuboid.*;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.geometry.QuadCollection;
+import net.minecraft.client.resources.model.geometry.UnbakedGeometry;
+import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.resources.model.sprite.TextureSlots;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -30,18 +31,18 @@ import java.util.stream.Collectors;
  */
 public class BaseModelDataImpl implements BaseModelData {
 
-    protected final BlockModel model;
+    protected final CuboidModel model;
     protected final List<Identifier> parents;
     protected final List<BaseModelElement> elements;
 
-    public BaseModelDataImpl(BlockModel model, List<Identifier> parents, List<BaseModelElement> elements){
+    public BaseModelDataImpl(CuboidModel model, List<Identifier> parents, List<BaseModelElement> elements){
         this.model = model;
         this.parents = ImmutableList.copyOf(parents);
         this.elements = ImmutableList.copyOf(elements);
     }
 
     @Override
-    public BlockModel getVanillaModel(){
+    public CuboidModel getVanillaModel(){
         return this.model;
     }
 
@@ -111,7 +112,7 @@ public class BaseModelDataImpl implements BaseModelData {
         );
     }
 
-    public SpriteIdentifier findParticleSprite(BlockModelBakingContext context){
+    public Material findParticleMaterial(BlockModelBakingContext context){
         ModelInstance<?> model = ModelInstance.of(DefaultModelTypes.BASE, this);
 
         // Repeatedly resolve key references until we get to a texture
@@ -123,17 +124,17 @@ public class BaseModelDataImpl implements BaseModelData {
             TextureSlots.SlotContents contents = this.findProperty(context, model, m -> m.textureSlots().values().get(finalCurrentKey));
             // If a key could not be found, return the missing texture
             if(contents == null)
-                return SpriteIdentifier.missing();
+                return context.missingMaterial();
 
             // If a texture is found return it
-            if(contents instanceof TextureSlots.Value)
-                return SpriteIdentifier.of(((TextureSlots.Value)contents).material());
+            if(contents instanceof TextureSlots.Value(Material material))
+                return material;
 
             // Check if a key has already been encountered
             currentKey = ((TextureSlots.Reference)contents).target();
             if(encounteredKeys.contains(currentKey)){
                 FusionClient.LOGGER.warn("Unable to resolve texture due to circular references {}->'{}' in '{}'!", encounteredKeys.stream().map(o -> "'" + o + "'").collect(Collectors.joining("->")), currentKey, context.getModelIdentifier());
-                return SpriteIdentifier.missing();
+                return context.missingMaterial();
             }
             encounteredKeys.add(currentKey);
         }
@@ -155,9 +156,10 @@ public class BaseModelDataImpl implements BaseModelData {
                 // Bake the faces of each element
                 for(BaseModelElement element : elements){
                     for(Direction direction : element.original.faces().keySet()){
-                        BlockElementFace face = element.original.faces().get(direction);
-                        TextureAtlasSprite sprite = context.getTexture(this.resolveMaterial(context, modelStack, face.texture()));
-                        BakedQuad quad = FaceBakery.bakeQuad(context.getModelBaker().parts(), element.original.from(), element.original.to(), face, sprite, direction, context.getTransformation(), element.original.rotation(), element.original.shade(), element.original.lightEmission());
+                        CuboidFace face = element.original.faces().get(direction);
+                        Material unbakedMaterial = this.resolveMaterial(context, modelStack, face.texture());
+                        Material.Baked material = unbakedMaterial != null ? context.bakeMaterial(unbakedMaterial) : context.bakeMaterial(context.missingMaterial());
+                        BakedQuad quad = FaceBakery.bakeQuad(context.getModelBaker(), element.original.from(), element.original.to(), face, material, direction, context.getTransformation(), element.original.rotation(), element.original.shade(), element.original.lightEmission());
                         Direction cullDirection = face.cullForDirection() != null ? Direction.rotate(context.getTransformation().transformation().getMatrix(), face.cullForDirection()) : null;
                         output.accept(new BaseModelQuad(quad, cullDirection));
                     }
@@ -192,7 +194,7 @@ public class BaseModelDataImpl implements BaseModelData {
         modelStack.removeLast();
     }
 
-    protected SpriteIdentifier resolveMaterial(BlockModelBakingContext context, Deque<ModelInstance<?>> modelStack, String key){
+    protected @Nullable Material resolveMaterial(BlockModelBakingContext context, Deque<ModelInstance<?>> modelStack, String key){
         if(key.charAt(0) == '#')
             key = key.substring(1);
 
@@ -218,33 +220,32 @@ public class BaseModelDataImpl implements BaseModelData {
             }
             // If a key could not be found, return the missing texture
             if(contents == null)
-                return SpriteIdentifier.missing();
+                return null;
 
             // If a texture is found return it
-            if(contents instanceof TextureSlots.Value)
-                return SpriteIdentifier.of(((TextureSlots.Value)contents).material());
+            if(contents instanceof TextureSlots.Value(Material material))
+                return material;
 
             // Check if a key has already been encountered
             currentKey = ((TextureSlots.Reference)contents).target();
             if(encounteredKeys.contains(currentKey)){
                 FusionClient.LOGGER.warn("Unable to resolve texture due to circular references {}->'{}' in '{}'!", encounteredKeys.stream().map(o -> "'" + o + "'").collect(Collectors.joining("->")), currentKey, context.getModelIdentifier());
-                return SpriteIdentifier.missing();
+                return null;
             }
             encounteredKeys.add(currentKey);
         }
     }
 
-    protected List<BlockElement> generateItemModel(BlockModelBakingContext context, Deque<ModelInstance<?>> modelStack){
-        List<BlockElement> elements = new ArrayList<>();
+    protected QuadCollection bakeItemModel(BlockModelBakingContext context, Deque<ModelInstance<?>> modelStack){
+        QuadCollection.Builder quads = new QuadCollection.Builder();
         for(int layer = 0; layer < ItemModelGenerator.LAYERS.size(); layer++){
             String layerName = ItemModelGenerator.LAYERS.get(layer);
-            SpriteIdentifier sprite = this.resolveMaterial(context, modelStack, layerName);
-            if(SpriteIdentifier.missing().equals(sprite))
+            Material unbakedMaterial = this.resolveMaterial(context, modelStack, layerName);
+            if(unbakedMaterial == null)
                 break;
-
-            SpriteContents spriteContents = context.getTexture(sprite).contents();
-            elements.addAll(ItemModelGenerator.processFrames(layer, layerName, spriteContents));
+            Material.Baked material = context.bakeMaterial(unbakedMaterial);
+            quads.addAll(context.getModelBaker().compute(new ItemModelGenerator.ItemLayerKey(material, context.getTransformation(), layer)));
         }
-        return elements;
+        return quads.build();
     }
 }

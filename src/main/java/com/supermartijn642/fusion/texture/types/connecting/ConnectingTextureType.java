@@ -26,7 +26,6 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData>
         BaseTextureData base = DefaultTextureTypes.BASE.deserialize(json);
         // Copy base properties
         ConnectingTextureData.Builder builder = ConnectingTextureData.builder();
-        builder.renderType(base.getRenderType());
         builder.emissive(base.isEmissive());
         builder.tinting(base.getTinting());
         // Deserialize 'layout'

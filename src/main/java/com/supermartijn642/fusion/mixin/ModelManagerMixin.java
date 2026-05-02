@@ -23,7 +23,7 @@ import java.util.Map;
 public class ModelManagerMixin {
 
     @Inject(
-        method = "lambda$loadBlockModels$5(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",
+        method = "lambda$loadBlockModels$0",
         at = @At("HEAD")
     )
     private static void reloadModelModifiers(ResourceManager resourceManager, CallbackInfoReturnable<Map<?,?>> ci){
@@ -47,7 +47,7 @@ public class ModelManagerMixin {
     }
 
     @Inject(
-        method = "lambda$loadBlockModels$6(Ljava/util/Map$Entry;)Lcom/mojang/datafixers/util/Pair;",
+        method = "lambda$loadBlockModels$2",
         at = @At(
             value = "INVOKE",
             target = "Lnet/neoforged/neoforge/client/model/UnbakedModelParser;parse(Ljava/io/Reader;)Lnet/minecraft/client/resources/model/UnbakedModel;",

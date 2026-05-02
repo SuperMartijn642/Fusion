@@ -4,19 +4,23 @@ import com.supermartijn642.fusion.api.model.BlockModelBakingContext;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.extensions.BlockModelExtension;
+import com.supermartijn642.fusion.extensions.CuboidModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.model.geom.EntityModelSet;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.block.model.TextureSlots;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.*;
+import net.minecraft.client.resources.model.cuboid.CuboidModel;
+import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.client.resources.model.cuboid.MissingCuboidModel;
+import net.minecraft.client.resources.model.geometry.UnbakedGeometry;
+import net.minecraft.client.resources.model.sprite.TextureSlots;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.context.ContextMap;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4fc;
 
 import java.util.*;
 
@@ -45,7 +49,7 @@ public class FusionBlockModel implements UnbakedModel {
         // Create baking context
         BlockModelBakingContext context = new BlockModelBakingContextImpl(
             modelBakery,
-            material -> modelBakery.sprites().get(material, wrapper),
+            material -> modelBakery.materials().get(material, wrapper),
             modelState,
             this.name,
             this.resolvedDependencies,
@@ -64,12 +68,12 @@ public class FusionBlockModel implements UnbakedModel {
         }
     }
 
-    public ItemModel bakeItemModel(ResolvedModel wrapper, ModelBaker modelBakery, List<ItemTintSource> tintSources, EntityModelSet entityModelSet){
+    public ItemModel bakeItemModel(ResolvedModel wrapper, ModelBaker modelBakery, List<ItemTintSource> tintSources, EntityModelSet entityModelSet, Matrix4fc transformation){
         this.resolveDependencies(modelBakery);
         // Create baking context
         ItemModelBakingContext context = new ItemModelBakingContextImpl(
             modelBakery,
-            material -> modelBakery.sprites().get(material, wrapper),
+            material -> modelBakery.materials().get(material, wrapper),
             this.name,
             this.resolvedDependencies,
             wrapper.getTopTextureSlots().resolvedValues,
@@ -83,7 +87,7 @@ public class FusionBlockModel implements UnbakedModel {
         );
         // Let the custom model handle the actual baking
         try{
-            return this.model.bakeItemModel(context);
+            return this.model.bakeItemModel(context, transformation);
         }catch(Exception e){
             throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
         }
@@ -121,7 +125,7 @@ public class FusionBlockModel implements UnbakedModel {
             }
         }
         // Always add missing model
-        this.resolvedDependencies.put(MissingBlockModel.LOCATION, modelBaker.getModel(MissingBlockModel.LOCATION).wrapped());
+        this.resolvedDependencies.put(MissingCuboidModel.LOCATION, modelBaker.getModel(MissingCuboidModel.LOCATION).wrapped());
         return this.resolvedDependencies;
     }
 
@@ -172,11 +176,11 @@ public class FusionBlockModel implements UnbakedModel {
     public static ModelInstance<?> getModelInstance(UnbakedModel model){
         if(model instanceof FusionBlockModel)
             return ((FusionBlockModel)model).model;
-        if(model instanceof BlockModel){
-            ModelInstance<?> modelInstance = ((BlockModelExtension)model).getFusionModel();
+        if(model instanceof CuboidModel){
+            ModelInstance<?> modelInstance = ((CuboidModelExtension)model).getFusionModel();
             if(modelInstance == null){
-                modelInstance = new ModelInstanceImpl<>(DefaultModelTypes.VANILLA, (BlockModel)model);
-                ((BlockModelExtension)model).setFusionModel(modelInstance);
+                modelInstance = new ModelInstanceImpl<>(DefaultModelTypes.VANILLA, (CuboidModel)model);
+                ((CuboidModelExtension)model).setFusionModel(modelInstance);
             }
             return modelInstance;
         }

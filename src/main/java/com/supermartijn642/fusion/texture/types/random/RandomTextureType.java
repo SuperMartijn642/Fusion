@@ -25,7 +25,6 @@ public class RandomTextureType implements TextureType<RandomTextureData> {
         BaseTextureData base = DefaultTextureTypes.BASE.deserialize(json);
         // Copy base properties
         RandomTextureData.Builder builder = RandomTextureData.builder();
-        builder.renderType(base.getRenderType());
         builder.emissive(base.isEmissive());
         builder.tinting(base.getTinting());
         // Rows

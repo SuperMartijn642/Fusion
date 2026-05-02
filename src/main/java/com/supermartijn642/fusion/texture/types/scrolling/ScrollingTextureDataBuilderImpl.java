@@ -9,19 +9,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ScrollingTextureDataBuilderImpl implements ScrollingTextureData.Builder {
 
-    private BaseTextureData.RenderType renderType;
     private boolean emissive = false;
     private BaseTextureData.QuadTinting tinting;
     private ScrollingTextureData.Position startPosition = ScrollingTextureData.Position.TOP_LEFT, endPosition = ScrollingTextureData.Position.BOTTOM_LEFT;
     private int frameTime = 10, frameWidth = 16, frameHeight = 16;
     private ScrollingTextureData.LoopType loopType = ScrollingTextureData.LoopType.RESET;
     private int loopPause = 0;
-
-    @Override
-    public ScrollingTextureDataBuilderImpl renderType(@Nullable BaseTextureData.RenderType renderType){
-        this.renderType = renderType;
-        return this;
-    }
 
     @Override
     public ScrollingTextureDataBuilderImpl emissive(boolean emissive){
@@ -104,7 +97,7 @@ public class ScrollingTextureDataBuilderImpl implements ScrollingTextureData.Bui
 
     public ScrollingTextureData build(){
         return new ScrollingTextureDataImpl(
-            this.renderType, this.emissive, this.tinting,
+            this.emissive, this.tinting,
             this.startPosition, this.endPosition, this.frameTime, this.frameWidth, this.frameHeight, this.loopType, this.loopPause
         );
     }

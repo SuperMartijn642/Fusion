@@ -45,19 +45,6 @@ public class BaseTextureType implements TextureType<BaseTextureData> {
     @Override
     public BaseTextureData deserialize(JsonObject json) throws JsonParseException{
         BaseTextureData.Builder<?,BaseTextureData> builder = BaseTextureData.builder();
-        // render_type
-        if(json.has("render_type")){
-            if(!json.get("render_type").isJsonPrimitive() || !json.getAsJsonPrimitive("render_type").isString())
-                throw new JsonParseException("Property 'render_type' must be a string!");
-            String renderTypeString = json.get("render_type").getAsString();
-            BaseTextureData.RenderType renderType;
-            try{
-                renderType = BaseTextureData.RenderType.valueOf(renderTypeString.toUpperCase(Locale.ROOT));
-            }catch(IllegalArgumentException e){
-                throw new JsonParseException("Property 'render_type' must be one of " + Arrays.toString(BaseTextureData.RenderType.values()).toLowerCase(Locale.ROOT) + ", not '" + renderTypeString + "'!");
-            }
-            builder.renderType(renderType);
-        }
         // emissive
         if(json.has("emissive")){
             if(!json.get("emissive").isJsonPrimitive() || !json.getAsJsonPrimitive("emissive").isBoolean())
@@ -83,8 +70,6 @@ public class BaseTextureType implements TextureType<BaseTextureData> {
     @Override
     public JsonObject serialize(BaseTextureData value){
         JsonObject json = new JsonObject();
-        if(value.getRenderType() != null)
-            json.addProperty("render_type", value.getRenderType().name().toLowerCase());
         if(value.isEmissive())
             json.addProperty("emissive", true);
         if(value.getTinting() != null)

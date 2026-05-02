@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.resources;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.packs.PackSelectionModel;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
@@ -18,12 +18,12 @@ public class ResourcePackListTipRenderer {
 
     private static final Identifier FUSION_LOGO = Identifier.fromNamespaceAndPath("fusion", "textures/resourcepacks/fusion_icon_blurred.png");
 
-    public static void renderBackground(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphics graphics, int x, int y, int width, int height){
+    public static void renderBackground(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphicsExtractor graphics, int x, int y, int width, int height){
         if(isVanillaCompatible && !metadata.isMinVersionSatisfied())
             graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, ARGB.color(255, 114, 83, 0));
     }
 
-    public static void renderIcon(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphics graphics, int x, int y, int width, int height){
+    public static void renderIcon(FusionPackMetadata metadata, boolean isVanillaCompatible, GuiGraphicsExtractor graphics, int x, int y, int width, int height){
         graphics.blit(RenderPipelines.GUI_TEXTURED, FUSION_LOGO, x, y, 0, 0, 12, 12, 12, 12);
     }
 

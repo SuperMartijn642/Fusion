@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.api.model.data;
 
-import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.resources.model.cuboid.CuboidModel;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
@@ -14,7 +14,7 @@ public interface BaseModelData {
         return BaseModelDataBuilder.builder();
     }
 
-    BlockModel getVanillaModel();
+    CuboidModel getVanillaModel();
 
     List<Identifier> getParents();
 }

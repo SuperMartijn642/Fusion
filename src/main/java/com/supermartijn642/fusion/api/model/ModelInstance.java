@@ -1,12 +1,13 @@
 package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.model.ModelInstanceImpl;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4fc;
 
 import java.util.Collection;
 import java.util.List;
@@ -40,10 +41,11 @@ public interface ModelInstance<T> {
     /**
      * Converts the model data into a baked item model.
      * @param context context for baking the model
+     * @param transformation inherited transformation for this model
      * @return a baked model
      * @see ItemModelBakingContext
      */
-    ItemModel bakeItemModel(ItemModelBakingContext context);
+    ItemModel bakeItemModel(ItemModelBakingContext context, Matrix4fc transformation);
 
     /**
      * Represents the model as a vanilla {@link BlockModel} instance. May be used gather info from other models, such as with the vanilla 'parent' property.

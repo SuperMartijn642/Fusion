@@ -9,16 +9,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ContinuousTextureDataBuilderImpl implements ContinuousTextureData.Builder {
 
-    private BaseTextureData.RenderType renderType;
     private boolean emissive = false;
     private BaseTextureData.QuadTinting tinting;
     private int rows = 1, columns = 1;
-
-    @Override
-    public ContinuousTextureDataBuilderImpl renderType(@Nullable BaseTextureData.RenderType renderType){
-        this.renderType = renderType;
-        return this;
-    }
 
     @Override
     public ContinuousTextureDataBuilderImpl emissive(boolean emissive){
@@ -46,6 +39,6 @@ public class ContinuousTextureDataBuilderImpl implements ContinuousTextureData.B
 
     @Override
     public ContinuousTextureData build(){
-        return new ContinuousTextureDataImpl(this.renderType, this.emissive, this.tinting, this.rows, this.columns);
+        return new ContinuousTextureDataImpl(this.emissive, this.tinting, this.rows, this.columns);
     }
 }

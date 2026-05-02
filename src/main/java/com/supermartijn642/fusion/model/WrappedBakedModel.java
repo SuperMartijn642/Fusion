@@ -1,11 +1,12 @@
 package com.supermartijn642.fusion.model;
 
-import net.minecraft.client.renderer.block.model.BlockModelPart;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,18 +24,18 @@ public class WrappedBakedModel implements BlockStateModel {
     }
 
     @Override
-    public List<BlockModelPart> collectParts(RandomSource random){
-        return this.original.collectParts(random);
-    }
-
-    @Override
-    public void collectParts(RandomSource random, List<BlockModelPart> parts){
+    public void collectParts(RandomSource random, List<BlockStateModelPart> parts){
         this.original.collectParts(random, parts);
     }
 
     @Override
-    public TextureAtlasSprite particleIcon(){
-        return this.original.particleIcon();
+    public Material.Baked particleMaterial(){
+        return this.original.particleMaterial();
+    }
+
+    @Override
+    public @BakedQuad.MaterialFlags int materialFlags(){
+        return this.original.materialFlags();
     }
 
     @Override
@@ -43,17 +44,17 @@ public class WrappedBakedModel implements BlockStateModel {
     }
 
     @Override
-    public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockModelPart> parts){
+    public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockStateModelPart> parts){
         this.original.collectParts(level, pos, state, random, parts);
     }
 
     @Override
-    public List<BlockModelPart> collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
-        return this.original.collectParts(level, pos, state, random);
+    public Material.Baked particleMaterial(BlockAndTintGetter level, BlockPos pos, BlockState state){
+        return this.original.particleMaterial(level, pos, state);
     }
 
     @Override
-    public TextureAtlasSprite particleIcon(BlockAndTintGetter level, BlockPos pos, BlockState state){
-        return this.original.particleIcon(level, pos, state);
+    public @BakedQuad.MaterialFlags int materialFlags(BlockAndTintGetter level, BlockPos pos, BlockState state){
+        return  this.original.materialFlags(level, pos, state);
     }
 }

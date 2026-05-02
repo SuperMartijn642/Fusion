@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.texture.types.scrolling;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.platform.Transparency;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
@@ -16,10 +17,12 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -215,6 +218,30 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
             )) == 0;
         }
 
+        @Override
+        public Transparency computeTransparency(float u0, float v0, float u1, float v1){
+            Transparency baseTransparency = this.transparency();
+            if(baseTransparency.isOpaque()){
+                return baseTransparency;
+            }else if(u0 == 0.0f && v0 == 0.0f && u1 == 1.0f && v1 == 1.0f){
+                return baseTransparency;
+            }else{
+                int x0 = Mth.floor(u0 * this.width);
+                int y0 = Mth.floor(v0 * this.height);
+                int x1 = Mth.ceil(u1 * this.width);
+                int y1 = Mth.ceil(v1 * this.height);
+                IntList uniqueFrames = this.animatedTexture.getUniqueFrames();
+                Transparency transparency = Transparency.NONE;
+                for(int i = 0; i < uniqueFrames.size(); i++){
+                    int frame = uniqueFrames.getInt(i);
+                    int frameX = this.xPositions[frame] * this.width;
+                    int frameY = this.yPositions[frame] * this.height;
+                    transparency = transparency.or(this.originalImage.computeTransparency(frameX + x0, frameY + y0, frameX + x1, frameY + y1));
+                }
+                return transparency;
+            }
+        }
+
         private class ScrollingAnimatedTexture extends SpriteContents.AnimatedTexture {
 
             public ScrollingAnimatedTexture(){
@@ -227,7 +254,7 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData> {
                 Int2ObjectMap<GpuTextureView> textureViews = new Int2ObjectOpenHashMap<>();
                 GpuBufferSlice[] slices = new GpuBufferSlice[ScrollingSpriteContents.this.byMipLevel.length];
 
-                for(int frameIndex : this.getUniqueFrames().toArray()){
+                for(int frameIndex : this.getUniqueFrames().toIntArray()){
                     GpuTexture gpuTexture = gpuDevice.createTexture(
                         () -> ScrollingSpriteContents.this.name + " animation frame " + frameIndex,
                         5,

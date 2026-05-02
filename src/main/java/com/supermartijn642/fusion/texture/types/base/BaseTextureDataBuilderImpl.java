@@ -8,15 +8,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BaseTextureDataBuilderImpl implements BaseTextureData.Builder<BaseTextureDataBuilderImpl,BaseTextureData> {
 
-    private BaseTextureData.RenderType renderType;
     private boolean emissive = false;
     private BaseTextureData.QuadTinting tinting;
-
-    @Override
-    public BaseTextureDataBuilderImpl renderType(@Nullable BaseTextureData.RenderType renderType){
-        this.renderType = renderType;
-        return this;
-    }
 
     @Override
     public BaseTextureDataBuilderImpl emissive(boolean emissive){
@@ -32,6 +25,6 @@ public class BaseTextureDataBuilderImpl implements BaseTextureData.Builder<BaseT
 
     @Override
     public BaseTextureData build(){
-        return new BaseTextureDataImpl(this.renderType, this.emissive, this.tinting);
+        return new BaseTextureDataImpl(this.emissive, this.tinting);
     }
 }

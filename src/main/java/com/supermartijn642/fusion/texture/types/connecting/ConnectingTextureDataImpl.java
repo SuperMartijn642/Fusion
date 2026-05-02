@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureDataImpl;
@@ -12,8 +11,8 @@ public class ConnectingTextureDataImpl extends BaseTextureDataImpl implements Co
 
     private final ConnectingTextureLayout layout;
 
-    public ConnectingTextureDataImpl(BaseTextureData.RenderType renderType, boolean emissive, QuadTinting tinting, ConnectingTextureLayout layout){
-        super(renderType, emissive, tinting);
+    public ConnectingTextureDataImpl(boolean emissive, QuadTinting tinting, ConnectingTextureLayout layout){
+        super(emissive, tinting);
         this.layout = layout;
     }
 

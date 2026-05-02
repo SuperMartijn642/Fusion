@@ -1,12 +1,11 @@
 package com.supermartijn642.fusion.texture;
 
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import net.minecraft.client.color.block.BlockColor;
-import net.minecraft.client.renderer.BiomeColors;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.color.block.BlockTintSources;
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockAndTintGetter;
-import net.minecraft.world.level.FoliageColor;
-import net.minecraft.world.level.GrassColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -17,22 +16,10 @@ public class QuadTintingHelper {
     /**
      * @see com.supermartijn642.fusion.api.texture.data.BaseTextureData.QuadTinting
      */
-    private static final BlockColor[] TINT_FUNCTIONS = new BlockColor[]{
-        (state, level, pos, tintIndex) -> {
-            if(level == null || pos == null)
-                return GrassColor.getDefaultColor();
-            return BiomeColors.getAverageGrassColor(level, pos);
-        },
-        (state, level, pos, tintIndex) -> {
-            if(level == null || pos == null)
-                return FoliageColor.FOLIAGE_DEFAULT;
-            return BiomeColors.getAverageFoliageColor(level, pos);
-        },
-        (state, level, pos, tintIndex) -> {
-            if(level == null || pos == null)
-                return -1;
-            return BiomeColors.getAverageWaterColor(level, pos);
-        }
+    private static final BlockTintSource[] TINT_FUNCTIONS = new BlockTintSource[]{
+            BlockTintSources.grass(),
+            BlockTintSources.foliage(),
+            BlockTintSources.water()
     };
 
     static{
@@ -41,7 +28,7 @@ public class QuadTintingHelper {
     }
 
     public static int getColor(BaseTextureData.QuadTinting tinting, BlockState state, BlockAndTintGetter level, BlockPos pos){
-        BlockColor tintFunction = TINT_FUNCTIONS[tinting.ordinal()];
-        return tintFunction.getColor(state, level, pos, 0) | 0xff000000;
+        BlockTintSource tintFunction = TINT_FUNCTIONS[tinting.ordinal()];
+        return ARGB.opaque(tintFunction.colorInWorld(state, level, pos));
     }
 }

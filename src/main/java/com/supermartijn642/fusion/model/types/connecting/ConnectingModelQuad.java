@@ -5,8 +5,8 @@ import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.model.types.base.BaseModelQuad;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureSprite;
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.Direction;
 
 /**
@@ -19,7 +19,7 @@ public class ConnectingModelQuad extends BaseModelQuad {
 
     public ConnectingModelQuad(BakedQuad bakedQuad, Direction cullDirection, ConnectionPredicate connectionPredicate){
         super(bakedQuad, cullDirection);
-        TextureAtlasSprite sprite = bakedQuad.sprite();
+        TextureAtlasSprite sprite = bakedQuad.materialInfo().sprite();
         if(sprite instanceof ConnectingTextureSprite && ((ConnectingTextureSprite)sprite).data() != null){
             ConnectingTextureData data = ((ConnectingTextureSprite)sprite).data();
             this.predicate = connectionPredicate;

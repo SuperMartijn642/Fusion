@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
-import net.minecraft.client.resources.model.AtlasManager;
+import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,15 +17,16 @@ import java.util.Set;
 public class AtlasConfigMixin {
 
     @ModifyVariable(
-        method = "<init>(Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;ZLjava/util/Set;)V",
-        at = @At("HEAD"),
-        ordinal = 0
+            method = "<init>(Lnet/minecraft/resources/Identifier;Lnet/minecraft/resources/Identifier;ZLjava/util/Set;)V",
+            at = @At("HEAD"),
+            argsOnly = true,
+            name = "additionalMetadata"
     )
-    private static Set<MetadataSectionType<?>> init(Set<MetadataSectionType<?>> set){
-        if(set.isEmpty())
+    private static Set<MetadataSectionType<?>> init(Set<MetadataSectionType<?>> additionalMetadata){
+        if(additionalMetadata.isEmpty())
             return Set.of(FusionTextureMetadataSection.TYPE);
-        ArrayList<MetadataSectionType<?>> copy = new ArrayList<>(set.size() + 1);
-        copy.addAll(set);
+        ArrayList<MetadataSectionType<?>> copy = new ArrayList<>(additionalMetadata.size() + 1);
+        copy.addAll(additionalMetadata);
         copy.add(FusionTextureMetadataSection.TYPE);
         return Set.copyOf(copy);
     }

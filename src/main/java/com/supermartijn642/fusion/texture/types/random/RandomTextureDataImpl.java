@@ -12,8 +12,8 @@ public class RandomTextureDataImpl extends BaseTextureDataImpl implements Random
     private final int rows, columns, count;
     private final Long seed;
 
-    public RandomTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting, int rows, int columns, int count, Long seed){
-        super(renderType, emissive, tinting);
+    public RandomTextureDataImpl(boolean emissive, QuadTinting tinting, int rows, int columns, int count, Long seed){
+        super(emissive, tinting);
         this.rows = rows;
         this.columns = columns;
         this.count = count;

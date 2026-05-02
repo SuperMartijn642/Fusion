@@ -10,16 +10,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ConnectingTextureDataBuilderImpl implements ConnectingTextureData.Builder {
 
-    private BaseTextureData.RenderType renderType;
     private boolean emissive = false;
     private BaseTextureData.QuadTinting tinting;
     private ConnectingTextureLayout layout = ConnectingTextureLayout.FULL;
-
-    @Override
-    public ConnectingTextureDataBuilderImpl renderType(@Nullable BaseTextureData.RenderType renderType){
-        this.renderType = renderType;
-        return this;
-    }
 
     @Override
     public ConnectingTextureDataBuilderImpl emissive(boolean emissive){
@@ -40,22 +33,7 @@ public class ConnectingTextureDataBuilderImpl implements ConnectingTextureData.B
     }
 
     @Override
-    public ConnectingTextureData.Builder renderType(@Nullable ConnectingTextureData.RenderType type){
-        if(type == null)
-            return this.renderType((BaseTextureData.RenderType)null);
-        switch(type){
-            case OPAQUE:
-                return this.renderType(BaseTextureData.RenderType.OPAQUE);
-            case CUTOUT:
-                return this.renderType(BaseTextureData.RenderType.CUTOUT);
-            case TRANSLUCENT:
-                return this.renderType(BaseTextureData.RenderType.TRANSLUCENT);
-        }
-        return this;
-    }
-
-    @Override
     public ConnectingTextureData build(){
-        return new ConnectingTextureDataImpl(this.renderType, this.emissive, this.tinting, this.layout);
+        return new ConnectingTextureDataImpl(this.emissive, this.tinting, this.layout);
     }
 }

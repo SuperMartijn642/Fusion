@@ -1,7 +1,9 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
+import com.mojang.blaze3d.platform.Transparency;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
+import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 /**
@@ -41,5 +43,11 @@ public class ConnectingTextureSprite extends BaseTextureSprite {
     @Override
     public ConnectingTextureData data(){
         return (ConnectingTextureData)super.data();
+    }
+
+    @Override
+    public Transparency computeTransparency(float u0, float v0, float u1, float v1){
+        ConnectingTextureLayoutHandler handler = ConnectingTextureLayoutHandler.get(this.data().getLayout());
+        return computeTiledTransparency(this, u0, v0, u1, v1, handler.getWidth(), handler.getHeight());
     }
 }

@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.model.data.ConnectingModelDataBuilder;
 import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.resources.Identifier;
 
 import java.util.LinkedHashMap;
@@ -40,8 +41,8 @@ public class ConnectingModelDataBuilderImpl implements ConnectingModelDataBuilde
     }
 
     @Override
-    public ConnectingModelDataBuilder texture(String key, Identifier texture){
-        this.baseModel.texture(key, texture);
+    public ConnectingModelDataBuilder texture(String key, Material material){
+        this.baseModel.texture(key, material);
         return this;
     }
 

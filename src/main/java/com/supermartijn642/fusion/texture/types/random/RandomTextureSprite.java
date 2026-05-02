@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.texture.types.random;
 
+import com.mojang.blaze3d.platform.Transparency;
 import com.supermartijn642.fusion.api.texture.data.RandomTextureData;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -29,5 +30,11 @@ public class RandomTextureSprite extends BaseTextureSprite {
     @Override
     public RandomTextureData data(){
         return (RandomTextureData)super.data();
+    }
+
+    @Override
+    public Transparency computeTransparency(float u0, float v0, float u1, float v1){
+        RandomTextureData data = this.data();
+        return computeTiledTransparency(this, u0, v0, u1, v1, data.getColumns(), data.getRows());
     }
 }

@@ -14,7 +14,7 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.AndItemPredicate;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateRegistry;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.item.BlockModelWrapper;
+import net.minecraft.client.renderer.item.CuboidItemModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ResolvableModel;
@@ -24,6 +24,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.world.item.Item;
+import org.joml.Matrix4f;
 
 import java.util.*;
 
@@ -64,7 +65,7 @@ public class ItemModelModifierReloadListener {
     }
 
     private ItemModel getOrBakeModel(Identifier location, Map<Identifier,ItemModel> bakedModels, ItemModel.BakingContext bakingContext){
-        return bakedModels.computeIfAbsent(location, l -> new BlockModelWrapper.Unbaked(l, List.of()).bake(bakingContext));
+        return bakedModels.computeIfAbsent(location, l -> new CuboidItemModelWrapper.Unbaked(l, Optional.empty(), List.of()).bake(bakingContext, new Matrix4f()));
     }
 
     public void reload(ResourceManager resourceManager){

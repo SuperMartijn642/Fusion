@@ -10,18 +10,16 @@ import com.supermartijn642.fusion.api.model.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.data.BaseModelData;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.block.model.*;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ModelRenderProperties;
-import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.cuboid.*;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.neoforged.neoforge.client.RenderTypeGroup;
-import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4fc;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,27 +54,25 @@ public class BaseModelType implements ModelType<BaseModelData> {
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
         boolean ambientOcclusion = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::ambientOcclusion, true);
-        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
-        RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
-        ChunkSectionLayer neoforgeRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.block();
+        Material.Baked particleMaterial = context.bakeMaterial(((BaseModelDataImpl)data).findParticleMaterial(context));
         // Finally, create the model
         return new BaseBakedModel(
             quads,
             ambientOcclusion,
-            particleSprite,
-            neoforgeRenderType
+            particleMaterial,
+            context.getModelBaker().interner()
         );
     }
 
     @Override
-    public ItemModel bakeItemModel(ItemModelBakingContext context, BaseModelData data){
+    public ItemModel bakeItemModel(ItemModelBakingContext context, BaseModelData data, Matrix4fc transformation){
         // Check for circular dependencies
         ((BaseModelDataImpl)data).validateParents(context);
         // Bake the quads
         List<BaseModelQuad> quads = ((BaseModelDataImpl)data).bakeQuads(context);
         // Gather remaining model properties
-        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
-        TextureAtlasSprite particleSprite = context.getTexture(((BaseModelDataImpl)data).findParticleSprite(context));
+        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, UnbakedModel::guiLight, CuboidModel.GuiLight.SIDE).lightLikeBlock();
+        Material.Baked particleMaterial = context.bakeMaterial(((BaseModelDataImpl)data).findParticleMaterial(context));
         //noinspection deprecation
         ItemTransforms transforms = new ItemTransforms(
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.THIRD_PERSON_LEFT_HAND),
@@ -89,23 +85,20 @@ public class BaseModelType implements ModelType<BaseModelData> {
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.FIXED),
             ((BaseModelDataImpl)data).findItemTransform(context, ItemDisplayContext.ON_SHELF)
         );
-        RenderTypeGroup neoforgeRenderTypeGroup = context.getNeoForgeAdditionalProperties().getOptional(NeoForgeModelProperties.RENDER_TYPE);
-        RenderType neoforgeItemRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entityItem();
-        RenderType neoforgeBlockRenderType = neoforgeRenderTypeGroup == null ? null : neoforgeRenderTypeGroup.entityBlock();
         // Finally, create the model
         return new BaseItemModel(
             context.getTintSources(),
             quads,
-            new ModelRenderProperties(usesBlockLight, particleSprite, transforms),
-            neoforgeItemRenderType,
-            neoforgeBlockRenderType
+            new ModelRenderProperties(usesBlockLight, particleMaterial, transforms),
+            transformation,
+            context.getModelBaker().interner()
         );
     }
 
     @Override
     public BaseModelData deserialize(JsonObject json) throws JsonParseException{
         // Deserialize the vanilla model attributes
-        BlockModel model = DefaultModelTypes.VANILLA.deserialize(json);
+        CuboidModel model = DefaultModelTypes.VANILLA.deserialize(json);
         // Read parents
         if(json.has("parent") && json.has("parents"))
             throw new JsonParseException("Model can only have either 'parent' or 'parents', not both!");
@@ -131,14 +124,14 @@ public class BaseModelType implements ModelType<BaseModelData> {
                 parents.add(Identifier.parse(parent));
             }
             if(!parents.isEmpty())
-                model = new BlockModel(model.geometry(), model.guiLight(), model.ambientOcclusion(), model.transforms(), model.textureSlots(), parents.get(0), model.rootTransform(), model.renderTypeGroup(), model.partVisibility());
+                model = new CuboidModel(model.geometry(), model.guiLight(), model.ambientOcclusion(), model.transforms(), model.textureSlots(), parents.get(0), model.rootTransform(), model.partVisibility());
         }
         List<BaseModelElement> elements = List.of();
-        if(model.geometry() instanceof SimpleUnbakedGeometry(
-            List<net.minecraft.client.renderer.block.model.BlockElement> vanillaElements
+        if(model.geometry() instanceof UnbakedCuboidGeometry(
+            List<CuboidModelElement> vanillaElements
         )){
             elements = new ArrayList<>(vanillaElements.size());
-            for(BlockElement element : vanillaElements)
+            for(CuboidModelElement element : vanillaElements)
                 elements.add(new BaseModelElement(element.from(), element.to(), element.faces(), element.rotation(), element.shade(), element.lightEmission()));
         }
         return new BaseModelDataImpl(model, parents, elements);

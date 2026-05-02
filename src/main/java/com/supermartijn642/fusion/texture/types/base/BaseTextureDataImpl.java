@@ -8,19 +8,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BaseTextureDataImpl implements BaseTextureData {
 
-    private final RenderType renderType;
     private final boolean emissive;
     private final QuadTinting tinting;
 
-    public BaseTextureDataImpl(RenderType renderType, boolean emissive, QuadTinting tinting){
-        this.renderType = renderType;
+    public BaseTextureDataImpl(boolean emissive, QuadTinting tinting){
         this.emissive = emissive;
         this.tinting = tinting;
-    }
-
-    @Override
-    public @Nullable RenderType getRenderType(){
-        return this.renderType;
     }
 
     @Override

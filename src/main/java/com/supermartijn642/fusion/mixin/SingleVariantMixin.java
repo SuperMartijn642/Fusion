@@ -1,9 +1,9 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.model.FusionBlockModel;
-import net.minecraft.client.renderer.block.model.BlockStateModel;
-import net.minecraft.client.renderer.block.model.SingleVariant;
-import net.minecraft.client.renderer.block.model.Variant;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.SingleVariant;
+import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.UnbakedModel;

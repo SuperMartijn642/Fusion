@@ -9,17 +9,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
 
-    private BaseTextureData.RenderType renderType;
     private boolean emissive = false;
     private BaseTextureData.QuadTinting tinting;
     private int rows = 1, columns = 1, count;
     private Long seed;
-
-    @Override
-    public RandomTextureDataBuilderImpl renderType(@Nullable BaseTextureData.RenderType renderType){
-        this.renderType = renderType;
-        return this;
-    }
 
     @Override
     public RandomTextureDataBuilderImpl emissive(boolean emissive){
@@ -67,6 +60,6 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
     public RandomTextureData build(){
         if(this.count > this.rows * this.columns)
             throw new IllegalArgumentException("Count cannot be greater than rows * columns!");
-        return new RandomTextureDataImpl(this.renderType, this.emissive, this.tinting, this.rows, this.columns, this.count, this.seed);
+        return new RandomTextureDataImpl(this.emissive, this.tinting, this.rows, this.columns, this.count, this.seed);
     }
 }

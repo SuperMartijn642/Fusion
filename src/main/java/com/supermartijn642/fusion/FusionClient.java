@@ -13,6 +13,7 @@ import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Unit;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.neoforge.client.event.ModelEvent;
@@ -29,7 +30,7 @@ public class FusionClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("fusion");
 
-    public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
+    public static final ThreadLocal<Unit> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
 
     public static void init(){
         // Register default texture types

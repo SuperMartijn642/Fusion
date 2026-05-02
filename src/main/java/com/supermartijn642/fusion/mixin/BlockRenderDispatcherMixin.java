@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.FusionClient;
 import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.util.Unit;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,7 +19,7 @@ public class BlockRenderDispatcherMixin {
         at = @At("HEAD")
     )
     private void renderBreakingTextureHead(CallbackInfo ci){
-        FusionClient.IS_RENDERING_BREAKING_OVERLAY.set(true);
+        FusionClient.IS_RENDERING_BREAKING_OVERLAY.set(Unit.INSTANCE);
     }
 
     @Inject(
@@ -26,6 +27,6 @@ public class BlockRenderDispatcherMixin {
         at = @At("TAIL")
     )
     private void renderBreakingTextureTail(CallbackInfo ci){
-        FusionClient.IS_RENDERING_BREAKING_OVERLAY.set(false);
+        FusionClient.IS_RENDERING_BREAKING_OVERLAY.remove();
     }
 }

@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
-import com.supermartijn642.fusion.model.MutableQuad;
 import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 
@@ -70,10 +70,10 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
                 oppositeY += (quad.y(lastCorner) - quad.y(oppositeCorner)) * oppositeToLastPercentage;
                 oppositeZ += (quad.z(lastCorner) - quad.z(oppositeCorner)) * oppositeToLastPercentage;
             }
-            quad.pos(oppositeCorner, oppositeX, oppositeY, oppositeZ);
+            quad.position(oppositeCorner, oppositeX, oppositeY, oppositeZ);
         }
         if(toNextCornerPercentage < 1){
-            quad.pos(
+            quad.position(
                 nextCorner,
                 quad.x(quadIndex) + (quad.x(nextCorner) - quad.x(quadIndex)) * toNextCornerPercentage,
                 quad.y(quadIndex) + (quad.y(nextCorner) - quad.y(quadIndex)) * toNextCornerPercentage,
@@ -81,7 +81,7 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
             );
         }
         if(toLastCornerPercentage < 1){
-            quad.pos(
+            quad.position(
                 lastCorner,
                 quad.x(quadIndex) + (quad.x(lastCorner) - quad.x(quadIndex)) * toLastCornerPercentage,
                 quad.y(quadIndex) + (quad.y(lastCorner) - quad.y(quadIndex)) * toLastCornerPercentage,

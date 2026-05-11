@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.FusionBlockModel;
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.resources.model.ModelDiscovery;
@@ -53,6 +53,6 @@ public class ModelManagerMixin {
     )
     private static void deserializeModel(Map.Entry<?,?> entry, CallbackInfoReturnable<?> ci, ResourceLocation name){
         // Store the model identifier, so the model can know its name
-        FusionBlockModel.CURRENT_MODEL.set(name);
+        FusionBlockModelData.CURRENT_MODEL.set(name);
     }
 }

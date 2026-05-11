@@ -12,6 +12,7 @@
     "AgeableMobMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
+    "BlockModelWrapperMixin",
     "BlockRenderDispatcherMixin",
     "BufferSourceMixin",
     "CompositePackResourceMixin",
@@ -26,6 +27,7 @@
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
     "MultiPartBakedModelMixin",
+    "OptionsMixin",
     "OutlineBufferSourceMixin",
     "PackEntryMixin",
     "PackMixin",
@@ -34,6 +36,7 @@
     "SpriteResourceLoaderMixin",
     "TerrainParticleMixin",
     "TextureAtlasSpriteMixin",
+    "UnbakedModelMixin",
     "WeightedBakedModelMixin"
   ],
   "server": [],

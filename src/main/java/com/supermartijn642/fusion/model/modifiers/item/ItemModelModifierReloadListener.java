@@ -64,7 +64,6 @@ public class ItemModelModifierReloadListener {
     }
 
     public void reload(ResourceManager resourceManager){
-        ItemPredicateRegistry.finalizeRegistration();
         this.models.clear();
 
         // Find all item model predicate files

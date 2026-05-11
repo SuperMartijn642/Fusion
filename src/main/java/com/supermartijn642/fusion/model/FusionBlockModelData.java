@@ -1,7 +1,6 @@
 package com.supermartijn642.fusion.model;
 
 import com.google.common.collect.ImmutableMap;
-import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
@@ -14,6 +13,7 @@ import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.block.model.*;
@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -111,13 +110,8 @@ public class FusionBlockModelData extends BlockModel {
             throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(modelInstance.getModelType()) + "' for  '" + identifier + "'!", e);
         }
         // Log warnings
-        if(!warnings.isEmpty()){
-            FusionClient.LOGGER.warn(
-                "Warnings for block model '{}':\n{}",
-                identifier,
-                warnings.stream().map(" |-> "::concat).collect(Collectors.joining("\n"))
-            );
-        }
+        if(!warnings.isEmpty())
+            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", identifier);
         return bakedModel;
     }
 
@@ -141,13 +135,9 @@ public class FusionBlockModelData extends BlockModel {
             throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.identifier + "'!", e);
         }
         // Log warnings
-        if(!warnings.isEmpty()){
-            FusionClient.LOGGER.warn(
-                "Warnings for item model '{}':\n{}",
-                this.identifier,
-                warnings.stream().map(" |-> "::concat).collect(Collectors.joining("\n"))
-            );
-        }
+        if(!warnings.isEmpty())
+            LoggingHelper.logUserWarnings(warnings, "Warnings for item model '{}':", this.identifier);
+
         return model;
     }
 

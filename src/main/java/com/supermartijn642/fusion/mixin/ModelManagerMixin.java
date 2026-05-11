@@ -1,8 +1,11 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.resources.model.ModelDiscovery;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.resources.model.UnbakedModel;
@@ -54,5 +57,22 @@ public class ModelManagerMixin {
     private static void deserializeModel(Map.Entry<?,?> entry, CallbackInfoReturnable<?> ci, ResourceLocation name){
         // Store the model identifier, so the model can know its name
         FusionBlockModelData.CURRENT_MODEL.set(name);
+    }
+
+    @Inject(
+        method = "lambda$loadBlockModels$10(Ljava/util/Map$Entry;)Lcom/mojang/datafixers/util/Pair;",
+        at = @At(
+            value = "INVOKE",
+            target = "Lorg/slf4j/Logger;error(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V",
+            shift = At.Shift.BEFORE
+        ),
+        cancellable = true
+    )
+    private static void interceptFusionErrors(Map.Entry<ResourceLocation,?> entry, CallbackInfoReturnable<?> ci, @Local Exception e){
+        // Report Fusion model user errors in a more readable way
+        if(e instanceof UserErrorException){
+            LoggingHelper.logUserError(e.getCause(), "Failed to load model '%s':", entry.getKey());
+            ci.setReturnValue(null);
+        }
     }
 }

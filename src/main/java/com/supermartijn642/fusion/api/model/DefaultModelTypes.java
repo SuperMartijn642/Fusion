@@ -1,14 +1,16 @@
 package com.supermartijn642.fusion.api.model;
 
-import com.supermartijn642.fusion.api.model.data.BaseModelData;
-import com.supermartijn642.fusion.api.model.data.ConnectingModelData;
-import com.supermartijn642.fusion.api.model.data.ConnectingModelDataBuilder;
+import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
+import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
+import com.supermartijn642.fusion.api.model.types.connecting.ConnectingModelData;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.model.types.base.BaseModelType;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelType;
-import com.supermartijn642.fusion.model.types.vanilla.VanillaModelType;
+import com.supermartijn642.fusion.model.types.cuboid.CuboidModelType;
+import com.supermartijn642.fusion.model.types.itemgenerator.ItemModelGeneratorModelType;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import net.minecraft.client.resources.model.UnbakedModel;
 
 /**
@@ -16,24 +18,32 @@ import net.minecraft.client.resources.model.UnbakedModel;
  * <p>
  * Created 29/04/2023 by SuperMartijn642
  */
-public class DefaultModelTypes {
+public final class DefaultModelTypes {
 
-    /**
-     * Model type used for vanilla {@link BlockModel} instances.
-     */
-    public static final ModelType<BlockModel> VANILLA = new VanillaModelType();
     /**
      * Model type used for any unknown models added by other mods.
      */
     public static final ModelType<UnbakedModel> UNKNOWN = new UnknownModelType();
     /**
-     * Model type which extends the vanilla model with some common properties.
+     * Model type used for vanilla {@link BlockModel} instances.
+     * @see CuboidModelDataBuilder
      */
-    public static final ModelType<BaseModelData> BASE = new BaseModelType();
+    public static final ModelType<BlockModel> CUBOID = new CuboidModelType();
+    /**
+     * Model type used for vanilla {@link ItemModelGenerator} instances.
+     * These models generate 3d geometry from 2d item textures.
+     */
+    public static final ModelType<Void> ITEM_MODEL_GENERATOR = new ItemModelGeneratorModelType();
+    /**
+     * Model type which extends the vanilla model with some common properties and also allows for processing base texture properties.
+     * @see BaseModelData
+     * @see DefaultTextureTypes#BASE
+     */
+    public static final ModelType<BaseModelData> BASE = BaseModelType.create();
     /**
      * Model type which allows for connecting textures.
+     * @see ConnectingModelData
      * @see DefaultTextureTypes#CONNECTING
-     * @see ConnectingModelDataBuilder
      */
     public static final ModelType<ConnectingModelData> CONNECTING = new ConnectingModelType();
 }

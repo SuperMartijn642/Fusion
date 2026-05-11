@@ -10,18 +10,25 @@ mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 # Block
 accessible field net/minecraft/world/level/block/Block OCCLUSION_CACHE Ljava/lang/ThreadLocal;
 # BlockModel
-accessible field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
 accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/google/gson/Gson;
+accessible field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
+mutable field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
 accessible field net/minecraft/client/renderer/block/model/BlockModel guiLight Lnet/minecraft/client/renderer/block/model/BlockModel$GuiLight;
+mutable field net/minecraft/client/renderer/block/model/BlockModel guiLight Lnet/minecraft/client/renderer/block/model/BlockModel$GuiLight;
 accessible field net/minecraft/client/renderer/block/model/BlockModel hasAmbientOcclusion Ljava/lang/Boolean;
-accessible field net/minecraft/client/renderer/block/model/BlockModel LOGGER Lorg/slf4j/Logger;
-accessible field net/minecraft/client/renderer/block/model/BlockModel overrides Ljava/util/List;
+mutable field net/minecraft/client/renderer/block/model/BlockModel hasAmbientOcclusion Ljava/lang/Boolean;
 accessible field net/minecraft/client/renderer/block/model/BlockModel parent Lnet/minecraft/client/renderer/block/model/BlockModel;
 accessible field net/minecraft/client/renderer/block/model/BlockModel parentLocation Lnet/minecraft/resources/ResourceLocation;
+mutable field net/minecraft/client/renderer/block/model/BlockModel parentLocation Lnet/minecraft/resources/ResourceLocation;
 accessible field net/minecraft/client/renderer/block/model/BlockModel textureMap Ljava/util/Map;
+mutable field net/minecraft/client/renderer/block/model/BlockModel textureMap Ljava/util/Map;
 accessible field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
-accessible method net/minecraft/client/renderer/block/model/BlockModel bakeFace (Lnet/minecraft/client/renderer/block/model/BlockElement;Lnet/minecraft/client/renderer/block/model/BlockElementFace;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/core/Direction;Lnet/minecraft/client/resources/model/ModelState;Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/renderer/block/model/BakedQuad;
+mutable field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
 accessible method net/minecraft/client/renderer/block/model/BlockModel findTextureEntry (Ljava/lang/String;)Lcom/mojang/datafixers/util/Either;
+extendable method net/minecraft/client/renderer/block/model/BlockModel findTextureEntry (Ljava/lang/String;)Lcom/mojang/datafixers/util/Either;
+accessible method net/minecraft/client/renderer/block/model/BlockModel getElements ()Ljava/util/List;
+accessible method net/minecraft/client/renderer/block/model/BlockModel getTransform (Lnet/minecraft/world/item/ItemDisplayContext;)Lnet/minecraft/client/renderer/block/model/ItemTransform;
+extendable method net/minecraft/client/renderer/block/model/BlockModel getTransform (Lnet/minecraft/world/item/ItemDisplayContext;)Lnet/minecraft/client/renderer/block/model/ItemTransform;
 # FilePackResources
 accessible field net/minecraft/server/packs/FilePackResources LOGGER Lorg/slf4j/Logger;
 # ItemModelGenerator
@@ -40,6 +47,9 @@ accessible field net/minecraft/client/resources/model/ModelBakery ITEM_MODEL_GEN
 accessible field net/minecraft/client/resources/model/ModelBakery unbakedCache Ljava/util/Map;
 accessible field net/minecraft/client/resources/model/ModelBakery topLevelModels Ljava/util/Map;
 accessible method net/minecraft/client/resources/model/ModelBakery getModel (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/resources/model/UnbakedModel;
+# ModelBakery$ModelBakerImpl
+accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Ljava/util/function/BiFunction;Lnet/minecraft/resources/ResourceLocation;)V
+accessible class net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl
 # ModelLayers
 accessible field net/minecraft/client/model/geom/ModelLayers ALL_MODELS Ljava/util/Set;
 # ModelPart
@@ -125,5 +135,7 @@ mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
 # TransferableSelectionList
 accessible field net/minecraft/client/gui/screens/packs/TransferableSelectionList screen Lnet/minecraft/client/gui/screens/packs/PackSelectionScreen;
+# Transformation
+accessible field com/mojang/math/Transformation decomposed Z
 # VertexFormat
 accessible field com/mojang/blaze3d/vertex/VertexFormat offsets Lit/unimi/dsi/fastutil/ints/IntList;

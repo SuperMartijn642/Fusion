@@ -3,8 +3,8 @@ package com.supermartijn642.fusion.model.modifiers.block;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.datafixers.util.Pair;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
-import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -90,12 +90,12 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
         IModelData[] arr = data.getData(DATA_PROPERTY);
         // Check whether quads from simple models should be submitted
         RenderType renderType = MinecraftForgeClient.getRenderType();
-        boolean addSimpleQuads = renderType == null || state == null || OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
+        boolean isDefaultRenderType = renderType == null || state == null || ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
         // When rendering breaking overlay, only submit the original model
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
             if(this.isOriginalSimpleModel)
-                return addSimpleQuads ? this.original.getQuads(state, side, random, EmptyModelData.INSTANCE) : List.of();
-            if(renderType == null || state == null || !(this.original instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)this.original).canRenderInLayer(state, renderType)){
+                return isDefaultRenderType ? this.original.getQuads(state, side, random, EmptyModelData.INSTANCE) : List.of();
+            if(ModelRenderTypeHelper.canRenderInLayer(this.original, state, RenderType.leash(), isDefaultRenderType)){
                 IModelData subData = arr == null || arr[0] == null ? EmptyModelData.INSTANCE : arr[0];
                 if(seed != null)
                     random.setSeed(seed);
@@ -105,13 +105,13 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
         }
         // If there's only simple models, return the cached quads
         if(!this.hasNonSimpleModels)
-            return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : List.of();
+            return isDefaultRenderType ? side == null ? this.quads : this.culledQuads[side.ordinal()] : List.of();
         // Start with quads from simple models
-        List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
+        List<BakedQuad> quads = isDefaultRenderType ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
         // Gather quads from complex models
         for(int i = 0; i < this.nonSimpleModels.size(); i++){
             BakedModel model = this.nonSimpleModels.get(i);
-            if(renderType == null || state == null || !(model instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType)){
+            if(ModelRenderTypeHelper.canRenderInLayer(model, state, renderType, isDefaultRenderType)){
                 IModelData subData = arr == null || arr[i] == null ? EmptyModelData.INSTANCE : arr[i];
                 if(seed != null)
                     random.setSeed(seed);
@@ -125,21 +125,21 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random random){
         // Check whether quads from simple models should be submitted
         RenderType renderType = MinecraftForgeClient.getRenderType();
-        boolean addSimpleQuads = renderType == null || state == null || OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
+        boolean isDefaultRenderType = renderType == null || state == null || ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
         // When rendering breaking overlay, only submit the original model
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
-            if(renderType == null || state == null || !(this.original instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)this.original).canRenderInLayer(state, renderType))
+            if(ModelRenderTypeHelper.canRenderInLayer(this.original, state, renderType, isDefaultRenderType))
                 return this.original.getQuads(state, side, random, EmptyModelData.INSTANCE);
             return List.of();
         }
         // If there's only simple models, return the cached quads
         if(!this.hasNonSimpleModels)
-            return addSimpleQuads ? side == null ? this.quads : this.culledQuads[side.ordinal()] : List.of();
+            return isDefaultRenderType ? side == null ? this.quads : this.culledQuads[side.ordinal()] : List.of();
         // Start with quads from simple models
-        List<BakedQuad> quads = addSimpleQuads ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
+        List<BakedQuad> quads = isDefaultRenderType ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
         // Gather quads from complex models
         for(BakedModel model : this.nonSimpleModels){
-            if(renderType == null || state == null || !(model instanceof CustomRenderTypeBakedModel) ? addSimpleQuads : ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, renderType))
+            if(ModelRenderTypeHelper.canRenderInLayer(model, state, renderType, isDefaultRenderType))
                 quads.addAll(model.getQuads(state, side, random, EmptyModelData.INSTANCE));
         }
         return quads;
@@ -147,14 +147,13 @@ public class BlockModelModifierBakedModel implements BakedModel, CustomRenderTyp
 
     @Override
     public boolean canRenderInLayer(BlockState state, RenderType layer){
+        boolean isDefaultRenderType = ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
         // When rendering breaking overlay, only submit the original model's render types
         if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
-            return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).canRenderInLayer(state, layer) : OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
+            return ModelRenderTypeHelper.canRenderInLayer(this.original, state, layer, isDefaultRenderType);
         // Check if any of the models can render in the layer
         for(BakedModel model : this.models){
-            if(model instanceof CustomRenderTypeBakedModel ?
-                ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
-                OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+            if(ModelRenderTypeHelper.canRenderInLayer(model, state, layer, isDefaultRenderType))
                 return true;
         }
         return false;

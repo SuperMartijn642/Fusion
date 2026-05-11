@@ -2,7 +2,6 @@ package com.supermartijn642.fusion.model;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Either;
-import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
@@ -12,6 +11,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
@@ -25,7 +25,6 @@ import org.joml.Vector3f;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -140,13 +139,8 @@ public class FusionBlockModelData extends BlockModel {
             throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.identifier + "'!", e);
         }
         // Log warnings
-        if(!warnings.isEmpty()){
-            FusionClient.LOGGER.warn(
-                "Warnings for block model '{}':\n{}",
-                this.identifier,
-                warnings.stream().map(" |-> "::concat).collect(Collectors.joining("\n"))
-            );
-        }
+        if(!warnings.isEmpty())
+            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.identifier);
         return bakedModel;
     }
 

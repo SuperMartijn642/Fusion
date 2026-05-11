@@ -4,6 +4,7 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.ModelInstance;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.util.IdentifierUtil;
@@ -31,7 +32,7 @@ public class BlockModelDeserializerMixin {
         at = @At("HEAD"),
         cancellable = true
     )
-    private void deserialize(JsonElement json, Type type, JsonDeserializationContext context, CallbackInfoReturnable<BlockModel> ci) throws JsonParseException{
+    private void deserialize(JsonElement json, Type type, JsonDeserializationContext context, CallbackInfoReturnable<BlockModel> ci) throws JsonParseException, UserErrorException{
         if(SHOULD_IGNORE.get())
             return;
 
@@ -44,6 +45,8 @@ public class BlockModelDeserializerMixin {
                 ModelInstance<?> model;
                 try{
                     model = ModelTypeRegistryImpl.deserializeModelData(json.getAsJsonObject());
+                }catch(JsonParseException e){
+                    throw new UserErrorException("Failed to deserialize Fusion model!", e);
                 }finally{
                     SHOULD_IGNORE.set(false);
                 }

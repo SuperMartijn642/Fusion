@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.RandomTextureData;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import net.minecraft.client.resources.data.AnimationFrame;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
@@ -23,7 +24,7 @@ import java.util.*;
 public class RandomTextureType implements TextureType<RandomTextureData,RandomTextureData> {
 
     @Override
-    public void createTexture(TextureOutput<RandomTextureData> output, TextureCreationContext context, RandomTextureData data) throws TextureErrorException{
+    public void createTexture(TextureOutput<RandomTextureData> output, TextureCreationContext context, RandomTextureData data) throws UserErrorException{
         // Calculate frame size
         int frameWidth = context.getImageWidth(), frameHeight = context.getImageHeight();
         int defaultTileSize = Math.min(context.getImageWidth() / data.getColumns(), context.getImageHeight() / data.getRows());
@@ -43,11 +44,11 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
 
         // Do frame size checks
         if(frameWidth == 0 || frameHeight == 0)
-            throw new TextureErrorException("Image must not be empty!");
+            throw new UserErrorException("Image must not be empty!");
         if(context.getImageWidth() % frameWidth != 0 || context.getImageHeight() % frameHeight != 0)
-            throw new TextureErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
+            throw new UserErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
         if(frameWidth % data.getColumns() != 0 || frameHeight % data.getRows() != 0)
-            throw new TextureErrorException("Image/frame size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of number of columns " + data.getColumns() + " and rows " + data.getRows() + "!");
+            throw new UserErrorException("Image/frame size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of number of columns " + data.getColumns() + " and rows " + data.getRows() + "!");
 
         // Create animation data
         int frameColumns = context.getImageWidth() / frameWidth;
@@ -61,7 +62,7 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
                 for(AnimationFrame frame : animationMetadata.animationFrames){
                     int index = frame.getFrameIndex();
                     if(index >= frameRows * frameColumns)
-                        throw new TextureErrorException("Frame index " + index + " is greater than the number of frames in the image!");
+                        throw new UserErrorException("Frame index " + index + " is greater than the number of frames in the image!");
                     int x = tileWidth * (index % frameColumns);
                     int y = tileHeight * (index / frameColumns);
                     frames.add(SpriteImageSource.AnimationFrame.of(x, y, frame.hasNoTime() ? animationMetadata.getFrameTime() : frame.getFrameTime()));
@@ -96,7 +97,7 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
             }
         }
         if(tiles == 0)
-            throw new TextureErrorException("Image is completely empty!");
+            throw new UserErrorException("Image is completely empty!");
 
         // Set custom texture data
         output.setCustomData(data);

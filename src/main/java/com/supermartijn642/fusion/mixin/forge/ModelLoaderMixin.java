@@ -1,7 +1,9 @@
 package com.supermartijn642.fusion.mixin.forge;
 
+import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.renderer.block.model.ModelBakery;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.util.ResourceLocation;
@@ -13,9 +15,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -64,5 +68,29 @@ public class ModelLoaderMixin {
         ModelBakery bakery = (ModelBakery)(Object)this;
         BlockModelModifierReloadListener.INSTANCE.applyOverlays(bakery);
         ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(bakery);
+    }
+
+    @Inject(
+        method = "onPostBakeEvent",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/util/registry/IRegistry;getObject(Ljava/lang/Object;)Ljava/lang/Object;",
+            shift = At.Shift.BEFORE,
+            ordinal = 0
+        )
+    )
+    private void interceptFusionErrors(CallbackInfo ci){
+        Iterator<Map.Entry<ResourceLocation,Exception>> iterator = this.loadingExceptions.entrySet().iterator();
+        while(iterator.hasNext()){
+            Map.Entry<ResourceLocation,Exception> entry = iterator.next();
+            if(!(entry.getKey() instanceof ModelResourceLocation))
+                continue;
+            // Report Fusion model user errors in a more readable way
+            Exception e = entry.getValue();
+            if(e instanceof UserErrorException){
+                LoggingHelper.logUserError(e.getCause(), e.getMessage());
+                iterator.remove();
+            }
+        }
     }
 }

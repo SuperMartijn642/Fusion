@@ -11,6 +11,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -163,13 +164,8 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
             throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.identifier + "'!", e);
         }
         // Log warnings
-        if(!warnings.isEmpty()){
-            FusionClient.LOGGER.warn(
-                "Warnings for block model '{}':\n{}",
-                this.identifier,
-                warnings.stream().map(" |-> "::concat).collect(Collectors.joining("\n"))
-            );
-        }
+        if(!warnings.isEmpty())
+            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.identifier);
         return bakedModel;
     }
 

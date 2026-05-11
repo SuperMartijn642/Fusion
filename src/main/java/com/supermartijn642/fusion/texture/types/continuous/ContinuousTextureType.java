@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ContinuousTextureData;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 import net.minecraft.client.resources.data.AnimationFrame;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.util.EnumFacing;
@@ -23,7 +24,7 @@ import java.util.List;
 public class ContinuousTextureType implements TextureType<ContinuousTextureData,ContinuousTextureData> {
 
     @Override
-    public void createTexture(TextureOutput<ContinuousTextureData> output, TextureCreationContext context, ContinuousTextureData data) throws TextureErrorException{
+    public void createTexture(TextureOutput<ContinuousTextureData> output, TextureCreationContext context, ContinuousTextureData data) throws UserErrorException{
         // Calculate frame size
         int frameWidth = context.getImageWidth(), frameHeight = context.getImageHeight();
         int defaultTileSize = Math.min(context.getImageWidth() / data.getColumns(), context.getImageHeight() / data.getRows());
@@ -43,11 +44,11 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
 
         // Do frame size checks
         if(frameWidth == 0 || frameHeight == 0)
-            throw new TextureErrorException("Image must not be empty!");
+            throw new UserErrorException("Image must not be empty!");
         if(context.getImageWidth() % frameWidth != 0 || context.getImageHeight() % frameHeight != 0)
-            throw new TextureErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
+            throw new UserErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
         if(frameWidth % data.getColumns() != 0 || frameHeight % data.getRows() != 0)
-            throw new TextureErrorException("Image/frame size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of number of columns " + data.getColumns() + " and rows " + data.getRows() + "!");
+            throw new UserErrorException("Image/frame size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of number of columns " + data.getColumns() + " and rows " + data.getRows() + "!");
 
         // Create sprite
         SpriteImageSource image = SpriteImageSource.vanilla(

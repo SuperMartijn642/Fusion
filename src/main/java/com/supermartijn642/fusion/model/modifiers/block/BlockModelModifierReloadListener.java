@@ -7,6 +7,7 @@ import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.extensions.ResourcePackExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
@@ -93,13 +94,15 @@ public class BlockModelModifierReloadListener {
         // Parse all the model overlay files
         for(Map.Entry<ResourceLocation,JsonElement> entry : resources.entrySet()){
             ResourceLocation location = entry.getKey();
-            if(!entry.getValue().isJsonObject())
-                throw new IllegalArgumentException("Block model overlay '" + location + "' must contain a json object!");
+            if(!entry.getValue().isJsonObject()){
+                FusionClient.LOGGER.error("Block model overlay '{}' must contain a json object!", location);
+                continue;
+            }
             JsonObject json = entry.getValue().getAsJsonObject();
             try{
                 this.parseResource(json);
             }catch(JsonParseException e){
-                FusionClient.LOGGER.error("Failed to parse block model overlay '{}': {}", location, e.getMessage());
+                LoggingHelper.logUserError(e, "Failed to parse block model overlay '%s':", location);
             }
         }
     }

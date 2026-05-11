@@ -11,6 +11,7 @@
     "forge.ForgeBlockModelRendererMixin",
     "forge.LightUtilMixin",
     "forge.ModelLoaderMixin",
+    "forge.ModelLoaderRegistryMixin",
     "forge.VanillaLoaderMixin",
     "forge.VertexLighterFlatMixin",
     "BlockMixin",

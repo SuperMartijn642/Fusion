@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import com.supermartijn642.fusion.texture.custom.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -99,7 +100,7 @@ public class TextureCreationHandler {
         try{
             textureType.createTexture(output, context, textureData);
             output.checkFinished();
-        }catch(TextureErrorException e){
+        }catch(UserErrorException e){
             FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
             return true;
         }catch(Exception e){

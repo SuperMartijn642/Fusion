@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.api.texture.custom;
 
+import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.texture.custom.SpriteImageSourceImpl;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
@@ -33,17 +34,17 @@ public interface SpriteImageSource {
 
     /**
      * Uploads frames from the given image the same as vanilla would.
-     * @throws TextureErrorException when the given image and animation metadata do not pass vanilla's frame size checks
+     * @throws UserErrorException when the given image and animation metadata do not pass vanilla's frame size checks
      */
-    static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata) throws TextureErrorException{
+    static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata) throws UserErrorException{
         return SpriteImageSourceImpl.vanilla(image, vanillaMetadata);
     }
 
     /**
      * Uploads frames from the given image the same as vanilla would, but with a different default frame size when no frame size is specified in the animation metadata.
-     * @throws TextureErrorException when the given image and animation metadata do not pass vanilla's frame size checks
+     * @throws UserErrorException when the given image and animation metadata do not pass vanilla's frame size checks
      */
-    static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata, int defaultFrameWidth, int defaultFrameHeight) throws TextureErrorException{
+    static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata, int defaultFrameWidth, int defaultFrameHeight) throws UserErrorException{
         return SpriteImageSourceImpl.vanilla(image, vanillaMetadata, defaultFrameWidth, defaultFrameHeight);
     }
 

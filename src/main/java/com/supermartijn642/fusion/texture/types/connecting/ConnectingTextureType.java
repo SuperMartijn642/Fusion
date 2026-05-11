@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import net.minecraft.client.renderer.texture.NativeImage;
@@ -25,7 +26,7 @@ import java.util.Locale;
 public class ConnectingTextureType implements TextureType<ConnectingTextureData,StitchedConnectingTextureData> {
 
     @Override
-    public void createTexture(TextureOutput<StitchedConnectingTextureData> output, TextureCreationContext context, ConnectingTextureData data) throws TextureErrorException{
+    public void createTexture(TextureOutput<StitchedConnectingTextureData> output, TextureCreationContext context, ConnectingTextureData data) throws UserErrorException{
         ConnectingTextureLayoutHandler layout = ConnectingTextureLayoutHandler.get(data.getLayout());
         int imageWidth = context.getImageWidth(), imageHeight = context.getImageHeight();
         NativeImage image = context.getImage();
@@ -36,7 +37,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         AnimationMetadataSection animationMetadata = context.getAnimationMetadata();
         if(data.getLayout() == ConnectingTextureLayout.FULL && frameWidth == frameHeight){ // Legacy full layout was a square image, so change the framing to the new aspect ratio
             if(animationMetadata != null)
-                throw new TextureErrorException("Image must use the 'full' layouts 6 : 8 aspect ratio to support animation!");
+                throw new UserErrorException("Image must use the 'full' layouts 6 : 8 aspect ratio to support animation!");
             frameHeight = frameHeight * 6 / 8;
             imageHeight = imageHeight * 6 / 8;
             image = ImageHelper.createCrop(image, 0, 0, imageWidth, imageHeight, true);
@@ -55,11 +56,11 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
 
         // Do frame size checks
         if(frameWidth == 0 || frameHeight == 0)
-            throw new TextureErrorException("Image must not be empty!");
+            throw new UserErrorException("Image must not be empty!");
         if(imageWidth % frameWidth != 0 || imageHeight % frameHeight != 0)
-            throw new TextureErrorException("Image size " + imageWidth + "x" + imageHeight + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
+            throw new UserErrorException("Image size " + imageWidth + "x" + imageHeight + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
         if(frameWidth % layout.getWidth() != 0 || frameHeight % layout.getHeight() != 0)
-            throw new TextureErrorException("Image/frame size " + frameWidth + "x" + frameHeight + " is not a multiple of '" + data.getLayout().name().toLowerCase(Locale.ROOT) + "' layout's " + layout.getWidth() + " : " + layout.getHeight() + " aspect ratio!");
+            throw new UserErrorException("Image/frame size " + frameWidth + "x" + frameHeight + " is not a multiple of '" + data.getLayout().name().toLowerCase(Locale.ROOT) + "' layout's " + layout.getWidth() + " : " + layout.getHeight() + " aspect ratio!");
 
         // Create animation data
         int frameColumns = imageWidth / frameWidth;
@@ -73,7 +74,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
                 for(AnimationFrame frame : animationMetadata.frames){
                     int index = frame.getIndex();
                     if(index >= frameRows * frameColumns)
-                        throw new TextureErrorException("Frame index " + index + " is greater than the number of frames in the image!");
+                        throw new UserErrorException("Frame index " + index + " is greater than the number of frames in the image!");
                     int x = tileWidth * (index % frameColumns);
                     int y = tileHeight * (index / frameColumns);
                     frames.add(SpriteImageSource.AnimationFrame.of(x, y, frame.isTimeUnknown() ? animationMetadata.getDefaultFrameTime() : frame.getTime()));

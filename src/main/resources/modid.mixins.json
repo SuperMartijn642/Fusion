@@ -10,8 +10,8 @@
     "forge.FMLClientHandlerMixin",
     "forge.ForgeBlockModelRendererMixin",
     "forge.LightUtilMixin",
+    "forge.ModelLoaderMixin",
     "forge.VanillaLoaderMixin",
-    "forge.VanillaModelWrapperMixin",
     "forge.VertexLighterFlatMixin",
     "BlockMixin",
     "BlockModelDeserializerMixin",
@@ -20,9 +20,10 @@
     "BlockRenderDispatcherMixin",
     "FileResourcePackMixin",
     "FolderResourcePackMixin",
+    "ItemModelGeneratorMixin",
     "ItemModelShaperMixin",
     "LegacyResourcePackWrapperMixin",
-    "ModelLoaderMixin",
+    "ModelBakeryMixin",
     "ModelManagerMixin",
     "MultiPartBakedModelMixin",
     "PackEntryMixin",
@@ -33,7 +34,9 @@
     "StitcherHolderMixin",
     "StitcherMixin",
     "TextureAtlasMixin",
-    "TextureAtlasSpriteMixin"
+    "TextureAtlasSpriteMixin",
+    "TextureManagerMixin",
+    "WeightedBakedModelMixin"
   ],
   "server": [],
   "injectors": {

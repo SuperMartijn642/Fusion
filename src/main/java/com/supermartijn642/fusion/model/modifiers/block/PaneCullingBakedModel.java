@@ -1,10 +1,10 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.google.common.collect.ImmutableMap;
-import com.supermartijn642.fusion.model.MutableQuad;
+import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
+import com.supermartijn642.fusion.model.BlockRenderContext;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
-import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
-import com.supermartijn642.fusion.model.types.connecting.SurroundingBlockCache;
 import net.minecraft.block.BlockPane;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.properties.PropertyBool;
@@ -32,7 +32,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         BlockPane.EAST
     };
 
-    private final MutableQuad helperMutableQuad = new MutableQuad();
+    private final MutableQuad helperMutableQuad = MutableQuad.create();
 
     public PaneCullingBakedModel(IBakedModel original){
         super(original);
@@ -48,13 +48,13 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
             return super.getQuads(state, cullDirection, seed);
 
         // Gather the states above and below
-        SurroundingBlockCache surroundingBlockCache = ConnectingBakedModel.BLOCK_CACHE.get();
-        if(surroundingBlockCache == null)
+        BlockRenderContext blockRenderContext = FusionClient.BLOCK_RENDER_CONTEXT.get();
+        if(blockRenderContext == null || blockRenderContext.level() == null || blockRenderContext.pos() == null)
             return super.getQuads(state, cullDirection, seed);
-        IBlockState stateAbove = surroundingBlockCache.getState(0, 1, 0);
+        IBlockState stateAbove = blockRenderContext.level().getBlockState(blockRenderContext.pos().up());
         if(stateAbove.getBlock() != state.getBlock())
             stateAbove = null;
-        IBlockState stateBelow = surroundingBlockCache.getState(0, -1, 0);
+        IBlockState stateBelow = blockRenderContext.level().getBlockState(blockRenderContext.pos().down());
         if(stateBelow.getBlock() != state.getBlock())
             stateBelow = null;
 
@@ -79,7 +79,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
 
         // Find the center of the quad
         MutableQuad quad = this.helperMutableQuad;
-        quad.fillFromBakedQuad(bakedQuad);
+        quad.copyBakedQuad(bakedQuad);
         float centerX = (quad.x(0) + quad.x(1) + quad.x(2) + quad.x(3)) / 4;
         float centerZ = (quad.z(0) + quad.z(1) + quad.z(2) + quad.z(3)) / 4;
         // If the quad's center is roughly at the center of the block, assume it is the middle part of the glass pane

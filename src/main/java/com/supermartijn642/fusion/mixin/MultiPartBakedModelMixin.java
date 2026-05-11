@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.google.common.base.Predicate;
-import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
-import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.MultipartBakedModel;
@@ -45,18 +45,15 @@ public class MultiPartBakedModelMixin implements CustomRenderTypeBakedModel {
 
     @Override
     public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer){
+        boolean isDefaultRenderType = ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
         if(!this.hasCustomRenderTypeModels)
-            return OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
-        if(state == null)
-            return false;
+            return isDefaultRenderType;
 
         // Check the predicate for each model
         for(Map.Entry<Predicate<IBlockState>,IBakedModel> selector : this.selectors.entrySet()){
             if(selector.getKey().test(state)){
                 IBakedModel model = selector.getValue();
-                if(model instanceof CustomRenderTypeBakedModel ?
-                    ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
-                    OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                if(ModelRenderTypeHelper.canRenderInLayer(model, state, layer, isDefaultRenderType))
                     return true;
             }
         }

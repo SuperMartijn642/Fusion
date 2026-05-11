@@ -34,8 +34,6 @@ public class FusionTextureMetadataSection implements IMetadataSectionSerializer<
 
     @Override
     public Data deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException{
-        // Finalize the registry
-        TextureTypeRegistryImpl.finalizeRegistration();
         // Get the texture type
         return new Data(TextureTypeRegistryImpl.deserializeTextureData(json.getAsJsonObject()));
     }

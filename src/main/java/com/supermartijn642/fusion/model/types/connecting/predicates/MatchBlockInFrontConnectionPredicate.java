@@ -2,8 +2,8 @@ package com.supermartijn642.fusion.model.types.connecting.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
-import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionDirection;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.block.Block;

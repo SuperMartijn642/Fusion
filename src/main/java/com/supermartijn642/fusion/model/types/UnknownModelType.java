@@ -2,48 +2,114 @@ package com.supermartijn642.fusion.model.types;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.GatherTexturesContext;
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.DefaultModelTypes;
+import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
-import com.supermartijn642.fusion.api.model.SpriteIdentifier;
-import com.supermartijn642.fusion.util.TextureAtlases;
+import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
+import com.supermartijn642.fusion.api.model.custom.ModelProperty;
+import com.supermartijn642.fusion.api.model.custom.ModelWalker;
+import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.util.Either;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ItemTransformVec3f;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.IModel;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
  */
-public class UnknownModelType implements ModelType<IModel> {
+public class UnknownModelType<T extends IModel> implements ModelType<T> {
 
     @Override
-    public IModel deserialize(JsonObject json) throws JsonParseException{
-        throw new UnsupportedOperationException("Cannot deserialize unknown model type!");
-    }
-
-    @Override
-    public JsonObject serialize(IModel value){
-        throw new UnsupportedOperationException("Cannot serialize unknown model type!");
-    }
-
-    @Override
-    public Collection<ResourceLocation> getModelDependencies(IModel data){
+    public Collection<ResourceLocation> getDependencies(T data){
         return data.getDependencies();
     }
 
     @Override
-    public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, IModel data){
-        // Get the textures
-        Collection<ResourceLocation> materials = data.getTextures();
-        return materials.stream().map(i -> SpriteIdentifier.of(TextureAtlases.getBlocks(), i)).collect(Collectors.toList());
+    public List<Either<ResourceLocation,ModelInstance<?>>> getParents(T data){
+        return Collections.emptyList();
     }
 
     @Override
-    public IBakedModel bake(ModelBakingContext context, IModel data){
-        return data.bake(context.getTransformation(), DefaultVertexFormats.BLOCK, material -> context.getTexture(SpriteIdentifier.of(TextureAtlases.getBlocks(), material)));
+    public Boolean getAmbientOcclusion(T data){
+        return data.asVanillaModel().map(DefaultModelTypes.CUBOID::getAmbientOcclusion).orElse(null);
+    }
+
+    @Override
+    public Boolean getIsGui3d(T data){
+        return data.asVanillaModel().map(DefaultModelTypes.CUBOID::getIsGui3d).orElse(null);
+    }
+
+    @Override
+    public ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type, T data){
+        return data.asVanillaModel().map(m -> DefaultModelTypes.CUBOID.getItemTransform(type, m)).orElse(null);
+    }
+
+    @Override
+    public Map<String,Either<String,ModelMaterial>> getMaterials(T data){
+        return data.asVanillaModel().map(DefaultModelTypes.CUBOID::getMaterials).orElse(Collections.emptyMap());
+    }
+
+    @Override
+    public ModelGeometry getGeometry(T data){
+        return ModelGeometry.of(data);
+    }
+
+    @Override
+    public @Nullable Boolean getShade(T data){
+        return null;
+    }
+
+    @Override
+    public @Nullable Boolean getEmissive(T data){
+        return null;
+    }
+
+    @Override
+    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context, T data){
+        return Optional.empty();
+    }
+
+    @Override
+    public IBakedModel bakeModel(ModelBakingContext context, T data){
+        // Bake the model
+        Function<ResourceLocation,TextureAtlasSprite> spriteGetter = material -> context.getMaterial(ModelMaterial.of(material));
+        return data.bake(context.getTransformation().toModelState(), DefaultVertexFormats.ITEM, spriteGetter);
+    }
+
+    public static <T> T findPropertyInStackAndParents(ModelBakingContext context, ModelWalker.ModelStack currentStack, Function<ModelInstance<?>,T> property, T defaultValue){
+        // First check the current stack
+        for(ModelInstance<?> modelInstance : currentStack){
+            T value = property.apply(modelInstance);
+            if(value != null)
+                return value;
+        }
+        // Check parents of the last model in the stack
+        Optional<T> result = context.walkModelTree(
+            currentStack.get(currentStack.size() - 1),
+            (modelInstance, stack) -> {
+                T value = property.apply(modelInstance);
+                return value == null ? ModelWalker.Result.proceed() : ModelWalker.Result.stop(value);
+            }
+        );
+        return result.orElse(defaultValue);
+    }
+
+    @Override
+    public T deserialize(JsonObject json) throws JsonParseException{
+        throw new UnsupportedOperationException("Cannot deserialize unknown model type!");
+    }
+
+    @Override
+    public JsonObject serialize(T value){
+        throw new UnsupportedOperationException("Cannot serialize unknown model type!");
     }
 }

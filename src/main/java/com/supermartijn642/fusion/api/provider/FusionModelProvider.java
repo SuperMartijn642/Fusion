@@ -7,6 +7,7 @@ import com.supermartijn642.core.generator.ResourceGenerator;
 import com.supermartijn642.core.generator.ResourceType;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.model.ModelInstance;
+import com.supermartijn642.fusion.api.model.ModelType;
 import net.minecraft.util.ResourceLocation;
 
 import java.util.HashMap;
@@ -48,9 +49,23 @@ public abstract class FusionModelProvider extends ResourceGenerator {
 
     /**
      * Adds a model to be generated.
+     * @param location  location of the model
+     * @param modelType type of the model
+     * @param data      model data to be serialized
+     */
+    public final <T> void addModel(ResourceLocation location, ModelType<T> modelType, T data){
+        ModelInstance<?> previousValue = this.models.put(location, ModelInstance.of(modelType, data));
+        if(previousValue != null)
+            throw new RuntimeException("Duplicate model for '" + location + "'!");
+    }
+
+    /**
+     * Adds a model to be generated.
      * @param location location of the model
      * @param model    model instance to be serialized
+     * @deprecated use {@link #addModel(ResourceLocation, ModelType, Object)}
      */
+    @Deprecated
     public final void addModel(ResourceLocation location, ModelInstance<?> model){
         ModelInstance<?> previousValue = this.models.put(location, model);
         if(previousValue != null)

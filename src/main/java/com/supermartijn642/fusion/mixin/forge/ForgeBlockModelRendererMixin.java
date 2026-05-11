@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin.forge;
 
-import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
-import com.supermartijn642.fusion.model.types.connecting.SurroundingBlockCache;
+import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.model.BlockRenderContext;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -26,7 +26,7 @@ public class ForgeBlockModelRendererMixin {
         remap = false
     )
     private static void renderHead(VertexLighterFlat lighter, IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        ConnectingBakedModel.BLOCK_CACHE.set(new SurroundingBlockCache(level, pos, state));
+        FusionClient.BLOCK_RENDER_CONTEXT.set(new BlockRenderContext(level, pos, state));
     }
 
     @Inject(
@@ -35,6 +35,6 @@ public class ForgeBlockModelRendererMixin {
         remap = false
     )
     private static void renderTail(VertexLighterFlat lighter, IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        ConnectingBakedModel.BLOCK_CACHE.remove();
+        FusionClient.BLOCK_RENDER_CONTEXT.remove();
     }
 }

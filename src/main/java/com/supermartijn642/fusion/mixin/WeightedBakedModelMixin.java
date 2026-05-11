@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
-import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.WeightedBakedModel;
@@ -43,13 +43,12 @@ public class WeightedBakedModelMixin implements CustomRenderTypeBakedModel {
 
     @Override
     public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer){
+        boolean isDefaultRenderType = ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
         if(!this.hasCustomRenderTypeModels)
-            return OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
+            return isDefaultRenderType;
         for(WeightedBakedModel.WeightedModel entry : this.models){
             IBakedModel model = entry.model;
-            if(model instanceof CustomRenderTypeBakedModel ?
-                ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
-                OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+            if(ModelRenderTypeHelper.canRenderInLayer(model, state, layer, isDefaultRenderType))
                 return true;
         }
         return false;

@@ -1,10 +1,10 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
-import com.supermartijn642.fusion.model.types.connecting.SurroundingBlockCache;
+import com.supermartijn642.fusion.model.BlockRenderContext;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.BlockModelRenderer;
@@ -34,7 +34,7 @@ public class BlockModelRendererMixin {
         at = @At("HEAD")
     )
     private void renderModelSmoothHead(IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        ConnectingBakedModel.BLOCK_CACHE.set(new SurroundingBlockCache(level, pos, state));
+        FusionClient.BLOCK_RENDER_CONTEXT.set(new BlockRenderContext(level, pos, state));
     }
 
     @Inject(
@@ -42,7 +42,7 @@ public class BlockModelRendererMixin {
         at = @At("RETURN")
     )
     private void renderModelSmoothTail(IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        ConnectingBakedModel.BLOCK_CACHE.remove();
+        FusionClient.BLOCK_RENDER_CONTEXT.remove();
     }
 
     @Inject(
@@ -50,7 +50,7 @@ public class BlockModelRendererMixin {
         at = @At("HEAD")
     )
     private void renderModelFlatHead(IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        ConnectingBakedModel.BLOCK_CACHE.set(new SurroundingBlockCache(level, pos, state));
+        FusionClient.BLOCK_RENDER_CONTEXT.set(new BlockRenderContext(level, pos, state));
     }
 
     @Inject(
@@ -58,7 +58,7 @@ public class BlockModelRendererMixin {
         at = @At("RETURN")
     )
     private void renderModelFlatTail(IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean checkSides, long random, CallbackInfoReturnable<Boolean> ci){
-        ConnectingBakedModel.BLOCK_CACHE.remove();
+        FusionClient.BLOCK_RENDER_CONTEXT.remove();
     }
 
     @ModifyVariable(

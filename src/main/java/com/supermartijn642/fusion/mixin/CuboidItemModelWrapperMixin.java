@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.mojang.math.Transformation;
-import com.supermartijn642.fusion.model.FusionBlockModel;
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.renderer.item.CuboidItemModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
@@ -32,11 +32,11 @@ public class CuboidItemModelWrapperMixin {
         Identifier location = unbaked.model();
         ResolvedModel wrapper = context.blockModelBaker().getModel(location);
         if(wrapper != null){
-            FusionBlockModel fusionBlockModel = FusionBlockModel.get(wrapper.wrapped());
-            if(fusionBlockModel != null){
+            FusionBlockModelData fusionData = FusionBlockModelData.get(wrapper.wrapped());
+            if(fusionData != null){
                 List<ItemTintSource> tintSources = unbaked.tints();
                 transformation = Transformation.compose(transformation, unbaked.transformation());
-                ItemModel model = fusionBlockModel.bakeItemModel(wrapper, transformation, tintSources, context.blockModelBaker(), context.entityModelSet());
+                ItemModel model = fusionData.bakeItemModel(wrapper, transformation, tintSources, context.blockModelBaker(), context.entityModelSet());
                 ci.setReturnValue(model);
             }
         }

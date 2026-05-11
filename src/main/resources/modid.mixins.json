@@ -24,6 +24,7 @@
     "IntermediaryFormatMixin",
     "ItemFeatureRendererMixin",
     "JarContentsPackResourcesMixin",
+    "MinecraftMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
     "ModelFeatureRendererMixin",

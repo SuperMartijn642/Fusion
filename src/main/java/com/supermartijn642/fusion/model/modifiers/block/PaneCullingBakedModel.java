@@ -1,9 +1,9 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
-import com.supermartijn642.fusion.model.quad.MutableQuad;
-import com.supermartijn642.fusion.model.quad.MutableQuadImpl;
+import com.supermartijn642.fusion.model.custom.quad.MutableQuadImpl;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;

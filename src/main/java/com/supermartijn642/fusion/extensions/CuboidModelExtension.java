@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.extensions;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.model.FusionBlockModel;
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
@@ -12,7 +12,7 @@ public interface CuboidModelExtension {
 
     void setFusionModel(ModelInstance<?> model);
 
-    FusionBlockModel getFusionBlockModelData();
+    FusionBlockModelData getFusionData();
 
-    void setFusionBlockModelData(FusionBlockModel data);
+    void setFusionData(FusionBlockModelData data);
 }

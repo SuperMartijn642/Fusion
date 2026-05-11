@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
-import com.supermartijn642.fusion.model.quad.MutableQuad;
-import com.supermartijn642.fusion.model.quad.MutableQuadImpl;
-import com.supermartijn642.fusion.model.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
+import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.model.custom.quad.MutableQuadImpl;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.neoforged.neoforge.client.model.quad.BakedColors;

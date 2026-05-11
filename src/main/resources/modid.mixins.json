@@ -27,6 +27,7 @@
     "FilePackResourcesMixin",
     "IntermediaryFormatMixin",
     "ItemRendererMixin",
+    "MinecraftMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
     "ModelFeatureRendererMixin",

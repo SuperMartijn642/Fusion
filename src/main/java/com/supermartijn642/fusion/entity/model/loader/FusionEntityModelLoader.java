@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.resources.ResourceLocation;
@@ -98,7 +99,7 @@ public class FusionEntityModelLoader {
         try{
             return loader.loadModel(json);
         }catch(JsonParseException e){
-            FusionClient.LOGGER.error("Failed to load entity model for '{}' from pack '{}': {}", location, resource.sourcePackId(), e.getMessage());
+            LoggingHelper.logUserError(e, "Failed to load entity model for '%s' from pack '%s':", location, resource.sourcePackId());
         }
         return null;
     }

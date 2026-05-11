@@ -14,7 +14,7 @@ import java.util.Arrays;
  * <p>
  * Created 07/04/2025 by SuperMartijn642
  */
-public class DefaultItemPredicates {
+public final class DefaultItemPredicates {
 
     /**
      * Combines the given predicates such that all predicates should be satisfied.

@@ -4,7 +4,6 @@ import com.supermartijn642.fusion.entity.EntityModelModifierManager;
 import com.supermartijn642.fusion.entity.EntityModelModifierReloadListener;
 import com.supermartijn642.fusion.entity.model.FusionModelPart;
 import com.supermartijn642.fusion.entity.model.loader.FusionEntityModelLoader;
-import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicateRegistry;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
@@ -45,7 +44,6 @@ public class EntityModelSetMixin {
         at = @At("TAIL")
     )
     private void loadFusionEntityModels(ResourceManager resourceManager, CallbackInfo ci){
-        EntityModelPredicateRegistry.finalizeRegistration();
         // Gather all model locations which should be considered for loading
         Set<ResourceLocation> locations = new HashSet<>();
         // Add models referenced in model modifiers

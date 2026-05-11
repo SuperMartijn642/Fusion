@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -51,5 +52,21 @@ public class ModelManagerMixin {
     private void applyBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, Object2IntMap<?> map, CallbackInfoReturnable<?> ci){
         BlockModelModifierReloadListener.INSTANCE.applyOverlays(modelBakery);
         ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(modelBakery);
+    }
+
+    @Inject(
+        method = "lambda$loadBlockModels$9(Ljava/util/Map$Entry;)Lcom/mojang/datafixers/util/Pair;",
+        at = @At("HEAD")
+    )
+    private static void storeBlockModelName(Map.Entry<ResourceLocation,?> entry, CallbackInfoReturnable<?> ci){
+        FusionBlockModelData.CURRENT_MODEL.set(entry.getKey());
+    }
+
+    @Inject(
+        method = "lambda$loadBlockModels$9(Ljava/util/Map$Entry;)Lcom/mojang/datafixers/util/Pair;",
+        at = @At("RETURN")
+    )
+    private static void clearBlockModelName(Map.Entry<ResourceLocation,?> entry, CallbackInfoReturnable<?> ci){
+        FusionBlockModelData.CURRENT_MODEL.remove();
     }
 }

@@ -4,14 +4,24 @@ accessWidener v1 named
 accessible field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 # BlockModel
-accessible field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
 accessible field net/minecraft/client/renderer/block/model/BlockModel GSON Lcom/google/gson/Gson;
+accessible field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
+mutable field net/minecraft/client/renderer/block/model/BlockModel elements Ljava/util/List;
 accessible field net/minecraft/client/renderer/block/model/BlockModel guiLight Lnet/minecraft/client/resources/model/UnbakedModel$GuiLight;
+mutable field net/minecraft/client/renderer/block/model/BlockModel guiLight Lnet/minecraft/client/resources/model/UnbakedModel$GuiLight;
 accessible field net/minecraft/client/renderer/block/model/BlockModel hasAmbientOcclusion Ljava/lang/Boolean;
+mutable field net/minecraft/client/renderer/block/model/BlockModel hasAmbientOcclusion Ljava/lang/Boolean;
 accessible field net/minecraft/client/renderer/block/model/BlockModel parent Lnet/minecraft/client/resources/model/UnbakedModel;
 accessible field net/minecraft/client/renderer/block/model/BlockModel parentLocation Lnet/minecraft/resources/ResourceLocation;
-accessible field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
 mutable field net/minecraft/client/renderer/block/model/BlockModel parentLocation Lnet/minecraft/resources/ResourceLocation;
+accessible field net/minecraft/client/renderer/block/model/BlockModel textureSlots Lnet/minecraft/client/renderer/block/model/TextureSlots$Data;
+mutable field net/minecraft/client/renderer/block/model/BlockModel textureSlots Lnet/minecraft/client/renderer/block/model/TextureSlots$Data;
+accessible field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
+mutable field net/minecraft/client/renderer/block/model/BlockModel transforms Lnet/minecraft/client/renderer/block/model/ItemTransforms;
+accessible method net/minecraft/client/renderer/block/model/BlockModel getElements ()Ljava/util/List;
+extendable method net/minecraft/client/renderer/block/model/BlockModel getElements ()Ljava/util/List;
+accessible method net/minecraft/client/renderer/block/model/BlockModel getParentLocation ()Lnet/minecraft/resources/ResourceLocation;
+extendable method net/minecraft/client/renderer/block/model/BlockModel getParentLocation ()Lnet/minecraft/resources/ResourceLocation;
 # BlockModelWrapper
 accessible method net/minecraft/client/renderer/item/BlockModelWrapper <init> (Lnet/minecraft/client/resources/model/BakedModel;Ljava/util/List;)V
 accessible method net/minecraft/client/renderer/item/BlockModelWrapper hasSpecialAnimatedTexture (Lnet/minecraft/world/item/ItemStack;)Z
@@ -36,8 +46,11 @@ accessible class net/minecraft/client/renderer/block/model/ItemTransform$Deseria
 accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init> (Lnet/minecraft/client/model/geom/builders/MeshDefinition;Lnet/minecraft/client/model/geom/builders/MaterialDefinition;)V
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
+# ModelBakery
+accessible field net/minecraft/client/resources/model/ModelBakery unbakedPlainModels Ljava/util/Map;
 # ModelBakery$ModelBakerImpl
 accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/ModelBakery$TextureGetter;Lnet/minecraft/client/resources/model/ModelDebugName;)V
+accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl getModel (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/resources/model/UnbakedModel;
 accessible class net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl
 # ModelDiscovery$ResolverImpl
 accessible method net/minecraft/client/resources/model/ModelDiscovery$ResolverImpl <init> (Lnet/minecraft/client/resources/model/ModelDiscovery;)V
@@ -132,3 +145,5 @@ accessible class net/minecraft/client/renderer/block/model/TextureSlots$Referenc
 accessible class net/minecraft/client/renderer/block/model/TextureSlots$Value
 # TransferableSelectionList
 accessible field net/minecraft/client/gui/screens/packs/TransferableSelectionList screen Lnet/minecraft/client/gui/screens/packs/PackSelectionScreen;
+# Transformation
+accessible field com/mojang/math/Transformation decomposed Z

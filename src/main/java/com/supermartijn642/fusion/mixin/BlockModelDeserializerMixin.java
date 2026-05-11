@@ -4,9 +4,8 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.model.FusionBlockModel;
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
-import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateRegistryImpl;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.resources.ResourceLocation;
@@ -40,11 +39,6 @@ public class BlockModelDeserializerMixin {
         if(loaderJson != null && loaderJson.isJsonPrimitive() && loaderJson.getAsJsonPrimitive().isString() && IdentifierUtil.isValidIdentifier(loaderJson.getAsString())){
             ResourceLocation loader = ResourceLocation.parse(loaderJson.getAsString());
             if(loader.getNamespace().equals("fusion") && loader.getPath().equals("model")){
-                // Finalize model type registration
-                ModelTypeRegistryImpl.finalizeRegistration();
-                // Finalize predicate registration
-                PredicateRegistryImpl.finalizeRegistration();
-
                 // Load the model data
                 SHOULD_IGNORE.set(true);
                 ModelInstance<?> model;
@@ -55,8 +49,7 @@ public class BlockModelDeserializerMixin {
                 }
 
                 // Create a dummy block model
-                FusionBlockModel newModel = new FusionBlockModel(model);
-                ci.setReturnValue(newModel);
+                ci.setReturnValue(new FusionBlockModelData(model));
             }
         }
     }

@@ -1,12 +1,11 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.FusionBlockModel;
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.SingleVariant;
 import net.minecraft.client.renderer.block.model.Variant;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvedModel;
-import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,10 +30,10 @@ public class SingleVariantMixin {
         Identifier location = variant.modelLocation();
         ResolvedModel wrapper = modelBaker.getModel(location);
         if(wrapper != null){
-            UnbakedModel wrapped = wrapper.wrapped();
-            if(wrapped instanceof FusionBlockModel fusionBlockModel){
+            FusionBlockModelData fusionData = FusionBlockModelData.get(wrapper.wrapped());
+            if(fusionData != null){
                 Variant.SimpleModelState modelState = variant.modelState();
-                BlockStateModel model = fusionBlockModel.bakeBlockModel(wrapper, modelBaker, modelState.asModelState());
+                BlockStateModel model = fusionData.bakeBlockModel(wrapper, modelBaker, modelState.asModelState());
                 ci.setReturnValue(model);
             }
         }

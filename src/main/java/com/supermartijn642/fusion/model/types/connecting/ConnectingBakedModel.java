@@ -1,26 +1,21 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
-import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
-import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
+import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionDirection;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
 import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
-import net.fabricmc.fabric.api.renderer.v1.RendererAccess;
-import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
-import net.fabricmc.fabric.api.renderer.v1.mesh.Mesh;
-import net.fabricmc.fabric.api.renderer.v1.mesh.MeshBuilder;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -32,6 +27,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3fc;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,7 +40,6 @@ import java.util.function.Supplier;
  */
 public class ConnectingBakedModel implements BakedModel {
 
-    private static final int VERTEX_SIZE, VERTEX_UV_OFFSET, VERTEX_POSITION_OFFSET;
     /**
      * Stores world space vector point in the up and right direction of the default texture orientation for each face
      */
@@ -52,11 +47,6 @@ public class ConnectingBakedModel implements BakedModel {
     private static final int[][] DEFAULT_TEXTURE_ROTATIONS_RIGHT = new int[6][];
 
     static{
-        // Amounts are in bytes, as a baked quad stores the data as ints and an int is 4 bytes, we divide by 4
-        VERTEX_SIZE = DefaultVertexFormat.BLOCK.getVertexSize() / 4;
-        VERTEX_UV_OFFSET = DefaultVertexFormat.BLOCK.getOffset(VertexFormatElement.UV) / 4;
-        VERTEX_POSITION_OFFSET = DefaultVertexFormat.BLOCK.getOffset(VertexFormatElement.POSITION) / 4;
-
         for(Direction direction : Direction.values()){
             int upX = 0, upY = 0, upZ = 0, rightX = 0, rightY = 0, rightZ = 0;
             if(direction == Direction.DOWN){
@@ -83,201 +73,108 @@ public class ConnectingBakedModel implements BakedModel {
         }
     }
 
-    private static float[] getUV(BakedQuad quad, int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + VERTEX_UV_OFFSET;
-        return new float[]{Float.intBitsToFloat(quad.getVertices()[offset]), Float.intBitsToFloat(quad.getVertices()[offset + 1])};
-    }
+    public static final Direction[] CULL_DIRECTIONS = {null, Direction.UP, Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
 
-    private static float[] getPosition(BakedQuad quad, int vertexIndex){
-        int offset = vertexIndex * VERTEX_SIZE + VERTEX_POSITION_OFFSET;
-        return new float[]{
-            Float.intBitsToFloat(quad.getVertices()[offset]),
-            Float.intBitsToFloat(quad.getVertices()[offset + 1]),
-            Float.intBitsToFloat(quad.getVertices()[offset + 2])
-        };
-    }
-
-    /*
-     * Quads are tagged if they need further processing.
-     * The tag consists of:
-     *  - 4 bits to indicate texture type (same as base model)
-     *  - 8 bits to indicate sprite index (same as base model)
-     *  - 8 bits to indicate predicate index
-     *  - 4 bits to indicate quad index, for layouts which have auxiliary quads
-     */
-
-    private final Mesh blockMesh, itemMesh;
-    private final List<QuadPredicates> predicates;
-    private final List<SpriteInstance> sprites;
-    private final boolean hasSpecialQuads;
-    private final boolean hasAmbientOcclusion;
+    private final List<Part> parts;
+    private final TextureAtlasSprite particleSprite;
+    private final BlockModel.GuiLight guiLight;
     private final boolean isGui3d;
-    private final boolean usesBlockLight;
-    private final TextureAtlasSprite particleIcon;
     private final ItemTransforms transforms;
-    private final ItemOverrides overrides;
 
-    public ConnectingBakedModel(List<ConnectingModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, ItemOverrides overrides){
-        this.hasAmbientOcclusion = hasAmbientOcclusion;
+    public ConnectingBakedModel(List<Part> parts, TextureAtlasSprite particleSprite, BlockModel.GuiLight guiLight, boolean isGui3d, ItemTransforms transforms){
+        this.parts = parts;
+        this.particleSprite = particleSprite;
+        this.guiLight = guiLight;
         this.isGui3d = isGui3d;
-        this.usesBlockLight = usesBlockLight;
-        this.particleIcon = particleIcon;
         this.transforms = transforms;
-        this.overrides = overrides;
-
-        // Create block mesh from the quads
-        MeshBuilder builder = RendererAccess.INSTANCE.getRenderer().meshBuilder();
-        QuadEmitter emitter = builder.getEmitter();
-        HashMap<QuadPredicates,Integer> predicates = new HashMap<>();
-        HashMap<SpriteInstance,Integer> sprites = new HashMap<>();
-        boolean hasSpecialQuads = false;
-        for(ConnectingModelQuad quad : quads){
-            // Some layouts need auxiliary quads, hence simply repeat the quad that many times
-            Integer tag = null;
-            int auxiliaryQuadCount = 0;
-            if(quad.hasConnectingTexture()){
-                Direction direction = quad.bakedQuad().getDirection();
-                TextureOrientation orientation = findOrientation(quad.bakedQuad());
-                ConnectionPredicate predicate = quad.connectionPredicate();
-                // Get the number of auxiliary quads needed
-                auxiliaryQuadCount = ConnectingTextureLayoutHandler.get(quad.getLayout()).getAuxiliaryQuadCount();
-                // Give each combination of direction, orientation, and predicate a unique index
-                int predicateIndex = predicates.computeIfAbsent(new QuadPredicates(direction, orientation, predicate), o -> predicates.size());
-                // Give each sprite a unique index
-                int spriteIndex = sprites.computeIfAbsent(quad.spriteInstance(), o -> sprites.size());
-                // Pack the predicate index and sprite index into the tag int
-                tag = 1 | (spriteIndex << 4) | (predicateIndex << 12);
-            }
-            // Tag quads which need additional processing
-            if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
-                int type = quad.textureType() == DefaultTextureTypes.RANDOM ? 2 : 3;
-                // Give each sprite a unique index
-                int spriteIndex = sprites.computeIfAbsent(quad.spriteInstance(), o -> sprites.size());
-                // Pack the type and sprite index into the tag
-                tag = type | (spriteIndex << 4);
-                hasSpecialQuads = true;
-            }
-            // Submit the quads
-            RenderMaterial material = FusionClient.getRenderTypeMaterial(hasAmbientOcclusion, quad.renderType(), quad.emissive());
-            for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
-                emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
-                if(quad.lightEmission() != null){
-                    for(int i = 0; i < 4; i++){
-                        int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
-                        int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
-                        emitter.lightmap(i, LightTexture.pack(sky, block));
-                    }
-                }
-                if(tag != null && quadIndex > 0)
-                    emitter.tag(tag | (quadIndex << 20)); // Add the quad index to the tag
-                else if(tag != null)
-                    emitter.tag(tag);
-                emitter.emit();
-            }
-        }
-        this.blockMesh = builder.build();
-        this.predicates = predicates.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
-        this.sprites = sprites.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
-        this.hasSpecialQuads = hasSpecialQuads;
-
-        // Create the item mesh
-        emitter = builder.getEmitter();
-        OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
-        for(ConnectingModelQuad quad : quads){
-            // Some layouts need auxiliary quads, hence simply repeat the quad that many times
-            int auxiliaryQuadCount = 0;
-            ConnectingTextureLayoutHandler layoutHandler = null;
-            if(quad.hasConnectingTexture()){
-                layoutHandler = ConnectingTextureLayoutHandler.get(quad.getLayout());
-                // Get the number of auxiliary quads needed
-                auxiliaryQuadCount = ConnectingTextureLayoutHandler.get(quad.getLayout()).getAuxiliaryQuadCount();
-            }
-            // Process and submit the quads
-            RenderMaterial material = FusionClient.getRenderTypeMaterial(null, quad.renderType(), quad.emissive());
-            for(int quadIndex = 0; quadIndex < auxiliaryQuadCount + 1; quadIndex++){
-                emitter.fromVanilla(quad.bakedQuad(), material, quad.cullDirection());
-                if(quad.lightEmission() != null){
-                    for(int i = 0; i < 4; i++){
-                        int sky = Math.max(quad.lightEmission(), LightTexture.sky(emitter.lightmap(i)));
-                        int block = Math.max(quad.lightEmission(), LightTexture.block(emitter.lightmap(i)));
-                        emitter.lightmap(i, LightTexture.pack(sky, block));
-                    }
-                }
-                // Process the quad if it has a connecting texture
-                // As item mesh does not depend on state, we can run the connecting texture processing immediately
-                if(layoutHandler != null){
-                    mutableQuad.set(emitter);
-                    mutableQuad.set(TextureOrientation.NORMAL_0.vertexIndexPermutation);
-                    SpriteInstance sprite = quad.spriteInstance();
-                    StitchedConnectingTextureData data = (StitchedConnectingTextureData)sprite.getTexture().getCustomData();
-                    boolean keepQuad = layoutHandler.processItemQuad(quadIndex, mutableQuad, sprite, data);
-                    if(!keepQuad)
-                        continue;
-                }
-                emitter.emit();
-            }
-        }
-        this.itemMesh = builder.build();
     }
 
-    private static TextureOrientation findOrientation(BakedQuad quad){
-        // First determine the texture orientation relative to the vertex indices
-        float[][] uvs = {getUV(quad, 0), getUV(quad, 1), getUV(quad, 2), getUV(quad, 3)};
-        // Compare the angle between directions v1 to v2 and v1 to v3, to check whether the texture is flipped
-        double angle1to2 = Math.atan2(uvs[1][1] - uvs[0][1], uvs[1][0] - uvs[0][0]), angle1to3 = Math.atan2(uvs[2][1] - uvs[0][1], uvs[2][0] - uvs[0][0]);
-        boolean textureFlipped = (angle1to2 - angle1to3 + 4 * Math.PI) % (2 * Math.PI) < Math.PI;
-        // Find the top-left-most-ish index, if we assume the uvs form an axis-aligned square this should work
-        int topLeftMostIndex = 0;
-        for(int i = 1; i < 4; i++){
-            float[] best = uvs[topLeftMostIndex], current = uvs[i];
-            if(current[0] + current[1] < best[0] + best[1])
-                topLeftMostIndex = i;
-        }
-        int textureRotation = textureFlipped ? topLeftMostIndex : (4 - topLeftMostIndex) % 4;
+    @Override
+    public void emitBlockQuads(BlockAndTintGetter level, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
+        // Cache computed connections
+        Map<QuadPredicatesKey,TextureConnections> computedConnections = new HashMap<>();
+        // Cache the surrounding blocks
+        SurroundingBlockCache blockCache = new SurroundingBlockCache(level, pos, state);
+        // Create the model parts
+        QuadEmitter emitter = context.getEmitter();
+        for(Part part : this.parts){
+            for(Direction cullDirection : CULL_DIRECTIONS){
+                // Skip direction if it doesn't pass the cull test
+                if(context.isFaceCulled(cullDirection))
+                    continue;
 
-        // Determine the vertex indices rotation relative to the block face
-        float[][] positions3d = {getPosition(quad, 0), getPosition(quad, 1), getPosition(quad, 2), getPosition(quad, 3)};
-        // Project the 3d positions onto the plane perpendicular to the facing of the quad
-        float[][] pos = new float[4][2];
-        Direction direction = quad.getDirection();
-        for(int i = 0; i < 4; i++){
-            if(direction == Direction.DOWN){
-                pos[i][0] = positions3d[i][0];
-                pos[i][1] = -positions3d[i][2];
-            }else if(direction == Direction.UP){
-                pos[i][0] = positions3d[i][0];
-                pos[i][1] = positions3d[i][2];
-            }else if(direction == Direction.NORTH){
-                pos[i][0] = -positions3d[i][0];
-                pos[i][1] = -positions3d[i][1];
-            }else if(direction == Direction.SOUTH){
-                pos[i][0] = positions3d[i][0];
-                pos[i][1] = -positions3d[i][1];
-            }else if(direction == Direction.WEST){
-                pos[i][0] = positions3d[i][2];
-                pos[i][1] = -positions3d[i][1];
-            }else if(direction == Direction.EAST){
-                pos[i][0] = -positions3d[i][2];
-                pos[i][1] = -positions3d[i][1];
+                emitter.cullFace(cullDirection);
+
+                OrientedMutableQuad mutableQuad = null;
+                for(ConnectingModelQuads.Entry entry : part.quads().get(cullDirection)){
+                    QuadAccess quad = entry.quad();
+                    // Get the sprite instance
+                    SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                    if(sprite == null){
+                        quad.toFrapiQuad(emitter);
+                        emitter.emit();
+                        continue;
+                    }
+
+                    // Process special texture type quads
+                    TextureType<?,?> textureType = sprite.getTexture().getTextureType();
+                    if(textureType == DefaultTextureTypes.CONNECTING){
+                        // Check if the connections have already been computed, otherwise compute them
+                        TextureConnections connections = computedConnections.computeIfAbsent(
+                            entry.predicateKey(),
+                            key -> computeConnections(key, blockCache)
+                        );
+
+                        // Get the sprite data
+                        StitchedConnectingTextureData data = (StitchedConnectingTextureData)sprite.getTexture().getCustomData();
+                        ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(data.getLayout());
+
+                        // Create quads
+                        if(mutableQuad == null)
+                            mutableQuad = new OrientedMutableQuad();
+                        for(int i = 0; i < layoutHandler.getAuxiliaryQuadCount() + 1; i++){
+                            mutableQuad.copyFrom(quad);
+                            mutableQuad.setPermutation(entry.orientation().vertexIndexPermutation);
+                            boolean keepQuad = layoutHandler.processBlockQuad(i, mutableQuad, sprite, data, connections);
+                            mutableQuad.resetPermutation();
+                            if(keepQuad){
+                                mutableQuad.toFrapiQuad(emitter);
+                                emitter.emit();
+                            }
+                        }
+                    }else if(textureType == DefaultTextureTypes.RANDOM){
+                        if(mutableQuad == null)
+                            mutableQuad = new OrientedMutableQuad();
+                        mutableQuad.copyFrom(quad);
+                        RandomTextureType.processQuad(mutableQuad, pos, quad.facing(), randomSupplier, sprite);
+                        mutableQuad.toFrapiQuad(emitter);
+                        emitter.emit();
+                    }else if(textureType == DefaultTextureTypes.CONTINUOUS){
+                        if(mutableQuad == null)
+                            mutableQuad = new OrientedMutableQuad();
+                        mutableQuad.copyFrom(quad);
+                        ContinuousTextureType.processQuad(mutableQuad, pos, quad.facing(), sprite);
+                        mutableQuad.toFrapiQuad(emitter);
+                        emitter.emit();
+                    }else{
+                        quad.toFrapiQuad(emitter);
+                        emitter.emit();
+                    }
+                }
             }
         }
-        // Compare the angle between directions v1 to v2 and v1 to v3, to check whether the texture is flipped
-        angle1to2 = Math.atan2(pos[1][1] - pos[0][1], pos[1][0] - pos[0][0]);
-        angle1to3 = Math.atan2(pos[2][1] - pos[0][1], pos[2][0] - pos[0][0]);
-        boolean quadFlipped = (angle1to2 - angle1to3 + 4 * Math.PI) % (2 * Math.PI) < Math.PI;
-        // Find the top-left-most-ish index, if we assume the uvs form an axis-aligned square this should work
-        topLeftMostIndex = 0;
-        for(int i = 1; i < 4; i++){
-            float[] best = pos[topLeftMostIndex], current = pos[i];
-            if(current[0] + current[1] < best[0] + best[1])
-                topLeftMostIndex = i;
-        }
-        int quadRotation = textureFlipped ? topLeftMostIndex : (4 - topLeftMostIndex);
+    }
 
-        // Combine the two, to get the in-world orientation of the texture
-        boolean flipped = textureFlipped ^ quadFlipped;
-        int rotation = quadFlipped ? (4 - textureRotation + quadRotation) % 4 : (textureRotation + quadRotation) % 4;
-        return TextureOrientation.of(flipped, rotation);
+    @Override
+    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
+        // Emit quads
+        QuadEmitter emitter = context.getEmitter();
+        for(Part part : this.parts){
+            for(ConnectingModelQuads.Entry entry : part.quads().all()){
+                entry.quad().toFrapiQuad(emitter);
+                emitter.emit();
+            }
+        }
     }
 
     @Override
@@ -286,124 +183,11 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random){
+    public List<BakedQuad> getQuads(@Nullable BlockState blockState, @Nullable Direction direction, RandomSource randomSource){
         return List.of();
     }
 
-    @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
-        // If either level or position is not given, the connected textures cannot be updated, so don't process them
-        boolean processConnectingTextures = blockView != null && pos != null && !this.predicates.isEmpty();
-        if(!processConnectingTextures && !this.hasSpecialQuads){
-            this.blockMesh.outputTo(context.getEmitter());
-            return;
-        }
-
-        // If a quad is going to get culled anyway, don't bother processing it
-        boolean[] culledFaces = {
-            context.isFaceCulled(Direction.DOWN),
-            context.isFaceCulled(Direction.UP),
-            context.isFaceCulled(Direction.NORTH),
-            context.isFaceCulled(Direction.SOUTH),
-            context.isFaceCulled(Direction.WEST),
-            context.isFaceCulled(Direction.EAST)
-        };
-        OrientedMutableQuad mutableQuad = new OrientedMutableQuad();
-
-        // Process special texture type quads
-        if(this.hasSpecialQuads){
-            context.pushTransform(
-                quad -> {
-                    if((quad.tag() & 15) != 0){
-                        // Ignore the quad if it will be culled anyway
-                        Direction cullFace = quad.cullFace();
-                        if(cullFace != null && culledFaces[cullFace.ordinal()])
-                            return false;
-
-                        // Unpack type and sprite index from the tag
-                        int tag = quad.tag();
-                        int type = quad.tag() & ((1 << 4) - 1);
-                        int spriteIndex = (tag >> 4) & ((1 << 8) - 1);
-
-                        // Get the sprite
-                        SpriteInstance sprite = this.sprites.get(spriteIndex);
-
-                        // Handle random texture type
-                        if(type == 2){
-                            mutableQuad.set(quad);
-                            mutableQuad.resetPermutation();
-                            RandomTextureType.processQuad(mutableQuad, pos, quad.nominalFace(), randomSupplier, sprite);
-                            return true;
-                        }
-                        // Handle continuous texture type
-                        if(type == 3){
-                            mutableQuad.set(quad);
-                            mutableQuad.resetPermutation();
-                            ContinuousTextureType.processQuad(mutableQuad, pos, quad.nominalFace(), sprite);
-                            return true;
-                        }
-                    }
-                    return true;
-                }
-            );
-        }
-
-        if(processConnectingTextures){
-            // Only compute connections for each predicate once
-            TextureConnections[] connectionsCache = new TextureConnections[this.predicates.size()];
-            // Store a cache of the surrounding blocks
-            SurroundingBlockCache blockCache = new SurroundingBlockCache(blockView, pos, state);
-            // Push a transform which maps any connecting texture quads to the correct uv
-            context.pushTransform(quad -> {
-                if((quad.tag() & 15) != 0){
-                    // Ignore the quad if it will be culled anyway
-                    Direction cullFace = quad.cullFace();
-                    if(cullFace != null && culledFaces[cullFace.ordinal()])
-                        return false;
-
-                    // Unpack type, sprite index, predicate index, and quad index from the tag
-                    int tag = quad.tag();
-                    int type = tag & ((1 << 4) - 1);
-                    int spriteIndex = (tag >> 4) & ((1 << 8) - 1);
-                    int predicateIndex = (tag >> 12) & ((1 << 8) - 1);
-                    int quadIndex = (tag >> 20) & ((1 << 4) - 1);
-
-                    if(type != 1)
-                        return true;
-
-                    // Get the connection predicate
-                    QuadPredicates predicate = this.predicates.get(predicateIndex);
-                    // Check if the connections have already been computed, otherwise compute them
-                    TextureConnections connections = connectionsCache[predicateIndex];
-                    if(connections == null){
-                        // Compute the connections
-                        connections = connectionsCache[predicateIndex] = computeConnections(predicate, blockCache);
-                    }
-
-                    // Get the sprite and the texture layout
-                    SpriteInstance sprite = this.sprites.get(spriteIndex);
-                    StitchedConnectingTextureData data = (StitchedConnectingTextureData)sprite.getTexture().getCustomData();
-                    ConnectingTextureLayout layout = data.getLayout();
-
-                    // Remap the quad's uv
-                    mutableQuad.set(quad);
-                    mutableQuad.set(predicate.orientation.vertexIndexPermutation);
-                    return ConnectingTextureLayoutHandler.get(layout).processBlockQuad(quadIndex, mutableQuad, sprite, data, connections);
-                }
-                return true;
-            });
-        }
-
-        this.blockMesh.outputTo(context.getEmitter());
-
-        // Pop the transforms
-        if(this.hasSpecialQuads)
-            context.popTransform();
-        if(processConnectingTextures)
-            context.popTransform();
-    }
-
-    private static TextureConnections computeConnections(QuadPredicates predicates, SurroundingBlockCache blocks){
+    private static TextureConnections computeConnections(QuadPredicatesKey predicates, SurroundingBlockCache blocks){
         ConnectionPredicate predicate = predicates.predicate;
         Direction face = predicates.direction;
         TextureOrientation orientation = predicates.orientation;
@@ -437,13 +221,13 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
-        this.itemMesh.outputTo(context.getEmitter());
+    public TextureAtlasSprite getParticleIcon(){
+        return this.particleSprite;
     }
 
     @Override
     public boolean useAmbientOcclusion(){
-        return this.hasAmbientOcclusion;
+        return true; // Ambient occlusion is handled by quads themselves
     }
 
     @Override
@@ -453,17 +237,7 @@ public class ConnectingBakedModel implements BakedModel {
 
     @Override
     public boolean usesBlockLight(){
-        return this.usesBlockLight;
-    }
-
-    @Override
-    public boolean isCustomRenderer(){
-        return false;
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon(){
-        return this.particleIcon;
+        return this.guiLight.lightLikeBlock();
     }
 
     @Override
@@ -472,16 +246,82 @@ public class ConnectingBakedModel implements BakedModel {
     }
 
     @Override
-    public ItemOverrides getOverrides(){
-        return this.overrides;
+    public boolean isCustomRenderer(){
+        return false;
     }
 
-    private static class QuadPredicates {
+    @Override
+    public ItemOverrides getOverrides(){
+        return ItemOverrides.EMPTY;
+    }
+
+    static TextureOrientation findOrientation(QuadAccess quad){
+        // First determine the texture orientation relative to the vertex indices
+        // Compare the angle between directions v1 to v2 and v1 to v3, to check whether the texture is flipped
+        double angle1to2 = Math.atan2(quad.v(1) - quad.v(0), quad.u(1) - quad.u(0)), angle1to3 = Math.atan2(quad.v(2) - quad.v(0), quad.u(2) - quad.u(0));
+        boolean textureFlipped = (angle1to2 - angle1to3 + 4 * Math.PI) % (2 * Math.PI) < Math.PI;
+        // Find the top-left-most-ish index, if we assume the uvs form a grid-aligned square this should work
+        int topLeftMostIndex = 0;
+        float minUV = quad.u(0) + quad.v(0);
+        for(int i = 1; i < 4; i++){
+            if(quad.u(i) + quad.v(i) < minUV){
+                minUV = quad.u(i) + quad.v(i);
+                topLeftMostIndex = i;
+            }
+        }
+        int textureRotation = textureFlipped ? topLeftMostIndex : (4 - topLeftMostIndex) % 4;
+
+        // Determine the vertex indices rotation relative to the block face
+        Vector3fc[] positions3d = {quad.position(0), quad.position(1), quad.position(2), quad.position(3)};
+        // Project the 3d positions onto the plane perpendicular to the facing of the quad
+        float[][] pos = new float[4][2];
+        Direction direction = quad.facing();
+        for(int i = 0; i < 4; i++){
+            if(direction == Direction.DOWN){
+                pos[i][0] = positions3d[i].x();
+                pos[i][1] = -positions3d[i].z();
+            }else if(direction == Direction.UP){
+                pos[i][0] = positions3d[i].x();
+                pos[i][1] = positions3d[i].z();
+            }else if(direction == Direction.NORTH){
+                pos[i][0] = -positions3d[i].x();
+                pos[i][1] = -positions3d[i].y();
+            }else if(direction == Direction.SOUTH){
+                pos[i][0] = positions3d[i].x();
+                pos[i][1] = -positions3d[i].y();
+            }else if(direction == Direction.WEST){
+                pos[i][0] = positions3d[i].z();
+                pos[i][1] = -positions3d[i].y();
+            }else if(direction == Direction.EAST){
+                pos[i][0] = -positions3d[i].z();
+                pos[i][1] = -positions3d[i].y();
+            }
+        }
+        // Compare the angle between directions v1 to v2 and v1 to v3, to check whether the texture is flipped
+        angle1to2 = Math.atan2(pos[1][1] - pos[0][1], pos[1][0] - pos[0][0]);
+        angle1to3 = Math.atan2(pos[2][1] - pos[0][1], pos[2][0] - pos[0][0]);
+        boolean quadFlipped = (angle1to2 - angle1to3 + 4 * Math.PI) % (2 * Math.PI) < Math.PI;
+        // Find the top-left-most-ish index, if we assume the uvs form an axis-aligned square this should work
+        topLeftMostIndex = 0;
+        for(int i = 1; i < 4; i++){
+            float[] best = pos[topLeftMostIndex], current = pos[i];
+            if(current[0] + current[1] < best[0] + best[1])
+                topLeftMostIndex = i;
+        }
+        int quadRotation = textureFlipped ? topLeftMostIndex : (4 - topLeftMostIndex);
+
+        // Combine the two, to get the in-world orientation of the texture
+        boolean flipped = textureFlipped ^ quadFlipped;
+        int rotation = quadFlipped ? (4 - textureRotation + quadRotation) % 4 : (textureRotation + quadRotation) % 4;
+        return TextureOrientation.of(flipped, rotation);
+    }
+
+    static class QuadPredicatesKey {
         public final Direction direction;
         public final TextureOrientation orientation;
         public final ConnectionPredicate predicate;
 
-        private QuadPredicates(Direction direction, TextureOrientation orientation, ConnectionPredicate predicate){
+        QuadPredicatesKey(Direction direction, TextureOrientation orientation, ConnectionPredicate predicate){
             this.direction = direction;
             this.orientation = orientation;
             this.predicate = predicate;
@@ -490,7 +330,7 @@ public class ConnectingBakedModel implements BakedModel {
         @Override
         public final boolean equals(Object o){
             if(this == o) return true;
-            if(!(o instanceof QuadPredicates that)) return false;
+            if(!(o instanceof QuadPredicatesKey that)) return false;
 
             return this.direction == that.direction && this.orientation == that.orientation && this.predicate.equals(that.predicate);
         }
@@ -504,7 +344,7 @@ public class ConnectingBakedModel implements BakedModel {
         }
     }
 
-    private enum TextureOrientation {
+    enum TextureOrientation {
         NORMAL_0(false, 0), NORMAL_90(false, 1), NORMAL_180(false, 2), NORMAL_270(false, 3),
         FLIPPED_0(true, 0), FLIPPED_90(true, 1), FLIPPED_180(true, 2), FLIPPED_270(true, 3);
 
@@ -589,5 +429,8 @@ public class ConnectingBakedModel implements BakedModel {
             }
             return newVector;
         }
+    }
+
+    public record Part(ConnectingModelQuads quads) {
     }
 }

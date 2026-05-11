@@ -1,7 +1,9 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
+import com.supermartijn642.fusion.model.custom.quad.MutableQuadImpl;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
@@ -30,46 +32,49 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         BlockStateProperties.EAST
     };
 
+    private final MutableQuad helperMutableQuad = new MutableQuadImpl();
+
     public PaneCullingBakedModel(BlockStateModel original){
         super(original);
     }
 
     @Override
-    public void emitQuads(QuadEmitter emitter, BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest){
+    public void emitQuads(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest){
         // If state has no side properties, then there's nothing to be culled
         if(!state.hasProperty(BlockStateProperties.NORTH) && !state.hasProperty(BlockStateProperties.SOUTH) && !state.hasProperty(BlockStateProperties.WEST) && !state.hasProperty(BlockStateProperties.EAST)){
-            super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+            super.emitQuads(emitter, level, pos, state, random, cullTest);
             return;
         }
 
         // Gather the states above and below
-        BlockState stateAbove = blockView.getBlockState(pos.above()).getAppearance(blockView, pos.above(), Direction.DOWN, state, pos);
-        if(stateAbove.getBlock() != state.getBlock())
-            stateAbove = null;
-        BlockState stateBelow = blockView.getBlockState(pos.below()).getAppearance(blockView, pos.below(), Direction.UP, state, pos);
-        if(stateBelow.getBlock() != state.getBlock())
-            stateBelow = null;
-
-        if(stateAbove == null && stateBelow == null){
-            super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+        BlockState above = level.getBlockState(pos.above()).getAppearance(level, pos.above(), Direction.DOWN, state, pos);
+        if(above.getBlock() != state.getBlock())
+            above = null;
+        BlockState below = level.getBlockState(pos.below()).getAppearance(level, pos.below(), Direction.UP, state, pos);
+        if(below.getBlock() != state.getBlock())
+            below = null;
+        if(above == null && below == null){
+            super.emitQuads(emitter, level, pos, state, random, cullTest);
             return;
         }
 
         // Filter out certain quads
-        BlockState finalStateAbove = stateAbove;
-        BlockState finalStateBelow = stateBelow;
+        BlockState finalStateAbove = above;
+        BlockState finalStateBelow = below;
         emitter.pushTransform(quad -> filterQuad(quad, finalStateAbove, finalStateBelow));
-        super.emitQuads(emitter, blockView, pos, state, random, cullTest);
+        super.emitQuads(emitter, level, pos, state, random, cullTest);
         emitter.popTransform();
     }
 
-    private static boolean filterQuad(QuadView quad, BlockState stateAbove, BlockState stateBelow){
+    private boolean filterQuad(QuadView quadView, BlockState stateAbove, BlockState stateBelow){
         // Check that the quad is part of the top or bottom face of the pane
-        Direction quadDirection = quad.nominalFace();
+        Direction quadDirection = quadView.nominalFace();
         if(quadDirection != Direction.UP && quadDirection != Direction.DOWN)
             return true;
 
         // Find the center of the quad
+        MutableQuad quad = this.helperMutableQuad;
+        quad.copyFrapiQuad(quadView);
         float centerX = (quad.x(0) + quad.x(1) + quad.x(2) + quad.x(3)) / 4;
         float centerZ = (quad.z(0) + quad.z(1) + quad.z(2) + quad.z(3)) / 4;
         // If the quad's center is roughly at the center of the block, assume it is the middle part of the glass pane

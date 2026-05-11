@@ -1,0 +1,83 @@
+package com.supermartijn642.fusion.model.types.cuboid;
+
+import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
+import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
+import net.minecraft.client.resources.model.cuboid.*;
+import net.minecraft.client.resources.model.sprite.TextureSlots;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemDisplayContext;
+
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Created 01/05/2023 by SuperMartijn642
+ */
+public class CuboidModelDataBuilderImpl extends AbstractCuboidModelDataBuilder<CuboidModelDataBuilderImpl,CuboidModel> {
+
+    public static CuboidModelDataBuilder<?,CuboidModel> builder(){
+        return new CuboidModelDataBuilderImpl();
+    }
+
+    private CuboidModelDataBuilderImpl(){
+    }
+
+    @Override
+    public CuboidModel build(){
+        // Create vanilla texture slots
+        TextureSlots.Data.Builder textures = new TextureSlots.Data.Builder();
+        this.materials.forEach((key, value) -> {
+            if(value.isLeft())
+                textures.addReference(key, value.left());
+            else
+                textures.addTexture(key, value.right().toMaterial());
+        });
+        // Convert vanilla geometry
+        List<CuboidModelElement> elements = new ArrayList<>(this.elements.size());
+        for(CuboidModelGeometry.Element element : this.elements){
+            Map<Direction,CuboidFace> faces = new EnumMap<>(Direction.class);
+            for(Direction side : Direction.values()){
+                CuboidModelGeometry.Face face = element.face(side);
+                if(face == null)
+                    continue;
+                String material = face.material();
+                if(!material.isEmpty() && material.charAt(0) == '#')
+                    material = material.substring(1);
+                faces.put(side, new CuboidFace(
+                    face.cullDirection(),
+                    face.tintIndex() == null ? -1 : face.tintIndex(),
+                    material,
+                    face.uv(),
+                    face.rotation()
+                ));
+            }
+            elements.add(new CuboidModelElement(
+                element.from(), element.to(),
+                faces,
+                element.rotation(),
+                element.shade() == null || element.shade(),
+                element.lightEmission() == null ? 0 : element.lightEmission()
+            ));
+        }
+        UnbakedCuboidGeometry geometry = new UnbakedCuboidGeometry(elements);
+        // Create item transforms
+        ItemTransforms itemTransforms = null;
+        if(!this.itemTransforms.isEmpty()){
+            itemTransforms = new ItemTransforms(
+                this.itemTransforms.getOrDefault(ItemDisplayContext.THIRD_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
+                this.itemTransforms.getOrDefault(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
+                this.itemTransforms.getOrDefault(ItemDisplayContext.FIRST_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
+                this.itemTransforms.getOrDefault(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
+                this.itemTransforms.getOrDefault(ItemDisplayContext.HEAD, ItemTransform.NO_TRANSFORM),
+                this.itemTransforms.getOrDefault(ItemDisplayContext.GUI, ItemTransform.NO_TRANSFORM),
+                this.itemTransforms.getOrDefault(ItemDisplayContext.GROUND, ItemTransform.NO_TRANSFORM),
+                this.itemTransforms.getOrDefault(ItemDisplayContext.FIXED, ItemTransform.NO_TRANSFORM),
+                this.itemTransforms.getOrDefault(ItemDisplayContext.ON_SHELF, ItemTransform.NO_TRANSFORM)
+            );
+        }
+        // Create the vanilla model
+        return new CuboidModel(geometry, this.guiLight, this.ambientOcclusion == null || this.ambientOcclusion, itemTransforms, textures.build(), this.parent);
+    }
+}

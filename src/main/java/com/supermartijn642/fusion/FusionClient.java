@@ -2,7 +2,7 @@ package com.supermartijn642.fusion;
 
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
-import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
@@ -12,14 +12,12 @@ import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
-import net.fabricmc.fabric.api.client.renderer.v1.mesh.ShadeMode;
-import net.fabricmc.fabric.api.util.TriState;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -41,21 +39,21 @@ public class FusionClient implements ClientModInitializer {
         FusionTextureTypeRegistry.registerTextureType(Fusion.identifier("continuous"), DefaultTextureTypes.CONTINUOUS);
         // Register default model types
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("unknown"), DefaultModelTypes.UNKNOWN);
-        FusionModelTypeRegistry.registerModelType(Fusion.identifier("vanilla"), DefaultModelTypes.VANILLA);
+        FusionModelTypeRegistry.registerModelType(Fusion.identifier("cuboid"), DefaultModelTypes.CUBOID);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("base"), DefaultModelTypes.BASE);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("connecting"), DefaultModelTypes.CONNECTING);
         // Register default connection predicates
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("and"), AndConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("or"), OrConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("not"), NotConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_direction"), IsDirectionConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_face_visible"), IsFaceVisibleConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_block"), IsSameBlockConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_state"), IsSameStateConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block"), MatchBlockConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block_in_front"), MatchBlockInFrontConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state"), MatchStateConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state_in_front"), MatchStateInFrontConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("and"), AndConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("or"), OrConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("not"), NotConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_direction"), IsDirectionConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_face_visible"), IsFaceVisibleConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_block"), IsSameBlockConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_state"), IsSameStateConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block"), MatchBlockConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block_in_front"), MatchBlockInFrontConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state"), MatchStateConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state_in_front"), MatchStateInFrontConnectionPredicate.SERIALIZER);
         // Register default item model predicates
         ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("and"), AndItemPredicate.SERIALIZER);
         ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("or"), OrItemPredicate.SERIALIZER);
@@ -72,24 +70,35 @@ public class FusionClient implements ClientModInitializer {
         EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("is_baby"), BabyEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("biome"), BiomeEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("dimension"), DimensionEntityModelPredicate.SERIALIZER);
-
-        // Finalize registration
-        ClientLifecycleEvents.CLIENT_STARTED.register(client -> TextureTypeRegistryImpl.finalizeRegistration());
-        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModelTypeRegistryImpl.finalizeRegistration());
-        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
     }
 
-    public static void applyMaterialProperties(QuadEmitter emitter, Boolean ambientOcclusion, BaseTextureData.RenderType renderType, boolean emissive){
-        emitter.shadeMode(ShadeMode.VANILLA);
-        emitter.ambientOcclusion(ambientOcclusion == null ? TriState.DEFAULT : ambientOcclusion ? TriState.TRUE : TriState.FALSE);
-        if(renderType != null){
-            ChunkSectionLayer layer = renderType == BaseTextureData.RenderType.OPAQUE ? ChunkSectionLayer.SOLID
-                : renderType == BaseTextureData.RenderType.CUTOUT ? ChunkSectionLayer.CUTOUT
-                : renderType == BaseTextureData.RenderType.TRANSLUCENT ? ChunkSectionLayer.TRANSLUCENT : null;
-            emitter.chunkLayer(layer);
+    public static void finalizeRegistries(){
+        TextureTypeRegistryImpl.finalizeRegistration();
+        ModelTypeRegistryImpl.finalizeRegistration();
+        ConnectionPredicateRegistryImpl.finalizeRegistration();
+        EntityModelPredicateRegistry.finalizeRegistration();
+        ItemPredicateRegistry.finalizeRegistration();
+    }
+
+    public static Optional<ChunkSectionLayer> getChunkLayer(BaseTextureData.RenderType renderType){
+        if(renderType == null)
+            return Optional.empty();
+        ChunkSectionLayer material;
+        //noinspection EnhancedSwitchMigration
+        switch(renderType){
+            case OPAQUE:
+                material = ChunkSectionLayer.SOLID;
+                break;
+            case CUTOUT:
+                material = ChunkSectionLayer.CUTOUT;
+                break;
+            case TRANSLUCENT:
+                material = ChunkSectionLayer.TRANSLUCENT;
+                break;
+            default:
+                throw new AssertionError();
         }
-        if(emissive)
-            emitter.emissive(true).diffuseShade(true).ambientOcclusion(TriState.FALSE);
+        return Optional.of(material);
     }
 
     private static String fusionVersion;

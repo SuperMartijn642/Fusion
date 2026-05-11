@@ -1,59 +1,133 @@
 package com.supermartijn642.fusion.api.model;
 
+import com.supermartijn642.fusion.api.model.custom.*;
+import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.ModelInstanceImpl;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.resources.model.cuboid.ItemTransform;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemDisplayContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
+ * A container for a model type along with its data.
+ * <p>
  * Created 29/04/2023 by SuperMartijn642
  */
+@ApiStatus.NonExtendable
 public interface ModelInstance<T> {
 
+    /**
+     * Create a new model instance for the given values.
+     */
     static <T> ModelInstance<T> of(ModelType<T> modelType, T modelData){
         return new ModelInstanceImpl<>(modelType, modelData);
     }
 
+    /**
+     * The type of the model.
+     */
     ModelType<T> getModelType();
 
+    /**
+     * The data of the model.
+     */
     T getModelData();
 
     /**
-     * Gets all the dependencies on other model files.
+     * Gets all the dependencies on other unbaked models.
      */
-    Collection<Identifier> getModelDependencies();
+    Collection<Identifier> getDependencies();
 
     /**
-     * Converts the model data into a baked block model.
-     * @param context context for baking the model
-     * @return a baked model
-     * @see BlockModelBakingContext
+     * Gets any parent models which the model may inherit properties from.
      */
-    BlockStateModel bakeBlockModel(BlockModelBakingContext context);
+    List<Either<Identifier,ModelInstance<?>>> getParents();
 
     /**
-     * Converts the model data into a baked item model.
-     * @param context context for baking the model
-     * @return a baked model
-     * @see ItemModelBakingContext
-     */
-    ItemModel bakeItemModel(ItemModelBakingContext context);
-
-    /**
-     * Represents the model as a vanilla {@link BlockModel} instance. May be used gather info from other models, such as with the vanilla 'parent' property.
-     * @return a representation of the model as a vanilla {@link BlockModel} instance, or {@code null} if such a representation is not available
+     * Gets whether the model should be rendered with ambient occlusion.
      */
     @Nullable
-    UnbakedModel getAsVanillaModel();
+    Boolean getAmbientOcclusion();
 
     /**
-     * Gets any 'parent' models which the model may inherit properties from.
+     * Gets the lighting to use when the model is rendered in a gui.
      */
-    List<Identifier> getParentModels();
+    @Nullable
+    UnbakedModel.GuiLight getGuiLight();
+
+    /**
+     * Gets the transformations used to render the model as an item under the given context.
+     */
+    @Nullable
+    ItemTransform getItemTransform(ItemDisplayContext type);
+
+    /**
+     * Gets the material references of the model.
+     */
+    Map<String,Either<String,ModelMaterial>> getMaterials();
+
+    /**
+     * Gets the material reference for the given key.
+     */
+    @Nullable
+    default Either<String,ModelMaterial> getMaterial(String key){
+        return this.getMaterials().get(key);
+    }
+
+    /**
+     * Gets the geometry of the model.
+     */
+    @Nullable
+    ModelGeometry getGeometry();
+
+    /**
+     * Gets whether the model should be shaded.
+     */
+    @Nullable
+    Boolean getShade();
+
+    /**
+     * Gets whether the model is emissive.
+     */
+    @Nullable
+    Boolean getEmissive();
+
+    /**
+     * Gets the transformations that should be applied to the model's geometry.
+     */
+    ModelTransform getTransform();
+
+    /**
+     * Gets an arbitrary property of this model.
+     * @see ModelProperty
+     */
+    <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context);
+
+    /**
+     * Gets an arbitrary property of this model.
+     * @see ModelProperty
+     */
+    default <X> Optional<X> getProperty(ModelProperty<X,Void> property){
+        return this.getProperty(property, null);
+    }
+
+    /**
+     * Creates a block state model from the model data.
+     */
+    BlockStateModel bakeBlockStateModel(BlockStateModelBakingContext context);
+
+    /**
+     * Creates an item model from the model data.
+     */
+    ItemModel bakeItemModel(ItemModelBakingContext context);
 }

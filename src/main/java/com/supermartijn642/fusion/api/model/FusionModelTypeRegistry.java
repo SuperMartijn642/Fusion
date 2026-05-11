@@ -5,6 +5,8 @@ import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import net.minecraft.util.ResourceLocation;
 
 /**
+ * Registry for model types.
+ * <p>
  * Created 26/04/2023 by SuperMartijn642
  */
 public final class FusionModelTypeRegistry {

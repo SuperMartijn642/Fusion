@@ -1,16 +1,21 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.mojang.datafixers.util.Pair;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
-import com.supermartijn642.fusion.model.FusionBlockModel;
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.IUnbakedModel;
+import net.minecraft.client.renderer.model.RenderMaterial;
 import net.minecraft.util.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Collection;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -22,20 +27,6 @@ public class BlockModelMixin implements BlockModelExtension {
     @Unique
     private ModelInstance<?> fusionModel;
 
-    @ModifyVariable(
-        method = "getMaterials(Ljava/util/function/Function;Ljava/util/Set;)Ljava/util/Collection;",
-        at = @At("HEAD"),
-        ordinal = 0
-    )
-    private Function<ResourceLocation,IUnbakedModel> adjustModelGetter(Function<ResourceLocation,IUnbakedModel> modelGetter){
-        return location -> {
-            IUnbakedModel model = modelGetter.apply(location);
-            if(model instanceof FusionBlockModel)
-                return ((FusionBlockModel)model).hasVanillaModel() ? ((FusionBlockModel)model).getVanillaModel() : FusionBlockModel.DUMMY_MODEL;
-            return model;
-        };
-    }
-
     @Override
     public ModelInstance<?> getFusionModel(){
         return this.fusionModel;
@@ -44,5 +35,18 @@ public class BlockModelMixin implements BlockModelExtension {
     @Override
     public void setFusionModel(ModelInstance<?> fusionModel){
         this.fusionModel = fusionModel;
+    }
+
+    @Inject(
+        method = "getMaterials",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void getMaterials(Function<ResourceLocation,IUnbakedModel> modelGetter, Set<Pair<String,String>> missingMaterials, CallbackInfoReturnable<Collection<RenderMaterial>> ci){
+        //noinspection DataFlowIssue
+        BlockModel model = (BlockModel)(Object)this;
+        Collection<RenderMaterial> materials = FusionBlockModelData.gatherBlockModelMaterials(model, modelGetter, missingMaterials);
+        if(materials != null)
+            ci.setReturnValue(materials);
     }
 }

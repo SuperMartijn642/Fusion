@@ -9,7 +9,7 @@ import java.util.function.Function;
 /**
  * Created 23/07/2022 by SuperMartijn642
  */
-public class Pair<X, Y> {
+public final class Pair<X, Y> {
 
     public static <X, Y> Pair<X,Y> of(X left, Y right){
         return new Pair<>(left, right);

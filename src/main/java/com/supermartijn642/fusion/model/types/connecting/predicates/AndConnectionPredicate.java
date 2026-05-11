@@ -4,9 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
-import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
-import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionDirection;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.Direction;
@@ -33,7 +33,7 @@ public class AndConnectionPredicate implements ConnectionPredicate {
             for(JsonElement element : array){
                 if(!element.isJsonObject())
                     throw new JsonParseException("Property 'predicates' must only contain objects!");
-                ConnectionPredicate predicate = FusionPredicateRegistry.deserializeConnectionPredicate(element.getAsJsonObject());
+                ConnectionPredicate predicate = FusionConnectionPredicateRegistry.deserializeConnectionPredicate(element.getAsJsonObject());
                 predicates.add(predicate);
             }
             return new AndConnectionPredicate(predicates);
@@ -45,7 +45,7 @@ public class AndConnectionPredicate implements ConnectionPredicate {
             // Create an array with all the serialized predicates
             JsonArray predicatesJson = new JsonArray();
             for(ConnectionPredicate predicate : value.predicates)
-                predicatesJson.add(FusionPredicateRegistry.serializeConnectionPredicate(predicate));
+                predicatesJson.add(FusionConnectionPredicateRegistry.serializeConnectionPredicate(predicate));
             json.add("predicates", predicatesJson);
             return json;
         }

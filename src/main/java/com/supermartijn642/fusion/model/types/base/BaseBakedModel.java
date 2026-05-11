@@ -1,17 +1,21 @@
 package com.supermartijn642.fusion.model.types.base;
 
-import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.model.custom.CullableQuads;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
+import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
-import com.supermartijn642.fusion.model.ItemBakedModel;
-import com.supermartijn642.fusion.model.MutableQuad;
+import com.supermartijn642.fusion.model.WrappedBakedModel;
+import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -19,265 +23,176 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.ChunkRenderTypeSet;
-import net.minecraftforge.client.RenderTypeHelper;
 import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.client.model.data.ModelProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created 06/09/2024 by SuperMartijn642
  */
 public class BaseBakedModel implements BakedModel {
 
-    public static final ModelProperty<BlockPos> POSITION_PROPERTY = new ModelProperty<>();
-
-    private final List<TaggedBakedQuad>[] completeBlockMesh;
-    private final List<BakedQuad> completeItemMesh;
-    private final Map<RenderType,List<TaggedBakedQuad>[]> blockMesh;
-    private final Map<RenderType,List<BakedQuad>> itemMesh;
-    private final ChunkRenderTypeSet blockRenderTypes;
-    private final List<RenderType> itemRenderTypes, itemRenderTypesFabulous;
-    private final boolean shouldCheckOriginalItemRenderTypes, shouldCheckOriginalBlockRenderTypes;
-    private final ItemBakedModel itemModel;
-    private final List<SpriteInstance> sprites;
-    private final boolean hasSpecialQuads;
-    private final boolean hasAmbientOcclusion;
+    private final List<Part> parts;
+    private final TextureAtlasSprite particleSprite;
+    private final BlockModel.GuiLight guiLight;
     private final boolean isGui3d;
-    private final boolean usesBlockLight;
-    private final TextureAtlasSprite particleIcon;
     private final ItemTransforms transforms;
-    private final ItemOverrides overrides;
 
-    public BaseBakedModel(List<BaseModelQuad> quads, boolean hasAmbientOcclusion, boolean isGui3d, boolean usesBlockLight, TextureAtlasSprite particleIcon, ItemTransforms transforms, ItemOverrides overrides, RenderType forgeRenderType){
-        this.hasAmbientOcclusion = hasAmbientOcclusion;
+    public BaseBakedModel(List<Part> parts, TextureAtlasSprite particleSprite, BlockModel.GuiLight guiLight, boolean isGui3d, ItemTransforms transforms){
+        this.parts = parts;
+        this.particleSprite = particleSprite;
+        this.guiLight = guiLight;
         this.isGui3d = isGui3d;
-        this.usesBlockLight = usesBlockLight;
-        this.particleIcon = particleIcon;
         this.transforms = transforms;
-        this.overrides = overrides;
-
-        // Create block and item meshes from the quads
-        Map<RenderType,List<TaggedBakedQuad>[]> blockMesh = new HashMap<>();
-        Set<RenderType> blockRenderTypes = new LinkedHashSet<>();
-        Map<RenderType,List<BakedQuad>> itemMesh = new HashMap<>();
-        Set<RenderType> itemRenderTypes = new LinkedHashSet<>(), itemRenderTypesFabulous = new LinkedHashSet<>();
-        HashMap<SpriteInstance,Integer> sprites = new HashMap<>();
-        boolean hasSpecialQuads = false;
-        MutableQuad mutableQuad = new MutableQuad();
-        for(BaseModelQuad quad : quads){
-            mutableQuad.fillFromBakedQuad(quad.bakedQuad());
-            mutableQuad.ambientOcclusion(!quad.emissive() && hasAmbientOcclusion);
-            mutableQuad.emissive(quad.emissive());
-            if(quad.lightEmission() != null){
-                for(int i = 0; i < 4; i++){
-                    int sky = Math.max(quad.lightEmission(), LightTexture.sky(mutableQuad.lightmap(i)));
-                    int block = Math.max(quad.lightEmission(), LightTexture.block(mutableQuad.lightmap(i)));
-                    mutableQuad.lightmap(i, LightTexture.pack(sky, block));
-                }
-            }
-            // Tag quads which need additional processing
-            int spriteIndex = -1;
-            if(quad.textureType() == DefaultTextureTypes.RANDOM || quad.textureType() == DefaultTextureTypes.CONTINUOUS){
-                // Give each sprite a unique index
-                spriteIndex = sprites.computeIfAbsent(quad.spriteInstance(), o -> sprites.size());
-                hasSpecialQuads = true;
-            }
-
-            TaggedBakedQuad finishedQuad = new TaggedBakedQuad(mutableQuad.toBakedQuad(), quad.textureType(), spriteIndex);
-            // Add the block quads
-            RenderType renderType = FusionClient.getRenderTypeMaterial(quad.renderType());
-            if(renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER && forgeRenderType != null)
-                renderType = forgeRenderType;
-            blockRenderTypes.add(renderType);
-            int cullIndex = cullIndex(quad.cullDirection());
-            //noinspection unchecked
-            List<TaggedBakedQuad>[] mesh = blockMesh.computeIfAbsent(renderType, r -> new List[7]);
-            if(mesh[cullIndex] == null)
-                mesh[cullIndex] = new ArrayList<>();
-            mesh[cullIndex].add(finishedQuad);
-            // Add the item quads
-            RenderType itemRenderType = renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER ? FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER
-                : RenderTypeHelper.getEntityRenderType(renderType, false);
-            itemRenderTypes.add(itemRenderType);
-            List<BakedQuad> itemQuads = itemMesh.get(renderType);
-            if(itemQuads == null){
-                itemQuads = new ArrayList<>();
-                itemMesh.put(itemRenderType, itemQuads);
-                RenderType fabulousRenderType = renderType == FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER ? FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER
-                    : RenderTypeHelper.getEntityRenderType(renderType, true);
-                itemRenderTypesFabulous.add(fabulousRenderType);
-                itemMesh.put(fabulousRenderType, itemQuads);
-            }
-            itemQuads.add(mutableQuad.toBakedQuad());
-        }
-        this.blockMesh = Map.copyOf(blockMesh);
-        this.blockRenderTypes = ChunkRenderTypeSet.of(blockRenderTypes.stream().filter(r -> r != FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER).toList());
-        this.shouldCheckOriginalBlockRenderTypes = blockRenderTypes.contains(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
-        this.itemMesh = Map.copyOf(itemMesh);
-        this.itemRenderTypes = itemRenderTypes.stream().filter(r -> r != FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER).toList();
-        this.itemRenderTypesFabulous = itemRenderTypesFabulous.stream().filter(r -> r != FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER).toList();
-        this.shouldCheckOriginalItemRenderTypes = itemRenderTypes.contains(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
-        this.sprites = sprites.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(Map.Entry::getKey).toList();
-        this.hasSpecialQuads = hasSpecialQuads;
-
-        //noinspection unchecked
-        this.completeBlockMesh = new List[7];
-        for(int i = 0; i < 7; i++){
-            int cullIndex = i;
-            this.completeBlockMesh[i] = blockRenderTypes.stream().map(r -> this.blockMesh.get(r)[cullIndex]).filter(Objects::nonNull).flatMap(List::stream).toList();
-        }
-        this.completeItemMesh = itemRenderTypes.stream().map(this.itemMesh::get).flatMap(List::stream).toList();
-
-        // Create a model to return the item quads
-        this.itemModel = new ItemBakedModel(this) {
-            @Override
-            protected List<BakedQuad> getQuads(ItemStack stack, boolean fabulous, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType){
-                if(renderType == null)
-                    return BaseBakedModel.this.completeItemMesh;
-
-                List<BakedQuad> quads = BaseBakedModel.this.itemMesh.get(renderType);
-                if(BaseBakedModel.this.shouldCheckOriginalItemRenderTypes && getNonModelRenderType(stack, fabulous) == renderType){
-                    List<BakedQuad> additionalQuads = BaseBakedModel.this.itemMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
-                    if(additionalQuads != null){
-                        if(quads == null)
-                            quads = additionalQuads;
-                        else{
-                            List<BakedQuad> combined = new ArrayList<>(quads.size() + additionalQuads.size());
-                            combined.addAll(quads);
-                            combined.addAll(additionalQuads);
-                            quads = combined;
-                        }
-                    }
-                }
-                return quads == null ? Collections.emptyList() : quads;
-            }
-        };
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random, ModelData data, @Nullable RenderType renderType){
-        List<TaggedBakedQuad> quads;
-        if(renderType == null)
-            quads = this.completeBlockMesh[cullIndex(cullDirection)];
-        else{
-            List<TaggedBakedQuad>[] mesh = this.blockMesh.get(renderType);
-            quads = mesh == null ? null : mesh[cullIndex(cullDirection)];
+    public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
+        return ModelData.builder()
+            .with(ConnectingBakedModel.POSITION_PROPERTY, pos)
+            .build();
+    }
+
+    @Override
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random, ModelData modelData, @Nullable RenderType renderType){
+        BlockPos pos = modelData.get(ConnectingBakedModel.POSITION_PROPERTY);
+
+        // Get whether the giving render type is the default render type
+        boolean isDefaultRenderType;
+        if(renderType != null){
             //noinspection deprecation
-            if(this.shouldCheckOriginalBlockRenderTypes && state != null && ItemBlockRenderTypes.getRenderLayers(state).contains(renderType)){
-                mesh = this.blockMesh.get(FusionClient.USE_ORIGINAL_RENDER_TYPE_MARKER);
-                List<TaggedBakedQuad> additionalQuads = mesh == null ? null : mesh[cullIndex(cullDirection)];
-                if(additionalQuads != null){
-                    if(quads == null)
-                        quads = additionalQuads;
-                    else{
-                        List<TaggedBakedQuad> combined = new ArrayList<>(quads.size() + additionalQuads.size());
-                        combined.addAll(quads);
-                        combined.addAll(additionalQuads);
-                        quads = combined;
-                    }
+            RenderType defaultRenderType = state == null ?
+                RenderType.solid() :
+                ItemBlockRenderTypes.getChunkRenderType(state);
+            isDefaultRenderType = renderType == defaultRenderType;
+        }else
+            isDefaultRenderType = true;
+
+        // Collect quads
+        List<BakedQuad> bakedQuads = new ArrayList<>();
+        MutableQuad mutableQuad = null;
+        for(Part part : this.parts){
+            for(QuadAccess quad : part.quads().get(cullDirection)){
+                // Check quad render type
+                if(renderType != null){
+                    RenderType quadRenderType = quad.chunkRenderType();
+                    if(quadRenderType == null ? !isDefaultRenderType : quadRenderType != renderType)
+                        continue;
                 }
+
+                // Get the sprite instance
+                SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                if(sprite == null || pos == null){
+                    bakedQuads.add(quad.toBakedQuad());
+                    continue;
+                }
+
+                // Process special texture type quads
+                TextureType<?,?> textureType = sprite.getTexture().getTextureType();
+                if(textureType == DefaultTextureTypes.RANDOM){
+                    if(mutableQuad == null)
+                        mutableQuad = MutableQuad.create();
+                    mutableQuad.copyFrom(quad);
+                    RandomTextureType.processQuad(mutableQuad, pos, quad.facing(), random, sprite);
+                    bakedQuads.add(mutableQuad.toBakedQuad());
+                }else if(textureType == DefaultTextureTypes.CONTINUOUS){
+                    if(mutableQuad == null)
+                        mutableQuad = MutableQuad.create();
+                    mutableQuad.copyFrom(quad);
+                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.facing(), sprite);
+                    bakedQuads.add(mutableQuad.toBakedQuad());
+                }else
+                    bakedQuads.add(quad.toBakedQuad());
             }
-            if(quads == null)
-                quads = Collections.emptyList();
-        }
-
-        // If there's no special quads, just return the quads as is
-        if(!this.hasSpecialQuads){
-            List<BakedQuad> bakedQuads = new ArrayList<>(quads.size());
-            for(TaggedBakedQuad quad : quads)
-                bakedQuads.add(quad.bakedQuad);
-            return bakedQuads;
-        }
-
-        // Get the position from the model data
-        BlockPos pos = data.get(POSITION_PROPERTY);
-        // If the position is absent, just return the quads
-        if(pos == null){
-            List<BakedQuad> bakedQuads = new ArrayList<>(quads.size());
-            for(TaggedBakedQuad quad : quads)
-                bakedQuads.add(quad.bakedQuad);
-            return bakedQuads;
-        }
-
-        // Push a transform which maps any connecting texture quads to the correct uv
-        ArrayList<BakedQuad> bakedQuads = new ArrayList<>(quads.size());
-        MutableQuad mutableQuad = new MutableQuad();
-        for(TaggedBakedQuad quad : quads){
-            // Process special texture type quads
-            if(quad.textureType == DefaultTextureTypes.RANDOM || quad.textureType == DefaultTextureTypes.CONTINUOUS){
-                // Get the sprite
-                SpriteInstance sprite = this.sprites.get(quad.spriteIndex);
-
-                mutableQuad.fillFromBakedQuad(quad.bakedQuad);
-                if(quad.textureType == DefaultTextureTypes.RANDOM)
-                    // Handle random texture type
-                    RandomTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getDirection(), random, sprite);
-                else
-                    // Handle continuous texture type
-                    ContinuousTextureType.processQuad(mutableQuad, pos, quad.bakedQuad.getDirection(), sprite);
-                bakedQuads.add(mutableQuad.toBakedQuad());
-            }else
-                bakedQuads.add(quad.bakedQuad);
         }
         return bakedQuads;
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource random){
-        return this.getQuads(state, side, random, ModelData.EMPTY, null);
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random){
+        return this.getQuads(state, cullDirection, random, ModelData.EMPTY, null);
     }
 
     @Override
-    public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData data){
-        if(this.shouldCheckOriginalBlockRenderTypes){
-            // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
-            //noinspection deprecation
-            return ChunkRenderTypeSet.union(
-                ItemBlockRenderTypes.getRenderLayers(state),
-                this.blockRenderTypes
-            );
-        }
-        return this.blockRenderTypes;
-    }
-
-    @Override
-    public List<RenderType> getRenderTypes(ItemStack stack, boolean fabulous){
-        if(this.shouldCheckOriginalItemRenderTypes){
-            // There's no way to know the render types beforehand through NeoForge's API, so just merge them here with the fixed render types
-            RenderType renderType = ItemBakedModel.getNonModelRenderType(stack, fabulous);
-            if(!(fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes).contains(renderType)){
-                ArrayList<RenderType> combined = new ArrayList<>((fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes).size() + 1);
-                combined.addAll(fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes);
-                combined.add(renderType);
-                return combined;
-            }
-        }
-        return fabulous ? this.itemRenderTypesFabulous : this.itemRenderTypes;
+    public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
+        return ChunkRenderTypeSet.all();
     }
 
     @Override
     public List<BakedModel> getRenderPasses(ItemStack stack, boolean fabulous){
-        this.itemModel.set(stack, fabulous);
-        return this.itemModel.asList();
+        // Get default render type to use for the item
+        RenderType defaultRenderType = Sheets.translucentItemSheet();
+        if(stack.getItem() instanceof BlockItem && ItemBlockRenderTypes.getChunkRenderType(((BlockItem)stack.getItem()).getBlock().defaultBlockState()) != RenderType.translucent())
+            defaultRenderType = Sheets.cutoutBlockSheet();
+
+        // Handle each part
+        List<BakedModel> models = new ArrayList<>(this.parts.size());
+        for(Part part : this.parts){
+            // Collect quads by render type
+            List<RenderType> renderTypes = new ArrayList<>(4);
+            List<List<BakedQuad>> quadsByRenderType = new ArrayList<>(4);
+            for(QuadAccess quad : part.quads.all()){
+                // Get render type
+                RenderType renderType = quad.itemRenderType();
+                if(renderType == null)
+                    renderType = defaultRenderType;
+                // Get or quad list
+                int i = renderTypes.indexOf(renderType);
+                List<BakedQuad> bakedQuads;
+                if(i == -1){
+                    renderTypes.add(renderType);
+                    bakedQuads = new ArrayList<>();
+                    quadsByRenderType.add(bakedQuads);
+                }else
+                    bakedQuads = quadsByRenderType.get(i);
+                // Add the quad to the list
+                bakedQuads.add(quad.toBakedQuad());
+            }
+
+            // Create model
+            models.add(new WrappedBakedModel(this) {
+                @Override
+                public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @NotNull RandomSource random, @NotNull ModelData data, @Nullable RenderType renderType){
+                    if(renderType == null){
+                        List<BakedQuad> combined = new ArrayList<>();
+                        for(List<BakedQuad> quads : quadsByRenderType)
+                            combined.addAll(quads);
+                        return combined;
+                    }
+                    int i = renderTypes.indexOf(renderType);
+                    return i == -1 ? List.of() : quadsByRenderType.get(i);
+                }
+
+                @Override
+                public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random){
+                    return this.getQuads(state, cullDirection, random, ModelData.EMPTY, null);
+                }
+
+                @Override
+                public List<RenderType> getRenderTypes(ItemStack stack, boolean fabulous){
+                    return renderTypes;
+                }
+            });
+        }
+        return models;
     }
 
     @Override
-    public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
-        if(!this.hasSpecialQuads)
-            return ModelData.EMPTY;
-        return ModelData.builder().with(POSITION_PROPERTY, pos).build();
+    public TextureAtlasSprite getParticleIcon(){
+        return this.particleSprite;
     }
 
     @Override
     public boolean useAmbientOcclusion(){
-        return this.hasAmbientOcclusion;
+        return true; // Ambient occlusion is handled by quads themselves
     }
 
     @Override
@@ -287,17 +202,7 @@ public class BaseBakedModel implements BakedModel {
 
     @Override
     public boolean usesBlockLight(){
-        return this.usesBlockLight;
-    }
-
-    @Override
-    public boolean isCustomRenderer(){
-        return false;
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon(){
-        return this.particleIcon;
+        return this.guiLight.lightLikeBlock();
     }
 
     @Override
@@ -306,23 +211,15 @@ public class BaseBakedModel implements BakedModel {
     }
 
     @Override
+    public boolean isCustomRenderer(){
+        return false;
+    }
+
+    @Override
     public ItemOverrides getOverrides(){
-        return this.overrides;
+        return ItemOverrides.EMPTY;
     }
 
-    private static int cullIndex(Direction cullDirection){
-        return cullDirection == null ? 0 : cullDirection.ordinal() + 1;
-    }
-
-    private static class TaggedBakedQuad {
-        final BakedQuad bakedQuad;
-        final TextureType<?,?> textureType;
-        final int spriteIndex;
-
-        private TaggedBakedQuad(BakedQuad bakedQuad, TextureType<?,?> textureType, int spriteIndex){
-            this.bakedQuad = bakedQuad;
-            this.textureType = textureType;
-            this.spriteIndex = spriteIndex;
-        }
+    public record Part(CullableQuads quads) {
     }
 }

@@ -26,6 +26,7 @@
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
     "MultiPartModelMixin",
+    "OptionsMixin",
     "OutlineBufferSourceMixin",
     "PackEntryMixin",
     "PackMixin",

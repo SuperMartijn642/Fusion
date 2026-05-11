@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.entity.model.predicates.AndEntityModelPredicat
 import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicate;
 import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicateRegistry;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
@@ -67,12 +68,7 @@ public class EntityModelModifierReloadListener {
             try{
                 parseResource(json);
             }catch(JsonParseException e){
-                FusionClient.LOGGER.error("Failed to parse entity model modifier '{}': {}", location, e.getMessage());
-                while(e.getCause() instanceof JsonParseException){
-                    //noinspection AssignmentToCatchBlockParameter
-                    e = (JsonParseException)e.getCause();
-                    FusionClient.LOGGER.error("   {}", e.getMessage());
-                }
+                LoggingHelper.logUserError(e, "Failed to parse entity model modifier '%s':", location);
             }
         }
     }

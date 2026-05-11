@@ -3,26 +3,24 @@ package com.supermartijn642.fusion;
 import com.google.common.collect.ImmutableSet;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
-import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.entity.model.predicates.*;
+import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
-import com.supermartijn642.fusion.model.types.connecting.ConnectingBakedModel;
 import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.FusionTextureMetadataSection;
+import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
-import net.neoforged.fml.InterModComms;
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.fml.event.lifecycle.InterModEnqueueEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Consumer;
+import java.util.Optional;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -30,8 +28,6 @@ import java.util.function.Consumer;
 public class FusionClient {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(Fusion.MODID);
-
-    public static final RenderType USE_ORIGINAL_RENDER_TYPE_MARKER = RenderType.create("fusion:ignore", null, null, 0, false, false, RenderType.CompositeState.builder().createCompositeState(false));
 
     public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
 
@@ -45,21 +41,21 @@ public class FusionClient {
         FusionTextureTypeRegistry.registerTextureType(Fusion.identifier("continuous"), DefaultTextureTypes.CONTINUOUS);
         // Register default model types
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("unknown"), DefaultModelTypes.UNKNOWN);
-        FusionModelTypeRegistry.registerModelType(Fusion.identifier("vanilla"), DefaultModelTypes.VANILLA);
+        FusionModelTypeRegistry.registerModelType(Fusion.identifier("cuboid"), DefaultModelTypes.CUBOID);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("base"), DefaultModelTypes.BASE);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("connecting"), DefaultModelTypes.CONNECTING);
         // Register default connection predicates
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("and"), AndConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("or"), OrConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("not"), NotConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_direction"), IsDirectionConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_face_visible"), IsFaceVisibleConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_block"), IsSameBlockConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_state"), IsSameStateConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block"), MatchBlockConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block_in_front"), MatchBlockInFrontConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state"), MatchStateConnectionPredicate.SERIALIZER);
-        FusionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state_in_front"), MatchStateInFrontConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("and"), AndConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("or"), OrConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("not"), NotConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_direction"), IsDirectionConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_face_visible"), IsFaceVisibleConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_block"), IsSameBlockConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("is_same_state"), IsSameStateConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block"), MatchBlockConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block_in_front"), MatchBlockInFrontConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state"), MatchStateConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state_in_front"), MatchStateInFrontConnectionPredicate.SERIALIZER);
         // Register default item model predicates
         ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("and"), AndItemPredicate.SERIALIZER);
         ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("or"), OrItemPredicate.SERIALIZER);
@@ -83,21 +79,23 @@ public class FusionClient {
             .add(FusionTextureMetadataSection.INSTANCE)
             .build();
 
-        // Finalize registration
-
-//        ClientLifecycleEvents.CLIENT_STARTED.register(client -> TextureTypeRegistryImpl.finalizeRegistration()); TODO
-//        ClientLifecycleEvents.CLIENT_STARTED.register(client -> ModelTypeRegistryImpl.finalizeRegistration());
-//        ClientLifecycleEvents.CLIENT_STARTED.register(client -> PredicateRegistryImpl.finalizeRegistration());
-
-        // Integration with FramedBlocks
-        ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
-            InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBakedModel.PREDICATES_EVALUATION_PROPERTY);
-        });
+        // Integration with FramedBlocks TODO
+//        ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
+//            InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBlockStateModel.PREDICATES_EVALUATION_PROPERTY);
+//        });
     }
 
-    public static RenderType getRenderTypeMaterial(BaseTextureData.RenderType renderType){
+    public static void finalizeRegistries(){
+        TextureTypeRegistryImpl.finalizeRegistration();
+        ModelTypeRegistryImpl.finalizeRegistration();
+        ConnectionPredicateRegistryImpl.finalizeRegistration();
+        EntityModelPredicateRegistry.finalizeRegistration();
+        ItemPredicateRegistry.finalizeRegistration();
+    }
+
+    public static Optional<RenderType> getChunkLayer(BaseTextureData.RenderType renderType){
         if(renderType == null)
-            return USE_ORIGINAL_RENDER_TYPE_MARKER;
+            return Optional.empty();
         RenderType material;
         //noinspection EnhancedSwitchMigration
         switch(renderType){
@@ -113,7 +111,7 @@ public class FusionClient {
             default:
                 throw new AssertionError();
         }
-        return material;
+        return Optional.of(material);
     }
 
     private static String fusionVersion;

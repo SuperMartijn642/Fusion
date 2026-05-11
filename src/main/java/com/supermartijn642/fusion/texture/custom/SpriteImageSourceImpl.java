@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.texture.custom;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.texture.custom.SpriteImageSource;
-import com.supermartijn642.fusion.api.texture.custom.TextureErrorException;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 
 import java.util.ArrayList;
@@ -40,12 +40,12 @@ public class SpriteImageSourceImpl implements SpriteImageSource {
         return new SpriteImageSourceImpl(image, frameWidth, frameHeight, frames, interpolateFrames);
     }
 
-    public static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata){
+    public static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata) throws UserErrorException{
         int defaultSize = Math.min(image.getWidth(), image.getHeight());
         return vanilla(image, vanillaMetadata, defaultSize, defaultSize);
     }
 
-    public static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata, int defaultFrameWidth, int defaultFrameHeight){
+    public static SpriteImageSource vanilla(NativeImage image, AnimationMetadataSection vanillaMetadata, int defaultFrameWidth, int defaultFrameHeight) throws UserErrorException{
         if(vanillaMetadata == null)
             return constant(image);
 
@@ -63,7 +63,7 @@ public class SpriteImageSourceImpl implements SpriteImageSource {
 
         // Do vanilla frame size check
         if(image.getWidth() % frameWidth != 0 || image.getHeight() % frameHeight != 0)
-            throw new TextureErrorException("Image size " + image.getWidth() + "x" + image.getHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
+            throw new UserErrorException("Image size " + image.getWidth() + "x" + image.getHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
 
         // Convert to Fusion frame info
         int frameColumns = image.getWidth() / frameWidth, frameRows = image.getHeight() / frameHeight;

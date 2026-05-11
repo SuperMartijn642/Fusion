@@ -14,9 +14,20 @@ public class FusionModelLoader implements UnbakedModelLoader<CuboidModel> {
     @Override
     public CuboidModel read(JsonObject json, JsonDeserializationContext context) throws JsonParseException{
         // Load the model data
-        ModelInstance<?> model = ModelTypeRegistryImpl.deserializeModelData(json.getAsJsonObject());
+        ModelInstance<?> model;
+        try{
+            model = ModelTypeRegistryImpl.deserializeModelData(json.getAsJsonObject());
+        }catch(JsonParseException e){
+            throw new Marker("Failed to deserialize Fusion model!", e);
+        }
 
         // Create a dummy block model
         return new FusionBlockModelData(model).asCuboidModel();
+    }
+
+    public static class Marker extends RuntimeException {
+        public Marker(String message, Throwable cause){ // Also add a regular message in case someone else catches this
+            super(message, cause);
+        }
     }
 }

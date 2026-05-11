@@ -14,6 +14,7 @@ import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.AndItemPredicate;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateRegistry;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.renderer.item.CuboidItemModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.ModelBakery;
@@ -90,13 +91,15 @@ public class ItemModelModifierReloadListener {
         // Parse all the item model predicate files
         for(Map.Entry<Identifier,JsonElement> entry : resources.entrySet()){
             Identifier location = entry.getKey();
-            if(!entry.getValue().isJsonObject())
-                throw new IllegalArgumentException("Item model predicates file '" + location + "' must contain a json object!");
+            if(!entry.getValue().isJsonObject()){
+                FusionClient.LOGGER.error("Item model modifier file '{}' must contain a json object!", location);
+                continue;
+            }
             JsonObject json = entry.getValue().getAsJsonObject();
             try{
                 this.parseResource(json);
             }catch(JsonParseException e){
-                FusionClient.LOGGER.error("Failed to parse item model predicates file '{}': {}", location, e.getMessage());
+                LoggingHelper.logUserError(e, "Failed to parse item model modifier file '%s':", location);
             }
         }
     }
@@ -104,7 +107,7 @@ public class ItemModelModifierReloadListener {
     private void parseResource(JsonObject json){
         // Get the targets
         if(!json.has("targets") || !json.get("targets").isJsonArray())
-            throw new JsonParseException("Item model predicates file must have array property 'targets'!");
+            throw new JsonParseException("Item model modifier file must have array property 'targets'!");
         JsonArray targetsJson = json.getAsJsonArray("targets");
         Set<Identifier> targets = new HashSet<>();
         for(JsonElement element : targetsJson){
@@ -133,7 +136,7 @@ public class ItemModelModifierReloadListener {
 
         // Get the models
         if(!json.has("models") || !json.get("models").isJsonArray())
-            throw new JsonParseException("Item model predicates file must have array property 'models'!");
+            throw new JsonParseException("Item model modifier file must have array property 'models'!");
         JsonArray modelsJson = json.getAsJsonArray("models");
         List<Pair<ItemPredicate,Identifier>> models = new ArrayList<>();
         for(JsonElement element : modelsJson){

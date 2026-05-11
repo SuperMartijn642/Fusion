@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.CustomRenderTypeBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;

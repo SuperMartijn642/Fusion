@@ -4,97 +4,280 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.*;
-import com.supermartijn642.fusion.api.model.data.BaseModelData;
-import com.supermartijn642.fusion.api.model.data.ConnectingModelData;
-import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
-import com.supermartijn642.fusion.api.predicate.DefaultConnectionPredicates;
-import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
+import com.supermartijn642.fusion.api.model.ModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
+import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
+import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.types.connecting.ConnectingModelData;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.DefaultConnectionPredicates;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Either;
-import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
-import com.supermartijn642.fusion.model.types.base.BaseModelElement;
-import net.minecraft.client.renderer.model.*;
+import com.supermartijn642.fusion.model.types.UnknownModelType;
+import com.supermartijn642.fusion.model.types.base.BaseModelType;
+import net.minecraft.client.renderer.Matrix4f;
+import net.minecraft.client.renderer.Vector3f;
+import net.minecraft.client.renderer.model.BlockModel;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemTransformVec3f;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Direction;
-import net.minecraft.util.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
-public class ConnectingModelType implements ModelType<ConnectingModelData> {
+public class ConnectingModelType extends BaseModelType<ConnectingModelData,ConnectingModelDataBuilderImpl> {
 
-    public static final String DEFAULT_CONNECTION_KEY = "default";
+    private static final ConnectionPredicate FALLBACK_PREDICATE = DefaultConnectionPredicates.isSameState();
 
     @Override
-    public Collection<ResourceLocation> getModelDependencies(ConnectingModelData data){
-        return DefaultModelTypes.BASE.getModelDependencies(data);
+    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context, ConnectingModelData data){
+        if(property == ModelProperty.MODEL_CONNECTION_PREDICATES)
+            //noinspection unchecked
+            return Optional.of((X)data.getAllConnectionPredicates());
+        return super.getProperty(property, context, data);
     }
 
     @Override
-    public Collection<SpriteIdentifier> getTextureDependencies(GatherTexturesContext context, ConnectingModelData data){
-        return DefaultModelTypes.BASE.getTextureDependencies(context, data);
-    }
+    public IBakedModel bakeModel(ModelBakingContext context, ConnectingModelData data){
+        // Bake geometry
+        AtomicBoolean isGui3d = new AtomicBoolean(false);
+        List<ConnectingBakedModel.Part> parts = new ArrayList<>();
+        context.walkModelTree(ModelInstance.of(this, data), (modelInstance, stack) -> {
+            ModelGeometry geometry = modelInstance.getGeometry();
+            if(geometry == null)
+                return ModelWalker.Result.proceed();
+            // Update gui3d
+            if(geometry.isGui3d())
+                isGui3d.set(true);
+            // Resolve materials
+            Set<String> missingKeys = new HashSet<>();
+            ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
+                key -> UnknownModelType.findPropertyInStackAndParents(context, stack, m -> m.getMaterial(key), null),
+                context::getMaterial,
+                missingKeys::add,
+                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + stack + ")!")
+            );
+            // Resolve connection predicates
+            Function<String,@Nullable ConnectionPredicate> connectionsResolver = createConnectionsResolver(
+                context,
+                stack,
+                keys -> context.pushWarning("Found circular connections key chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + stack + ")!")
+            );
+            // Compose transformations
+            ModelTransform transforms = stack.composeTransforms();
+            transforms = ModelTransform.compose(transforms, context.getTransformation());
+            // Bake the geometry
+            ConnectingModelQuads.Builder quads;
+            if(geometry.isCuboidGeometry())
+                quads = bakeCuboidGeometry((CuboidModelGeometry)geometry, transforms, materialResolver, connectionsResolver);
+            else
+                quads = ConnectingModelQuads.builder().add(geometry.bake(transforms, materialResolver));
+            if(!missingKeys.isEmpty())
+                context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
+            // Apply model properties to the quads
+            Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
+            Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
+            quads = quads.mutateQuads((side, quad) -> {
+                if(shade != null)
+                    quad.shade(shade);
+                if(emissive != null)
+                    quad.emissive(emissive);
+                BaseModelType.applyTextureProperties(quad);
+                return true;
+            });
+            // Create a new part
+            parts.add(new ConnectingBakedModel.Part(
+                quads.build()
+            ));
+            return ModelWalker.Result.endBranch();
+        });
 
-    @Override
-    @Nullable
-    public BlockModel getAsVanillaModel(ConnectingModelData data){
-        return DefaultModelTypes.BASE.getAsVanillaModel(data);
-    }
+        // Find particle sprite
+        ModelMaterial particleMaterial = context.walkModelTree(ModelInstance.of(this, data), (modelInstance, stack) -> {
+            ModelMaterial material = stack.findMaterialRecursive(
+                "particle",
+                l -> {}
+            );
+            return material == null ? ModelWalker.Result.proceed() : ModelWalker.Result.stop(material);
+        }).orElse(null);
+        if(particleMaterial == null){
+            context.pushWarning("Could not resolve 'particle' material!");
+            particleMaterial = ModelMaterial.missingBlockAtlas();
+        }
+        TextureAtlasSprite resolvedParticleMaterial = context.getMaterial(particleMaterial);
+        // Find ambient occlusion
+        boolean ambientOcclusion = context.walkModelTree(
+            ModelInstance.of(this, data),
+            (modelInstance, stack) -> {
+                Boolean v = modelInstance.getAmbientOcclusion();
+                return v == null ? ModelWalker.Result.proceed() : ModelWalker.Result.stop(v);
+            }
+        ).orElse(true);
+        // Find gui light
+        BlockModel.GuiLight guiLight = context.walkModelTree(
+            ModelInstance.of(this, data),
+            (modelInstance, stack) -> {
+                BlockModel.GuiLight v = modelInstance.getGuiLight();
+                return v == null ? ModelWalker.Result.proceed() : ModelWalker.Result.stop(v);
+            }
+        ).orElse(BlockModel.GuiLight.SIDE);
+        // Find item transforms
+        BiFunction<ItemCameraTransforms.TransformType,ItemTransformVec3f,ItemTransformVec3f> itemTransformResolver = (type, fallback) ->
+            context.walkModelTree(
+                ModelInstance.of(this, data),
+                (modelInstance, stack) -> {
+                    ItemTransformVec3f transform = modelInstance.getItemTransform(type);
+                    return transform == null ? ModelWalker.Result.proceed() : ModelWalker.Result.stop(transform);
+                }
+            ).orElse(fallback);
+        ItemCameraTransforms itemTransforms = new ItemCameraTransforms(
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND, ItemTransformVec3f.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND, ItemTransformVec3f.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIRST_PERSON_LEFT_HAND, ItemTransformVec3f.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND, ItemTransformVec3f.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.HEAD, ItemTransformVec3f.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.GUI, ItemTransformVec3f.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.GROUND, ItemTransformVec3f.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIXED, ItemTransformVec3f.NO_TRANSFORM)
+        );
 
-    @Override
-    public List<ResourceLocation> getParentModels(ConnectingModelData data){
-        return data.getParents();
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public IBakedModel bake(ModelBakingContext context, ConnectingModelData data){
-        // Check for circular dependencies
-        ((ConnectingModelDataImpl)data).validateParents(context::getModel, context.getModelIdentifier());
-        // Bake the quads
-        //noinspection unchecked,rawtypes
-        List<ConnectingModelQuad> quads = (List)((ConnectingModelDataImpl)data).bakeQuads(context);
-        // Gather remaining model properties
-        boolean ambientOcclusion = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.hasAmbientOcclusion, true);
-        boolean isGui3d = ((BaseModelDataImpl)data).findProperty(context, model -> model == ModelBakery.GENERATION_MARKER ? false : null, true);
-        boolean usesBlockLight = ((BaseModelDataImpl)data).findProperty(context, model -> model.guiLight, BlockModel.GuiLight.SIDE).lightLikeBlock();
-        TextureAtlasSprite particleSprite = context.getTexture(((ConnectingModelDataImpl)data).findParticleSprite(context));
-        ItemTransformVec3f transformThirdPersonLeftHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND) : null, ItemTransformVec3f.NO_TRANSFORM);
-        ItemTransformVec3f transformThirdPersonRightHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND) : null, ItemTransformVec3f.NO_TRANSFORM);
-        ItemTransformVec3f transformFirstPersonLeftHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.FIRST_PERSON_LEFT_HAND) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.FIRST_PERSON_LEFT_HAND) : null, ItemTransformVec3f.NO_TRANSFORM);
-        ItemTransformVec3f transformFirstPersonRightHand = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND) : null, ItemTransformVec3f.NO_TRANSFORM);
-        ItemTransformVec3f transformHead = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.HEAD) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.HEAD) : null, ItemTransformVec3f.NO_TRANSFORM);
-        ItemTransformVec3f transformGui = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.GUI) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.GUI) : null, ItemTransformVec3f.NO_TRANSFORM);
-        ItemTransformVec3f transformGround = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.GROUND) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.GROUND) : null, ItemTransformVec3f.NO_TRANSFORM);
-        ItemTransformVec3f transformFixed = ((ConnectingModelDataImpl)data).findProperty(context, model -> model.transforms.hasTransform(ItemCameraTransforms.TransformType.FIXED) ? model.transforms.getTransform(ItemCameraTransforms.TransformType.FIXED) : null, ItemTransformVec3f.NO_TRANSFORM);
-        ItemCameraTransforms itemTransforms = new ItemCameraTransforms(transformThirdPersonLeftHand, transformThirdPersonRightHand, transformFirstPersonLeftHand, transformFirstPersonRightHand, transformHead, transformGui, transformGround, transformFixed);
-        ItemOverrideList itemOverrides = data.getVanillaModel().overrides.isEmpty() ? ItemOverrideList.EMPTY : new ItemOverrideList(context.getModelBakery(), data.getVanillaModel(), i -> context.getModel(i).getAsVanillaModel(), data.getVanillaModel().overrides);
         // Finally, create the model
         return new ConnectingBakedModel(
-            quads,
+            parts,
+            resolvedParticleMaterial,
             ambientOcclusion,
-            isGui3d,
-            usesBlockLight,
-            particleSprite,
-            itemTransforms,
-            itemOverrides
+            guiLight,
+            isGui3d.get(),
+            itemTransforms
         );
     }
 
+    private static ConnectingModelQuads.Builder bakeCuboidGeometry(CuboidModelGeometry geometry,
+                                                                   ModelTransform transformation,
+                                                                   ModelGeometry.MaterialResolver materialResolver,
+                                                                   Function<String,@Nullable ConnectionPredicate> connectionsResolver){
+        ConnectingModelQuads.Builder quads = ConnectingModelQuads.builder();
+        for(CuboidModelGeometry.Element element : geometry.elements()){
+            // Create quads the same way as vanilla
+            // Check whether the size is 0 for any axis
+            Vector3f from = element.from();
+            Vector3f to = element.to();
+            boolean drawXFaces = from.y() != to.y() && from.z() != to.z();
+            boolean drawYFaces = from.x() != to.x() && from.z() != to.z();
+            boolean drawZFaces = from.x() != to.x() && from.y() != to.y();
+            if(!drawXFaces && !drawYFaces && !drawZFaces)
+                continue;
+
+            // Create the quads for each side
+            for(Direction side : Direction.values()){
+                CuboidModelGeometry.Face face = element.face(side);
+                if(face == null)
+                    continue;
+
+                boolean shouldDrawFace;
+                switch(side.getAxis()){
+                    case X:
+                        shouldDrawFace = drawXFaces;
+                        break;
+                    case Y:
+                        shouldDrawFace = drawYFaces;
+                        break;
+                    case Z:
+                        shouldDrawFace = drawZFaces;
+                        break;
+                    default:
+                        throw new AssertionError();
+                }
+                if(!shouldDrawFace)
+                    continue;
+
+                // Bake the face
+                QuadAccess quad = CuboidModelGeometry.bakeFace(face, element, side, transformation, materialResolver);
+                // Resolve connections key
+                Optional<String> key = face.getProperty(ModelProperty.FACE_CONNECTIONS_KEY);
+                ConnectionPredicate connectionPredicate = connectionsResolver.apply(key.orElse(ConnectingModelData.DEFAULT_KEY));
+                // Add the quad
+                Direction cullDirection = face.cullDirection() == null ? null :
+                    Direction.rotate(new Matrix4f(transformation.matrix()), face.cullDirection());
+                quads.add(cullDirection, quad, connectionPredicate);
+            }
+        }
+        return quads;
+    }
+
+    private static Function<String,@Nullable ConnectionPredicate> createConnectionsResolver(ModelBakingContext context, ModelWalker.ModelStack stack, Consumer<List<String>> reportCircular){
+        // Create function to resolve specific key
+        Map<String,ConnectionPredicate> resolvedConnections = new HashMap<>();
+        return key -> {
+            // Check if the key has already been resolved
+            if(resolvedConnections.containsKey(key))
+                return resolvedConnections.get(key);
+            // Resolve the key
+            List<String> encounteredKeys = new ArrayList<>();
+            while(true){
+                encounteredKeys.add(key);
+                final String finalKey = key;
+                Either<String,ConnectionPredicate> next = UnknownModelType.findPropertyInStackAndParents(context, stack, m -> m.getProperty(ModelProperty.MODEL_CONNECTION_PREDICATES).map(connections -> connections.get(finalKey)).orElse(null), null);
+                if(next != null){
+                    if(next.isRight()){
+                        ConnectionPredicate predicate = next.right();
+                        for(String encounteredKey : encounteredKeys)
+                            resolvedConnections.put(encounteredKey, predicate);
+                        return predicate;
+                    }
+                    key = next.left();
+                }else{ // Check materials map
+                    Either<String,ModelMaterial> material = UnknownModelType.findPropertyInStackAndParents(context, stack, m -> m.getMaterial(finalKey), null);
+                    if(material == null){
+                        if(key.equals(ConnectingModelData.DEFAULT_KEY))
+                            break;
+                        key = ConnectingModelData.DEFAULT_KEY;
+                    }else
+                        key = material.flatMap(Function.identity(), m -> m.texture().toString());
+                }
+                if(encounteredKeys.contains(key)){
+                    encounteredKeys.add(key);
+                    reportCircular.accept(Collections.unmodifiableList(encounteredKeys));
+                    break;
+                }
+                ConnectionPredicate previouslyResolved = resolvedConnections.get(key);
+                if(previouslyResolved != null){
+                    for(String encounteredKey : encounteredKeys)
+                        resolvedConnections.put(encounteredKey, previouslyResolved);
+                    return previouslyResolved;
+                }
+            }
+            for(String encounteredKey : encounteredKeys)
+                resolvedConnections.put(encounteredKey, FALLBACK_PREDICATE);
+            return FALLBACK_PREDICATE;
+        };
+    }
+
     @Override
-    public ConnectingModelData deserialize(JsonObject json) throws JsonParseException{
+    protected ConnectingModelDataBuilderImpl builder(){
+        return (ConnectingModelDataBuilderImpl)ConnectingModelData.builder();
+    }
+
+    @Override
+    protected void deserialize(JsonObject json, ConnectingModelDataBuilderImpl builder){
         // Deserialize the base model
-        BaseModelData base = DefaultModelTypes.BASE.deserialize(json);
+        super.deserialize(json, builder);
         // Deserialize all the predicates from the 'connections' array
-        Map<String,Either<ConnectionPredicate,String>> connections = new LinkedHashMap<>(); // This should maintain order
-        connections.put("default", Either.left(DefaultConnectionPredicates.isSameState()));
         if(json.has("connections")){
             JsonElement connectionsElement = json.get("connections");
             if(connectionsElement.isJsonArray() || (connectionsElement.isJsonObject() && connectionsElement.getAsJsonObject().has("type"))) // Legacy array
-                connections.put("default", Either.left(loadPredicate(connectionsElement, "connections")));
+                builder.defaultConnections(loadPredicate(connectionsElement, "connections"));
             else if(connectionsElement.isJsonObject()){ // Load predicates per texture
                 JsonObject object = connectionsElement.getAsJsonObject();
                 if(object.size() == 0)
@@ -105,78 +288,32 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
                         String reference = entry.getValue().getAsString();
                         if(reference.isEmpty() || reference.charAt(0) != '#')
                             throw new JsonParseException("Reference for connections key '" + key + "' must start with '#'!");
-                        connections.put(key, Either.right(reference.substring(1)));
+                        builder.connections(key, reference.substring(1));
                     }else
-                        connections.put(key, Either.left(loadPredicate(entry.getValue(), key)));
+                        builder.connections(key, loadPredicate(object.get(key), key));
                 }
             }else
                 throw new JsonParseException("Property 'connections' must be an array!");
         }
-        // Read the 'connections' keys for all element faces
-        List<ConnectingModelElement> elements = new ArrayList<>(((BaseModelDataImpl)base).getElements().size());
-        JsonArray elementsJson = json.getAsJsonArray("elements");
-        for(int i = 0; i < ((BaseModelDataImpl)base).getElements().size(); i++){
-            JsonObject elementFaces = elementsJson.get(i).getAsJsonObject().getAsJsonObject("faces");
-            BaseModelElement baseElement = ((BaseModelDataImpl)base).getElements().get(i);
-            Map<Direction,String> connectionKeys = null;
-            if(elementFaces != null){
-                for(Direction side : Direction.values()){
-                    if(elementFaces.has(side.getName()) && elementFaces.get(side.getName()).isJsonObject() && elementFaces.getAsJsonObject(side.getName()).has("connections")){
-                        JsonElement connectionsJson = elementFaces.getAsJsonObject(side.getName()).get("connections");
-                        if(!connectionsJson.isJsonPrimitive() || !connectionsJson.getAsJsonPrimitive().isString())
-                            throw new JsonParseException("Face property 'connections' must be a string!");
-                        String key = connectionsJson.getAsString();
-                        if(key.isEmpty())
-                            throw new JsonParseException("Face property 'connections' must not be empty!");
-                        if(connectionKeys == null)
-                            connectionKeys = new EnumMap<>(Direction.class);
-                        connectionKeys.put(side, key);
-                    }
-                }
-            }
-            elements.add(new ConnectingModelElement(
-                baseElement.from,
-                baseElement.to,
-                baseElement.faces,
-                baseElement.rotation,
-                baseElement.shade,
-                baseElement.light_emission,
-                connectionKeys
-            ));
-        }
-        return new ConnectingModelDataImpl(base.getVanillaModel(), base.getParents(), elements, connections);
     }
 
     @Override
-    public JsonObject serialize(ConnectingModelData value){
+    public JsonObject serialize(ConnectingModelData data){
         // Serialize base model
-        JsonObject json = DefaultModelTypes.BASE.serialize(value);
-        // Create an array with all the serialized predicates
-        Map<String,Either<ConnectionPredicate,String>> predicates = value.getAllConnectionPredicates();
-        if(predicates.size() == 1 && predicates.containsKey("default") && predicates.get("default").isLeft())
-            json.add("connections", FusionPredicateRegistry.serializeConnectionPredicate(predicates.get("default").left()));
+        JsonObject json = super.serialize(data);
+        // Create 'connections' array with all the predicates
+        Map<String,Either<String,ConnectionPredicate>> predicates = data.getAllConnectionPredicates();
+        if(predicates.size() == 1 && predicates.containsKey(ConnectingModelData.DEFAULT_KEY) && predicates.get(ConnectingModelData.DEFAULT_KEY).isRight())
+            json.add("connections", FusionConnectionPredicateRegistry.serializeConnectionPredicate(predicates.get(ConnectingModelData.DEFAULT_KEY).right()));
         else if(!predicates.isEmpty()){
             JsonObject connectionsJson = new JsonObject();
             predicates.forEach((key, predicate) -> {
-                if(predicate.isLeft())
-                    connectionsJson.add(key, FusionPredicateRegistry.serializeConnectionPredicate(predicate.left()));
+                if(predicate.isRight())
+                    connectionsJson.add(key, FusionConnectionPredicateRegistry.serializeConnectionPredicate(predicate.right()));
                 else
-                    connectionsJson.addProperty(key, '#' + predicate.right());
+                    connectionsJson.addProperty(key, '#' + predicate.left());
             });
             json.add("connections", connectionsJson);
-        }
-        // Add 'connections' property to element faces
-        for(int i = 0; i < ((ConnectingModelDataImpl)value).getElements().size(); i++){
-            Map<Direction,String> connectionKeys = ((ConnectingModelDataImpl)value).getElements().get(i).faceConnectionKeys;
-            if(connectionKeys.isEmpty())
-                continue;
-            JsonObject elementFaces = json.getAsJsonArray("elements").get(i).getAsJsonObject().getAsJsonObject("faces");
-            if(elementFaces == null)
-                continue;
-            for(Direction side : connectionKeys.keySet()){
-                if(elementFaces.has(side.getName()))
-                    elementFaces.getAsJsonObject(side.getName()).addProperty("connections", connectionKeys.get(side));
-            }
         }
         return json;
     }
@@ -188,13 +325,38 @@ public class ConnectingModelType implements ModelType<ConnectingModelData> {
             for(JsonElement predicateElements : array){
                 if(!predicateElements.isJsonObject())
                     throw new JsonParseException("Predicate '" + key + "' must only contain objects!");
-                ConnectionPredicate predicate = FusionPredicateRegistry.deserializeConnectionPredicate(predicateElements.getAsJsonObject());
+                ConnectionPredicate predicate = FusionConnectionPredicateRegistry.deserializeConnectionPredicate(predicateElements.getAsJsonObject());
                 subPredicates.add(predicate);
             }
             return DefaultConnectionPredicates.or(subPredicates.toArray(new ConnectionPredicate[0]));
         }
         if(element.isJsonObject())
-            return FusionPredicateRegistry.deserializeConnectionPredicate(element.getAsJsonObject());
+            return FusionConnectionPredicateRegistry.deserializeConnectionPredicate(element.getAsJsonObject());
         throw new JsonParseException("Predicate '" + key + "' must be an object or an array!");
+    }
+
+    @Override
+    protected CuboidModelGeometry.Face.Builder deserializeFace(JsonObject json){
+        CuboidModelGeometry.Face.Builder builder = super.deserializeFace(json);
+        JsonElement connectionsJson = json.get("connections");
+        if(connectionsJson != null){
+            if(!connectionsJson.isJsonPrimitive() || !connectionsJson.getAsJsonPrimitive().isString())
+                throw new JsonParseException("Element face property 'connections' must be a string!");
+            String key = connectionsJson.getAsString();
+            if(!key.isEmpty() && key.charAt(0) == '#')
+                key = key.substring(1);
+            if(key.isEmpty())
+                throw new JsonParseException("Element face property 'connections' must not be empty!");
+            builder.property(ModelProperty.FACE_CONNECTIONS_KEY, key);
+        }
+        return builder;
+    }
+
+    @Override
+    protected JsonObject serializeFace(CuboidModelGeometry.Face face){
+        JsonObject json = super.serializeFace(face);
+        Optional<String> key = face.getProperty(ModelProperty.FACE_CONNECTIONS_KEY);
+        key.ifPresent(s -> json.addProperty("connections", s));
+        return json;
     }
 }

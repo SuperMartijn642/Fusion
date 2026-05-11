@@ -19,8 +19,6 @@ public class FusionTextureMetadataSection implements IMetadataSectionSerializer<
 
     @Override
     public Pair<TextureType<Object,?>,Object> fromJson(JsonObject json){
-        // Finalize the registry
-        TextureTypeRegistryImpl.finalizeRegistration();
         // Get the texture type
         return TextureTypeRegistryImpl.deserializeTextureData(json);
     }

@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.model;
 
-import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.model.IBakedModel;
@@ -99,6 +98,6 @@ public class WrappedBakedModel implements IBakedModel, CustomRenderTypeBakedMode
 
     @Override
     public boolean canRenderInLayer(BlockState state, BlockRenderLayer layer){
-        return this.original instanceof CustomRenderTypeBakedModel ? ((CustomRenderTypeBakedModel)this.original).canRenderInLayer(state, layer) : OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
+        return ModelRenderTypeHelper.canRenderInLayer(this.original, state, layer, ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer));
     }
 }

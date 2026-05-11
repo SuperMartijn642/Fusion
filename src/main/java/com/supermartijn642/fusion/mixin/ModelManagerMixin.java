@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.renderer.model.ModelBakery;
@@ -12,11 +13,22 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.lang.ref.WeakReference;
+
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
 @Mixin(ModelManager.class)
 public class ModelManagerMixin {
+
+    @Inject(
+        method = "prepare",
+        at = @At("RETURN")
+    )
+    private void captureModelBakery(IResourceManager resourceManager, IProfiler profiler, CallbackInfoReturnable<ModelBakery> ci){
+        // Store model bakery reference
+        FusionBlockModelData.modelBakery = new WeakReference<>(ci.getReturnValue());
+    }
 
     @Inject(
         method = "prepare",

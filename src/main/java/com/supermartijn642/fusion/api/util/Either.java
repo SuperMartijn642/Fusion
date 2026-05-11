@@ -115,7 +115,7 @@ public abstract class Either<X, Y> {
      */
     public abstract void ifRight(Consumer<Y> consumer);
 
-    private static class Left<X, Y> extends Either<X,Y> {
+    private static final class Left<X, Y> extends Either<X,Y> {
 
         private final X value;
 
@@ -189,7 +189,7 @@ public abstract class Either<X, Y> {
         }
     }
 
-    private static class Right<X, Y> extends Either<X,Y> {
+    private static final class Right<X, Y> extends Either<X,Y> {
 
         private final Y value;
 

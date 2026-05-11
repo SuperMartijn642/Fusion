@@ -30,6 +30,7 @@
     "ModelFeatureRendererMixin",
     "ModelManagerMixin",
     "MultiPartModelMixin",
+    "OptionsMixin",
     "OutlineBufferSourceMixin",
     "PackEntryMixin",
     "PackMixin",

@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.extensions.CuboidModelExtension;
-import com.supermartijn642.fusion.model.FusionBlockModel;
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.CuboidModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransforms;
@@ -24,7 +24,7 @@ public class CuboidModelMixin implements CuboidModelExtension {
     @Unique
     private ModelInstance<?> fusionModel;
     @Unique
-    private FusionBlockModel fusionBlockModelData;
+    private FusionBlockModelData fusionData;
 
     @Override
     public ModelInstance<?> getFusionModel(){
@@ -37,13 +37,13 @@ public class CuboidModelMixin implements CuboidModelExtension {
     }
 
     @Override
-    public FusionBlockModel getFusionBlockModelData(){
-        return this.fusionBlockModelData;
+    public FusionBlockModelData getFusionData(){
+        return this.fusionData;
     }
 
     @Override
-    public void setFusionBlockModelData(FusionBlockModel data){
-        this.fusionBlockModelData = data;
+    public void setFusionData(FusionBlockModelData data){
+        this.fusionData = data;
     }
 
     @Inject(
@@ -52,8 +52,8 @@ public class CuboidModelMixin implements CuboidModelExtension {
         cancellable = true
     )
     public void geometry(CallbackInfoReturnable<UnbakedGeometry> ci){
-        if(this.fusionBlockModelData != null)
-            ci.setReturnValue(this.fusionBlockModelData.geometry());
+        if(this.fusionData != null)
+            ci.setReturnValue(this.fusionData.geometry());
     }
 
     @Inject(
@@ -62,8 +62,8 @@ public class CuboidModelMixin implements CuboidModelExtension {
         cancellable = true
     )
     public void guiLight(CallbackInfoReturnable<UnbakedModel.GuiLight> ci){
-        if(this.fusionBlockModelData != null)
-            ci.setReturnValue(this.fusionBlockModelData.guiLight());
+        if(this.fusionData != null)
+            ci.setReturnValue(this.fusionData.guiLight());
     }
 
     @Inject(
@@ -72,8 +72,8 @@ public class CuboidModelMixin implements CuboidModelExtension {
         cancellable = true
     )
     public void ambientOcclusion(CallbackInfoReturnable<Boolean> ci){
-        if(this.fusionBlockModelData != null)
-            ci.setReturnValue(this.fusionBlockModelData.ambientOcclusion());
+        if(this.fusionData != null)
+            ci.setReturnValue(this.fusionData.ambientOcclusion());
     }
 
     @Inject(
@@ -82,8 +82,8 @@ public class CuboidModelMixin implements CuboidModelExtension {
         cancellable = true
     )
     public void transforms(CallbackInfoReturnable<ItemTransforms> ci){
-        if(this.fusionBlockModelData != null)
-            ci.setReturnValue(this.fusionBlockModelData.transforms());
+        if(this.fusionData != null)
+            ci.setReturnValue(this.fusionData.transforms());
     }
 
     @Inject(
@@ -92,8 +92,8 @@ public class CuboidModelMixin implements CuboidModelExtension {
         cancellable = true
     )
     public void textureSlots(CallbackInfoReturnable<TextureSlots.Data> ci){
-        if(this.fusionBlockModelData != null)
-            ci.setReturnValue(this.fusionBlockModelData.textureSlots());
+        if(this.fusionData != null)
+            ci.setReturnValue(this.fusionData.textureSlots());
     }
 
     @Inject(
@@ -102,7 +102,7 @@ public class CuboidModelMixin implements CuboidModelExtension {
         cancellable = true
     )
     public void parent(CallbackInfoReturnable<Identifier> ci){
-        if(this.fusionBlockModelData != null)
-            ci.setReturnValue(this.fusionBlockModelData.parent());
+        if(this.fusionData != null)
+            ci.setReturnValue(this.fusionData.parent());
     }
 }

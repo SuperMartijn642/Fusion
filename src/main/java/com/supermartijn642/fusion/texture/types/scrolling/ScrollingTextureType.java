@@ -5,10 +5,10 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.SpriteImageSource;
 import com.supermartijn642.fusion.api.texture.custom.TextureCreationContext;
-import com.supermartijn642.fusion.api.texture.custom.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.custom.TextureOutput;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,14 +21,14 @@ import java.util.Locale;
 public class ScrollingTextureType implements TextureType<ScrollingTextureData,BaseTextureData> {
 
     @Override
-    public void createTexture(TextureOutput<BaseTextureData> output, TextureCreationContext context, ScrollingTextureData data) throws TextureErrorException{
+    public void createTexture(TextureOutput<BaseTextureData> output, TextureCreationContext context, ScrollingTextureData data) throws UserErrorException{
         // Can not be combined with vanilla animation data
         if(context.getAnimationMetadata() != null)
-            throw new TextureErrorException("Can not be used in combination with vanilla animation data!");
+            throw new UserErrorException("Can not be used in combination with vanilla animation data!");
 
         // Validate frame size
         if(context.getImageWidth() < data.getFrameWidth() || context.getImageHeight() < data.getFrameHeight())
-            throw new TextureErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is smaller than frame size " + data.getFrameWidth() + "x" + data.getFrameHeight() + "!");
+            throw new UserErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is smaller than frame size " + data.getFrameWidth() + "x" + data.getFrameHeight() + "!");
 
         // Calculate frame start and end
         boolean reverse = data.getLoopType() == ScrollingTextureData.LoopType.REVERSE;

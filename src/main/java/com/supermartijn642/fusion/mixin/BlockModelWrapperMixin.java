@@ -1,11 +1,10 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.FusionBlockModel;
+import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.ResolvedModel;
-import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -31,10 +30,10 @@ public class BlockModelWrapperMixin {
         ResourceLocation location = unbaked.model();
         ResolvedModel wrapper = context.blockModelBaker().getModel(location);
         if(wrapper != null){
-            UnbakedModel wrapped = wrapper.wrapped();
-            if(wrapped instanceof FusionBlockModel fusionBlockModel){
+            FusionBlockModelData fusionData = FusionBlockModelData.get(wrapper.wrapped());
+            if(fusionData != null){
                 List<ItemTintSource> tintSources = unbaked.tints();
-                ItemModel model = fusionBlockModel.bakeItemModel(wrapper, context.blockModelBaker(), tintSources, context.entityModelSet());
+                ItemModel model = fusionData.bakeItemModel(wrapper, tintSources, context.blockModelBaker(), context.entityModelSet());
                 ci.setReturnValue(model);
             }
         }

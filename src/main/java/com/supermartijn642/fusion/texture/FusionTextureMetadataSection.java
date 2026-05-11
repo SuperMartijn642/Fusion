@@ -27,8 +27,6 @@ public class FusionTextureMetadataSection {
     private static Pair<TextureType<Object,?>,Object> fromJson(JsonElement element){
         if(!element.isJsonObject())
             throw new JsonParseException("Fusion metadata section must be an object!");
-        // Finalize the registry
-        TextureTypeRegistryImpl.finalizeRegistration();
         // Get the texture type
         return TextureTypeRegistryImpl.deserializeTextureData(element.getAsJsonObject());
     }

@@ -1,8 +1,6 @@
 package com.supermartijn642.fusion.mixin.forge;
 
-import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
-import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateRegistryImpl;
-import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
+import com.supermartijn642.fusion.FusionClient;
 import net.minecraftforge.fmllegacy.DatagenModLoader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,8 +22,6 @@ public class DatagenModLoaderMixin {
         )
     )
     private static void begin(CallbackInfo ci){
-        TextureTypeRegistryImpl.finalizeRegistration();
-        ModelTypeRegistryImpl.finalizeRegistration();
-        PredicateRegistryImpl.finalizeRegistration();
+        FusionClient.finalizeRegistries();
     }
 }

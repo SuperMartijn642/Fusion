@@ -2,9 +2,9 @@ package com.supermartijn642.fusion.model.types.connecting.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.predicate.ConnectionDirection;
-import com.supermartijn642.fusion.api.predicate.ConnectionPredicate;
-import com.supermartijn642.fusion.api.predicate.FusionPredicateRegistry;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionDirection;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.model.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -24,14 +24,14 @@ public class NotConnectionPredicate implements ConnectionPredicate {
             if(!json.has("predicate") || !json.get("predicate").isJsonObject())
                 throw new JsonParseException("Not-predicate must have object property 'predicate'!");
             // Deserialize the predicate
-            ConnectionPredicate predicate = FusionPredicateRegistry.deserializeConnectionPredicate(json.getAsJsonObject("predicate"));
+            ConnectionPredicate predicate = FusionConnectionPredicateRegistry.deserializeConnectionPredicate(json.getAsJsonObject("predicate"));
             return new NotConnectionPredicate(predicate);
         }
 
         @Override
         public JsonObject serialize(NotConnectionPredicate value){
             JsonObject json = new JsonObject();
-            json.add("predicate", FusionPredicateRegistry.serializeConnectionPredicate(value.predicate));
+            json.add("predicate", FusionConnectionPredicateRegistry.serializeConnectionPredicate(value.predicate));
             return json;
         }
     };

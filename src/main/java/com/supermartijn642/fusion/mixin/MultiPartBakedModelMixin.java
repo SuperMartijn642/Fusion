@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.OriginalRenderTypeHelper;
-import com.supermartijn642.fusion.model.types.base.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.MultiPartBakedModel;
@@ -51,10 +51,9 @@ public class MultiPartBakedModelMixin implements CustomRenderTypeBakedModel {
 
     @Override
     public boolean canRenderInLayer(BlockState state, RenderType layer){
+        boolean isDefaultRenderType = ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
         if(!this.hasCustomRenderTypeModels)
-            return OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
-        if(state == null)
-            return false;
+            return isDefaultRenderType;
 
         // If the block state is already cached, use the cache
         BitSet bitset = this.selectorCache.get(state);
@@ -62,9 +61,7 @@ public class MultiPartBakedModelMixin implements CustomRenderTypeBakedModel {
             for(int i = 0; i < bitset.length(); ++i){
                 if(bitset.get(i)){
                     BakedModel model = this.selectors.get(i).getRight();
-                    if(model instanceof CustomRenderTypeBakedModel ?
-                        ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
-                        OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                    if(ModelRenderTypeHelper.canRenderInLayer(model, state, layer, isDefaultRenderType))
                         return true;
                 }
             }
@@ -75,9 +72,7 @@ public class MultiPartBakedModelMixin implements CustomRenderTypeBakedModel {
         for(Pair<Predicate<BlockState>,BakedModel> selector : this.selectors){
             if(selector.getLeft().test(state)){
                 BakedModel model = selector.getRight();
-                if(model instanceof CustomRenderTypeBakedModel ?
-                    ((CustomRenderTypeBakedModel)model).canRenderInLayer(state, layer) :
-                    OriginalRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer))
+                if(ModelRenderTypeHelper.canRenderInLayer(model, state, layer, isDefaultRenderType))
                     return true;
             }
         }

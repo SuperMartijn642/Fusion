@@ -1,7 +1,6 @@
 package com.supermartijn642.fusion.model;
 
 import com.google.common.collect.ImmutableMap;
-import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
@@ -13,6 +12,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.block.model.*;
@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -86,13 +85,8 @@ public class FusionBlockModelData {
             throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
         }
         // Log warnings
-        if(!warnings.isEmpty()){
-            FusionClient.LOGGER.warn(
-                "Warnings for block model '{}':\n{}",
-                this.name,
-                warnings.stream().map(" |-> "::concat).collect(Collectors.joining("\n"))
-            );
-        }
+        if(!warnings.isEmpty())
+            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.name);
 
         // Clear missing models
         MISSING_MODEL.remove();
@@ -122,13 +116,8 @@ public class FusionBlockModelData {
             throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
         }
         // Log warnings
-        if(!warnings.isEmpty()){
-            FusionClient.LOGGER.warn(
-                "Warnings for item model '{}':\n{}",
-                this.name,
-                warnings.stream().map(" |-> "::concat).collect(Collectors.joining("\n"))
-            );
-        }
+        if(!warnings.isEmpty())
+            LoggingHelper.logUserWarnings(warnings, "Warnings for item model '{}':", this.name);
 
         // Clear missing models
         MISSING_MODEL.remove();

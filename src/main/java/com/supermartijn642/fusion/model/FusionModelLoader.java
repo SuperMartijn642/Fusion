@@ -4,24 +4,19 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.model.types.connecting.predicates.PredicateRegistryImpl;
+import net.minecraft.client.renderer.block.model.BlockModel;
 import net.neoforged.neoforge.client.model.UnbakedModelLoader;
 
 /**
  * Created 02/01/2025 by SuperMartijn642
  */
-public class FusionModelLoader implements UnbakedModelLoader<FusionBlockModel> {
+public class FusionModelLoader implements UnbakedModelLoader<BlockModel> {
     @Override
-    public FusionBlockModel read(JsonObject json, JsonDeserializationContext context) throws JsonParseException{
-        // Finalize model type registration
-        ModelTypeRegistryImpl.finalizeRegistration();
-        // Finalize predicate registration
-        PredicateRegistryImpl.finalizeRegistration();
-
+    public BlockModel read(JsonObject json, JsonDeserializationContext context) throws JsonParseException{
         // Load the model data
         ModelInstance<?> model = ModelTypeRegistryImpl.deserializeModelData(json.getAsJsonObject());
 
         // Create a dummy block model
-        return new FusionBlockModel(model);
+        return new FusionBlockModelData(model);
     }
 }

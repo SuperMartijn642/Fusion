@@ -10,6 +10,7 @@
     "neoforge.QuadLighterMixin",
     "AgeableMobMixin",
     "BlockModelMixin",
+    "BlockModelWrapperMixin",
     "BlockRenderDispatcherMixin",
     "BufferSourceMixin",
     "CompositePackResourceMixin",
@@ -20,6 +21,7 @@
     "EntityRenderersMixin",
     "FilePackResourcesMixin",
     "ItemRendererMixin",
+    "MinecraftMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
@@ -31,6 +33,7 @@
     "SpriteResourceLoaderMixin",
     "TerrainParticleMixin",
     "TextureAtlasSpriteMixin",
+    "UnbakedModelMixin",
     "WeightedBakedModelMixin"
   ],
   "server": [],

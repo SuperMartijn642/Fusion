@@ -1,9 +1,9 @@
 package com.supermartijn642.fusion.api.texture;
 
 import com.supermartijn642.fusion.api.texture.custom.TextureCreationContext;
-import com.supermartijn642.fusion.api.texture.custom.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.custom.TextureOutput;
 import com.supermartijn642.fusion.api.util.Serializer;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -17,7 +17,7 @@ public interface TextureType<T, X> extends Serializer<T> {
      * @param output  output for the sprites and any custom data
      * @param context context for creating the sprites
      * @param data    custom texture data
-     * @throws TextureErrorException when there's a user error in the resource pack, for example an invalid configuration
+     * @throws UserErrorException when there's a user error in the resource pack, for example an invalid configuration
      */
-    void createTexture(TextureOutput<X> output, TextureCreationContext context, T data) throws TextureErrorException;
+    void createTexture(TextureOutput<X> output, TextureCreationContext context, T data) throws UserErrorException;
 }

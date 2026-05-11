@@ -1,14 +1,18 @@
 package com.supermartijn642.fusion.model;
 
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.SpriteIdentifier;
+import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBaker;
-import net.minecraft.client.resources.model.ModelState;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -16,46 +20,55 @@ import java.util.function.Function;
  */
 public class ModelBakingContextImpl implements ModelBakingContext {
 
+    private final Consumer<String> warnings;
+    private final ResourceLocation identifier;
+    private final ModelTransform transform;
+    private final BakedModel missingModel;
+    private final Function<Material,TextureAtlasSprite> textureGetter;
+    private final Map<ResourceLocation,ModelInstance<?>> dependencies;
     private final ModelBaker modelBaker;
-    private final Function<Material,TextureAtlasSprite> spriteGetter;
-    private final ModelState modelState;
-    private final ResourceLocation modelIdentifier;
 
-    public ModelBakingContextImpl(ModelBaker modelBaker, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, ResourceLocation modelIdentifier){
+    public ModelBakingContextImpl(Consumer<String> warnings, ResourceLocation identifier, ModelTransform transform, BakedModel missingModel, Function<Material,TextureAtlasSprite> textureGetter, Map<ResourceLocation,ModelInstance<?>> dependencies, ModelBaker modelBaker){
+        this.warnings = warnings;
+        this.identifier = identifier;
+        this.transform = transform;
+        this.missingModel = missingModel;
+        this.textureGetter = textureGetter;
+        this.dependencies = dependencies;
         this.modelBaker = modelBaker;
-        this.spriteGetter = spriteGetter;
-        this.modelState = modelState;
-        this.modelIdentifier = modelIdentifier;
-    }
-
-
-    @Override
-    public ModelBaker getModelBaker(){
-        return this.modelBaker;
     }
 
     @Override
-    public TextureAtlasSprite getTexture(SpriteIdentifier identifier){
-        return this.spriteGetter.apply(identifier.toMaterial());
-    }
-
-    @Override
-    public TextureAtlasSprite getTexture(ResourceLocation atlas, ResourceLocation texture){
-        return this.spriteGetter.apply(new Material(atlas, texture));
-    }
-
-    @Override
-    public ModelState getTransformation(){
-        return this.modelState;
+    public void pushWarning(String warning){
+        this.warnings.accept(warning);
     }
 
     @Override
     public ResourceLocation getModelIdentifier(){
-        return this.modelIdentifier;
+        return this.identifier;
     }
 
     @Override
-    public ModelInstance<?> getModel(ResourceLocation identifier){
-        return FusionBlockModel.getModelInstance(this.modelBaker.getModel(identifier));
+    public ModelTransform getTransformation(){
+        return this.transform;
+    }
+
+    @Override
+    public TextureAtlasSprite getMaterial(ModelMaterial material){
+        return this.textureGetter.apply(material.toMaterial());
+    }
+
+    @Override
+    public @Nullable ModelInstance<?> getModel(ResourceLocation identifier){
+        return this.dependencies.get(identifier);
+    }
+
+    @Override
+    public BakedModel getMissingModel(){
+        return this.missingModel;
+    }
+
+    public ModelBaker getModelBaker(){
+        return this.modelBaker;
     }
 }

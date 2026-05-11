@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -30,6 +31,8 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         BlockStateProperties.EAST
     };
 
+    private final MutableQuad helperMutableQuad = MutableQuad.create();
+
     public PaneCullingBakedModel(BlockStateModel original){
         super(original);
     }
@@ -58,18 +61,20 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         // Filter out certain quads
         BlockState finalStateAbove = stateAbove;
         BlockState finalStateBelow = stateBelow;
-        emitter.pushTransform(quad -> filterQuad(quad, finalStateAbove, finalStateBelow));
+        emitter.pushTransform(quad -> this.filterQuad(quad, finalStateAbove, finalStateBelow));
         super.emitQuads(emitter, blockView, pos, state, random, cullTest);
         emitter.popTransform();
     }
 
-    private static boolean filterQuad(QuadView quad, BlockState stateAbove, BlockState stateBelow){
+    private boolean filterQuad(QuadView quadView, BlockState stateAbove, BlockState stateBelow){
         // Check that the quad is part of the top or bottom face of the pane
-        Direction quadDirection = quad.nominalFace();
+        Direction quadDirection = quadView.nominalFace();
         if(quadDirection != Direction.UP && quadDirection != Direction.DOWN)
             return true;
 
         // Find the center of the quad
+        MutableQuad quad = this.helperMutableQuad;
+        quad.copyFrapiQuad(quadView);
         float centerX = (quad.x(0) + quad.x(1) + quad.x(2) + quad.x(3)) / 4;
         float centerZ = (quad.z(0) + quad.z(1) + quad.z(2) + quad.z(3)) / 4;
         // If the quad's center is roughly at the center of the block, assume it is the middle part of the glass pane

@@ -1,53 +1,99 @@
 package com.supermartijn642.fusion.api.model;
 
+import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
+import com.supermartijn642.fusion.api.model.custom.ModelProperty;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemTransform;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
+ * An interface for custom model types.
+ * <p>
  * Created 27/04/2023 by SuperMartijn642
+ * @param <T> data used to bake the model
  */
 public interface ModelType<T> extends Serializer<T> {
 
     /**
-     * Gets all the dependencies on other model files.
-     * @param data custom model data
+     * Gets all the dependencies on other unbaked models.
      */
-    Collection<ResourceLocation> getModelDependencies(T data);
+    Collection<ResourceLocation> getDependencies(T data);
 
     /**
-     * Converts the model data into a baked model.
-     * @param context context for baking the model
-     * @param data    custom model data
-     * @return a baked model
-     * @see ModelBakingContext
+     * Gets any parent models which the model may inherit properties from.
      */
-    BakedModel bake(ModelBakingContext context, T data);
+    List<Either<ResourceLocation,ModelInstance<?>>> getParents(T data);
 
     /**
-     * Represents the model as a vanilla {@link BlockModel} instance. May be used gather info from other models, such as with the vanilla 'parent' property.
-     * If the model cannot be represented as a {@link BlockModel} instance, this method should return {@code null}.
-     * @param data custom model data
-     * @return a representation of the model as a vanilla {@link BlockModel} instance, or {@code null} if such a representation is not available
+     * Gets whether the model should be rendered with ambient occlusion.
      */
     @Nullable
-    default BlockModel getAsVanillaModel(T data){
-        return null;
+    Boolean getAmbientOcclusion(T data);
+
+    /**
+     * Gets the lighting to use when the model is rendered in a gui.
+     */
+    @Nullable
+    BlockModel.GuiLight getGuiLight(T data);
+
+    /**
+     * Gets the transformations used to render the model as an item under the given context.
+     */
+    @Nullable
+    ItemTransform getItemTransform(ItemTransforms.TransformType type, T data);
+
+    /**
+     * Gets the material references of the model.
+     */
+    Map<String,Either<String,ModelMaterial>> getMaterials(T data);
+
+    /**
+     * Gets the geometry of the model.
+     */
+    @Nullable
+    ModelGeometry getGeometry(T data);
+
+    /**
+     * Gets whether the model should be shaded.
+     */
+    @Nullable
+    Boolean getShade(T data);
+
+    /**
+     * Gets whether the model is emissive.
+     */
+    @Nullable
+    Boolean getEmissive(T data);
+
+    /**
+     * Gets the transformations that should be applied to the model's geometry.
+     */
+    default ModelTransform getTransform(T data){
+        return ModelTransform.identity();
     }
 
     /**
-     * Gets any 'parent' models which the model may inherit properties from.
+     * Gets an arbitrary property of this model.
+     * @see ModelProperty
      */
-    default List<ResourceLocation> getParentModels(T data){
-        BlockModel vanillaModel = this.getAsVanillaModel(data);
-        if(vanillaModel != null && vanillaModel.parentLocation != null)
-            return List.of(vanillaModel.parentLocation);
-        return Collections.emptyList();
-    }
+    <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context, T data);
+
+    /**
+     * Creates a baked model from the model data.
+     * @see ModelBakingContext
+     */
+    BakedModel bakeModel(ModelBakingContext context, T data);
 }

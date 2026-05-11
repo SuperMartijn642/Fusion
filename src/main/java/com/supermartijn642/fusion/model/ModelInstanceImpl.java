@@ -1,15 +1,24 @@
 package com.supermartijn642.fusion.model;
 
-import com.supermartijn642.fusion.api.model.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
+import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
+import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
+import com.supermartijn642.fusion.api.model.custom.ModelProperty;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.util.Either;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemTransform;
+import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -35,22 +44,62 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public Collection<ResourceLocation> getModelDependencies(){
-        return this.modelType.getModelDependencies(this.modelData);
+    public Collection<ResourceLocation> getDependencies(){
+        return this.modelType.getDependencies(this.modelData);
     }
 
     @Override
-    public @Nullable BlockModel getAsVanillaModel(){
-        return this.modelType.getAsVanillaModel(this.modelData);
+    public List<Either<ResourceLocation,ModelInstance<?>>> getParents(){
+        return this.modelType.getParents(this.modelData);
     }
 
     @Override
-    public BakedModel bake(ModelBakingContext context){
-        return this.modelType.bake(context, this.modelData);
+    public @Nullable Boolean getAmbientOcclusion(){
+        return this.modelType.getAmbientOcclusion(this.modelData);
     }
 
     @Override
-    public List<ResourceLocation> getParentModels(){
-        return this.modelType.getParentModels(this.modelData);
+    public @Nullable BlockModel.GuiLight getGuiLight(){
+        return this.modelType.getGuiLight(this.modelData);
+    }
+
+    @Override
+    public @Nullable ItemTransform getItemTransform(ItemTransforms.TransformType type){
+        return this.modelType.getItemTransform(type, this.modelData);
+    }
+
+    @Override
+    public Map<String,Either<String,ModelMaterial>> getMaterials(){
+        return this.modelType.getMaterials(this.modelData);
+    }
+
+    @Override
+    public @Nullable ModelGeometry getGeometry(){
+        return this.modelType.getGeometry(this.modelData);
+    }
+
+    @Override
+    public @Nullable Boolean getShade(){
+        return this.modelType.getShade(this.modelData);
+    }
+
+    @Override
+    public @Nullable Boolean getEmissive(){
+        return this.modelType.getEmissive(this.modelData);
+    }
+
+    @Override
+    public ModelTransform getTransform(){
+        return this.modelType.getTransform(this.modelData);
+    }
+
+    @Override
+    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context){
+        return this.modelType.getProperty(property, context, this.modelData);
+    }
+
+    @Override
+    public BakedModel bakeModel(ModelBakingContext context){
+        return this.modelType.bakeModel(context, this.modelData);
     }
 }

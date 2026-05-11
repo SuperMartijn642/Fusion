@@ -5,9 +5,9 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.TextureCreationContext;
-import com.supermartijn642.fusion.api.texture.custom.TextureErrorException;
 import com.supermartijn642.fusion.api.texture.custom.TextureOutput;
 import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.util.UserErrorException;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -18,7 +18,7 @@ import java.util.Locale;
 public class BaseTextureType implements TextureType<BaseTextureData,BaseTextureData> {
 
     @Override
-    public void createTexture(TextureOutput<BaseTextureData> output, TextureCreationContext context, BaseTextureData data) throws TextureErrorException{
+    public void createTexture(TextureOutput<BaseTextureData> output, TextureCreationContext context, BaseTextureData data) throws UserErrorException{
         // Create vanilla sprite
         //noinspection rawtypes,unchecked
         DefaultTextureTypes.VANILLA.createTexture((TextureOutput)output, context, null);

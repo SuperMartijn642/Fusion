@@ -110,10 +110,15 @@ public class ModelGeometryImpl implements ModelGeometry {
         // Bake the model
         Function<Material,TextureAtlasSprite> spriteGetter = material -> materialResolver.get(material.texture().toString());
         ModelBakery modelBakery = FusionBlockModelData.modelBakery.get();
-        ResourceLocation identifier = this.model instanceof BlockModel && !((BlockModel)this.model).name.isEmpty() && IdentifierUtil.isValidIdentifier(((BlockModel)this.model).name) ?
-            new ResourceLocation(((BlockModel)this.model).name) :
-            Fusion.identifier("unknown_geometry");
-        BakedModel baked = this.model.bake(modelBakery, spriteGetter, transformation.toModelState(), identifier);
+        BakedModel baked;
+        try{
+            ResourceLocation identifier = this.model instanceof BlockModel && !((BlockModel)this.model).name.isEmpty() && IdentifierUtil.isValidIdentifier(((BlockModel)this.model).name) ?
+                new ResourceLocation(((BlockModel)this.model).name) :
+                Fusion.identifier("unknown_geometry");
+            baked = this.model.bake(modelBakery, spriteGetter, transformation.toModelState(), identifier);
+        }catch(Exception e){
+            throw new RuntimeException("Encountered an exception baking model of class '" + this.model.getClass().getName() + "'!", e);
+        }
         if(baked == null)
             return CullableQuads.empty();
 

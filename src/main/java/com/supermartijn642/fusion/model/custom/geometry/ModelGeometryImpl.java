@@ -105,7 +105,12 @@ public class ModelGeometryImpl implements ModelGeometry {
     public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
         // Bake the model
         Function<ResourceLocation,TextureAtlasSprite> spriteGetter = material -> materialResolver.get(material.toString());
-        IBakedModel baked = this.model.bake(transformation.toModelState(), DefaultVertexFormats.ITEM, spriteGetter);
+        IBakedModel baked;
+        try{
+            baked = this.model.bake(transformation.toModelState(), DefaultVertexFormats.ITEM, spriteGetter);
+        }catch(Exception e){
+            throw new RuntimeException("Encountered an exception baking model of class '" + this.model.getClass().getName() + "'!", e);
+        }
 
         // Collect all quads from the model
         CullableQuads.Builder quads = CullableQuads.builder();

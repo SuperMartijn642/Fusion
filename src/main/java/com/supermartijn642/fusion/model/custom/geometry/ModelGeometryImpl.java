@@ -159,7 +159,12 @@ public class ModelGeometryImpl implements ModelGeometry {
         };
 
         // Bake the model
-        BakedModel baked = this.model.bake(modelBaker, spriteGetter, transformation.toModelState());
+        BakedModel baked;
+        try{
+            baked = this.model.bake(modelBaker, spriteGetter, transformation.toModelState());
+        }catch(Exception e){
+            throw new RuntimeException("Encountered an exception baking model of class '" + this.model.getClass().getName() + "'!", e);
+        }
         if(baked == null)
             return CullableQuads.empty();
 

@@ -161,6 +161,10 @@ public class ModelGeometryImpl implements ModelGeometry {
             }
         };
         // Bake the model
-        return CullableQuads.of(this.geometry.bake(textureSlots, modelBaker, transformation.toModelState(), () -> ""));
+        try{
+            return CullableQuads.of(this.geometry.bake(textureSlots, modelBaker, transformation.toModelState(), () -> ""));
+        }catch(Exception e){
+            throw new RuntimeException("Encountered an exception baking geometry of class '" + this.geometry.getClass().getName() + "'!", e);
+        }
     }
 }

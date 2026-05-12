@@ -168,7 +168,12 @@ public class ModelGeometryImpl implements ModelGeometry {
         };
 
         // Bake the model
-        BakedModel baked = this.model.bake(textureSlots, modelBaker, transformation.toModelState(), true, true, ItemTransforms.NO_TRANSFORMS);
+        BakedModel baked;
+        try{
+            baked = this.model.bake(textureSlots, modelBaker, transformation.toModelState(), true, true, ItemTransforms.NO_TRANSFORMS);
+        }catch(Exception e){
+            throw new RuntimeException("Encountered an exception baking model of class '" + this.model.getClass().getName() + "'!", e);
+        }
 
         // Create dummy random
         RandomSource random = RandomSource.createNewThreadLocalInstance();

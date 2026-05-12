@@ -99,7 +99,12 @@ public class ModelGeometryImpl implements ModelGeometry {
         // Bake the model
         Function<ResourceLocation,TextureAtlasSprite> spriteGetter = material -> materialResolver.get(material.toString());
         ModelBakery modelBakery = FusionBlockModelData.modelBakery.get();
-        IBakedModel baked = this.model.bake(modelBakery, spriteGetter, transformation.toModelTransform(), DefaultVertexFormats.BLOCK_NORMALS);
+        IBakedModel baked;
+        try{
+            baked = this.model.bake(modelBakery, spriteGetter, transformation.toModelTransform(), DefaultVertexFormats.BLOCK_NORMALS);
+        }catch(Exception e){
+            throw new RuntimeException("Encountered an exception baking model of class '" + this.model.getClass().getName() + "'!", e);
+        }
         if(baked == null)
             return CullableQuads.empty();
 

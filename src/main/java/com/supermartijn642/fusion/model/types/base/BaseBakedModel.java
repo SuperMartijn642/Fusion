@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.types.base;
 
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.texture.custom.QuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
@@ -56,6 +57,11 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
         // Emit all quads
         QuadEmitter emitter = context.getEmitter();
         for(Part part : this.parts){
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForBlock(level, pos, state))
+                continue;
+
+            // Process all quads
             for(Direction cullDirection : CullingHelper.cullDirections()){
                 // Set cull direction
                 emitter.cullFace(cullDirection);
@@ -92,6 +98,11 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
         // Emit all quads
         QuadEmitter emitter = context.getEmitter();
         for(Part part : this.parts){
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForItem(stack))
+                continue;
+
+            // Process all quads
             EmittableQuad mutableQuad = null;
             for(Quad quad : part.quads().all()){
                 // Simply add quads that don't need further processing
@@ -132,6 +143,10 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
         List<BakedQuad> bakedQuads = new ArrayList<>();
         EmittableQuad mutableQuad = null;
         for(Part part : this.parts){
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForBlock(null, null, state))
+                continue;
+
             // Process quads
             for(Quad quad : part.quads().get(cullDirection)){
                 // Simply add quads that don't need further processing
@@ -190,7 +205,7 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
         return ItemOverrides.EMPTY;
     }
 
-    public record Part(Quads quads) {
+    public record Part(Quads quads, ModelPredicate conditions) {
     }
 
     public record Quads(List<Quad>[] quads, List<Quad> all) {

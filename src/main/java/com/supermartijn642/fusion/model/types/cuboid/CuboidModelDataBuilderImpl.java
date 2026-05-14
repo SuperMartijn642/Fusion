@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.model.types.cuboid;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Either;
-import com.supermartijn642.fusion.api.model.custom.ModelProperty;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
 import net.minecraft.client.renderer.block.model.*;
@@ -58,10 +58,10 @@ public class CuboidModelDataBuilderImpl extends AbstractCuboidModelDataBuilder<C
                         face.rotation() == null ? 0 : face.rotation().angle()
                     ),
                     new ForgeFaceData(
-                        face.getProperty(ModelProperty.FORGE_GEOMETRY_COLOR).orElse(-1),
-                        face.getProperty(ModelProperty.FORGE_GEOMETRY_BLOCK_LIGHT).orElse(0),
-                        face.getProperty(ModelProperty.FORGE_GEOMETRY_SKY_LIGHT).orElse(0),
-                        face.getProperty(ModelProperty.FORGE_GEOMETRY_AMBIENT_OCCLUSION).orElse(true)
+                        face.getProperty(DefaultModelProperties.FORGE_GEOMETRY_COLOR).orElse(-1),
+                        face.getProperty(DefaultModelProperties.FORGE_GEOMETRY_BLOCK_LIGHT).orElse(0),
+                        face.getProperty(DefaultModelProperties.FORGE_GEOMETRY_SKY_LIGHT).orElse(0),
+                        face.getProperty(DefaultModelProperties.FORGE_GEOMETRY_AMBIENT_OCCLUSION).orElse(true)
                     )
                 ));
             }

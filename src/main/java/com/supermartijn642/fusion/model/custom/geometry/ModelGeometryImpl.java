@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.util.ChunkRenderTypeHelper;
+import com.supermartijn642.fusion.util.CullingHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -166,16 +167,11 @@ public class ModelGeometryImpl implements ModelGeometry {
             // Skip non-chunk render types
             if(!ChunkRenderTypeHelper.isChunkRenderType(renderType))
                 continue;
-            baked.getQuads(Blocks.AIR.defaultBlockState(), null, random, ModelData.EMPTY, renderType).forEach(q -> {
-                MutableQuad mutableQuad = MutableQuad.create(q);
-                mutableQuad.chunkRenderType(renderType);
-                quads.add(null, mutableQuad);
-            });
-            for(Direction cullDirection : Direction.values()){
+            for(Direction cullDirection : CullingHelper.cullDirections()){
                 baked.getQuads(Blocks.AIR.defaultBlockState(), cullDirection, random, ModelData.EMPTY, renderType).forEach(q -> {
                     MutableQuad mutableQuad = MutableQuad.create(q);
                     mutableQuad.chunkRenderType(renderType);
-                    quads.add(null, mutableQuad);
+                    quads.add(cullDirection, mutableQuad);
                 });
             }
         }

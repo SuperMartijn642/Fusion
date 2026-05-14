@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.model.custom.geometry;
 
 import com.google.common.collect.ImmutableMap;
-import com.supermartijn642.fusion.api.model.custom.ModelProperty;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
+import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.BlockElementFace;
 import net.minecraft.core.Direction;
 
@@ -27,6 +28,11 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
             .rotation(Rotation.byAngle(face.uv().rotation))
             .cullDirection(face.cullForDirection())
             .tintIndex(face.tintIndex() == -1 ? null : face.tintIndex())
+            .ambientOcclusion(face.data().ambientOcclusion() ? null : false)
+            .property(DefaultModelProperties.FORGE_GEOMETRY_COLOR, face.data().color())
+            .property(DefaultModelProperties.FORGE_GEOMETRY_BLOCK_LIGHT, face.data().blockLight())
+            .property(DefaultModelProperties.FORGE_GEOMETRY_SKY_LIGHT, face.data().skyLight())
+            .property(DefaultModelProperties.FORGE_GEOMETRY_AMBIENT_OCCLUSION, face.data().ambientOcclusion())
             .build();
     }
 
@@ -39,9 +45,9 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
     private final Integer lightEmission;
     private final Boolean ambientOcclusion;
     private final Boolean emissive;
-    private final Map<ModelProperty<?,?>,Function<?,?>> properties;
+    private final Map<Property<?,?>,Function<?,?>> properties;
 
-    public CuboidGeometryFaceImpl(String material, UV uv, Rotation rotation, Direction cullDirection, Integer tintIndex, Boolean shade, Integer lightEmission, Boolean ambientOcclusion, Boolean emissive, Map<ModelProperty<?,?>,Function<?,?>> properties){
+    public CuboidGeometryFaceImpl(String material, UV uv, Rotation rotation, Direction cullDirection, Integer tintIndex, Boolean shade, Integer lightEmission, Boolean ambientOcclusion, Boolean emissive, Map<Property<?,?>,Function<?,?>> properties){
         this.material = material;
         this.uv = uv;
         this.rotation = rotation;
@@ -100,7 +106,7 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
     }
 
     @Override
-    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context){
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context){
         Function<?,?> function = this.properties.get(property);
         //noinspection unchecked,rawtypes
         return function == null ?
@@ -119,7 +125,7 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
         private Integer lightEmission;
         private Boolean ambientOcclusion;
         private Boolean emissive;
-        private final ImmutableMap.Builder<ModelProperty<?,?>,Function<?,?>> properties = ImmutableMap.builder();
+        private final ImmutableMap.Builder<Property<?,?>,Function<?,?>> properties = ImmutableMap.builder();
 
         @Override
         public Builder material(String key){
@@ -180,19 +186,19 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
         }
 
         @Override
-        public <X> Builder property(ModelProperty<X,?> property, X value){
+        public <X> Builder property(Property<X,?> property, X value){
             this.properties.put(property, p -> value);
             return this;
         }
 
         @Override
-        public <X> Builder property(ModelProperty<X,?> property, Supplier<X> value){
+        public <X> Builder property(Property<X,?> property, Supplier<X> value){
             this.properties.put(property, p -> value.get());
             return this;
         }
 
         @Override
-        public <X, C> Builder property(ModelProperty<X,C> property, Function<C,X> value){
+        public <X, C> Builder property(Property<X,C> property, Function<C,X> value){
             this.properties.put(property, value);
             return this;
         }

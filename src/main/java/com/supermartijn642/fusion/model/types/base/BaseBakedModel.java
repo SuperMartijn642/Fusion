@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.model.types.base;
 import com.google.common.base.Suppliers;
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.texture.custom.QuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
@@ -77,12 +78,20 @@ public class BaseBakedModel implements BakedModel {
         // Check whether we should use block context
         boolean hasBlockContext = level != null || pos != null || state != null;
 
+        // For each part, collect whether the part's conditions are met and collect texture states for the part
+        boolean[] partConditions = new boolean[this.parts.size()];
+
         // Collect texture states
         //noinspection unchecked
         List<Object>[][] combinedStates = new List[this.parts.size()][];
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(int i = 0; i < this.parts.size(); i++){
             Part part = this.parts.get(i);
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForBlock(level, pos, state))
+                continue;
+            partConditions[i] = true;
+
             // Extract state for all the textures that need processing
             //noinspection unchecked
             List<Object>[] extractStates = new List[7];
@@ -102,7 +111,7 @@ public class BaseBakedModel implements BakedModel {
             }
             combinedStates[i] = extractStates;
         }
-        return new RenderData(combinedStates, propertyStore);
+        return new RenderData(partConditions, combinedStates, propertyStore);
     }
 
     @Override
@@ -156,6 +165,10 @@ public class BaseBakedModel implements BakedModel {
         EmittableQuad mutableQuad = null;
         for(int i = 0; i < this.parts.size(); i++){
             Part part = this.parts.get(i);
+            // Check part condition
+            if(!renderData.partConditions[i])
+                continue;
+
             // Get texture states for part
             List<Object> states = renderData.statesForPart(i)[CullingHelper.cullIndex(cullDirection)];
             // Process quads
@@ -209,6 +222,10 @@ public class BaseBakedModel implements BakedModel {
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         List<BakedModel> models = new ArrayList<>(this.parts.size());
         for(Part part : this.parts){
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForItem(stack))
+                continue;
+
             // Collect quads by render type
             List<RenderType> renderTypes = new ArrayList<>(4);
             List<List<BakedQuad>> quadsByRenderType = new ArrayList<>(4);
@@ -307,7 +324,7 @@ public class BaseBakedModel implements BakedModel {
         return false;
     }
 
-    public record Part(Quads quads) {
+    public record Part(Quads quads, ModelPredicate conditions) {
     }
 
     public record Quads(List<Quad>[] quads, List<Quad> all) {
@@ -326,7 +343,7 @@ public class BaseBakedModel implements BakedModel {
     public record Quad(QuadAccess quad, SpriteInstance sprite, QuadProcessor<Object> processor) {
     }
 
-    private record RenderData(List<Object>[][] combinedTextureStates, PropertyStore propertyStore) {
+    private record RenderData(boolean[] partConditions, List<Object>[][] combinedTextureStates, PropertyStore propertyStore) {
         List<Object>[] statesForPart(int index){
             return this.combinedTextureStates[index];
         }

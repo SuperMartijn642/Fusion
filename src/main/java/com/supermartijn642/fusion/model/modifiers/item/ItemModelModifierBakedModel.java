@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedOverrides;
@@ -28,15 +28,15 @@ import java.util.List;
 public class ItemModelModifierBakedModel implements BakedModel {
 
     private final BakedModel defaultModel;
-    private final List<Pair<ItemPredicate,BakedModel>> models;
+    private final List<Pair<ItemModelPredicate,BakedModel>> models;
 
-    public ItemModelModifierBakedModel(BakedModel defaultModel, List<Pair<ItemPredicate,BakedModel>> models){
+    public ItemModelModifierBakedModel(BakedModel defaultModel, List<Pair<ItemModelPredicate,BakedModel>> models){
         this.defaultModel = defaultModel;
         this.models = models;
     }
 
     public BakedModel forStack(ItemStack stack){
-        for(Pair<ItemPredicate,BakedModel> entry : this.models){
+        for(Pair<ItemModelPredicate,BakedModel> entry : this.models){
             if(entry.left().test(stack))
                 return entry.right();
         }

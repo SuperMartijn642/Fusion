@@ -1,9 +1,9 @@
-package com.supermartijn642.fusion.model.modifiers.item.predicates;
+package com.supermartijn642.fusion.model.predicates.item;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.resources.ResourceLocation;
@@ -16,11 +16,11 @@ import java.util.Map;
  */
 public class ItemPredicateRegistry {
 
-    private static final Map<ResourceLocation,Serializer<? extends ItemPredicate>> IDENTIFIER_TO_SERIALIZER = new HashMap<>();
-    private static final Map<Serializer<? extends ItemPredicate>,ResourceLocation> SERIALIZER_TO_IDENTIFIER = new HashMap<>();
+    private static final Map<ResourceLocation,Serializer<? extends ItemModelPredicate>> IDENTIFIER_TO_SERIALIZER = new HashMap<>();
+    private static final Map<Serializer<? extends ItemModelPredicate>,ResourceLocation> SERIALIZER_TO_IDENTIFIER = new HashMap<>();
     private static boolean finalized = false;
 
-    public static synchronized void registerItemPredicate(ResourceLocation identifier, Serializer<? extends ItemPredicate> serializer){
+    public static synchronized void registerItemPredicate(ResourceLocation identifier, Serializer<? extends ItemModelPredicate> serializer){
         if(finalized)
             throw new RuntimeException("Item predicates must be registered before models get loaded!");
         if(IDENTIFIER_TO_SERIALIZER.containsKey(identifier))
@@ -32,7 +32,7 @@ public class ItemPredicateRegistry {
         SERIALIZER_TO_IDENTIFIER.put(serializer, identifier);
     }
 
-    public static JsonObject serializeItemPredicate(ItemPredicate predicate){
+    public static JsonObject serializeItemPredicate(ItemModelPredicate predicate){
         if(!finalized)
             throw new RuntimeException("Can only serialize item predicates after registration has completed!");
         ResourceLocation identifier = SERIALIZER_TO_IDENTIFIER.get(predicate.getSerializer());
@@ -55,7 +55,7 @@ public class ItemPredicateRegistry {
         return json;
     }
 
-    public static ItemPredicate deserializeItemPredicate(JsonObject json){
+    public static ItemModelPredicate deserializeItemPredicate(JsonObject json){
         if(!finalized)
             throw new RuntimeException("Can only deserialize item predicates after registration has completed!");
         JsonElement typeJson = json.getAsJsonObject().get("type");
@@ -64,12 +64,12 @@ public class ItemPredicateRegistry {
         if(!IdentifierUtil.isValidIdentifier(typeJson.getAsString()))
             throw new JsonParseException("Property 'type' must be a valid identifier!");
         ResourceLocation identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
-        Serializer<? extends ItemPredicate> serializer = IDENTIFIER_TO_SERIALIZER.get(identifier);
+        Serializer<? extends ItemModelPredicate> serializer = IDENTIFIER_TO_SERIALIZER.get(identifier);
         if(serializer == null)
             throw new JsonParseException("Unknown item predicate type '" + identifier + "'!");
 
         // Deserialize the item predicate
-        ItemPredicate predicate;
+        ItemModelPredicate predicate;
         try{
             predicate = serializer.deserialize(json);
         }catch(JsonParseException e){

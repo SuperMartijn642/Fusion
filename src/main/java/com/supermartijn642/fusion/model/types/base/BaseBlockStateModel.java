@@ -1,16 +1,15 @@
 package com.supermartijn642.fusion.model.types.base;
 
-import com.supermartijn642.fusion.api.model.custom.CullableQuads;
-import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
-import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
-import com.supermartijn642.fusion.api.texture.SpriteHelper;
-import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.BlockStateQuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
-import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
-import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
+import com.supermartijn642.fusion.api.util.PropertyStore;
+import com.supermartijn642.fusion.util.CullingHelper;
+import com.supermartijn642.fusion.util.FallbackPropertyStore;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.mesh.ShadeMode;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -21,6 +20,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -33,14 +33,17 @@ public class BaseBlockStateModel implements BlockStateModel {
 
     private final List<Part> parts;
     private final TextureAtlasSprite particleSprite;
+    private final PropertyStore propertyStore;
 
-    public BaseBlockStateModel(List<Part> parts, TextureAtlasSprite particleSprite){
+    public BaseBlockStateModel(List<Part> parts, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
         this.parts = parts;
         this.particleSprite = particleSprite;
+        this.propertyStore = propertyStore;
     }
 
     @Override
     public void emitQuads(QuadEmitter emitter, BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, Predicate<@Nullable Direction> cullTest){
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(Part part : this.parts){
             for(Direction cullDirection : CULL_DIRECTIONS){
                 // Skip direction if it doesn't pass the cull test
@@ -50,48 +53,117 @@ public class BaseBlockStateModel implements BlockStateModel {
                 emitter.cullFace(cullDirection);
                 emitter.shadeMode(ShadeMode.VANILLA);
 
-                MutableQuad mutableQuad = null;
-                for(QuadAccess quad : part.quads().get(cullDirection)){
-                    // Get the sprite instance
-                    SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
-                    if(sprite == null){
-                        quad.toFrapiQuad(emitter);
+                EmittableQuad mutableQuad = null;
+                for(Quad quad : part.quads().get(cullDirection)){
+                    // Simply add quads that don't need further processing
+                    if(quad.processor() == null){
+                        quad.quad().toFrapiQuad(emitter);
                         emitter.emit();
                         continue;
                     }
 
+                    // Create mutable quad
+                    if(mutableQuad == null)
+                        mutableQuad = EmittableQuad.create(q -> {
+                            q.toFrapiQuad(emitter);
+                            emitter.emit();
+                        });
+                    mutableQuad.copyFrom(quad.quad());
+
                     // Process special texture type quads
-                    TextureType<?,?> textureType = sprite.getTexture().getTextureType();
-                    if(textureType == DefaultTextureTypes.RANDOM){
-                        if(mutableQuad == null)
-                            mutableQuad = MutableQuad.create();
-                        mutableQuad.copyFrom(quad);
-                        RandomTextureType.processQuad(mutableQuad, pos, quad.facing(), random, sprite);
-                        mutableQuad.toFrapiQuad(emitter);
-                        emitter.emit();
-                    }else if(textureType == DefaultTextureTypes.CONTINUOUS){
-                        if(mutableQuad == null)
-                            mutableQuad = MutableQuad.create();
-                        mutableQuad.copyFrom(quad);
-                        ContinuousTextureType.processQuad(mutableQuad, pos, quad.facing(), sprite);
-                        mutableQuad.toFrapiQuad(emitter);
-                        emitter.emit();
-                    }else{
-                        quad.toFrapiQuad(emitter);
-                        emitter.emit();
-                    }
+                    Object s = quad.processor().extractState(level, pos, state, () -> random, propertyStore);
+                    quad.processor().processQuad(mutableQuad, quad.sprite(), s, propertyStore);
                 }
             }
         }
     }
 
     @Override
-    public void collectParts(RandomSource random, List<BlockModelPart> output){
+    public void collectParts(RandomSource random, List<BlockModelPart> parts){
+        // Handle each part
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
+        for(Part part : this.parts){
+            // Extract state for all the textures that need processing
+            //noinspection unchecked
+            List<Object>[] extractStates = new List[7];
+            for(Direction cullDirection : CullingHelper.cullDirections()){
+                int cullIndex = CullingHelper.cullIndex(cullDirection);
+                for(Quad quad : part.quads().get(cullDirection)){
+                    // Ignore quads that don't need processing
+                    if(quad.processor() == null)
+                        continue;
+                    if(extractStates[cullIndex] == null)
+                        extractStates[cullIndex] = new ArrayList<>();
+                    extractStates[cullIndex].add(quad.processor().extractState(null, null, null, () -> random, propertyStore));
+                }
+            }
+
+            // Create model parts
+            parts.add(new BlockModelPart() {
+                @Override
+                public List<BakedQuad> getQuads(@Nullable Direction cullDirection){
+                    List<Quad> quads = part.quads().get(cullDirection);
+                    List<Object> states = extractStates[CullingHelper.cullIndex(cullDirection)];
+                    int stateIndex = 0;
+
+                    // Convert all quads to baked quads
+                    List<BakedQuad> bakedQuads = new ArrayList<>(quads.size());
+                    EmittableQuad mutableQuad = null;
+                    for(Quad quad : quads){
+                        // Simply add quads that don't need further processing
+                        if(quad.processor() == null){
+                            bakedQuads.add(quad.quad().toBakedQuad());
+                            continue;
+                        }
+
+                        // Create mutable quad
+                        if(mutableQuad == null)
+                            mutableQuad = EmittableQuad.create(q -> bakedQuads.add(q.toBakedQuad()));
+                        mutableQuad.copyFrom(quad.quad());
+
+                        // Process special texture type quads
+                        Object state = states.get(stateIndex++);
+                        quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
+                    }
+                    return bakedQuads;
+                }
+
+                @Override
+                public boolean useAmbientOcclusion(){
+                    return true;
+                }
+
+                @Override
+                public TextureAtlasSprite particleIcon(){
+                    return part.particleSprite();
+                }
+            });
+        }
     }
 
     @Override
     public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
-        return null;
+        List<Object> identity = new ArrayList<>();
+        identity.add(this);
+        // Add keys for all the textures that have additional processing
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
+        for(Part part : this.parts){
+            for(Direction cullDirection : CullingHelper.cullDirections()){
+                for(Quad quad : part.quads().get(cullDirection)){
+                    // Ignore quads that don't need processing
+                    if(quad.processor() == null)
+                        continue;
+                    // Extract state
+                    Object s = quad.processor().extractState(level, pos, state, () -> random, propertyStore);
+                    // Create key
+                    Object key = quad.processor().createGeometryKey(s, propertyStore);
+                    if(key == null)
+                        return null;
+                    identity.add(key);
+                }
+            }
+        }
+        return identity;
     }
 
     @Override
@@ -99,6 +171,15 @@ public class BaseBlockStateModel implements BlockStateModel {
         return this.particleSprite;
     }
 
-    public record Part(CullableQuads quads, TextureAtlasSprite particleSprite) {
+    public record Part(Quads quads, TextureAtlasSprite particleSprite) {
+    }
+
+    public record Quads(List<Quad>[] quads) {
+        List<Quad> get(Direction cullDirection){
+            return this.quads[CullingHelper.cullIndex(cullDirection)];
+        }
+    }
+
+    public record Quad(QuadAccess quad, SpriteInstance sprite, BlockStateQuadProcessor<Object> processor) {
     }
 }

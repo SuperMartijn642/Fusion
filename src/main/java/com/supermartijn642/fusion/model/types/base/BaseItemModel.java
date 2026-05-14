@@ -1,6 +1,13 @@
 package com.supermartijn642.fusion.model.types.base;
 
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.texture.custom.ItemQuadProcessor;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
+import com.supermartijn642.fusion.api.util.PropertyStore;
+import com.supermartijn642.fusion.util.FallbackPropertyStore;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadAtlas;
+import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -12,7 +19,6 @@ import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.world.entity.ItemOwner;
@@ -22,11 +28,9 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3fc;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -37,11 +41,13 @@ public class BaseItemModel implements ItemModel {
     private final List<Part> parts;
     private final List<ItemTintSource> tints;
     private final boolean animated;
+    private final PropertyStore propertyStore;
 
-    public BaseItemModel(List<Part> parts, List<ItemTintSource> tints){
+    public BaseItemModel(List<Part> parts, List<ItemTintSource> tints, PropertyStore propertyStore){
         this.parts = parts;
         this.tints = tints;
         this.animated = parts.stream().anyMatch(p -> p.animated);
+        this.propertyStore = propertyStore;
     }
 
     @Override
@@ -71,69 +77,84 @@ public class BaseItemModel implements ItemModel {
         }else
             foilType = null;
         // Get default render type to use for the item
-        RenderType defaultBlockRenderType = Sheets.cutoutBlockSheet();
+        RenderType defaultBlockRenderType;
         if(stack.getItem() instanceof BlockItem && ItemBlockRenderTypes.getChunkRenderType(((BlockItem)stack.getItem()).getBlock().defaultBlockState()) != ChunkSectionLayer.TRANSLUCENT)
             defaultBlockRenderType = Sheets.translucentBlockItemSheet();
+        else
+            defaultBlockRenderType = Sheets.cutoutBlockSheet();
         // Submit each part
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(Part part : this.parts){
-            // Create function to create layers
-            Function<RenderType,ItemStackRenderState.LayerRenderState> layerConfigurer = renderType -> {
-                ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
-                if(tintValues != null)
-                    System.arraycopy(tintValues, 0, layer.prepareTintLayers(tintValues.length), 0, tintValues.length);
-                if(foilType != null)
-                    layer.setFoilType(foilType);
-                layer.setExtents(part.extents);
-                layer.setUsesBlockLight(part.guiLight.lightLikeBlock());
-                layer.setParticleIcon(part.particleSprite);
-                layer.setTransform(part.transforms.getTransform(displayContext));
-                layer.setRenderType(renderType);
-                return layer;
-            };
-            // Create a layer for each render type
-            List<RenderType> renderTypes = new ArrayList<>(4);
-            List<ItemStackRenderState.LayerRenderState> layers = new ArrayList<>(4);
-            for(QuadAccess quad : part.quads){
-                // Get render type
-                RenderType renderType = quad.itemRenderType();
-                if(renderType == null){
-                    renderType = TextureAtlas.LOCATION_BLOCKS.equals(quad.sprite().atlasLocation()) ?
-                        defaultBlockRenderType :
-                        Sheets.translucentItemSheet();
+            // Create and configure layer
+            ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
+            if(tintValues != null)
+                System.arraycopy(tintValues, 0, layer.prepareTintLayers(tintValues.length), 0, tintValues.length);
+            if(foilType != null)
+                layer.setFoilType(foilType);
+            layer.setExtents(part.extents);
+            layer.setUsesBlockLight(part.guiLight.lightLikeBlock());
+            layer.setParticleIcon(part.particleSprite);
+            layer.setTransform(part.transforms.getTransform(displayContext));
+            layer.setRenderType(Sheets.translucentItemSheet());
+            layer.setRenderTypeGetter((atlas, renderType) -> {
+                if(atlas == QuadAtlas.BLOCK){
+                    if(renderType == null)
+                        return defaultBlockRenderType;
+                    return renderType == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockSheet();
                 }
-                // Get or create layer
-                int i = renderTypes.indexOf(renderType);
-                ItemStackRenderState.LayerRenderState layer;
-                if(i == -1){
-                    renderTypes.add(renderType);
-                    layer = layerConfigurer.apply(renderType);
-                    layers.add(layer);
-                }else
-                    layer = layers.get(i);
-                // Add the quad to the layer
-                layer.prepareQuadList().add(quad.toBakedQuad());
+                return Sheets.translucentItemSheet();
+            });
+
+            // Process all quads
+            QuadEmitter emitter = layer.emitter();
+            EmittableQuad mutableQuad = null;
+            for(Quad quad : part.quads){
+                // Simply add quads that don't need further processing
+                if(quad.processor() == null){
+                    quad.quad().toFrapiQuad(emitter);
+                    emitter.emit();
+                    continue;
+                }
+
+                // Extract state
+                Object state = quad.processor().extractState(stack, propertyStore);
+
+                // Create geometry key
+                renderState.appendModelIdentityElement(quad.processor().createGeometryKey(state, propertyStore));
+
+                // Create mutable quad
+                if(mutableQuad == null){
+                    mutableQuad = EmittableQuad.create(q -> {
+                        q.toFrapiQuad(emitter);
+                        emitter.emit();
+                    });
+                }
+                mutableQuad.copyFrom(quad.quad());
+
+                // Process quad
+                quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
             }
         }
     }
 
     public static class Part {
-        private final List<QuadAccess> quads;
+        private final List<Quad> quads;
         private final UnbakedModel.GuiLight guiLight;
         private final TextureAtlasSprite particleSprite;
         private final ItemTransforms transforms;
         private final Supplier<Vector3fc[]> extents;
         private final boolean animated;
 
-        public Part(List<QuadAccess> quads, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms transforms){
+        public Part(List<Quad> quads, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms transforms){
             this.quads = quads;
             this.guiLight = guiLight;
             this.particleSprite = particleSprite;
             this.transforms = transforms;
             this.extents = () -> {
                 Set<Vector3fc> positions = new HashSet<>();
-                for(QuadAccess quad : this.quads){
+                for(Quad quad : this.quads){
                     for(int vertex = 0; vertex < 4; vertex++){
-                        positions.add(quad.position(vertex));
+                        positions.add(quad.quad().position(vertex));
                     }
                 }
                 return positions.toArray(Vector3fc[]::new);
@@ -141,14 +162,17 @@ public class BaseItemModel implements ItemModel {
 
             // Check whether the quads contain animated textures
             boolean animated = false;
-            for(QuadAccess quad : this.quads){
+            for(Quad quad : this.quads){
                 //noinspection resource
-                if(quad.sprite().contents().isAnimated()){
+                if(quad.quad().sprite().contents().isAnimated()){
                     animated = true;
                     break;
                 }
             }
             this.animated = animated;
         }
+    }
+
+    public record Quad(QuadAccess quad, SpriteInstance sprite, ItemQuadProcessor<Object> processor) {
     }
 }

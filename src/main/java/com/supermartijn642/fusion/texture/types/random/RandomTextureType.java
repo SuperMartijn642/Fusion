@@ -3,24 +3,32 @@ package com.supermartijn642.fusion.texture.types.random;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.*;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.api.texture.data.RandomTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.random.RandomTextureData;
+import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
+import com.supermartijn642.fusion.util.Triple;
 import net.minecraft.client.resources.metadata.animation.AnimationFrame;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Supplier;
 
 /**
  * Created 22/10/2024 by SuperMartijn642
@@ -109,6 +117,89 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         output.setCustomData(data);
     }
 
+    @Override
+    public @Nullable BlockStateQuadProcessor<?> initializeBlockStateModelQuad(MutableQuad quad, SpriteInstance sprite, RandomTextureData data, PropertyStore properties){
+        // Apply base texture properties
+        BaseTextureType.applyProperties(quad, data);
+
+        // Create processor
+        Direction side = quad.facing();
+        return new BlockStateQuadProcessor<Integer>() {
+            @Override
+            public Integer extractState(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, PropertyStore properties){
+                if(pos == null)
+                    pos = BlockPos.ZERO;
+                // Calculate seed
+                long seed = 1;
+                if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION)
+                    seed = pos.asLong() + 1;
+                else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_FACING)
+                    seed = (pos.asLong() + 1) * (side.ordinal() + 1);
+                else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_AXIS)
+                    seed = (pos.asLong() + 1) * (side.getAxis().ordinal() + 1);
+                if(data.getSeed() != null)
+                    seed ^= data.getSeed();
+                // Pick which tile to use
+                RandomSource random = randomSupplier.get();
+                random.setSeed(seed);
+                random.nextLong(); // Neighboring blocks may lead to similar seeds, hence generate long first to increase randomness
+                return random.nextInt(sprite.getTexture().getSprites().size());
+            }
+
+            @Override
+            public Object createGeometryKey(Integer state, PropertyStore properties){
+                return Triple.of(DefaultTextureTypes.RANDOM, sprite, state);
+            }
+
+            @Override
+            public void processQuad(EmittableQuad quad, SpriteInstance sprite, Integer index, PropertyStore properties){
+                // Adjust the quad's uv
+                SpriteInstance newSprite = sprite.getTexture().getSprites().get(index);
+                for(int i = 0; i < 4; i++){
+                    quad.uv(
+                        i,
+                        newSprite.getU0() + (quad.u(i) - sprite.getU0()) / (sprite.getU1() - sprite.getSprite().getU0()) * (newSprite.getU1() - newSprite.getU0()),
+                        newSprite.getV0() + (quad.v(i) - sprite.getV0()) / (sprite.getV1() - sprite.getSprite().getV0()) * (newSprite.getV1() - newSprite.getV0())
+                    );
+                }
+                quad.emit();
+            }
+        };
+    }
+
+    @Override
+    public @Nullable ItemQuadProcessor<?> initializeItemModelQuad(MutableQuad quad, SpriteInstance sprite, RandomTextureData data, PropertyStore properties){
+        // Process quad as if at position zero
+        BlockPos pos = BlockPos.ZERO;
+        Direction side = quad.facing();
+        // Calculate seed
+        long seed = 1;
+        if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION)
+            seed = pos.asLong() + 1;
+        else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_FACING)
+            seed = (pos.asLong() + 1) * (side.ordinal() + 1);
+        else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_AXIS)
+            seed = (pos.asLong() + 1) * (side.getAxis().ordinal() + 1);
+        if(data.getSeed() != null)
+            seed ^= data.getSeed();
+        // Pick which tile to use
+        RandomSource random = RandomSource.createNewThreadLocalInstance();
+        random.setSeed(seed);
+        random.nextLong(); // Neighboring blocks may lead to similar seeds, hence generate long first to increase randomness
+        int index = random.nextInt(sprite.getTexture().getSprites().size());
+        // Adjust the quad's uv
+        SpriteInstance newSprite = sprite.getTexture().getSprites().get(index);
+        for(int i = 0; i < 4; i++){
+            quad.uv(
+                i,
+                newSprite.getU0() + (quad.u(i) - sprite.getU0()) / (sprite.getU1() - sprite.getSprite().getU0()) * (newSprite.getU1() - newSprite.getU0()),
+                newSprite.getV0() + (quad.v(i) - sprite.getV0()) / (sprite.getV1() - sprite.getSprite().getV0()) * (newSprite.getV1() - newSprite.getV0())
+            );
+        }
+        // No processing for item quads
+        return null;
+    }
+
     public static final int MAX_SIZE = 10;
 
     @Override
@@ -176,34 +267,5 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         if(data.getSeed() != null)
             json.addProperty("seed", data.getSeed());
         return json;
-    }
-
-    public static void processQuad(MutableQuad quad, BlockPos pos, Direction side, RandomSource random, SpriteInstance sprite){
-        if(side == null)
-            return;
-        RandomTextureData data = (RandomTextureData)sprite.getTexture().getCustomData();
-        // Calculate seed
-        long seed = 1;
-        if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION)
-            seed = pos.asLong() + 1;
-        else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_FACING)
-            seed = (pos.asLong() + 1) * (side.ordinal() + 1);
-        else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_AXIS)
-            seed = (pos.asLong() + 1) * (side.getAxis().ordinal() + 1);
-        if(data.getSeed() != null)
-            seed ^= data.getSeed();
-        // Pick which tile to use
-        random.setSeed(seed);
-        random.nextLong(); // Neighboring blocks may lead to similar seeds, hence generate long first to increase randomness
-        int index = random.nextInt(sprite.getTexture().getSprites().size());
-        // Adjust the quad's uv
-        SpriteInstance newSprite = sprite.getTexture().getSprites().get(index);
-        for(int i = 0; i < 4; i++){
-            quad.uv(
-                i,
-                newSprite.getU0() + (quad.u(i) - sprite.getU0()) / (sprite.getU1() - sprite.getSprite().getU0()) * (newSprite.getU1() - newSprite.getU0()),
-                newSprite.getV0() + (quad.v(i) - sprite.getV0()) / (sprite.getV1() - sprite.getSprite().getV0()) * (newSprite.getV1() - newSprite.getV0())
-            );
-        }
     }
 }

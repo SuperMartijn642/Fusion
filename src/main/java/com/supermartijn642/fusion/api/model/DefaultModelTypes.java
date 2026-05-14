@@ -23,7 +23,7 @@ public final class DefaultModelTypes {
     /**
      * Model type used for any unknown models added by other mods.
      */
-    public static final ModelType<UnbakedModel> UNKNOWN = new UnknownModelType();
+    public static final ModelType<UnbakedModel> UNKNOWN = new UnknownModelType<>();
     /**
      * Model type used for vanilla {@link BlockModel} instances.
      * @see CuboidModelDataBuilder

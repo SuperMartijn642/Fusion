@@ -4,6 +4,7 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.ModelWalker;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Pair;
@@ -29,20 +30,20 @@ public class ModelWalkerImpl {
     private static final ModelWalker.Result<?> END_BRANCH = new ModelWalker.Result<Object>() {};
     private static final ModelWalker.Result<Void> EMPTY_STOP = new StopResult<>(null);
 
-    public static <T> Optional<T> walkModelTree(Function<ResourceLocation,ModelInstance<?>> modelResolver, ModelInstance<?> modelInstance, ModelWalker<T> walker){
+    public static <T> Optional<T> walkModelTree(Function<ResourceLocation,ModelInstance<?>> modelResolver, UntypedModelInstance modelInstance, ModelWalker<T> walker){
         ModelStackImpl stack = new ModelStackImpl();
-        ModelWalker.Result<T> result = walk(stack, modelResolver, Either.right(modelInstance), walker);
+        ModelWalker.Result<T> result = walk(stack, modelResolver::apply, Either.right(modelInstance), walker);
         return result instanceof StopResult<?> ? Optional.ofNullable(((StopResult<T>)result).value) : Optional.empty();
     }
 
     public static <T> Optional<T> walkModelTree(Function<ResourceLocation,ModelInstance<?>> modelResolver, ResourceLocation model, ModelWalker<T> walker){
         ModelStackImpl stack = new ModelStackImpl();
-        ModelWalker.Result<T> result = walk(stack, modelResolver, Either.left(model), walker);
+        ModelWalker.Result<T> result = walk(stack, modelResolver::apply, Either.left(model), walker);
         return result instanceof StopResult<?> ? Optional.ofNullable(((StopResult<T>)result).value) : Optional.empty();
     }
 
-    private static <T> ModelWalker.Result<T> walk(ModelStackImpl stack, Function<ResourceLocation,ModelInstance<?>> modelResolver, Either<ResourceLocation,ModelInstance<?>> entry, ModelWalker<T> walker){
-        ModelInstance<?> modelInstance = entry.flatMap(modelResolver, Function.identity());
+    private static <T> ModelWalker.Result<T> walk(ModelStackImpl stack, Function<ResourceLocation,UntypedModelInstance> modelResolver, Either<ResourceLocation,UntypedModelInstance> entry, ModelWalker<T> walker){
+        UntypedModelInstance modelInstance = entry.flatMap(modelResolver, Function.identity());
         stack.push(entry.leftOrNull(), modelInstance);
         ModelWalker.Result<T> result = walker.consume(modelInstance, stack);
         if(result instanceof StopResult)
@@ -53,7 +54,7 @@ public class ModelWalkerImpl {
         }
         if(result != PROCEED)
             throw new AssertionError("Unexpected result: " + result.getClass());
-        for(Either<ResourceLocation,ModelInstance<?>> parent : modelInstance.getParents()){
+        for(Either<ResourceLocation,UntypedModelInstance> parent : modelInstance.getParents()){
             result = walk(stack, modelResolver, parent, walker);
             if(result instanceof StopResult)
                 return result;
@@ -90,9 +91,9 @@ public class ModelWalkerImpl {
 
     private static class ModelStackImpl implements ModelWalker.ModelStack {
 
-        private final List<Pair<ResourceLocation,ModelInstance<?>>> models = new ArrayList<>(); // Model trees aren't expected to get very tall, hence an array list should be fine
+        private final List<Pair<ResourceLocation,UntypedModelInstance>> models = new ArrayList<>(); // Model trees aren't expected to get very tall, hence an array list should be fine
 
-        void push(ResourceLocation identifier, ModelInstance<?> modelInstance){
+        void push(ResourceLocation identifier, UntypedModelInstance modelInstance){
             this.models.add(Pair.of(identifier, modelInstance));
         }
 
@@ -106,7 +107,7 @@ public class ModelWalkerImpl {
         }
 
         @Override
-        public ModelInstance<?> get(int index){
+        public UntypedModelInstance get(int index){
             return this.models.get(index).right();
         }
 
@@ -116,16 +117,16 @@ public class ModelWalkerImpl {
         }
 
         @Override
-        public @NotNull Iterator<ModelInstance<?>> iterator(){
-            Iterator<Pair<ResourceLocation,ModelInstance<?>>> iterator = this.models.iterator();
-            return new Iterator<ModelInstance<?>>() {
+        public @NotNull Iterator<UntypedModelInstance> iterator(){
+            Iterator<Pair<ResourceLocation,UntypedModelInstance>> iterator = this.models.iterator();
+            return new Iterator<UntypedModelInstance>() {
                 @Override
                 public boolean hasNext(){
                     return iterator.hasNext();
                 }
 
                 @Override
-                public ModelInstance<?> next(){
+                public UntypedModelInstance next(){
                     return iterator.next().right();
                 }
             };
@@ -133,7 +134,7 @@ public class ModelWalkerImpl {
 
         @Override
         public @Nullable Boolean findAmbientOcclusion(){
-            for(ModelInstance<?> model : this){
+            for(UntypedModelInstance model : this){
                 Boolean value = model.getAmbientOcclusion();
                 if(value != null)
                     return value;
@@ -143,7 +144,7 @@ public class ModelWalkerImpl {
 
         @Override
         public @Nullable Boolean findIsGui3d(){
-            for(ModelInstance<?> model : this){
+            for(UntypedModelInstance model : this){
                 Boolean value = model.getIsGui3d();
                 if(value != null)
                     return value;
@@ -153,7 +154,7 @@ public class ModelWalkerImpl {
 
         @Override
         public @Nullable ItemTransformVec3f findItemTransform(ItemCameraTransforms.TransformType type){
-            for(ModelInstance<?> model : this){
+            for(UntypedModelInstance model : this){
                 ItemTransformVec3f value = model.getItemTransform(type);
                 if(value != null)
                     return value;
@@ -163,7 +164,7 @@ public class ModelWalkerImpl {
 
         @Override
         public @Nullable Either<String,ModelMaterial> findMaterial(String key){
-            for(ModelInstance<?> model : this){
+            for(UntypedModelInstance model : this){
                 Either<String,ModelMaterial> value = model.getMaterial(key);
                 if(value != null)
                     return value;
@@ -201,7 +202,7 @@ public class ModelWalkerImpl {
 
         @Override
         public @Nullable ModelGeometry findGeometry(){
-            for(ModelInstance<?> model : this){
+            for(UntypedModelInstance model : this){
                 ModelGeometry value = model.getGeometry();
                 if(value != null)
                     return value;
@@ -211,7 +212,7 @@ public class ModelWalkerImpl {
 
         @Override
         public @Nullable Boolean findShade(){
-            for(ModelInstance<?> model : this){
+            for(UntypedModelInstance model : this){
                 Boolean value = model.getShade();
                 if(value != null)
                     return value;
@@ -221,7 +222,7 @@ public class ModelWalkerImpl {
 
         @Override
         public @Nullable Boolean findEmissive(){
-            for(ModelInstance<?> model : this){
+            for(UntypedModelInstance model : this){
                 Boolean value = model.getEmissive();
                 if(value != null)
                     return value;
@@ -232,14 +233,14 @@ public class ModelWalkerImpl {
         @Override
         public ModelTransform composeTransforms(){
             ModelTransform transform = ModelTransform.identity();
-            for(ModelInstance<?> model : this)
+            for(UntypedModelInstance model : this)
                 transform = ModelTransform.compose(model.getTransform(), transform);
             return transform;
         }
 
         @Override
         public <X, C> Optional<X> findProperty(Property<X,C> property, C context){
-            for(ModelInstance<?> model : this){
+            for(UntypedModelInstance model : this){
                 Optional<X> value = model.getProperty(property, context);
                 if(value.isPresent())
                     return value;
@@ -250,9 +251,12 @@ public class ModelWalkerImpl {
         @Override
         public String toString(){
             return this.models.stream().map(pair -> {
-                String identifier = pair.left() == null ? "'unnamed'" : "'" + pair.left().toString() + "'";
-                String type = "'" + ModelTypeRegistryImpl.getIdentifier(pair.right().getModelType()) + "'";
-                return identifier + "@" + type;
+                String identifier = pair.left() == null ? "'unnamed'" : "'" + pair.left() + "'";
+                if(pair.right() instanceof ModelInstance<?>){
+                    String type = "'" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)pair.right()).getModelType()) + "'";
+                    return identifier + "@" + type;
+                }
+                return identifier;
             }).collect(Collectors.joining(" -> "));
         }
     }

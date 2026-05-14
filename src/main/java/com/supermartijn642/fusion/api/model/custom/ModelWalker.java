@@ -34,7 +34,7 @@ public interface ModelWalker<T> {
      * @param walker        consumer for models in the tree
      * @return an optional value that was returned by given the walker
      */
-    static <T> Optional<T> walkModelTree(Function<ResourceLocation,ModelInstance<?>> modelResolver, ModelInstance<?> modelInstance, ModelWalker<T> walker){
+    static <T> Optional<T> walkModelTree(Function<ResourceLocation,ModelInstance<?>> modelResolver, UntypedModelInstance modelInstance, ModelWalker<T> walker){
         return ModelWalkerImpl.walkModelTree(modelResolver, modelInstance, walker);
     }
 
@@ -57,7 +57,7 @@ public interface ModelWalker<T> {
      * @return {@link Result#proceed()} when the walker should continue, {@link Result#endBranch()} when the walker should end exploring the current branch and continue with the next branch, and {@link Result#stop(Object)} when the walker should stop
      * @see Result
      */
-    Result<T> consume(ModelInstance<?> modelInstance, ModelStack stack);
+    Result<T> consume(UntypedModelInstance modelInstance, ModelStack stack);
 
     @ApiStatus.NonExtendable
     interface Result<T> {
@@ -96,7 +96,7 @@ public interface ModelWalker<T> {
      * The first element in the stack represents the top of tree, with each consecutive element being a parent of the one before it.
      */
     @ApiStatus.NonExtendable
-    interface ModelStack extends Iterable<ModelInstance<?>> {
+    interface ModelStack extends Iterable<UntypedModelInstance> {
 
         /**
          * Size of the model stack.
@@ -107,7 +107,7 @@ public interface ModelWalker<T> {
          * Element at the given index.
          * The first element in the stack represents the top of tree, with each consecutive element being a parent of the one before it.
          */
-        ModelInstance<?> get(int index);
+        UntypedModelInstance get(int index);
 
         /**
          * Identifier of the model at the given index, may be {@code null} for unnamed models.

@@ -2,12 +2,8 @@ package com.supermartijn642.fusion.model.types.itemgenerator;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
-import com.supermartijn642.fusion.api.model.custom.CullableQuads;
-import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
@@ -35,7 +31,7 @@ public class ItemModelGeneratorModelType implements ModelType<Void> {
     }
 
     @Override
-    public List<Either<ResourceLocation,ModelInstance<?>>> getParents(Void data){
+    public List<Either<ResourceLocation,UntypedModelInstance>> getParents(Void data){
         return Collections.emptyList();
     }
 

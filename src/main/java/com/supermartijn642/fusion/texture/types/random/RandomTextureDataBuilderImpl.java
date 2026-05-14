@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.texture.types.random;
 
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.api.texture.data.RandomTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.random.RandomTextureData;
 import org.jetbrains.annotations.Nullable;
 
 /**

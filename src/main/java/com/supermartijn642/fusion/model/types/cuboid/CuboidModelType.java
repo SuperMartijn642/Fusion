@@ -10,7 +10,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
-import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
+import com.supermartijn642.fusion.util.CullingHelper;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.renderer.block.model.*;
@@ -188,7 +188,7 @@ public class CuboidModelType extends UnknownModelType<BlockModel> {
             @Override
             public void emitBlockQuads(BlockAndTintGetter level, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
                 QuadEmitter emitter = context.getEmitter();
-                for(Direction cullDirection : BaseBakedModel.CULL_DIRECTIONS){
+                for(Direction cullDirection : CullingHelper.cullDirections()){
                     if(context.isFaceCulled(cullDirection))
                         continue;
                     for(QuadAccess quad : finishedQuads.get(cullDirection)){

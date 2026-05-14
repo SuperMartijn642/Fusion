@@ -41,22 +41,23 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad copyFrom(QuadAccess quad){
+        MutableQuadImpl impl = (MutableQuadImpl)quad;
         // Quad data
-        this.bakedQuadCache = null;
+        this.bakedQuadCache = impl.bakedQuadCache;
         for(int i = 0; i < 4; i++){
-            Vector3f position = quad.position(i);
+            Vector3f position = impl.positions[i];
             this.positions[i].set(position.x, position.y, position.z);
-            this.uvs[i][0] = quad.u(i);
-            this.uvs[i][1] = quad.v(i);
+            this.uvs[i][0] = impl.uvs[i][0];
+            this.uvs[i][1] = impl.uvs[i][1];
         }
-        this.facing = quad.facing();
-        this.sprite = quad.sprite();
-        this.tintIndex = quad.tintIndex();
-        this.shade = quad.shade();
-        this.lightEmission = quad.lightEmission();
+        this.facing = impl.facing;
+        this.sprite = impl.sprite;
+        this.tintIndex = impl.tintIndex;
+        this.shade = impl.shade;
+        this.lightEmission = impl.lightEmission;
         // Our properties
-        this.emissive = quad.emissive();
-        this.renderLayer = quad.renderLayer();
+        this.emissive = impl.emissive;
+        this.renderLayer = impl.renderLayer;
         return this;
     }
 

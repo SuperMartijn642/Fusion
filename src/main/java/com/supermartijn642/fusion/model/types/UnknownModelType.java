@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelWalker;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
@@ -50,7 +51,7 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     }
 
     @Override
-    public List<Either<ResourceLocation,ModelInstance<?>>> getParents(T data){
+    public List<Either<ResourceLocation,UntypedModelInstance>> getParents(T data){
         return List.of();
     }
 
@@ -108,9 +109,9 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
         return data.bake(modelBaker, spriteGetter, context.getTransformation().toModelState());
     }
 
-    public static <T> T findPropertyInStackAndParents(ModelBakingContext context, ModelWalker.ModelStack currentStack, Function<ModelInstance<?>,T> property, T defaultValue){
+    public static <T> T findPropertyInStackAndParents(ModelBakingContext context, ModelWalker.ModelStack currentStack, Function<UntypedModelInstance,T> property, T defaultValue){
         // First check the current stack
-        for(ModelInstance<?> modelInstance : currentStack){
+        for(UntypedModelInstance modelInstance : currentStack){
             T value = property.apply(modelInstance);
             if(value != null)
                 return value;

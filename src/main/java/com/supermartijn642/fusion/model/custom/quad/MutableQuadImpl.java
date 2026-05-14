@@ -55,28 +55,28 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad copyFrom(QuadAccess quad){
+        MutableQuadImpl impl = (MutableQuadImpl)quad;
         // Quad data
-        for(int i = 0; i < 4; i++){
-            this.positions[i].set(quad.position(i));
-            this.uvs[i] = UVPair.pack(quad.u(i), quad.v(i));
-        }
-        this.facing = quad.facing();
-        this.sprite = quad.sprite();
-        this.tintIndex = quad.tintIndex();
-        this.shade = quad.shade();
-        this.lightEmission = quad.lightEmission();
+        this.bakedQuadCache = impl.bakedQuadCache;
+        for(int i = 0; i < 4; i++)
+            this.positions[i].set(impl.positions[i]);
+        System.arraycopy(impl.uvs, 0, this.uvs, 0, 4);
+        this.facing = impl.facing;
+        this.sprite = impl.sprite;
+        this.tintIndex = impl.tintIndex;
+        this.shade = impl.shade;
+        this.lightEmission = impl.lightEmission;
         // Our properties
-        this.ambientOcclusion = quad.ambientOcclusion();
-        this.emissive = quad.emissive();
-        this.chunkLayer = quad.chunkLayer();
-        this.itemRenderType = quad.itemRenderType();
+        this.ambientOcclusion = impl.ambientOcclusion;
+        this.emissive = impl.emissive;
+        this.chunkLayer = impl.chunkLayer;
+        this.itemRenderType = impl.itemRenderType;
         // NeoForge data
-        this.bakedNormalsCache = null;
-        this.bakedColorsCache = null;
-        for(int i = 0; i < 4; i++){
-            this.bakedNormals[i].set(quad.neoNormal(i));
-            this.bakedColors[i] = quad.neoColor(i);
-        }
+        this.bakedNormalsCache = impl.bakedNormalsCache;
+        this.bakedColorsCache = impl.bakedColorsCache;
+        for(int i = 0; i < 4; i++)
+            this.bakedNormals[i].set(impl.bakedNormals[i]);
+        System.arraycopy(impl.bakedColors, 0, this.bakedColors, 0, 4);
         return this;
     }
 

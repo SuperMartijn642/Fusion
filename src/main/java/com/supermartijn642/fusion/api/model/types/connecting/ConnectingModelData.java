@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.api.model.types.connecting;
 
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
-import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionPredicate;
-import com.supermartijn642.fusion.api.model.types.connecting.predicates.DefaultConnectionPredicates;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelDataBuilderImpl;
 import org.jetbrains.annotations.ApiStatus;

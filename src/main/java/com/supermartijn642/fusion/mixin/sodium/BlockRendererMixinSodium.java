@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import me.jellysquid.mods.sodium.client.model.light.LightPipeline;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;

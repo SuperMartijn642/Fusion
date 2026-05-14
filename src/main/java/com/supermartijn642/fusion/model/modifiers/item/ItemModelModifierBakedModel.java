@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.model.BakedQuad;
@@ -26,15 +26,15 @@ import java.util.Random;
 public class ItemModelModifierBakedModel implements IBakedModel {
 
     private final IBakedModel defaultModel;
-    private final List<Pair<ItemPredicate,IBakedModel>> models;
+    private final List<Pair<ItemModelPredicate,IBakedModel>> models;
 
-    public ItemModelModifierBakedModel(IBakedModel defaultModel, List<Pair<ItemPredicate,IBakedModel>> models){
+    public ItemModelModifierBakedModel(IBakedModel defaultModel, List<Pair<ItemModelPredicate,IBakedModel>> models){
         this.defaultModel = defaultModel;
         this.models = models;
     }
 
     public IBakedModel forStack(ItemStack stack){
-        for(Pair<ItemPredicate,IBakedModel> entry : this.models){
+        for(Pair<ItemModelPredicate,IBakedModel> entry : this.models){
             if(entry.left().test(stack))
                 return entry.right();
         }

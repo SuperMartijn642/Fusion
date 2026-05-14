@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.texture.custom.QuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
@@ -72,12 +73,20 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         // Check whether we should use block context
         boolean hasBlockContext = level != null || pos != null || state != null;
 
+        // For each part, collect whether the part's conditions are met and collect texture states for the part
+        boolean[] partConditions = new boolean[this.parts.size()];
+
         // Collect texture states
         //noinspection unchecked
         List<Object>[][] combinedStates = new List[this.parts.size()][];
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(int i = 0; i < this.parts.size(); i++){
             Part part = this.parts.get(i);
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForBlock(level, pos, state))
+                continue;
+            partConditions[i] = true;
+
             // Extract state for all the textures that need processing
             //noinspection unchecked
             List<Object>[] extractStates = new List[7];
@@ -97,7 +106,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
             }
             combinedStates[i] = extractStates;
         }
-        return new RenderData(combinedStates, propertyStore);
+        return new RenderData(partConditions, combinedStates, propertyStore);
     }
 
     @Override
@@ -160,6 +169,10 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         EmittableQuad mutableQuad = null;
         for(int i = 0; i < this.parts.size(); i++){
             Part part = this.parts.get(i);
+            // Check part condition
+            if(!renderData.partConditions[i])
+                continue;
+
             // Get texture states for part
             List<Object> states = renderData.statesForPart(i)[CullingHelper.cullIndex(cullDirection)];
             // Process quads
@@ -201,6 +214,10 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         List<BakedQuad> bakedQuads = new ArrayList<>();
         for(Part part : this.parts){
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForItem(stack))
+                continue;
+
             // Process all quads
             EmittableQuad mutableQuad = null;
             for(Quad quad : part.quads.all){
@@ -260,9 +277,11 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     public static final class Part {
         private final Quads quads;
+        private final ModelPredicate conditions;
 
-        public Part(Quads quads){
+        public Part(Quads quads, ModelPredicate conditions){
             this.quads = quads;
+            this.conditions = conditions;
         }
     }
 
@@ -300,10 +319,12 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
     }
 
     private static final class RenderData {
+        private final boolean[] partConditions;
         private final List<Object>[][] combinedTextureStates;
         private final PropertyStore propertyStore;
 
-        private RenderData(List<Object>[][] combinedTextureStates, PropertyStore propertyStore){
+        private RenderData(boolean[] partConditions, List<Object>[][] combinedTextureStates, PropertyStore propertyStore){
+            this.partConditions = partConditions;
             this.combinedTextureStates = combinedTextureStates;
             this.propertyStore = propertyStore;
         }

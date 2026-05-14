@@ -7,7 +7,7 @@ import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
-import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
+import com.supermartijn642.fusion.model.predicates.item.*;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.connecting.predicates.*;
 import net.fabricmc.api.ClientModInitializer;
@@ -51,13 +51,13 @@ public class FusionClient implements ClientModInitializer {
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state"), MatchStateConnectionPredicate.SERIALIZER);
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state_in_front"), MatchStateInFrontConnectionPredicate.SERIALIZER);
         // Register default item model predicates
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("and"), AndItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("or"), OrItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("not"), NotItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("count"), CountItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("durability"), DurabilityItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("enchantment"), EnchantmentItemPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("potion"), PotionItemPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("and"), AndItemModelPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("or"), OrItemModelPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("not"), NotItemModelPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("count"), CountItemModelPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("durability"), DurabilityItemModelPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("enchantment"), EnchantmentItemModelPredicate.SERIALIZER);
+        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("potion"), PotionItemModelPredicate.SERIALIZER);
         // Register default entity model predicates
         EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("and"), AndEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistry.registerEntityModelPredicate(Fusion.identifier("or"), OrEntityModelPredicate.SERIALIZER);

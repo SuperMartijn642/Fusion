@@ -1,8 +1,8 @@
-package com.supermartijn642.fusion.model.modifiers.item.predicates;
+package com.supermartijn642.fusion.model.predicates.item;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -15,11 +15,11 @@ import net.minecraft.world.item.alchemy.Potions;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class PotionItemPredicate implements ItemPredicate {
+public class PotionItemModelPredicate implements ItemModelPredicate {
 
-    public static final Serializer<PotionItemPredicate> SERIALIZER = new Serializer<>() {
+    public static final Serializer<PotionItemModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
-        public PotionItemPredicate deserialize(JsonObject json) throws JsonParseException{
+        public PotionItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("potion") || !json.get("potion").isJsonPrimitive() || !json.getAsJsonPrimitive("potion").isString())
                 throw new JsonParseException("Potion-predicate must have string property 'enchantment'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("potion").getAsString()))
@@ -28,11 +28,11 @@ public class PotionItemPredicate implements ItemPredicate {
             Potion potion = BuiltInRegistries.POTION.get(potionIdentifier);
             if(potion == null || potion == Potions.EMPTY)
                 throw new JsonParseException("Unknown potion '" + potionIdentifier + "'!");
-            return new PotionItemPredicate(potion);
+            return new PotionItemModelPredicate(potion);
         }
 
         @Override
-        public JsonObject serialize(PotionItemPredicate value){
+        public JsonObject serialize(PotionItemModelPredicate value){
             JsonObject json = new JsonObject();
             json.addProperty("potion", BuiltInRegistries.POTION.getKey(value.potion).toString());
             return json;
@@ -41,7 +41,7 @@ public class PotionItemPredicate implements ItemPredicate {
 
     private final Potion potion;
 
-    public PotionItemPredicate(Potion potion){
+    public PotionItemModelPredicate(Potion potion){
         if(potion == null)
             throw new NullPointerException("Potion must not be null!");
         this.potion = potion;
@@ -53,7 +53,7 @@ public class PotionItemPredicate implements ItemPredicate {
     }
 
     @Override
-    public Serializer<? extends ItemPredicate> getSerializer(){
+    public Serializer<? extends ItemModelPredicate> getSerializer(){
         return SERIALIZER;
     }
 }

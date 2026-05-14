@@ -4,9 +4,9 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.datafixers.util.Either;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelProperty;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
@@ -297,10 +297,10 @@ public class FusionBlockModelData extends BlockModel {
                         face.rotation() == null ? 0 : face.rotation().angle()
                     ),
                     new ExtraFaceData(
-                        face.getProperty(ModelProperty.NEO_GEOMETRY_COLOR).orElse(-1),
-                        face.getProperty(ModelProperty.NEO_GEOMETRY_BLOCK_LIGHT).orElse(0),
-                        face.getProperty(ModelProperty.NEO_GEOMETRY_SKY_LIGHT).orElse(0),
-                        face.getProperty(ModelProperty.NEO_GEOMETRY_AMBIENT_OCCLUSION).orElse(true)
+                        face.getProperty(DefaultModelProperties.NEO_GEOMETRY_COLOR).orElse(-1),
+                        face.getProperty(DefaultModelProperties.NEO_GEOMETRY_BLOCK_LIGHT).orElse(0),
+                        face.getProperty(DefaultModelProperties.NEO_GEOMETRY_SKY_LIGHT).orElse(0),
+                        face.getProperty(DefaultModelProperties.NEO_GEOMETRY_AMBIENT_OCCLUSION).orElse(true)
                     ),
                     new MutableObject<>()
                 ));
@@ -311,10 +311,10 @@ public class FusionBlockModelData extends BlockModel {
                 element.rotation(),
                 element.shade() == null || element.shade(),
                 new ExtraFaceData(
-                    element.getProperty(ModelProperty.NEO_GEOMETRY_COLOR).orElse(-1),
-                    element.getProperty(ModelProperty.NEO_GEOMETRY_BLOCK_LIGHT).orElse(0),
-                    element.getProperty(ModelProperty.NEO_GEOMETRY_SKY_LIGHT).orElse(0),
-                    element.getProperty(ModelProperty.NEO_GEOMETRY_AMBIENT_OCCLUSION).orElse(true)
+                    element.getProperty(DefaultModelProperties.NEO_GEOMETRY_COLOR).orElse(-1),
+                    element.getProperty(DefaultModelProperties.NEO_GEOMETRY_BLOCK_LIGHT).orElse(0),
+                    element.getProperty(DefaultModelProperties.NEO_GEOMETRY_SKY_LIGHT).orElse(0),
+                    element.getProperty(DefaultModelProperties.NEO_GEOMETRY_AMBIENT_OCCLUSION).orElse(true)
                 )
             );
         }).toList();

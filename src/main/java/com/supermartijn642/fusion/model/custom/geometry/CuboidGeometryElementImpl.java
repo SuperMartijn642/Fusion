@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.model.custom.geometry;
 
 import com.google.common.collect.ImmutableMap;
-import com.supermartijn642.fusion.api.model.custom.ModelProperty;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
+import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.BlockElement;
 import net.minecraft.client.renderer.block.model.BlockElementRotation;
 import net.minecraft.core.Direction;
@@ -35,10 +36,10 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
             .face(Direction.WEST, CuboidModelGeometry.Face.of(element.faces.get(Direction.WEST)))
             .shade(element.shade ? null : false)
             .ambientOcclusion(element.getFaceData().ambientOcclusion() ? null : false)
-            .property(ModelProperty.NEO_GEOMETRY_COLOR, element.getFaceData().color())
-            .property(ModelProperty.NEO_GEOMETRY_BLOCK_LIGHT, element.getFaceData().blockLight())
-            .property(ModelProperty.NEO_GEOMETRY_SKY_LIGHT, element.getFaceData().skyLight())
-            .property(ModelProperty.NEO_GEOMETRY_AMBIENT_OCCLUSION, element.getFaceData().ambientOcclusion())
+            .property(DefaultModelProperties.NEO_GEOMETRY_COLOR, element.getFaceData().color())
+            .property(DefaultModelProperties.NEO_GEOMETRY_BLOCK_LIGHT, element.getFaceData().blockLight())
+            .property(DefaultModelProperties.NEO_GEOMETRY_SKY_LIGHT, element.getFaceData().skyLight())
+            .property(DefaultModelProperties.NEO_GEOMETRY_AMBIENT_OCCLUSION, element.getFaceData().ambientOcclusion())
             .build();
     }
 
@@ -49,9 +50,9 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
     private final Integer lightEmission;
     private final Boolean ambientOcclusion;
     private final Boolean emissive;
-    private final Map<ModelProperty<?,?>,Function<?,?>> properties;
+    private final Map<Property<?,?>,Function<?,?>> properties;
 
-    private CuboidGeometryElementImpl(Vector3fc from, Vector3fc to, BlockElementRotation rotation, Map<Direction,CuboidModelGeometry.Face> faces, Boolean shade, Integer lightEmission, Boolean ambientOcclusion, Boolean emissive, Map<ModelProperty<?,?>,Function<?,?>> properties){
+    private CuboidGeometryElementImpl(Vector3fc from, Vector3fc to, BlockElementRotation rotation, Map<Direction,CuboidModelGeometry.Face> faces, Boolean shade, Integer lightEmission, Boolean ambientOcclusion, Boolean emissive, Map<Property<?,?>,Function<?,?>> properties){
         this.from = from;
         this.to = to;
         this.rotation = rotation;
@@ -104,7 +105,7 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
     }
 
     @Override
-    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context){
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context){
         Function<?,?> function = this.properties.get(property);
         //noinspection unchecked,rawtypes
         return function == null ?
@@ -121,7 +122,7 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
         private Integer lightEmission;
         private Boolean ambientOcclusion;
         private Boolean emissive;
-        private final ImmutableMap.Builder<ModelProperty<?,?>,Function<?,?>> properties = ImmutableMap.builder();
+        private final ImmutableMap.Builder<Property<?,?>,Function<?,?>> properties = ImmutableMap.builder();
 
         @Override
         public Builder fromTo(Vector3fc from, Vector3fc to){
@@ -172,19 +173,19 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
         }
 
         @Override
-        public <X> Builder property(ModelProperty<X,?> property, X value){
+        public <X> Builder property(Property<X,?> property, X value){
             this.properties.put(property, p -> value);
             return this;
         }
 
         @Override
-        public <X> Builder property(ModelProperty<X,?> property, Supplier<X> value){
+        public <X> Builder property(Property<X,?> property, Supplier<X> value){
             this.properties.put(property, p -> value.get());
             return this;
         }
 
         @Override
-        public <X, C> Builder property(ModelProperty<X,C> property, Function<C,X> value){
+        public <X, C> Builder property(Property<X,C> property, Function<C,X> value){
             this.properties.put(property, value);
             return this;
         }

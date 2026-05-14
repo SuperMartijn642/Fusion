@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.texture.types.continuous;
 
-import com.supermartijn642.fusion.api.texture.data.ContinuousTextureData;
+import com.supermartijn642.fusion.api.texture.types.continuous.ContinuousTextureData;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureDataImpl;
 
 /**

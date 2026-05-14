@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
@@ -42,12 +43,12 @@ public class FusionBlockModelData extends BlockModel {
     }
 
     private final ResourceLocation identifier;
-    private final ModelInstance<?> model;
+    private final UntypedModelInstance model;
     private boolean resolved = false;
     private List<UnbakedModel> parents = List.of();
-    private Map<ResourceLocation,ModelInstance<?>> dependencies;
+    private Map<ResourceLocation,UntypedModelInstance> dependencies;
 
-    private FusionBlockModelData(ResourceLocation identifier, ModelInstance<?> model){
+    private FusionBlockModelData(ResourceLocation identifier, UntypedModelInstance model){
         super(null, List.of(), Map.of(), true, null, ItemTransforms.NO_TRANSFORMS, List.of());
         this.identifier = identifier;
         this.model = model;
@@ -274,9 +275,9 @@ public class FusionBlockModelData extends BlockModel {
         this.resolved = true;
 
         // Parents
-        List<com.supermartijn642.fusion.api.util.Either<ResourceLocation,ModelInstance<?>>> parents = this.model.getParents();
+        List<com.supermartijn642.fusion.api.util.Either<ResourceLocation,UntypedModelInstance>> parents = this.model.getParents();
         this.parents = new ArrayList<>(parents.size());
-        for(com.supermartijn642.fusion.api.util.Either<ResourceLocation,ModelInstance<?>> parent : parents){
+        for(com.supermartijn642.fusion.api.util.Either<ResourceLocation,UntypedModelInstance> parent : parents){
             UnbakedModel parentModel;
             if(parent.isLeft()){
                 parentModel = resolver.apply(parent.left());
@@ -302,7 +303,7 @@ public class FusionBlockModelData extends BlockModel {
     }
 
     private void setDependencies(Map<ResourceLocation,UnbakedModel> dependencies){
-        ImmutableMap.Builder<ResourceLocation,ModelInstance<?>> builder = ImmutableMap.builderWithExpectedSize(dependencies.size());
+        ImmutableMap.Builder<ResourceLocation,UntypedModelInstance> builder = ImmutableMap.builderWithExpectedSize(dependencies.size());
         dependencies.forEach((key, model) -> builder.put(key, getModelInstance(model)));
         this.dependencies = builder.build();
     }
@@ -325,7 +326,10 @@ public class FusionBlockModelData extends BlockModel {
         try{
             bakedModel = this.model.bakeModel(context);
         }catch(Exception e){
-            throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.identifier + "'!", e);
+            if(this.model instanceof ModelInstance<?>)
+                throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
+            else
+                throw new RuntimeException("Encountered an exception while baking untyped block model for '" + this.identifier + "'!", e);
         }
         // Log warnings
         if(!warnings.isEmpty())
@@ -336,7 +340,7 @@ public class FusionBlockModelData extends BlockModel {
     @Contract("_,_,_,_,!null -> !null")
     private static <T> T getFromModelTree(UnbakedModel model,
                                           Function<FusionBlockModelData,@Nullable T> fusionModelGetter,
-                                          Function<ModelInstance<?>,@Nullable T> unknownModelGetter,
+                                          Function<UntypedModelInstance,@Nullable T> unknownModelGetter,
                                           BiFunction<T,T,T> merger,
                                           T defaultValue){
         T value = model instanceof FusionBlockModelData ?
@@ -367,7 +371,7 @@ public class FusionBlockModelData extends BlockModel {
 
     private static <T> T getFromModelTree(UnbakedModel model,
                                           Function<FusionBlockModelData,@Nullable T> fusionModelGetter,
-                                          Function<ModelInstance<?>,@Nullable T> unknownModelGetter,
+                                          Function<UntypedModelInstance,@Nullable T> unknownModelGetter,
                                           T defaultValue){
         return getFromModelTree(model, fusionModelGetter, unknownModelGetter, null, defaultValue);
     }
@@ -388,7 +392,7 @@ public class FusionBlockModelData extends BlockModel {
         return getFromModelTree(
             this,
             m -> m.model.getAmbientOcclusion(),
-            ModelInstance::getAmbientOcclusion,
+            UntypedModelInstance::getAmbientOcclusion,
             true
         );
     }
@@ -398,7 +402,7 @@ public class FusionBlockModelData extends BlockModel {
         return getFromModelTree(
             this,
             m -> m.guiLight,
-            ModelInstance::getGuiLight,
+            UntypedModelInstance::getGuiLight,
             GuiLight.SIDE
         );
     }
@@ -455,7 +459,7 @@ public class FusionBlockModelData extends BlockModel {
         return material;
     }
 
-    private static List<BlockElement> getElements(ModelInstance<?> model){
+    private static List<BlockElement> getElements(UntypedModelInstance model){
         ModelGeometry geometry = model.getGeometry();
         if(!(geometry instanceof CuboidModelGeometry))
             return List.of();
@@ -489,7 +493,7 @@ public class FusionBlockModelData extends BlockModel {
         }).toList();
     }
 
-    private static Map<String,Either<Material,String>> getMaterials(ModelInstance<?> model){
+    private static Map<String,Either<Material,String>> getMaterials(UntypedModelInstance model){
         Map<String,Either<Material,String>> materials = new HashMap<>();
         model.getMaterials().forEach((key, value) -> {
             if(value.isLeft())
@@ -500,7 +504,7 @@ public class FusionBlockModelData extends BlockModel {
         return Map.copyOf(materials);
     }
 
-    private static ItemTransforms getItemTransforms(ModelInstance<?> model){
+    private static ItemTransforms getItemTransforms(UntypedModelInstance model){
         ImmutableMap.Builder<ItemTransforms.TransformType,ItemTransform> transformsBuilder = ImmutableMap.builder();
         for(ItemTransforms.TransformType type : ItemTransforms.TransformType.values()){
             ItemTransform transform = model.getItemTransform(type);
@@ -521,7 +525,7 @@ public class FusionBlockModelData extends BlockModel {
         );
     }
 
-    public static ModelInstance<?> getModelInstance(UnbakedModel model){
+    public static UntypedModelInstance getModelInstance(UnbakedModel model){
         if(model instanceof FusionBlockModelData)
             return ((FusionBlockModelData)model).model;
         if(model == ModelBakery.GENERATION_MARKER)

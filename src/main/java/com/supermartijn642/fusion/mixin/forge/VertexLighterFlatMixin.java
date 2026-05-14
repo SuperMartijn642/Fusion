@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.mixin.forge;
 
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.extensions.VertexLighterFlatExtension;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import net.minecraftforge.client.model.pipeline.BlockInfo;

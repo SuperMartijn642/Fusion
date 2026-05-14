@@ -11,6 +11,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.block.state.IBlockState;
@@ -104,7 +105,7 @@ public class CuboidModelType implements ModelType<ModelBlock> {
     }
 
     @Override
-    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context, ModelBlock data){
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context, ModelBlock data){
         return Optional.empty();
     }
 

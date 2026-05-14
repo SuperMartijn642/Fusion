@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.api.model.custom;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.custom.ModelWalkerImpl;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemTransformVec3f;
@@ -184,16 +185,16 @@ public interface ModelWalker<T> {
         ModelTransform composeTransforms();
 
         /**
-         * Finds the first model in the stack that returns a value for {@link ModelInstance#getProperty(ModelProperty, Object)} and returns its value.
+         * Finds the first model in the stack that returns a value for {@link ModelInstance#getProperty(Property, Object)} and returns its value.
          * If no such model is present, the result is {@link Optional#empty()}.
          */
-        <X, C> Optional<X> findProperty(ModelProperty<X,C> property, C context);
+        <X, C> Optional<X> findProperty(Property<X,C> property, C context);
 
         /**
-         * Finds the first model in the stack that returns a value for {@link ModelInstance#getProperty(ModelProperty)} and returns its value.
+         * Finds the first model in the stack that returns a value for {@link ModelInstance#getProperty(Property)} and returns its value.
          * If no such model is present, the result is {@link Optional#empty()}.
          */
-        default <X> Optional<X> findProperty(ModelProperty<X,Void> property){
+        default <X> Optional<X> findProperty(Property<X,Void> property){
             return this.findProperty(property, null);
         }
     }

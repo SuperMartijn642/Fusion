@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.texture;
 
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.util.math.BlockPos;
@@ -15,7 +15,7 @@ import net.minecraft.world.biome.BiomeColorHelper;
 public class QuadTintingHelper {
 
     /**
-     * @see com.supermartijn642.fusion.api.texture.data.BaseTextureData.QuadTinting
+     * @see BaseTextureData.QuadTinting
      */
     private static final IBlockColor[] TINT_FUNCTIONS = new IBlockColor[]{
         (state, level, pos, tintIndex) -> {

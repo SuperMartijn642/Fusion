@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
+import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ModelBlock;
@@ -118,12 +119,7 @@ public class ModelGeometryImpl implements ModelGeometry {
             if(!ModelRenderTypeHelper.canRenderInLayer(baked, Blocks.AIR.getDefaultState(), renderType, renderType == BlockRenderLayer.SOLID))
                 continue;
             ForgeHooksClient.setRenderLayer(renderType);
-            baked.getQuads(Blocks.AIR.getDefaultState(), null, 42).forEach(q -> {
-                MutableQuad mutableQuad = MutableQuad.create(q);
-                mutableQuad.renderLayer(renderType);
-                quads.add(null, mutableQuad);
-            });
-            for(EnumFacing cullDirection : EnumFacing.values()){
+            for(EnumFacing cullDirection : CullingHelper.cullDirections()){
                 baked.getQuads(Blocks.AIR.getDefaultState(), cullDirection, 42).forEach(q -> {
                     MutableQuad mutableQuad = MutableQuad.create(q);
                     mutableQuad.renderLayer(renderType);

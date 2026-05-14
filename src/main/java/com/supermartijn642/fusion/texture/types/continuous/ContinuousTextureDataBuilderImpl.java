@@ -1,9 +1,8 @@
 package com.supermartijn642.fusion.texture.types.continuous;
 
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.api.texture.data.ContinuousTextureData;
-
-import javax.annotation.Nullable;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.continuous.ContinuousTextureData;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created 07/09/2024 by SuperMartijn642

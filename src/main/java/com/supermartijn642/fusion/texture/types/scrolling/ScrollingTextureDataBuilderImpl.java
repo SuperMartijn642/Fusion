@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.texture.types.scrolling;
 
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.scrolling.ScrollingTextureData;
 import org.jetbrains.annotations.Nullable;
 
 /**

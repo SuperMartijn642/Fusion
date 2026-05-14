@@ -7,11 +7,11 @@ import com.google.gson.JsonObject;
 import com.supermartijn642.core.generator.ResourceCache;
 import com.supermartijn642.core.generator.ResourceGenerator;
 import com.supermartijn642.core.generator.ResourceType;
-import com.supermartijn642.fusion.api.model.modifier.item.DefaultItemPredicates;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.DefaultItemPredicates;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.modifiers.item.predicates.AndItemPredicate;
-import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateRegistry;
+import com.supermartijn642.fusion.model.predicates.item.AndItemModelPredicate;
+import com.supermartijn642.fusion.model.predicates.item.ItemPredicateRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
@@ -68,11 +68,11 @@ public abstract class FusionItemModelModifierProvider extends ResourceGenerator 
             json.addProperty("default_model", modifier.defaultModel.toString());
         // Conditional models
         JsonArray models = new JsonArray();
-        for(Pair<ResourceLocation,ItemPredicate> pair : modifier.conditionalModels){
+        for(Pair<ResourceLocation,ItemModelPredicate> pair : modifier.conditionalModels){
             JsonObject model = new JsonObject();
             model.addProperty("model", pair.left().toString());
             JsonArray conditions = new JsonArray();
-            List<ItemPredicate> predicates = pair.right() instanceof AndItemPredicate ? ((AndItemPredicate)pair.right()).getPredicates() : Collections.singletonList(pair.right());
+            List<ItemModelPredicate> predicates = pair.right() instanceof AndItemModelPredicate ? ((AndItemModelPredicate)pair.right()).getPredicates() : Collections.singletonList(pair.right());
             predicates.stream()
                 .map(ItemPredicateRegistry::serializeItemPredicate)
                 .forEach(conditions::add);
@@ -103,7 +103,7 @@ public abstract class FusionItemModelModifierProvider extends ResourceGenerator 
     public static final class ModifierBuilder {
         private final ResourceLocation location;
         private final Set<ResourceLocation> targets = new HashSet<>();
-        private final List<Pair<ResourceLocation,ItemPredicate>> conditionalModels = new ArrayList<>();
+        private final List<Pair<ResourceLocation,ItemModelPredicate>> conditionalModels = new ArrayList<>();
         private ResourceLocation defaultModel = null;
 
         private ModifierBuilder(ResourceLocation location){
@@ -149,7 +149,7 @@ public abstract class FusionItemModelModifierProvider extends ResourceGenerator 
          * The first conditional models for which its conditions are met will be used.
          * @see DefaultItemPredicates
          */
-        public ModifierBuilder conditionalModel(ResourceLocation model, ItemPredicate condition){
+        public ModifierBuilder conditionalModel(ResourceLocation model, ItemModelPredicate condition){
             this.conditionalModels.add(Pair.of(model, condition));
             return this;
         }

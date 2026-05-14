@@ -1,8 +1,8 @@
-package com.supermartijn642.fusion.model.modifiers.item.predicates;
+package com.supermartijn642.fusion.model.predicates.item;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.item.ItemStack;
@@ -10,11 +10,11 @@ import net.minecraft.item.ItemStack;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class DurabilityItemPredicate implements ItemPredicate {
+public class DurabilityItemModelPredicate implements ItemModelPredicate {
 
-    public static final Serializer<DurabilityItemPredicate> SERIALIZER = new Serializer<DurabilityItemPredicate>() {
+    public static final Serializer<DurabilityItemModelPredicate> SERIALIZER = new Serializer<DurabilityItemModelPredicate>() {
         @Override
-        public DurabilityItemPredicate deserialize(JsonObject json) throws JsonParseException{
+        public DurabilityItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("min") && !json.has("min_percentage") && !json.has("max") && !json.has("max_percentage"))
                 throw new JsonParseException("Durability-predicate must have at least one of 'min', 'min_percentage', 'max', or 'max_percentage'!");
 
@@ -63,11 +63,11 @@ public class DurabilityItemPredicate implements ItemPredicate {
             // Validate min <= max
             if((min.isLeft() && max.isLeft() && min.left() > max.left()) || (min.isRight() && max.isRight() && min.right() > max.right()))
                 throw new JsonParseException("Minimum durability must be less than or equal to maximum durability!");
-            return new DurabilityItemPredicate(min, max);
+            return new DurabilityItemModelPredicate(min, max);
         }
 
         @Override
-        public JsonObject serialize(DurabilityItemPredicate value){
+        public JsonObject serialize(DurabilityItemModelPredicate value){
             JsonObject json = new JsonObject();
             if(value.isMinPercentage)
                 json.addProperty("min_percentage", value.minPercentage);
@@ -85,7 +85,7 @@ public class DurabilityItemPredicate implements ItemPredicate {
     private final float minPercentage, maxPercentage;
     private final boolean isMinPercentage, isMaxPercentage;
 
-    public DurabilityItemPredicate(Either<Integer,Float> min, Either<Integer,Float> max){
+    public DurabilityItemModelPredicate(Either<Integer,Float> min, Either<Integer,Float> max){
         if(min.isLeft() && min.left() < 0)
             throw new IllegalArgumentException("Minimum durability must be a positive number!");
         if(min.isRight() && (min.right() < 0 || min.right() > 1))
@@ -112,7 +112,7 @@ public class DurabilityItemPredicate implements ItemPredicate {
     }
 
     @Override
-    public Serializer<? extends ItemPredicate> getSerializer(){
+    public Serializer<? extends ItemModelPredicate> getSerializer(){
         return SERIALIZER;
     }
 }

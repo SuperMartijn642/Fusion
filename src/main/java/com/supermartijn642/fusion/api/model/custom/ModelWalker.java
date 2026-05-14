@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.api.model.custom;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.custom.ModelWalkerImpl;
@@ -183,6 +184,13 @@ public interface ModelWalker<T> {
          * @see ModelInstance#getTransform()
          */
         ModelTransform composeTransforms();
+
+        /**
+         * Combines conditions from the models in the stack.
+         * If no model has a condition, the result is {@code null}.
+         */
+        @Nullable
+        ModelPredicate combineConditions();
 
         /**
          * Finds the first model in the stack that returns a value for {@link ModelInstance#getProperty(Property, Object)} and returns its value.

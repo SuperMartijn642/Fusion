@@ -1,8 +1,8 @@
-package com.supermartijn642.fusion.model.modifiers.item.predicates;
+package com.supermartijn642.fusion.model.predicates.item;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.world.item.ItemStack;
@@ -10,11 +10,11 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class CountItemPredicate implements ItemPredicate {
+public class CountItemModelPredicate implements ItemModelPredicate {
 
-    public static final Serializer<CountItemPredicate> SERIALIZER = new Serializer<>() {
+    public static final Serializer<CountItemModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
-        public CountItemPredicate deserialize(JsonObject json) throws JsonParseException{
+        public CountItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("min") && !json.has("min_percentage") && !json.has("max") && !json.has("max_percentage"))
                 throw new JsonParseException("Count-predicate must have at least one of 'min', 'min_percentage', 'max', or 'max_percentage'!");
 
@@ -63,11 +63,11 @@ public class CountItemPredicate implements ItemPredicate {
             // Validate min <= max
             if((min.isLeft() && max.isLeft() && min.left() > max.left()) || (min.isRight() && max.isRight() && min.right() > max.right()))
                 throw new JsonParseException("Minimum count must be less than or equal to maximum count!");
-            return new CountItemPredicate(min, max);
+            return new CountItemModelPredicate(min, max);
         }
 
         @Override
-        public JsonObject serialize(CountItemPredicate value){
+        public JsonObject serialize(CountItemModelPredicate value){
             JsonObject json = new JsonObject();
             if(value.isMinPercentage)
                 json.addProperty("min_percentage", value.minPercentage);
@@ -85,7 +85,7 @@ public class CountItemPredicate implements ItemPredicate {
     private final float minPercentage, maxPercentage;
     private final boolean isMinPercentage, isMaxPercentage;
 
-    public CountItemPredicate(Either<Integer,Float> min, Either<Integer,Float> max){
+    public CountItemModelPredicate(Either<Integer,Float> min, Either<Integer,Float> max){
         if(min.isLeft() && min.left() < 0)
             throw new IllegalArgumentException("Minimum count must be a positive number!");
         if(min.isRight() && (min.right() < 0 || min.right() > 1))
@@ -112,7 +112,7 @@ public class CountItemPredicate implements ItemPredicate {
     }
 
     @Override
-    public Serializer<? extends ItemPredicate> getSerializer(){
+    public Serializer<? extends ItemModelPredicate> getSerializer(){
         return SERIALIZER;
     }
 }

@@ -6,6 +6,7 @@ import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.ModelWalker;
 import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.Property;
@@ -230,6 +231,17 @@ public class ModelWalkerImpl {
             for(UntypedModelInstance model : this)
                 transform = ModelTransform.compose(model.getTransform(), transform);
             return transform;
+        }
+
+        @Override
+        public @Nullable ModelPredicate combineConditions(){
+            List<ModelPredicate> predicates = new ArrayList<>(this.size());
+            for(UntypedModelInstance model : this){
+                ModelPredicate condition = model.getCondition();
+                if(condition != null)
+                    predicates.add(condition);
+            }
+            return predicates.isEmpty() ? null : ModelPredicate.and(predicates.toArray(new ModelPredicate[0]));
         }
 
         @Override

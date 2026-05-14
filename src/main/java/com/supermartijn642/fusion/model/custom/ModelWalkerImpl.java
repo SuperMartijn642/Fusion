@@ -2,12 +2,12 @@ package com.supermartijn642.fusion.model.custom;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelProperty;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.ModelWalker;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransform;
@@ -234,7 +234,7 @@ public class ModelWalkerImpl {
         }
 
         @Override
-        public <X, C> Optional<X> findProperty(ModelProperty<X,C> property, C context){
+        public <X, C> Optional<X> findProperty(Property<X,C> property, C context){
             for(ModelInstance<?> model : this){
                 Optional<X> value = model.getProperty(property, context);
                 if(value.isPresent())

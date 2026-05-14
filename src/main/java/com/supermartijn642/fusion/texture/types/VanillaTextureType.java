@@ -2,11 +2,12 @@ package com.supermartijn642.fusion.texture.types;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.texture.TextureType;
-import com.supermartijn642.fusion.api.texture.custom.SpriteImageSource;
-import com.supermartijn642.fusion.api.texture.custom.TextureCreationContext;
-import com.supermartijn642.fusion.api.texture.custom.TextureOutput;
+import com.supermartijn642.fusion.api.texture.custom.*;
+import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.api.util.UserErrorException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
@@ -18,6 +19,11 @@ public class VanillaTextureType implements TextureType<Void,Void> {
         output.createSprite()
             .image(SpriteImageSource.vanilla(context.getImage(), context.getAnimationMetadata()))
             .submit();
+    }
+
+    @Override
+    public @Nullable QuadProcessor<?> initializeModelQuad(MutableQuad quad, SpriteInstance sprite, Void data, PropertyStore properties){
+        return null;
     }
 
     @Override

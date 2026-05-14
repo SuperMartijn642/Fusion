@@ -63,7 +63,7 @@ public class CuboidModelType implements ModelType<ModelBlock> {
     }
 
     @Override
-    public List<Either<ResourceLocation,ModelInstance<?>>> getParents(ModelBlock data){
+    public List<Either<ResourceLocation,UntypedModelInstance>> getParents(ModelBlock data){
         ResourceLocation parent = data.getParentLocation();
         return parent == null ? Collections.emptyList() : ImmutableList.of(Either.left(parent));
     }
@@ -134,8 +134,8 @@ public class CuboidModelType implements ModelType<ModelBlock> {
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads
-            Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
-            Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
+            Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getShade, null);
+            Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getEmissive, null);
             if(shade != null || emissive != null){
                 quads = quads.mutateQuads((side, quad) -> {
                     if(shade != null)

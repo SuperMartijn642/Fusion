@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
@@ -43,13 +44,13 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
     }
 
     private final ResourceLocation identifier;
-    private final ModelInstance<?> model;
+    private final UntypedModelInstance model;
     private boolean uvLock = false;
     private boolean resolved = false;
     private List<ModelBlock> parents = Collections.emptyList();
-    private Map<ResourceLocation,ModelInstance<?>> dependencies;
+    private Map<ResourceLocation,UntypedModelInstance> dependencies;
 
-    private FusionBlockModelData(ResourceLocation identifier, ModelInstance<?> model){
+    private FusionBlockModelData(ResourceLocation identifier, UntypedModelInstance model){
         super(null, Collections.emptyList(), Collections.emptyMap(), true, true, ItemCameraTransforms.DEFAULT, Collections.emptyList());
         this.identifier = identifier;
         this.model = model;
@@ -106,9 +107,9 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
         this.collectDependencies(this.model);
 
         // Parents
-        List<com.supermartijn642.fusion.api.util.Either<ResourceLocation,ModelInstance<?>>> parents = this.model.getParents();
+        List<com.supermartijn642.fusion.api.util.Either<ResourceLocation,UntypedModelInstance>> parents = this.model.getParents();
         this.parents = new ArrayList<>(parents.size());
-        for(com.supermartijn642.fusion.api.util.Either<ResourceLocation,ModelInstance<?>> parent : parents){
+        for(com.supermartijn642.fusion.api.util.Either<ResourceLocation,UntypedModelInstance> parent : parents){
             if(parent.isLeft()){
                 IModel parentModel = ModelLoaderRegistry.getModelOrMissing(parent.left());
                 if(parentModel == ModelLoaderRegistry.getMissingModel())
@@ -136,9 +137,9 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
         this.textures = FusionBlockModelData.getMaterials(this.model);
     }
 
-    private void collectDependencies(ModelInstance<?> model){
+    private void collectDependencies(UntypedModelInstance model){
         for(ResourceLocation dependency : model.getDependencies()){
-            ModelInstance<?> dependencyModel = FusionBlockModelData.getModelInstance(ModelLoaderRegistry.getModelOrMissing(dependency));
+            UntypedModelInstance dependencyModel = FusionBlockModelData.getModelInstance(ModelLoaderRegistry.getModelOrMissing(dependency));
             this.dependencies.put(dependency, dependencyModel);
             this.collectDependencies(dependencyModel);
         }
@@ -161,7 +162,10 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
         try{
             bakedModel = this.model.bakeModel(context);
         }catch(Exception e){
-            throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.identifier + "'!", e);
+            if(this.model instanceof ModelInstance<?>)
+                throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
+            else
+                throw new RuntimeException("Encountered an exception while baking untyped block model for '" + this.identifier + "'!", e);
         }
         // Log warnings
         if(!warnings.isEmpty())
@@ -172,7 +176,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
     @Contract("_,_,_,_,!null -> !null")
     private static <T> T getFromModelTree(ModelBlock model,
                                           Function<FusionBlockModelData,@Nullable T> fusionModelGetter,
-                                          Function<ModelInstance<?>,@Nullable T> unknownModelGetter,
+                                          Function<UntypedModelInstance,@Nullable T> unknownModelGetter,
                                           BiFunction<T,T,T> merger,
                                           T defaultValue){
         T value = model instanceof FusionBlockModelData ?
@@ -201,7 +205,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
 
     private static <T> T getFromModelTree(ModelBlock model,
                                           Function<FusionBlockModelData,@Nullable T> fusionModelGetter,
-                                          Function<ModelInstance<?>,@Nullable T> unknownModelGetter,
+                                          Function<UntypedModelInstance,@Nullable T> unknownModelGetter,
                                           T defaultValue){
         return getFromModelTree(model, fusionModelGetter, unknownModelGetter, null, defaultValue);
     }
@@ -222,7 +226,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
         return getFromModelTree(
             this,
             m -> m.model.getAmbientOcclusion(),
-            ModelInstance::getAmbientOcclusion,
+            UntypedModelInstance::getAmbientOcclusion,
             true
         );
     }
@@ -232,7 +236,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
         return getFromModelTree(
             this,
             m -> m.model.getIsGui3d(),
-            ModelInstance::getIsGui3d,
+            UntypedModelInstance::getIsGui3d,
             true
         );
     }
@@ -276,7 +280,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
         return !value.isEmpty() && value.charAt(0) == '#';
     }
 
-    private static List<BlockPart> getElements(ModelInstance<?> model){
+    private static List<BlockPart> getElements(UntypedModelInstance model){
         ModelGeometry geometry = model.getGeometry();
         if(geometry == null)
             return null;
@@ -310,7 +314,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
         }).collect(Collectors.toList());
     }
 
-    private static Map<String,String> getMaterials(ModelInstance<?> model){
+    private static Map<String,String> getMaterials(UntypedModelInstance model){
         Map<String,String> materials = new HashMap<>();
         model.getMaterials().forEach((key, value) -> {
             if(value.isLeft())
@@ -321,7 +325,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
         return ImmutableMap.copyOf(materials);
     }
 
-    private static ItemCameraTransforms getItemCameraTransforms(ModelInstance<?> model){
+    private static ItemCameraTransforms getItemCameraTransforms(UntypedModelInstance model){
         ImmutableMap.Builder<ItemCameraTransforms.TransformType,ItemTransformVec3f> transformsBuilder = ImmutableMap.builder();
         for(ItemCameraTransforms.TransformType type : ItemCameraTransforms.TransformType.values()){
             ItemTransformVec3f transform = model.getItemTransform(type);
@@ -343,7 +347,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
 
     private static final Class<?> VANILLA_MODEL_WRAPPER_CLASS = ModelLoader.class.getDeclaredClasses()[8];
 
-    public static ModelInstance<?> getModelInstance(IModel model){
+    public static UntypedModelInstance getModelInstance(IModel model){
         if(model instanceof FusionBlockModelData)
             return ((FusionBlockModelData)model).model;
         if(model.asVanillaModel().filter(ModelBakery.MODEL_GENERATED::equals).isPresent())
@@ -360,7 +364,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
         return new ModelInstanceImpl<>(DefaultModelTypes.UNKNOWN, model);
     }
 
-    public static ModelInstance<?> getModelInstance(ModelBlock model){
+    public static UntypedModelInstance getModelInstance(ModelBlock model){
         if(model instanceof FusionBlockModelData)
             return ((FusionBlockModelData)model).model;
         if(model == ModelBakery.MODEL_GENERATED)

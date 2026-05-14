@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.model.types.cuboid;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.ModelInstance;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
@@ -26,7 +26,7 @@ public class CuboidModelType extends UnknownModelType<BlockModel> {
     }
 
     @Override
-    public List<Either<ResourceLocation,ModelInstance<?>>> getParents(BlockModel data){
+    public List<Either<ResourceLocation,UntypedModelInstance>> getParents(BlockModel data){
         ResourceLocation parent = data.getParentLocation();
         return parent == null ? List.of() : List.of(Either.left(parent));
     }

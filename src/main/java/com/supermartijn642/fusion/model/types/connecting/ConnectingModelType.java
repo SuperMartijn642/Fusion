@@ -10,6 +10,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.model.types.connecting.ConnectingModelData;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.BlockStateQuadProcessor;
@@ -88,6 +89,8 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             // Compose transformations
             ModelTransform transforms = stack.composeTransforms();
             transforms = ModelTransform.compose(transforms, context.getTransformation());
+            // Combine conditions
+            ModelPredicate conditions = stack.combineConditions();
             // Bake the geometry
             List<Pair<QuadAccess,ConnectionPredicate>>[] quads;
             if(geometry.isCuboidGeometry())
@@ -152,7 +155,8 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             propertyStore.setProperty(FACE_CONNECTION_PREDICATE, null);
             // Create a new part
             parts.add(new BaseBlockStateModel.Part(
-                new BaseBlockStateModel.Quads(processedQuads)
+                new BaseBlockStateModel.Quads(processedQuads),
+                conditions
             ));
             return ModelWalker.Result.endBranch();
         });
@@ -302,6 +306,8 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             // Compose transformations
             ModelTransform transforms = stack.composeTransforms();
             transforms = ModelTransform.compose(transforms, context.getTransformation());
+            // Combine conditions
+            ModelPredicate conditions = stack.combineConditions();
             // Bake the geometry
             List<Pair<QuadAccess,ConnectionPredicate>>[] quads;
             if(geometry.isCuboidGeometry())
@@ -383,6 +389,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             // Create the item model
             parts.add(new BaseItemModel.Part(
                 List.copyOf(processedQuads),
+                conditions,
                 guiLight,
                 particleSprite,
                 itemTransforms

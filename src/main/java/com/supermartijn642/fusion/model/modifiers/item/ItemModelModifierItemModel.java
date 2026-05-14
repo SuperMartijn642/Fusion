@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
@@ -22,15 +22,15 @@ import java.util.List;
 public class ItemModelModifierItemModel implements ItemModel {
 
     private final ItemModel defaultModel;
-    private final List<Pair<ItemPredicate,BakedModel>> models;
+    private final List<Pair<ItemModelPredicate,BakedModel>> models;
 
-    public ItemModelModifierItemModel(ItemModel defaultModel, List<Pair<ItemPredicate,BakedModel>> models){
+    public ItemModelModifierItemModel(ItemModel defaultModel, List<Pair<ItemModelPredicate,BakedModel>> models){
         this.defaultModel = defaultModel;
         this.models = models;
     }
 
     private BakedModel forStack(ItemStack stack){
-        for(Pair<ItemPredicate,BakedModel> entry : this.models){
+        for(Pair<ItemModelPredicate,BakedModel> entry : this.models){
             if(entry.left().test(stack))
                 return entry.right();
         }

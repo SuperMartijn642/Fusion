@@ -2,22 +2,18 @@ package com.supermartijn642.fusion;
 
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
-import com.supermartijn642.fusion.api.model.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
-import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
-import net.minecraft.client.renderer.RenderType;
+import com.supermartijn642.fusion.texture.types.connecting.predicates.*;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.ModList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.Optional;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -79,26 +75,6 @@ public class FusionClient {
         ModelTypeRegistryImpl.finalizeRegistration();
         ConnectionPredicateRegistryImpl.finalizeRegistration();
         ItemPredicateRegistry.finalizeRegistration();
-    }
-
-    public static Optional<RenderType> getChunkLayer(BaseTextureData.RenderType renderType){
-        if(renderType == null)
-            return Optional.empty();
-        RenderType material;
-        switch(renderType){
-            case OPAQUE:
-                material = RenderType.solid();
-                break;
-            case CUTOUT:
-                material = RenderType.cutout();
-                break;
-            case TRANSLUCENT:
-                material = RenderType.translucent();
-                break;
-            default:
-                throw new AssertionError();
-        }
-        return Optional.of(material);
     }
 
     private static String fusionVersion;

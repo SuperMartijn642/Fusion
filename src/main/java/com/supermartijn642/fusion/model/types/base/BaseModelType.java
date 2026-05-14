@@ -5,19 +5,22 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
+import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
-import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.custom.QuadProcessor;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.Property;
+import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
+import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.client.renderer.model.*;
@@ -93,12 +96,15 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
     }
 
     @Override
-    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context, T data){
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context, T data){
         return Optional.empty();
     }
 
     @Override
     public IBakedModel bakeModel(ModelBakingContext context, T data){
+        // Create shared property store
+        PropertyStore propertyStore = PropertyStore.create();
+
         // Bake geometry
         AtomicBoolean isGui3d = new AtomicBoolean(false);
         List<BaseBakedModel.Part> parts = new ArrayList<>();
@@ -127,17 +133,45 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             // Apply model properties to the quads
             Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
             Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
-            quads = quads.mutateQuads((side, quad) -> {
-                if(shade != null)
-                    quad.shade(shade);
-                if(emissive != null)
-                    quad.emissive(emissive);
-                applyTextureProperties(quad);
-                return true;
-            });
+            // Initialize special texture quads
+            //noinspection unchecked
+            List<BaseBakedModel.Quad>[] processedQuads = new List[7];
+            MutableQuad mutableQuad = MutableQuad.create();
+            for(Direction cullDirection : CullingHelper.cullDirections()){
+                List<BaseBakedModel.Quad> directionQuads = new ArrayList<>(quads.get(cullDirection).size());
+                for(QuadAccess quad : quads.get(cullDirection)){
+                    // Get the sprite instance
+                    SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                    if(sprite == null){
+                        directionQuads.add(new BaseBakedModel.Quad(
+                            quad,
+                            null,
+                            null
+                        ));
+                        continue;
+                    }
+                    // Initialize the quad
+                    mutableQuad.copyFrom(quad);
+                    QuadProcessor<?> processor = sprite.getTexture().initializeModelQuad(mutableQuad, sprite, propertyStore);
+                    SpriteInstance newSprite = SpriteHelper.getSpriteInstance(mutableQuad.sprite());
+                    // Apply model properties
+                    if(shade != null)
+                        mutableQuad.shade(shade);
+                    if(emissive != null)
+                        mutableQuad.emissive(emissive);
+                    // Create quad
+                    //noinspection unchecked
+                    directionQuads.add(new BaseBakedModel.Quad(
+                        mutableQuad.createCopy(),
+                        newSprite == null ? sprite : newSprite,
+                        (QuadProcessor<Object>)processor
+                    ));
+                }
+                processedQuads[CullingHelper.cullIndex(cullDirection)] = ImmutableList.copyOf(directionQuads);
+            }
             // Create a new part
             parts.add(new BaseBakedModel.Part(
-                quads
+                BaseBakedModel.Quads.create(processedQuads)
             ));
             return ModelWalker.Result.endBranch();
         });
@@ -198,20 +232,9 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             ambientOcclusion,
             guiLight,
             isGui3d.get(),
-            itemTransforms
+            itemTransforms,
+            propertyStore
         );
-    }
-
-    public static void applyTextureProperties(MutableQuad quad){
-        TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(quad.sprite());
-        if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData){
-            BaseTextureData data = (BaseTextureData)textureInstance.getCustomData();
-            if(data.isEmissive())
-                quad.emissive(true);
-            FusionClient.getChunkLayer(data.getRenderType()).ifPresent(quad::chunkRenderType);
-            if(data.getTinting() != null)
-                quad.tintIndex(39216);
-        }
     }
 
     protected abstract BUILDER builder();

@@ -10,6 +10,7 @@ import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
+import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.renderer.RenderType;
@@ -118,12 +119,7 @@ public class ModelGeometryImpl implements ModelGeometry {
             if(!ModelRenderTypeHelper.canRenderInLayer(baked, Blocks.AIR.defaultBlockState(), renderType, renderType == RenderType.solid()))
                 continue;
             ForgeHooksClient.setRenderLayer(renderType);
-            baked.getQuads(Blocks.AIR.defaultBlockState(), null, random, EmptyModelData.INSTANCE).forEach(q -> {
-                MutableQuad mutableQuad = MutableQuad.create(q);
-                mutableQuad.chunkRenderType(renderType);
-                quads.add(null, mutableQuad);
-            });
-            for(Direction cullDirection : Direction.values()){
+            for(Direction cullDirection : CullingHelper.cullDirections()){
                 baked.getQuads(Blocks.AIR.defaultBlockState(), cullDirection, random, EmptyModelData.INSTANCE).forEach(q -> {
                     MutableQuad mutableQuad = MutableQuad.create(q);
                     mutableQuad.chunkRenderType(renderType);

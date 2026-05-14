@@ -4,6 +4,7 @@ import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.texture.custom.ItemQuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
@@ -76,6 +77,10 @@ public class BaseItemModel implements ItemModel {
         // Submit each part
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(Part part : this.parts){
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForItem(stack))
+                continue;
+
             ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
             if(tintValues != null)
                 layer.tintLayers().addAll(tintValues);
@@ -116,14 +121,16 @@ public class BaseItemModel implements ItemModel {
 
     public static class Part {
         private final List<Quad> quads;
+        private final ModelPredicate conditions;
         private final UnbakedModel.GuiLight guiLight;
         private final ModelMaterial.Resolved particleMaterial;
         private final ItemTransforms transforms;
         private final Supplier<Vector3fc[]> extents;
         private final boolean animated;
 
-        public Part(List<Quad> quads, UnbakedModel.GuiLight guiLight, ModelMaterial.Resolved particleMaterial, ItemTransforms transforms){
+        public Part(List<Quad> quads, ModelPredicate conditions, UnbakedModel.GuiLight guiLight, ModelMaterial.Resolved particleMaterial, ItemTransforms transforms){
             this.quads = quads;
+            this.conditions = conditions;
             this.guiLight = guiLight;
             this.particleMaterial = particleMaterial;
             this.transforms = transforms;

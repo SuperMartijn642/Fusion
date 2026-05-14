@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.model.types.base;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.texture.custom.BlockStateQuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
@@ -43,6 +44,10 @@ public class BaseBlockStateModel implements BlockStateModel {
     public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockStateModelPart> parts){
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(Part part : this.parts){
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForBlock(level, pos, state))
+                continue;
+
             // Extract state for all the textures that need processing
             //noinspection unchecked
             List<Object>[] extractStates = new List[7];
@@ -118,6 +123,14 @@ public class BaseBlockStateModel implements BlockStateModel {
         // Add keys for all the textures that have additional processing
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(Part part : this.parts){
+            // Check part condition
+            if(part.conditions != null){
+                if(!part.conditions.testForBlock(level, pos, state)){
+                    identity.add(false);
+                    continue;
+                }
+                identity.add(true);
+            }
             for(Direction cullDirection : CullingHelper.cullDirections()){
                 for(Quad quad : part.quads().get(cullDirection)){
                     // Ignore quads that don't need processing
@@ -146,7 +159,7 @@ public class BaseBlockStateModel implements BlockStateModel {
         return this.materialFlags;
     }
 
-    public record Part(Quads quads, ModelMaterial.Resolved particleMaterial, int materialFlags) {
+    public record Part(Quads quads, ModelPredicate conditions, ModelMaterial.Resolved particleMaterial, int materialFlags) {
     }
 
     public record Quads(List<Quad>[] quads) {

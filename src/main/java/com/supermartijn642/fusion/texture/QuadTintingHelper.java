@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.texture;
 
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import net.minecraft.client.color.block.BlockTintSource;
 import net.minecraft.client.color.block.BlockTintSources;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class QuadTintingHelper {
 
     /**
-     * @see com.supermartijn642.fusion.api.texture.data.BaseTextureData.QuadTinting
+     * @see BaseTextureData.QuadTinting
      */
     private static final BlockTintSource[] TINT_FUNCTIONS = new BlockTintSource[]{
         BlockTintSources.grass(),

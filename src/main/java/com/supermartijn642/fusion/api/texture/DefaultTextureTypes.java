@@ -1,7 +1,11 @@
 package com.supermartijn642.fusion.api.texture;
 
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
-import com.supermartijn642.fusion.api.texture.data.*;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.connecting.ConnectingTextureData;
+import com.supermartijn642.fusion.api.texture.types.continuous.ContinuousTextureData;
+import com.supermartijn642.fusion.api.texture.types.random.RandomTextureData;
+import com.supermartijn642.fusion.api.texture.types.scrolling.ScrollingTextureData;
 import com.supermartijn642.fusion.texture.types.VanillaTextureType;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureType;

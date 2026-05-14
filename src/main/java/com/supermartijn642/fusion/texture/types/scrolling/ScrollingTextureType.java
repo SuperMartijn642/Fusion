@@ -2,13 +2,15 @@ package com.supermartijn642.fusion.texture.types.scrolling;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.texture.TextureType;
-import com.supermartijn642.fusion.api.texture.custom.SpriteImageSource;
-import com.supermartijn642.fusion.api.texture.custom.TextureCreationContext;
-import com.supermartijn642.fusion.api.texture.custom.TextureOutput;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.api.texture.data.ScrollingTextureData;
+import com.supermartijn642.fusion.api.texture.custom.*;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.scrolling.ScrollingTextureData;
+import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.api.util.UserErrorException;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,6 +67,13 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData,Ba
 
         // Set custom texture data
         output.setCustomData(data);
+    }
+
+    @Override
+    public @Nullable QuadProcessor<?> initializeModelQuad(MutableQuad quad, SpriteInstance sprite, BaseTextureData data, PropertyStore properties){
+        // Apply base texture properties
+        BaseTextureType.applyProperties(quad, data);
+        return null;
     }
 
     @Override

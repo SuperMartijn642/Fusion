@@ -1,8 +1,7 @@
 package com.supermartijn642.fusion.texture.types.base;
 
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-
-import javax.annotation.Nullable;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created 07/09/2024 by SuperMartijn642

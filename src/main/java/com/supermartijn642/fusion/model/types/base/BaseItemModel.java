@@ -2,7 +2,12 @@ package com.supermartijn642.fusion.model.types.base;
 
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.texture.custom.ItemQuadProcessor;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
+import com.supermartijn642.fusion.api.util.PropertyStore;
+import com.supermartijn642.fusion.util.FallbackPropertyStore;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.minecraft.client.color.item.ItemTintSource;
@@ -33,12 +38,14 @@ public class BaseItemModel implements ItemModel {
     private final List<ItemTintSource> tints;
     private final ModelTransform transformation;
     private final boolean animated;
+    private final PropertyStore propertyStore;
 
-    public BaseItemModel(List<Part> parts, List<ItemTintSource> tints, ModelTransform transformation){
+    public BaseItemModel(List<Part> parts, List<ItemTintSource> tints, ModelTransform transformation, PropertyStore propertyStore){
         this.parts = parts;
         this.tints = tints;
         this.transformation = transformation;
         this.animated = parts.stream().anyMatch(p -> p.animated);
+        this.propertyStore = propertyStore;
     }
 
     @Override
@@ -67,6 +74,7 @@ public class BaseItemModel implements ItemModel {
             renderState.appendModelIdentityElement(foilType);
         }
         // Submit each part
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(Part part : this.parts){
             ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
             if(tintValues != null)
@@ -78,32 +86,57 @@ public class BaseItemModel implements ItemModel {
             layer.setUsesBlockLight(part.guiLight.lightLikeBlock());
             layer.setParticleMaterial(part.particleMaterial.toBakedMaterial());
             layer.setItemTransform(part.transforms.getTransform(displayContext));
+
+            // Process all quads
             QuadEmitter emitter = layer.emitter();
-            for(QuadAccess quad : part.quads){
-                quad.toFrapiQuad(emitter);
-                emitter.emit();
+            EmittableQuad mutableQuad = null;
+            for(Quad quad : part.quads){
+                // Simply add quads that don't need further processing
+                if(quad.processor() == null){
+                    quad.quad().toFrapiQuad(emitter);
+                    emitter.emit();
+                    continue;
+                }
+
+                // Extract state
+                Object state = quad.processor().extractState(stack, propertyStore);
+
+                // Create geometry key
+                renderState.appendModelIdentityElement(quad.processor().createGeometryKey(state, propertyStore));
+
+                // Create mutable quad
+                if(mutableQuad == null){
+                    mutableQuad = EmittableQuad.create(q -> {
+                        q.toFrapiQuad(emitter);
+                        emitter.emit();
+                    });
+                }
+                mutableQuad.copyFrom(quad.quad());
+
+                // Process quad
+                quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
             }
         }
     }
 
     public static class Part {
-        private final List<QuadAccess> quads;
+        private final List<Quad> quads;
         private final UnbakedModel.GuiLight guiLight;
         private final ModelMaterial.Resolved particleMaterial;
         private final ItemTransforms transforms;
         private final Supplier<Vector3fc[]> extents;
         private final boolean animated;
 
-        public Part(List<QuadAccess> quads, UnbakedModel.GuiLight guiLight, ModelMaterial.Resolved particleMaterial, ItemTransforms transforms){
+        public Part(List<Quad> quads, UnbakedModel.GuiLight guiLight, ModelMaterial.Resolved particleMaterial, ItemTransforms transforms){
             this.quads = quads;
             this.guiLight = guiLight;
             this.particleMaterial = particleMaterial;
             this.transforms = transforms;
             this.extents = () -> {
                 Set<Vector3fc> positions = new HashSet<>();
-                for(QuadAccess quad : this.quads){
+                for(Quad quad : this.quads){
                     for(int vertex = 0; vertex < 4; vertex++){
-                        positions.add(quad.position(vertex));
+                        positions.add(quad.quad().position(vertex));
                     }
                 }
                 return positions.toArray(Vector3fc[]::new);
@@ -111,14 +144,17 @@ public class BaseItemModel implements ItemModel {
 
             // Check whether the quads contain animated textures
             boolean animated = false;
-            for(QuadAccess quad : this.quads){
+            for(Quad quad : this.quads){
                 //noinspection resource
-                if(quad.sprite().contents().isAnimated()){
+                if(quad.quad().sprite().contents().isAnimated()){
                     animated = true;
                     break;
                 }
             }
             this.animated = animated;
         }
+    }
+
+    public record Quad(QuadAccess quad, SpriteInstance sprite, ItemQuadProcessor<Object> processor) {
     }
 }

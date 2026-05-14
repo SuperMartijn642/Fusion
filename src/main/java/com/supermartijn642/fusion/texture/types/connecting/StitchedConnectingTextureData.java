@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
+import com.supermartijn642.fusion.api.texture.types.connecting.ConnectingTextureData;
 
 import java.util.List;
 
@@ -13,7 +13,7 @@ public class StitchedConnectingTextureData extends ConnectingTextureDataImpl {
     private final List<SpriteInstance> tiles;
 
     public StitchedConnectingTextureData(ConnectingTextureData base, List<SpriteInstance> tiles){
-        super(base.getRenderType(), base.isEmissive(), base.getTinting(), base.getLayout());
+        super(base.getRenderType(), base.isEmissive(), base.getTinting(), base.getLayout(), base.getConnectionPredicate());
         this.tiles = tiles;
     }
 

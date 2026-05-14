@@ -2,9 +2,10 @@ package com.supermartijn642.fusion.api.model.custom.geometry;
 
 import com.mojang.math.Quadrant;
 import com.supermartijn642.fusion.api.model.custom.CullableQuads;
-import com.supermartijn642.fusion.api.model.custom.ModelProperty;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.util.Property;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
 import com.supermartijn642.fusion.model.custom.geometry.CuboidGeometryElementImpl;
 import com.supermartijn642.fusion.model.custom.geometry.CuboidGeometryFaceImpl;
 import com.supermartijn642.fusion.model.custom.geometry.CuboidModelGeometryImpl;
@@ -18,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3fc;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -76,7 +76,7 @@ public interface CuboidModelGeometry extends ModelGeometry {
      * A part in a cuboid model representing a cuboid with potential faces on each side.
      */
     @ApiStatus.NonExtendable
-    interface Element {
+    interface Element extends PropertyGetter {
 
         /**
          * Converts the given {@link CuboidModelElement} to an {@link Element}.
@@ -138,20 +138,6 @@ public interface CuboidModelGeometry extends ModelGeometry {
         @Nullable
         Boolean emissive();
 
-        /**
-         * Gets an arbitrary property of this element.
-         * @see ModelProperty
-         */
-        <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context);
-
-        /**
-         * Gets an arbitrary property of this element.
-         * @see ModelProperty
-         */
-        default <X> Optional<X> getProperty(ModelProperty<X,Void> property){
-            return this.getProperty(property, null);
-        }
-
         @ApiStatus.NonExtendable
         interface Builder {
 
@@ -198,25 +184,25 @@ public interface CuboidModelGeometry extends ModelGeometry {
              * Sets an arbitrary property for the element.
              * @param property property to be set
              * @param value    value for the property
-             * @see ModelProperty
+             * @see Property
              */
-            <X> Builder property(ModelProperty<X,?> property, X value);
+            <X> Builder property(Property<X,?> property, X value);
 
             /**
              * Sets an arbitrary property for the element.
              * @param property property to be set
              * @param value    value supplier for the property
-             * @see ModelProperty
+             * @see Property
              */
-            <X> Builder property(ModelProperty<X,?> property, Supplier<X> value);
+            <X> Builder property(Property<X,?> property, Supplier<X> value);
 
             /**
              * Sets an arbitrary property for the element.
              * @param property property to be set
              * @param value    value resolver for the property
-             * @see ModelProperty
+             * @see Property
              */
-            <X, C> Builder property(ModelProperty<X,C> property, Function<C,X> value);
+            <X, C> Builder property(Property<X,C> property, Function<C,X> value);
 
             /**
              * Builds the element.
@@ -228,7 +214,7 @@ public interface CuboidModelGeometry extends ModelGeometry {
     /**
      * A face of a cuboid element.
      */
-    interface Face {
+    interface Face extends PropertyGetter {
 
         /**
          * Converts the given {@link CuboidFace} to a {@link Face}.
@@ -298,20 +284,6 @@ public interface CuboidModelGeometry extends ModelGeometry {
         @Nullable
         Boolean emissive();
 
-        /**
-         * Gets an arbitrary property of this face.
-         * @see ModelProperty
-         */
-        <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context);
-
-        /**
-         * Gets an arbitrary property of this face.
-         * @see ModelProperty
-         */
-        default <X> Optional<X> getProperty(ModelProperty<X,Void> property){
-            return this.getProperty(property, null);
-        }
-
         @ApiStatus.NonExtendable
         interface Builder {
 
@@ -373,25 +345,25 @@ public interface CuboidModelGeometry extends ModelGeometry {
              * Sets an arbitrary property for the face.
              * @param property property to be set
              * @param value    value for the property
-             * @see ModelProperty
+             * @see Property
              */
-            <X> Builder property(ModelProperty<X,?> property, X value);
+            <X> Builder property(Property<X,?> property, X value);
 
             /**
              * Sets an arbitrary property for the face.
              * @param property property to be set
              * @param value    value supplier for the property
-             * @see ModelProperty
+             * @see Property
              */
-            <X> Builder property(ModelProperty<X,?> property, Supplier<X> value);
+            <X> Builder property(Property<X,?> property, Supplier<X> value);
 
             /**
              * Sets an arbitrary property for the face.
              * @param property property to be set
              * @param value    value resolver for the property
-             * @see ModelProperty
+             * @see Property
              */
-            <X, C> Builder property(ModelProperty<X,C> property, Function<C,X> value);
+            <X, C> Builder property(Property<X,C> property, Function<C,X> value);
 
             /**
              * Builds the face.

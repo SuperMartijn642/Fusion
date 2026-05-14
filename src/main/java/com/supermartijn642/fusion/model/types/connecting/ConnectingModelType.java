@@ -8,14 +8,25 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.model.types.connecting.ConnectingModelData;
-import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionPredicate;
-import com.supermartijn642.fusion.api.model.types.connecting.predicates.DefaultConnectionPredicates;
-import com.supermartijn642.fusion.api.model.types.connecting.predicates.FusionConnectionPredicateRegistry;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
+import com.supermartijn642.fusion.api.texture.custom.BlockStateQuadProcessor;
+import com.supermartijn642.fusion.api.texture.custom.ItemQuadProcessor;
+import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.api.util.Property;
+import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
+import com.supermartijn642.fusion.model.types.base.BaseBlockStateModel;
+import com.supermartijn642.fusion.model.types.base.BaseItemModel;
 import com.supermartijn642.fusion.model.types.base.BaseModelType;
+import com.supermartijn642.fusion.util.CullingHelper;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
@@ -37,11 +48,11 @@ import java.util.stream.Collectors;
  */
 public class ConnectingModelType extends BaseModelType<ConnectingModelData,ConnectingModelDataBuilderImpl> {
 
-    private static final ConnectionPredicate FALLBACK_PREDICATE = DefaultConnectionPredicates.isSameState();
+    public static final Property<ConnectionPredicate,Void> FACE_CONNECTION_PREDICATE = Property.create();
 
     @Override
-    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context, ConnectingModelData data){
-        if(property == ModelProperty.MODEL_CONNECTION_PREDICATES)
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context, ConnectingModelData data){
+        if(property == DefaultModelProperties.MODEL_CONNECTION_PREDICATES)
             //noinspection unchecked
             return Optional.of((X)data.getAllConnectionPredicates());
         return super.getProperty(property, context, data);
@@ -49,8 +60,11 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
 
     @Override
     public BlockStateModel bakeBlockStateModel(BlockStateModelBakingContext context, ConnectingModelData data){
+        // Create shared property store
+        PropertyStore propertyStore = PropertyStore.create();
+
         // Bake geometry
-        List<ConnectingBlockStateModel.Part> parts = new ArrayList<>();
+        List<BaseBlockStateModel.Part> parts = new ArrayList<>();
         context.walkModelTree(ModelInstance.of(this, data), (modelInstance, stack) -> {
             ModelGeometry geometry = modelInstance.getGeometry();
             if(geometry == null)
@@ -73,44 +87,84 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             ModelTransform transforms = stack.composeTransforms();
             transforms = ModelTransform.compose(transforms, context.getTransformation());
             // Bake the geometry
-            ConnectingModelQuads.Builder quads;
+            List<Pair<QuadAccess,ConnectionPredicate>>[] quads;
             if(geometry.isCuboidGeometry())
                 quads = bakeCuboidGeometry((CuboidModelGeometry)geometry, transforms, materialResolver, connectionsResolver);
-            else
-                quads = ConnectingModelQuads.builder().add(geometry.bake(transforms, materialResolver));
+            else{
+                //noinspection unchecked
+                quads = new List[7];
+                CullableQuads bakedGeometry = geometry.bake(transforms, materialResolver);
+                for(Direction cullDirection : CullingHelper.cullDirections()){
+                    quads[CullingHelper.cullIndex(cullDirection)] = bakedGeometry.get(cullDirection).stream()
+                        .map(q -> Pair.of(q, (ConnectionPredicate)null))
+                        .toList();
+                }
+            }
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads
             Boolean ambientOcclusion = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getAmbientOcclusion, null);
             Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
             Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
-            quads = quads.mutateQuads((side, quad) -> {
-                if(ambientOcclusion != null)
-                    quad.ambientOcclusion(ambientOcclusion);
-                if(shade != null)
-                    quad.shade(shade);
-                if(emissive != null)
-                    quad.emissive(emissive);
-                BaseModelType.applyTextureProperties(quad);
-                return true;
-            });
+            // Initialize special texture quads
+            //noinspection unchecked
+            List<BaseBlockStateModel.Quad>[] processedQuads = new List[7];
+            MutableQuad mutableQuad = MutableQuad.create();
+            for(Direction cullDirection : CullingHelper.cullDirections()){
+                List<BaseBlockStateModel.Quad> directionQuads = new ArrayList<>(quads[CullingHelper.cullIndex(cullDirection)].size());
+                for(Pair<QuadAccess,ConnectionPredicate> pair : quads[CullingHelper.cullIndex(cullDirection)]){
+                    QuadAccess quad = pair.left();
+                    // Get the sprite instance
+                    SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                    if(sprite == null){
+                        directionQuads.add(new BaseBlockStateModel.Quad(
+                            quad,
+                            null,
+                            null
+                        ));
+                        continue;
+                    }
+                    // Put the face's connection predicate into the property store
+                    propertyStore.setProperty(FACE_CONNECTION_PREDICATE, pair.right());
+                    // Initialize the quad
+                    mutableQuad.copyFrom(quad);
+                    BlockStateQuadProcessor<?> processor = sprite.getTexture().initializeBlockStateModelQuad(mutableQuad, sprite, propertyStore);
+                    SpriteInstance newSprite = SpriteHelper.getSpriteInstance(mutableQuad.sprite());
+                    // Apply model properties
+                    if(ambientOcclusion != null)
+                        mutableQuad.ambientOcclusion(ambientOcclusion);
+                    if(shade != null)
+                        mutableQuad.shade(shade);
+                    if(emissive != null)
+                        mutableQuad.emissive(emissive);
+                    // Create quad
+                    //noinspection unchecked
+                    directionQuads.add(new BaseBlockStateModel.Quad(
+                        mutableQuad.createCopy(),
+                        newSprite == null ? sprite : newSprite,
+                        (BlockStateQuadProcessor<Object>)processor
+                    ));
+                }
+                processedQuads[CullingHelper.cullIndex(cullDirection)] = List.copyOf(directionQuads);
+            }
+            propertyStore.setProperty(FACE_CONNECTION_PREDICATE, null);
             // Resolve particle material
             ModelMaterial.Resolved particleMaterial = materialResolver.get("particle");
             if(particleMaterial.isMissing())
                 context.pushWarning("Could not resolve 'particle' material for model stack (" + stack + ")!");
             // Find material flags
-            ConnectingModelQuads completedQuads = quads.build();
             int materialFlags = 0;
-            for(ConnectingModelQuads.Entry entry : completedQuads.all()){
-                QuadAccess quad = entry.quad();
-                if(quad.chunkLayer().translucent())
-                    materialFlags |= 1;
-                else if(quad.sprite().contents().isAnimated())
-                    materialFlags |= 2;
+            for(Direction cullDirection : CullingHelper.cullDirections()){
+                for(BaseBlockStateModel.Quad quad : processedQuads[CullingHelper.cullIndex(cullDirection)]){
+                    if(quad.quad().chunkLayer().translucent())
+                        materialFlags |= 1;
+                    else if(quad.quad().sprite().contents().isAnimated())
+                        materialFlags |= 2;
+                }
             }
             // Create a new part
-            parts.add(new ConnectingBlockStateModel.Part(
-                completedQuads,
+            parts.add(new BaseBlockStateModel.Part(
+                new BaseBlockStateModel.Quads(processedQuads),
                 particleMaterial,
                 materialFlags
             ));
@@ -132,21 +186,25 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
         ModelMaterial.Resolved resolvedParticleMaterial = context.getMaterial(particleMaterial);
 
         // Calculate material flags
-        int materialFlags = parts.stream().mapToInt(ConnectingBlockStateModel.Part::materialFlags).reduce(0, (a, b) -> a | b);
+        int materialFlags = parts.stream().mapToInt(BaseBlockStateModel.Part::materialFlags).reduce(0, (a, b) -> a | b);
 
         // Finally, create the model
-        return new ConnectingBlockStateModel(
+        return new BaseBlockStateModel(
             parts,
             resolvedParticleMaterial,
-            materialFlags
+            materialFlags,
+            propertyStore
         );
     }
 
-    private static ConnectingModelQuads.Builder bakeCuboidGeometry(CuboidModelGeometry geometry,
-                                                                   ModelTransform transformation,
-                                                                   ModelGeometry.MaterialResolver materialResolver,
-                                                                   Function<String,@Nullable ConnectionPredicate> connectionsResolver){
-        ConnectingModelQuads.Builder quads = ConnectingModelQuads.builder();
+    private static List<Pair<QuadAccess,ConnectionPredicate>>[] bakeCuboidGeometry(CuboidModelGeometry geometry,
+                                                                                   ModelTransform transformation,
+                                                                                   ModelGeometry.MaterialResolver materialResolver,
+                                                                                   Function<String,@Nullable ConnectionPredicate> connectionsResolver){
+        //noinspection unchecked
+        List<Pair<QuadAccess,ConnectionPredicate>>[] quads = new List[7];
+        for(int cullIndex = 0; cullIndex < 7; cullIndex++)
+            quads[cullIndex] = new ArrayList<>();
         for(CuboidModelGeometry.Element element : geometry.elements()){
             // Create quads the same way as vanilla
             // Check whether the size is 0 for any axis
@@ -175,12 +233,12 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                 // Bake the face
                 QuadAccess quad = CuboidModelGeometry.bakeFace(face, element, side, transformation, materialResolver);
                 // Resolve connections key
-                Optional<String> key = face.getProperty(ModelProperty.FACE_CONNECTIONS_KEY);
+                Optional<String> key = face.getProperty(DefaultModelProperties.FACE_CONNECTIONS_KEY);
                 ConnectionPredicate connectionPredicate = connectionsResolver.apply(key.orElse(ConnectingModelData.DEFAULT_KEY));
                 // Add the quad
                 Direction cullDirection = face.cullDirection() == null ? null :
                     Direction.rotate(transformation.matrix(), face.cullDirection());
-                quads.add(cullDirection, quad, connectionPredicate);
+                quads[CullingHelper.cullIndex(cullDirection)].add(Pair.of(quad, connectionPredicate));
             }
         }
         return quads;
@@ -198,7 +256,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             while(true){
                 encounteredKeys.add(key);
                 final String finalKey = key;
-                Either<String,ConnectionPredicate> next = UnknownModelType.findPropertyInStackAndParents(context, stack, m -> m.getProperty(ModelProperty.MODEL_CONNECTION_PREDICATES).map(connections -> connections.get(finalKey)).orElse(null), null);
+                Either<String,ConnectionPredicate> next = UnknownModelType.findPropertyInStackAndParents(context, stack, m -> m.getProperty(DefaultModelProperties.MODEL_CONNECTION_PREDICATES).map(connections -> connections.get(finalKey)).orElse(null), null);
                 if(next != null){
                     if(next.isRight()){
                         ConnectionPredicate predicate = next.right();
@@ -221,25 +279,29 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                     reportCircular.accept(Collections.unmodifiableList(encounteredKeys));
                     break;
                 }
-                ConnectionPredicate previouslyResolved = resolvedConnections.get(key);
-                if(previouslyResolved != null){
+                if(resolvedConnections.containsKey(key)){
+                    ConnectionPredicate previouslyResolved = resolvedConnections.get(key);
                     for(String encounteredKey : encounteredKeys)
                         resolvedConnections.put(encounteredKey, previouslyResolved);
                     return previouslyResolved;
                 }
             }
             for(String encounteredKey : encounteredKeys)
-                resolvedConnections.put(encounteredKey, FALLBACK_PREDICATE);
-            return FALLBACK_PREDICATE;
+                resolvedConnections.put(encounteredKey, null);
+            return null;
         };
     }
 
     @Override
     public ItemModel bakeItemModel(ItemModelBakingContext context, ConnectingModelData data){
+        // Create shared property store
+        PropertyStore propertyStore = PropertyStore.create();
+
         // Create a submodel for each geometry
-        List<ConnectingItemModel.Part> parts = new ArrayList<>();
+        List<BaseItemModel.Part> parts = new ArrayList<>();
         context.walkModelTree(ModelInstance.of(this, data), (modelInstance, stack) -> {
-            if(modelInstance.getGeometry() == null)
+            ModelGeometry geometry = modelInstance.getGeometry();
+            if(geometry == null)
                 return ModelWalker.Result.proceed();
             // Resolve materials
             Set<String> missingKeys = new HashSet<>();
@@ -249,26 +311,74 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                 missingKeys::add,
                 keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + stack + ")!")
             );
+            // Resolve connection predicates
+            Function<String,@Nullable ConnectionPredicate> connectionsResolver = createConnectionsResolver(
+                context,
+                stack,
+                keys -> context.pushWarning("Found circular connections key chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + stack + ")!")
+            );
             // Compose transformations
             ModelTransform transforms = stack.composeTransforms();
+            transforms = ModelTransform.compose(transforms, context.getTransformation());
             // Bake the geometry
-            CullableQuads quads = modelInstance.getGeometry().bake(transforms, materialResolver);
+            List<Pair<QuadAccess,ConnectionPredicate>>[] quads;
+            if(geometry.isCuboidGeometry())
+                quads = bakeCuboidGeometry((CuboidModelGeometry)geometry, transforms, materialResolver, connectionsResolver);
+            else{
+                //noinspection unchecked
+                quads = new List[7];
+                CullableQuads bakedGeometry = geometry.bake(transforms, materialResolver);
+                for(Direction cullDirection : CullingHelper.cullDirections()){
+                    quads[CullingHelper.cullIndex(cullDirection)] = bakedGeometry.get(cullDirection).stream()
+                        .map(q -> Pair.of(q, (ConnectionPredicate)null))
+                        .toList();
+                }
+            }
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads
             Boolean ambientOcclusion = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getAmbientOcclusion, null);
             Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
             Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
-            quads = quads.mutateQuads((side, quad) -> {
-                if(ambientOcclusion != null)
-                    quad.ambientOcclusion(ambientOcclusion);
-                if(shade != null)
-                    quad.shade(shade);
-                if(emissive != null)
-                    quad.emissive(emissive);
-                BaseModelType.applyTextureProperties(quad);
-                return true;
-            });
+            // Initialize special texture quads
+            List<BaseItemModel.Quad> processedQuads = new ArrayList<>();
+            MutableQuad mutableQuad = MutableQuad.create();
+            for(Direction cullDirection : CullingHelper.cullDirections()){
+                for(Pair<QuadAccess,ConnectionPredicate> pair : quads[CullingHelper.cullIndex(cullDirection)]){
+                    QuadAccess quad = pair.left();
+                    // Get the sprite instance
+                    SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                    if(sprite == null){
+                        processedQuads.add(new BaseItemModel.Quad(
+                            quad,
+                            null,
+                            null
+                        ));
+                        continue;
+                    }
+                    // Put the face's connection predicate into the property store
+                    propertyStore.setProperty(FACE_CONNECTION_PREDICATE, pair.right());
+                    // Initialize the quad
+                    mutableQuad.copyFrom(quad);
+                    ItemQuadProcessor<?> processor = sprite.getTexture().initializeItemModelQuad(mutableQuad, sprite, propertyStore);
+                    SpriteInstance newSprite = SpriteHelper.getSpriteInstance(mutableQuad.sprite());
+                    // Apply model properties
+                    if(ambientOcclusion != null)
+                        mutableQuad.ambientOcclusion(ambientOcclusion);
+                    if(shade != null)
+                        mutableQuad.shade(shade);
+                    if(emissive != null)
+                        mutableQuad.emissive(emissive);
+                    // Create quad
+                    //noinspection unchecked
+                    processedQuads.add(new BaseItemModel.Quad(
+                        mutableQuad.createCopy(),
+                        newSprite == null ? sprite : newSprite,
+                        (ItemQuadProcessor<Object>)processor
+                    ));
+                }
+            }
+            propertyStore.setProperty(FACE_CONNECTION_PREDICATE, null);
             // Resolve particle material
             ModelMaterial.Resolved particleMaterial = materialResolver.get("particle");
             if(particleMaterial == null)
@@ -290,8 +400,8 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                 itemTransformResolver.apply(ItemDisplayContext.ON_SHELF, ItemTransform.NO_TRANSFORM)
             );
             // Create the item model
-            parts.add(new ConnectingItemModel.Part(
-                quads.all(),
+            parts.add(new BaseItemModel.Part(
+                List.copyOf(processedQuads),
                 guiLight,
                 particleMaterial,
                 itemTransforms
@@ -300,7 +410,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
         });
 
         // Create one composite model of all the sub-models
-        return new ConnectingItemModel(parts, context.getTintSources(), context.getTransformation());
+        return new BaseItemModel(parts, context.getTintSources(), context.getTransformation(), propertyStore);
     }
 
     @Override
@@ -331,7 +441,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                         builder.connections(key, loadPredicate(object.get(key), key));
                 }
             }else
-                throw new JsonParseException("Property 'connections' must be an array!");
+                throw new JsonParseException("Property 'connections' must be an object or array!");
         }
     }
 
@@ -356,7 +466,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
         return json;
     }
 
-    private static ConnectionPredicate loadPredicate(JsonElement element, String key){
+    public static ConnectionPredicate loadPredicate(JsonElement element, String key){
         if(element.isJsonArray()){
             JsonArray array = element.getAsJsonArray();
             List<ConnectionPredicate> subPredicates = new ArrayList<>();
@@ -385,7 +495,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                 key = key.substring(1);
             if(key.isEmpty())
                 throw new JsonParseException("Element face property 'connections' must not be empty!");
-            builder.property(ModelProperty.FACE_CONNECTIONS_KEY, key);
+            builder.property(DefaultModelProperties.FACE_CONNECTIONS_KEY, key);
         }
         return builder;
     }
@@ -393,7 +503,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
     @Override
     protected JsonObject serializeFace(CuboidModelGeometry.Face face){
         JsonObject json = super.serializeFace(face);
-        Optional<String> key = face.getProperty(ModelProperty.FACE_CONNECTIONS_KEY);
+        Optional<String> key = face.getProperty(DefaultModelProperties.FACE_CONNECTIONS_KEY);
         key.ifPresent(s -> json.addProperty("connections", s));
         return json;
     }

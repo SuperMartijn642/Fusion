@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.api.texture.types.connecting.ConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 
@@ -14,11 +14,11 @@ import java.util.Arrays;
 public abstract class ConnectingTextureLayoutHandler {
 
     /**
-     * @see ConnectingTextureLayout
+     * @see ConnectingTextureData.Layout
      */
     private static ConnectingTextureLayoutHandler[] HANDLERS;
 
-    public static ConnectingTextureLayoutHandler get(ConnectingTextureLayout layout){
+    public static ConnectingTextureLayoutHandler get(ConnectingTextureData.Layout layout){
         if(HANDLERS == null){
             HANDLERS = new ConnectingTextureLayoutHandler[]{
                 new FullLayoutHandler(),
@@ -29,7 +29,7 @@ public abstract class ConnectingTextureLayoutHandler {
                 new PiecedLayoutHandler(),
                 new OverlayLayoutHandler()
             };
-            if(HANDLERS.length != ConnectingTextureLayout.values().length)
+            if(HANDLERS.length != ConnectingTextureData.Layout.values().length)
                 throw new AssertionError("Missing connecting texture layout handlers!");
         }
         return HANDLERS[layout.ordinal()];

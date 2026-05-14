@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.mixin.fabric;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;

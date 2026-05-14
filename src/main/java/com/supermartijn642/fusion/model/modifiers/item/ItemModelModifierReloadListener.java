@@ -2,10 +2,10 @@ package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.modifiers.item.predicates.AndItemPredicate;
-import com.supermartijn642.fusion.model.modifiers.item.predicates.ItemPredicateRegistry;
+import com.supermartijn642.fusion.model.predicates.item.AndItemModelPredicate;
+import com.supermartijn642.fusion.model.predicates.item.ItemPredicateRegistry;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.resources.model.BakedModel;
@@ -55,7 +55,7 @@ public class ItemModelModifierReloadListener {
             ItemModelPredicatesProperties properties = entry.getValue();
             if(!bakedModels.containsKey(target)) continue;
             BakedModel defaultModel = properties.defaultModel == null ? bakedModels.get(target) : bakedModels.get(properties.defaultModel);
-            List<Pair<ItemPredicate,BakedModel>> models = properties.models.stream()
+            List<Pair<ItemModelPredicate,BakedModel>> models = properties.models.stream()
                 .map(pair -> pair.mapRight(bakedModels::get))
                 .toList();
             bakedModels.put(target, new ItemModelModifierBakedModel(defaultModel, models));
@@ -120,7 +120,7 @@ public class ItemModelModifierReloadListener {
         if(!json.has("models") || !json.get("models").isJsonArray())
             throw new JsonParseException("Item model modifier file must have array property 'models'!");
         JsonArray modelsJson = json.getAsJsonArray("models");
-        List<Pair<ItemPredicate,ResourceLocation>> models = new ArrayList<>();
+        List<Pair<ItemModelPredicate,ResourceLocation>> models = new ArrayList<>();
         for(JsonElement element : modelsJson){
             if(!element.isJsonObject())
                 throw new JsonParseException("Array property 'models' must only contain objects!");
@@ -135,7 +135,7 @@ public class ItemModelModifierReloadListener {
             this.models.put(target, properties);
     }
 
-    private Pair<ItemPredicate,ResourceLocation> parseModelEntry(JsonObject json){
+    private Pair<ItemModelPredicate,ResourceLocation> parseModelEntry(JsonObject json){
         // Model
         if(!json.has("model") || !json.get("model").isJsonPrimitive() || !json.getAsJsonPrimitive("model").isString())
             throw new JsonParseException("Models entry must have string property 'model'!");
@@ -149,22 +149,22 @@ public class ItemModelModifierReloadListener {
         JsonArray conditionsJson = json.getAsJsonArray("conditions");
         if(conditionsJson.isEmpty())
             throw new JsonParseException("Model entry property 'conditions' must not be empty!");
-        List<ItemPredicate> predicates = new ArrayList<>();
+        List<ItemModelPredicate> predicates = new ArrayList<>();
         for(JsonElement element : conditionsJson){
             if(!element.isJsonObject())
                 throw new JsonParseException("Model entry property 'conditions' must only contain objects!");
             predicates.add(ItemPredicateRegistry.deserializeItemPredicate(element.getAsJsonObject()));
         }
-        ItemPredicate predicate = predicates.size() == 1 ? predicates.getFirst() : new AndItemPredicate(predicates);
+        ItemModelPredicate predicate = predicates.size() == 1 ? predicates.getFirst() : new AndItemModelPredicate(predicates);
 
         return Pair.of(predicate, model);
     }
 
     private static class ItemModelPredicatesProperties {
         final ResourceLocation defaultModel;
-        final List<Pair<ItemPredicate,ResourceLocation>> models;
+        final List<Pair<ItemModelPredicate,ResourceLocation>> models;
 
-        private ItemModelPredicatesProperties(ResourceLocation defaultModel, List<Pair<ItemPredicate,ResourceLocation>> models){
+        private ItemModelPredicatesProperties(ResourceLocation defaultModel, List<Pair<ItemModelPredicate,ResourceLocation>> models){
             this.defaultModel = defaultModel;
             this.models = models;
         }
@@ -173,7 +173,7 @@ public class ItemModelModifierReloadListener {
             Set<ResourceLocation> models = new HashSet<>(this.models.size() + 1);
             if(this.defaultModel != null)
                 models.add(this.defaultModel);
-            for(Pair<ItemPredicate,ResourceLocation> entry : this.models)
+            for(Pair<ItemModelPredicate,ResourceLocation> entry : this.models)
                 models.add(entry.right());
             return models;
         }

@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.texture.types.random;
 
-import com.supermartijn642.fusion.api.texture.data.RandomTextureData;
+import com.supermartijn642.fusion.api.texture.types.random.RandomTextureData;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureDataImpl;
 
 import javax.annotation.Nullable;

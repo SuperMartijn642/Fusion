@@ -2,10 +2,10 @@ package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelProperty;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
@@ -86,9 +86,9 @@ public interface ModelType<T> extends Serializer<T> {
 
     /**
      * Gets an arbitrary property of this model.
-     * @see ModelProperty
+     * @see Property
      */
-    <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context, T data);
+    <X, C> Optional<X> getProperty(Property<X,C> property, C context, T data);
 
     /**
      * Creates a baked model from the model data.

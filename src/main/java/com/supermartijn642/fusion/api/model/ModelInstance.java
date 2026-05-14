@@ -2,10 +2,10 @@ package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelProperty;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
 import com.supermartijn642.fusion.model.ModelInstanceImpl;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * A container for a model type along with its data.
@@ -25,7 +24,7 @@ import java.util.Optional;
  * Created 29/04/2023 by SuperMartijn642
  */
 @ApiStatus.NonExtendable
-public interface ModelInstance<T> {
+public interface ModelInstance<T> extends PropertyGetter {
 
     /**
      * Create a new model instance for the given values.
@@ -107,20 +106,6 @@ public interface ModelInstance<T> {
      * Gets the transformations that should be applied to the model's geometry.
      */
     ModelTransform getTransform();
-
-    /**
-     * Gets an arbitrary property of this model.
-     * @see ModelProperty
-     */
-    <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context);
-
-    /**
-     * Gets an arbitrary property of this model.
-     * @see ModelProperty
-     */
-    default <X> Optional<X> getProperty(ModelProperty<X,Void> property){
-        return this.getProperty(property, null);
-    }
 
     /**
      * Creates a baked model from the model data.

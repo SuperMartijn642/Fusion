@@ -7,10 +7,10 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelProperty;
 import com.supermartijn642.fusion.api.model.custom.ModelWalker;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.ModelBakingContextImpl;
 import net.minecraft.client.renderer.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -82,7 +82,7 @@ public class UnknownModelType<T extends IUnbakedModel> implements ModelType<T> {
     }
 
     @Override
-    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context, T data){
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context, T data){
         return Optional.empty();
     }
 

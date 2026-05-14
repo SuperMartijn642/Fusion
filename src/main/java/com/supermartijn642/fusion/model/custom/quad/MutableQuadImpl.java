@@ -43,24 +43,25 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad copyFrom(QuadAccess quad){
+        MutableQuadImpl impl = (MutableQuadImpl)quad;
         // Quad data
-        this.bakedQuadCache = null;
+        this.bakedQuadCache = impl.bakedQuadCache;
         for(int i = 0; i < 4; i++){
-            Vector3f position = quad.position(i);
+            Vector3f position = impl.positions[i];
             this.positions[i].set(position.x(), position.y(), position.z());
-            this.uvs[i][0] = quad.u(i);
-            this.uvs[i][1] = quad.v(i);
+            this.uvs[i][0] = impl.uvs[i][0];
+            this.uvs[i][1] = impl.uvs[i][1];
         }
-        this.facing = quad.facing();
-        this.sprite = quad.sprite();
-        this.tintIndex = quad.tintIndex();
-        this.shade = quad.shade();
-        this.lightEmission = quad.lightEmission();
+        this.facing = impl.facing;
+        this.sprite = impl.sprite;
+        this.tintIndex = impl.tintIndex;
+        this.shade = impl.shade;
+        this.lightEmission = impl.lightEmission;
         // Our properties
-        this.ambientOcclusion = quad.ambientOcclusion();
-        this.emissive = quad.emissive();
-        this.chunkRenderType = quad.chunkRenderType();
-        this.itemRenderType = quad.itemRenderType();
+        this.ambientOcclusion = impl.ambientOcclusion;
+        this.emissive = impl.emissive;
+        this.chunkRenderType = impl.chunkRenderType;
+        this.itemRenderType = impl.itemRenderType;
         return this;
     }
 

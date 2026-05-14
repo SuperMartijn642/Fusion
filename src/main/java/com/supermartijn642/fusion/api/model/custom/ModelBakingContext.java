@@ -53,7 +53,7 @@ public interface ModelBakingContext {
      * @param walker        consumer for models in the tree
      * @return an optional value that was returned by given the walker
      */
-    default <T> Optional<T> walkModelTree(ModelInstance<?> modelInstance, ModelWalker<T> walker){
+    default <T> Optional<T> walkModelTree(UntypedModelInstance modelInstance, ModelWalker<T> walker){
         return ModelWalker.walkModelTree(this::getModel, modelInstance, walker);
     }
 

@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.api.util.Serializer;
@@ -82,6 +83,14 @@ public interface ModelType<T> extends Serializer<T> {
      */
     default ModelTransform getTransform(T data){
         return ModelTransform.identity();
+    }
+
+    /**
+     * Gets the condition for this model.
+     */
+    @Nullable
+    default ModelPredicate getCondition(T data){
+        return null;
     }
 
     /**

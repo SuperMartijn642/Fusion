@@ -103,9 +103,9 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads
-            Boolean ambientOcclusion = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getAmbientOcclusion, null);
-            Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
-            Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
+            Boolean ambientOcclusion = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getAmbientOcclusion, null);
+            Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getShade, null);
+            Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getEmissive, null);
             // Initialize special texture quads
             //noinspection unchecked
             List<BaseBlockStateModel.Quad>[] processedQuads = new List[7];
@@ -337,9 +337,9 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads
-            Boolean ambientOcclusion = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getAmbientOcclusion, null);
-            Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
-            Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
+            Boolean ambientOcclusion = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getAmbientOcclusion, null);
+            Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getShade, null);
+            Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getEmissive, null);
             // Initialize special texture quads
             List<BaseItemModel.Quad> processedQuads = new ArrayList<>();
             MutableQuad mutableQuad = MutableQuad.create();
@@ -384,7 +384,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             if(particleMaterial == null)
                 context.pushWarning("Could not resolve 'particle' material for model stack (" + stack + ")!");
             // Resolve gui light
-            UnbakedModel.GuiLight guiLight = UnknownModelType.findPropertyInStackAndParents(context, stack, ModelInstance::getGuiLight, UnbakedModel.GuiLight.SIDE);
+            UnbakedModel.GuiLight guiLight = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getGuiLight, UnbakedModel.GuiLight.SIDE);
             // Resolve item transforms
             BiFunction<ItemDisplayContext,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) ->
                 UnknownModelType.findPropertyInStackAndParents(context, stack, m -> m.getItemTransform(type), fallback);

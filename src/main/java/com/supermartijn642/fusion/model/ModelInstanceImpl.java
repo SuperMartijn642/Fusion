@@ -2,10 +2,7 @@ package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
-import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ItemModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
@@ -51,7 +48,7 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public List<Either<Identifier,ModelInstance<?>>> getParents(){
+    public List<Either<Identifier,UntypedModelInstance>> getParents(){
         return this.modelType.getParents(this.modelData);
     }
 

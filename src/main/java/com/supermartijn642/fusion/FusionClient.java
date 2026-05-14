@@ -2,25 +2,22 @@ package com.supermartijn642.fusion;
 
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
-import com.supermartijn642.fusion.api.model.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.FusionModelLoader;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
-import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
+import com.supermartijn642.fusion.texture.types.connecting.predicates.*;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.neoforge.client.event.ModelEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -86,27 +83,6 @@ public class FusionClient {
         ConnectionPredicateRegistryImpl.finalizeRegistration();
         EntityModelPredicateRegistry.finalizeRegistration();
         ItemPredicateRegistry.finalizeRegistration();
-    }
-
-    public static Optional<ChunkSectionLayer> getChunkLayer(BaseTextureData.RenderType renderType){
-        if(renderType == null)
-            return Optional.empty();
-        ChunkSectionLayer material;
-        //noinspection EnhancedSwitchMigration
-        switch(renderType){
-            case OPAQUE:
-                material = ChunkSectionLayer.SOLID;
-                break;
-            case CUTOUT:
-                material = ChunkSectionLayer.CUTOUT;
-                break;
-            case TRANSLUCENT:
-                material = ChunkSectionLayer.TRANSLUCENT;
-                break;
-            default:
-                throw new AssertionError();
-        }
-        return Optional.of(material);
     }
 
     private static String fusionVersion;

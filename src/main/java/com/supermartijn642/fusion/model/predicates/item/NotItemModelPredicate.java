@@ -1,37 +1,37 @@
-package com.supermartijn642.fusion.model.modifiers.item.predicates;
+package com.supermartijn642.fusion.model.predicates.item;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.world.item.ItemStack;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class NotItemPredicate implements ItemPredicate {
+public class NotItemModelPredicate implements ItemModelPredicate {
 
-    public static final Serializer<NotItemPredicate> SERIALIZER = new Serializer<>() {
+    public static final Serializer<NotItemModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
-        public NotItemPredicate deserialize(JsonObject json) throws JsonParseException{
+        public NotItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("predicate") || !json.get("predicate").isJsonObject())
                 throw new JsonParseException("Not-predicate must have object property 'predicate'!");
             // Deserialize the predicate
-            ItemPredicate predicate = ItemPredicateRegistry.deserializeItemPredicate(json.getAsJsonObject("predicate"));
-            return new NotItemPredicate(predicate);
+            ItemModelPredicate predicate = ItemPredicateRegistry.deserializeItemPredicate(json.getAsJsonObject("predicate"));
+            return new NotItemModelPredicate(predicate);
         }
 
         @Override
-        public JsonObject serialize(NotItemPredicate value){
+        public JsonObject serialize(NotItemModelPredicate value){
             JsonObject json = new JsonObject();
             json.add("predicates", ItemPredicateRegistry.serializeItemPredicate(value.predicate));
             return json;
         }
     };
 
-    private final ItemPredicate predicate;
+    private final ItemModelPredicate predicate;
 
-    public NotItemPredicate(ItemPredicate predicate){
+    public NotItemModelPredicate(ItemModelPredicate predicate){
         this.predicate = predicate;
     }
 
@@ -41,7 +41,7 @@ public class NotItemPredicate implements ItemPredicate {
     }
 
     @Override
-    public Serializer<? extends ItemPredicate> getSerializer(){
+    public Serializer<? extends ItemModelPredicate> getSerializer(){
         return SERIALIZER;
     }
 }

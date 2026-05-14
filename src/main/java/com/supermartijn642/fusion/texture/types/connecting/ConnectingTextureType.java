@@ -182,12 +182,10 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
                     return evaluation.get();
 
                 // Get surrounding blocks
-                SurroundingBlockCache surroundingBlocks = properties.getProperty(SURROUNDING_BLOCKS).orElseGet(() -> {
-                    SurroundingBlockCache c = level == null || pos == null ?
+                SurroundingBlockCache surroundingBlocks = properties.getOrCompute(SURROUNDING_BLOCKS, () -> {
+                    return level == null || pos == null ?
                         SurroundingBlockCache.EMPTY :
                         new SurroundingBlockCache(level, pos, state);
-                    properties.setProperty(SURROUNDING_BLOCKS, c);
-                    return c;
                 });
 
                 // Evaluate predicate
@@ -209,17 +207,9 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             @Override
             public void processQuad(EmittableQuad quad, SpriteInstance sprite, TextureConnections state, PropertyStore properties){
                 // Create oriented quad, so the quad always has the same orientation for the layout handlers
-                OrientedMutableQuad orientedQuad = properties.getProperty(ORIENTED_QUAD).orElseGet(() -> {
-                    OrientedMutableQuad q = new OrientedMutableQuad();
-                    properties.setProperty(ORIENTED_QUAD, q);
-                    return q;
-                });
+                OrientedMutableQuad orientedQuad = properties.getOrCompute(ORIENTED_QUAD, OrientedMutableQuad::new);
                 // Get dummy quad
-                MutableQuad dummyQuad = properties.getProperty(DUMMY_QUAD).orElseGet(() -> {
-                    MutableQuad q = MutableQuad.create();
-                    properties.setProperty(DUMMY_QUAD, q);
-                    return q;
-                });
+                MutableQuad dummyQuad = properties.getOrCompute(DUMMY_QUAD, MutableQuad::create);
                 dummyQuad.copyFrom(quad);
                 // Process quads
                 for(int i = 0; i < layoutHandler.getAuxiliaryQuadCount() + 1; i++){

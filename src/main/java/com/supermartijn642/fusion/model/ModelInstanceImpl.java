@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.BlockModel;
@@ -92,6 +93,11 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     @Override
     public ModelTransform getTransform(){
         return this.modelType.getTransform(this.modelData);
+    }
+
+    @Override
+    public @Nullable ModelPredicate getCondition(){
+        return this.modelType.getCondition(this.modelData);
     }
 
     @Override

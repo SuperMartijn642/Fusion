@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.model.types.connecting;
 
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.types.connecting.ConnectingModelData;
-import com.supermartijn642.fusion.api.model.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.AbstractBaseModelDataBuilder;
 

@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.mixin.rubidium;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import me.jellysquid.mods.sodium.client.model.quad.ModelQuadView;
 import me.jellysquid.mods.sodium.client.render.vertex.VertexBufferWriter;

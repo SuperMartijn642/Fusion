@@ -3,10 +3,7 @@ package com.supermartijn642.fusion.model;
 import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
-import com.supermartijn642.fusion.api.model.custom.ItemModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
@@ -47,9 +44,9 @@ public class FusionBlockModelData extends BlockModel {
     }
 
     private final ResourceLocation identifier;
-    private final ModelInstance<?> model;
+    private final UntypedModelInstance model;
 
-    private FusionBlockModelData(ResourceLocation identifier, ModelInstance<?> model){
+    private FusionBlockModelData(ResourceLocation identifier, UntypedModelInstance model){
         super(null, List.of(), TextureSlots.Data.EMPTY, null, null, null);
         this.identifier = identifier;
         this.model = model;
@@ -68,10 +65,10 @@ public class FusionBlockModelData extends BlockModel {
         this.model.getDependencies().forEach(resolver::resolve);
 
         // Fill vanilla block model properties
-        List<com.supermartijn642.fusion.api.util.Either<ResourceLocation,ModelInstance<?>>> parents = this.model.getParents();
+        List<com.supermartijn642.fusion.api.util.Either<ResourceLocation,UntypedModelInstance>> parents = this.model.getParents();
         this.parentLocation = parents.isEmpty() ? null : parents.getFirst().leftOrNull();
         if(!parents.isEmpty()){
-            Either<ResourceLocation,ModelInstance<?>> parent = parents.getFirst();
+            Either<ResourceLocation,UntypedModelInstance> parent = parents.getFirst();
             if(parent.isLeft()){
                 this.parent = resolver.resolve(parent.left());
                 this.parentLocation = parent.left();
@@ -92,7 +89,7 @@ public class FusionBlockModelData extends BlockModel {
         return bakeBlockModel(this.model, this.identifier, modelBakery, modelState);
     }
 
-    public static BakedModel bakeBlockModel(ModelInstance<?> modelInstance, ResourceLocation identifier, ModelBaker modelBakery, ModelState modelState){
+    public static BakedModel bakeBlockModel(UntypedModelInstance modelInstance, ResourceLocation identifier, ModelBaker modelBakery, ModelState modelState){
         // Collect warnings
         List<String> warnings = new ArrayList<>();
         // Create baking context
@@ -107,7 +104,10 @@ public class FusionBlockModelData extends BlockModel {
         try{
             bakedModel = modelInstance.bakeBlockStateModel(context);
         }catch(Exception e){
-            throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(modelInstance.getModelType()) + "' for  '" + identifier + "'!", e);
+            if(modelInstance instanceof ModelInstance<?>)
+                throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)modelInstance).getModelType()) + "' for  '" + identifier + "'!", e);
+            else
+                throw new RuntimeException("Encountered an exception while baking untyped block model for '" + identifier + "'!", e);
         }
         // Log warnings
         if(!warnings.isEmpty())
@@ -132,7 +132,10 @@ public class FusionBlockModelData extends BlockModel {
         try{
             model = this.model.bakeItemModel(context);
         }catch(Exception e){
-            throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.identifier + "'!", e);
+            if(this.model instanceof ModelInstance<?>)
+                throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
+            else
+                throw new RuntimeException("Encountered an exception while baking untyped item model for '" + this.identifier + "'!", e);
         }
         // Log warnings
         if(!warnings.isEmpty())
@@ -148,14 +151,19 @@ public class FusionBlockModelData extends BlockModel {
             .itemTransforms(itemTransforms);
         textureSlots.resolvedValues.forEach((key, material) -> builder.material(key, material.texture()));
         return bakeBlockModel(
-            ModelInstance.of(DefaultModelTypes.BASE, builder.build()), // TODO
+            new ModelInstanceImpl<>(DefaultModelTypes.BASE, builder.build()) {
+                @Override
+                public List<Either<ResourceLocation,UntypedModelInstance>> getParents(){
+                    return List.of(Either.right(FusionBlockModelData.this.model));
+                }
+            },
             this.identifier,
             modelBaker,
             modelState
         );
     }
 
-    private static List<BlockElement> getElements(ModelInstance<?> model){
+    private static List<BlockElement> getElements(UntypedModelInstance model){
         ModelGeometry geometry = model.getGeometry();
         if(!(geometry instanceof CuboidModelGeometry))
             return List.of();
@@ -194,7 +202,7 @@ public class FusionBlockModelData extends BlockModel {
         }).toList();
     }
 
-    public static TextureSlots.Data getTextureSlots(ModelInstance<?> model){
+    public static TextureSlots.Data getTextureSlots(UntypedModelInstance model){
         TextureSlots.Data.Builder textures = new TextureSlots.Data.Builder();
         model.getMaterials().forEach((key, value) -> {
             if(value.isLeft())
@@ -205,7 +213,7 @@ public class FusionBlockModelData extends BlockModel {
         return textures.build();
     }
 
-    private static ItemTransforms getItemTransforms(ModelInstance<?> model){
+    private static ItemTransforms getItemTransforms(UntypedModelInstance model){
         ImmutableMap.Builder<ItemDisplayContext,ItemTransform> transformsBuilder = ImmutableMap.builder();
         for(ItemDisplayContext type : ItemDisplayContext.values()){
             ItemTransform transform = model.getItemTransform(type);
@@ -226,7 +234,7 @@ public class FusionBlockModelData extends BlockModel {
         );
     }
 
-    public static ModelInstance<?> getModelInstance(UnbakedModel model){
+    public static UntypedModelInstance getModelInstance(UnbakedModel model){
         if(model instanceof FusionBlockModelData)
             return ((FusionBlockModelData)model).model;
         if(model instanceof BlockModel){

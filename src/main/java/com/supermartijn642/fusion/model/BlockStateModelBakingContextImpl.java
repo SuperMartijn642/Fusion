@@ -4,6 +4,7 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelBakery;
@@ -51,9 +52,10 @@ public class BlockStateModelBakingContextImpl implements BlockStateModelBakingCo
 
     @Override
     public @Nullable ModelInstance<?> getModel(ResourceLocation identifier){
-        if(this.modelBaker instanceof ModelBakery.ModelBakerImpl impl)
-            return FusionBlockModelData.getModelInstance(impl.getModel(identifier));
-        return null;
+        if(!(this.modelBaker instanceof ModelBakery.ModelBakerImpl impl))
+            return null;
+        UntypedModelInstance modelInstance = FusionBlockModelData.getModelInstance(impl.getModel(identifier));
+        return modelInstance instanceof ModelInstance<?> ? (ModelInstance<?>)modelInstance : null;
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.CompositeModel;
@@ -104,7 +105,7 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     }
 
     @Override
-    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context, T data){
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context, T data){
         return Optional.empty();
     }
 
@@ -113,7 +114,8 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
         // Bake geometry
         List<BlockModelPart> parts = new ArrayList<>();
         context.walkModelTree(ModelInstance.of(this, data), (modelInstance, stack) -> {
-            if(modelInstance.getGeometry() == null)
+            ModelGeometry geometry = modelInstance.getGeometry();
+            if(geometry == null)
                 return ModelWalker.Result.proceed();
             // Resolve materials
             Set<String> missingKeys = new HashSet<>();
@@ -127,7 +129,7 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
             ModelTransform transforms = stack.composeTransforms();
             transforms = ModelTransform.compose(transforms, context.getTransformation());
             // Bake the geometry
-            CullableQuads quads = modelInstance.getGeometry().bake(transforms, materialResolver);
+            CullableQuads quads = geometry.bake(transforms, materialResolver);
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads
@@ -197,7 +199,8 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
         // Create a submodel for each geometry
         List<ItemModel> subModels = new ArrayList<>();
         context.walkModelTree(ModelInstance.of(this, data), (modelInstance, stack) -> {
-            if(modelInstance.getGeometry() == null)
+            ModelGeometry geometry = modelInstance.getGeometry();
+            if(geometry == null)
                 return ModelWalker.Result.proceed();
             // Resolve materials
             Set<String> missingKeys = new HashSet<>();
@@ -210,7 +213,7 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
             // Compose transformations
             ModelTransform transforms = stack.composeTransforms();
             // Bake the geometry
-            CullableQuads quads = modelInstance.getGeometry().bake(transforms, materialResolver);
+            CullableQuads quads = geometry.bake(transforms, materialResolver);
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads

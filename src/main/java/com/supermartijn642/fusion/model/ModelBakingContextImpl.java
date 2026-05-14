@@ -4,6 +4,7 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.Material;
@@ -25,10 +26,10 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     private final ModelTransform transform;
     private final BakedModel missingModel;
     private final Function<Material,TextureAtlasSprite> textureGetter;
-    private final Map<ResourceLocation,ModelInstance<?>> dependencies;
+    private final Map<ResourceLocation,UntypedModelInstance> dependencies;
     private final ModelBaker modelBaker;
 
-    public ModelBakingContextImpl(Consumer<String> warnings, ResourceLocation identifier, ModelTransform transform, BakedModel missingModel, Function<Material,TextureAtlasSprite> textureGetter, Map<ResourceLocation,ModelInstance<?>> dependencies, ModelBaker modelBaker){
+    public ModelBakingContextImpl(Consumer<String> warnings, ResourceLocation identifier, ModelTransform transform, BakedModel missingModel, Function<Material,TextureAtlasSprite> textureGetter, Map<ResourceLocation,UntypedModelInstance> dependencies, ModelBaker modelBaker){
         this.warnings = warnings;
         this.identifier = identifier;
         this.transform = transform;
@@ -60,7 +61,8 @@ public class ModelBakingContextImpl implements ModelBakingContext {
 
     @Override
     public @Nullable ModelInstance<?> getModel(ResourceLocation identifier){
-        return this.dependencies.get(identifier);
+        UntypedModelInstance model = this.dependencies.get(identifier);
+        return model instanceof ModelInstance<?> ? (ModelInstance<?>)model : null;
     }
 
     @Override

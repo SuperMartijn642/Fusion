@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.api.model;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
@@ -35,7 +36,7 @@ public interface ModelType<T> extends Serializer<T> {
     /**
      * Gets any parent models which the model may inherit properties from.
      */
-    List<Either<ResourceLocation,ModelInstance<?>>> getParents(T data);
+    List<Either<ResourceLocation,UntypedModelInstance>> getParents(T data);
 
     /**
      * Gets whether the model should be rendered with ambient occlusion.

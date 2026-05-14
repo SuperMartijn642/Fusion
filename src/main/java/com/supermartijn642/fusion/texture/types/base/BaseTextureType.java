@@ -2,12 +2,15 @@ package com.supermartijn642.fusion.texture.types.base;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
-import com.supermartijn642.fusion.api.texture.custom.TextureCreationContext;
-import com.supermartijn642.fusion.api.texture.custom.TextureOutput;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.custom.*;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.api.util.UserErrorException;
+import net.minecraft.client.renderer.RenderType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -24,6 +27,37 @@ public class BaseTextureType implements TextureType<BaseTextureData,BaseTextureD
         DefaultTextureTypes.VANILLA.createTexture((TextureOutput)output, context, null);
         // Set custom texture data
         output.setCustomData(data);
+    }
+
+    @Override
+    public @Nullable BlockStateQuadProcessor<?> initializeBlockStateModelQuad(MutableQuad quad, SpriteInstance sprite, BaseTextureData data, PropertyStore properties){
+        applyProperties(quad, data);
+        return null;
+    }
+
+    @Override
+    public @Nullable ItemQuadProcessor<?> initializeItemModelQuad(MutableQuad quad, SpriteInstance sprite, BaseTextureData data, PropertyStore properties){
+        applyProperties(quad, data);
+        return null;
+    }
+
+    public static void applyProperties(MutableQuad quad, BaseTextureData data){
+        if(data.isEmissive())
+            quad.emissive(true);
+        if(data.getRenderType() != null)
+            quad.chunkRenderType(getChunkLayer(data.getRenderType()));
+        if(data.getTinting() != null)
+            quad.tintIndex(39216);
+    }
+
+    public static RenderType getChunkLayer(BaseTextureData.RenderType renderType){
+        if(renderType == null)
+            return null;
+        return switch(renderType){
+            case OPAQUE -> RenderType.solid();
+            case CUTOUT -> RenderType.cutout();
+            case TRANSLUCENT -> RenderType.translucent();
+        };
     }
 
     @Override

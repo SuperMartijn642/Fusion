@@ -1,8 +1,8 @@
-package com.supermartijn642.fusion.model.modifiers.item.predicates;
+package com.supermartijn642.fusion.model.predicates.item;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.item.ItemStack;
@@ -10,17 +10,17 @@ import net.minecraft.item.ItemStack;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class CountItemPredicate implements ItemPredicate {
+public class DurabilityItemModelPredicate implements ItemModelPredicate {
 
-    public static final Serializer<CountItemPredicate> SERIALIZER = new Serializer<CountItemPredicate>() {
+    public static final Serializer<DurabilityItemModelPredicate> SERIALIZER = new Serializer<DurabilityItemModelPredicate>() {
         @Override
-        public CountItemPredicate deserialize(JsonObject json) throws JsonParseException{
+        public DurabilityItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("min") && !json.has("min_percentage") && !json.has("max") && !json.has("max_percentage"))
-                throw new JsonParseException("Count-predicate must have at least one of 'min', 'min_percentage', 'max', or 'max_percentage'!");
+                throw new JsonParseException("Durability-predicate must have at least one of 'min', 'min_percentage', 'max', or 'max_percentage'!");
 
-            // Minimum count
+            // Minimum durability
             if(json.has("min") && json.has("min_percentage"))
-                throw new JsonParseException("Count-predicate can have only either 'min' or 'min_percentage', not both!");
+                throw new JsonParseException("Durability-predicate can have only either 'min' or 'min_percentage', not both!");
             Either<Integer,Float> min = Either.left(0);
             if(json.has("min")){
                 if(!json.get("min").isJsonPrimitive() || !json.getAsJsonPrimitive("min").isNumber())
@@ -39,9 +39,9 @@ public class CountItemPredicate implements ItemPredicate {
                 min = Either.right(minValue);
             }
 
-            // Maximum count
+            // Maximum durability
             if(json.has("max") && json.has("max_percentage"))
-                throw new JsonParseException("Count-predicate can have only either 'max' or 'max_percentage', not both!");
+                throw new JsonParseException("Durability-predicate can have only either 'max' or 'max_percentage', not both!");
             Either<Integer,Float> max = Either.right(1f);
             if(json.has("max")){
                 if(!json.get("max").isJsonPrimitive() || !json.getAsJsonPrimitive("max").isNumber())
@@ -62,12 +62,12 @@ public class CountItemPredicate implements ItemPredicate {
 
             // Validate min <= max
             if((min.isLeft() && max.isLeft() && min.left() > max.left()) || (min.isRight() && max.isRight() && min.right() > max.right()))
-                throw new JsonParseException("Minimum count must be less than or equal to maximum count!");
-            return new CountItemPredicate(min, max);
+                throw new JsonParseException("Minimum durability must be less than or equal to maximum durability!");
+            return new DurabilityItemModelPredicate(min, max);
         }
 
         @Override
-        public JsonObject serialize(CountItemPredicate value){
+        public JsonObject serialize(DurabilityItemModelPredicate value){
             JsonObject json = new JsonObject();
             if(value.isMinPercentage)
                 json.addProperty("min_percentage", value.minPercentage);
@@ -85,17 +85,17 @@ public class CountItemPredicate implements ItemPredicate {
     private final float minPercentage, maxPercentage;
     private final boolean isMinPercentage, isMaxPercentage;
 
-    public CountItemPredicate(Either<Integer,Float> min, Either<Integer,Float> max){
+    public DurabilityItemModelPredicate(Either<Integer,Float> min, Either<Integer,Float> max){
         if(min.isLeft() && min.left() < 0)
-            throw new IllegalArgumentException("Minimum count must be a positive number!");
+            throw new IllegalArgumentException("Minimum durability must be a positive number!");
         if(min.isRight() && (min.right() < 0 || min.right() > 1))
             throw new IllegalArgumentException("Minimum percentage must be between 0 and 1!");
         if(max.isLeft() && max.left() < 0)
-            throw new IllegalArgumentException("Maximum count must be a positive number!");
+            throw new IllegalArgumentException("Maximum durability must be a positive number!");
         if(max.isRight() && (max.right() < 0 || max.right() > 1))
             throw new IllegalArgumentException("Maximum percentage must be between 0 and 1!");
         if((min.isLeft() && max.isLeft() && min.left() > max.left()) || (min.isRight() && max.isRight() && min.right() > max.right()))
-            throw new IllegalArgumentException("Minimum count must be less than or equal to maximum count!");
+            throw new IllegalArgumentException("Minimum durability must be less than or equal to maximum durability!");
         this.min = min.isLeft() ? min.left() : -1;
         this.max = max.isLeft() ? max.left() : -1;
         this.minPercentage = min.isRight() ? min.right() : -1;
@@ -106,13 +106,13 @@ public class CountItemPredicate implements ItemPredicate {
 
     @Override
     public boolean test(ItemStack stack){
-        int count = stack.getCount();
-        return (this.isMinPercentage ? this.minPercentage * stack.getItem().getMaxStackSize() <= count : this.min <= count)
-            && (this.isMaxPercentage ? this.maxPercentage * stack.getItem().getMaxStackSize() >= count : this.max >= count);
+        int durability = stack.getMaxDamage() - stack.getDamageValue();
+        return (this.isMinPercentage ? this.minPercentage * stack.getMaxDamage() <= durability : this.min <= durability)
+            && (this.isMaxPercentage ? this.maxPercentage * stack.getMaxDamage() >= durability : this.max >= durability);
     }
 
     @Override
-    public Serializer<? extends ItemPredicate> getSerializer(){
+    public Serializer<? extends ItemModelPredicate> getSerializer(){
         return SERIALIZER;
     }
 }

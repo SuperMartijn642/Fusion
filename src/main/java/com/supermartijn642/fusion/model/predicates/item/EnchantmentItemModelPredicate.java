@@ -1,8 +1,8 @@
-package com.supermartijn642.fusion.model.modifiers.item.predicates;
+package com.supermartijn642.fusion.model.predicates.item;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.modifier.item.ItemPredicate;
+import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.item.EnchantedBookItem;
@@ -17,11 +17,11 @@ import net.minecraft.util.registry.Registry;
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class EnchantmentItemPredicate implements ItemPredicate {
+public class EnchantmentItemModelPredicate implements ItemModelPredicate {
 
-    public static final Serializer<EnchantmentItemPredicate> SERIALIZER = new Serializer<EnchantmentItemPredicate>() {
+    public static final Serializer<EnchantmentItemModelPredicate> SERIALIZER = new Serializer<EnchantmentItemModelPredicate>() {
         @Override
-        public EnchantmentItemPredicate deserialize(JsonObject json) throws JsonParseException{
+        public EnchantmentItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
             // Enchantment
             if(!json.has("enchantment") || !json.get("enchantment").isJsonPrimitive() || !json.getAsJsonPrimitive("enchantment").isString())
                 throw new JsonParseException("Item-predicate must have string property 'enchantment'!");
@@ -54,11 +54,11 @@ public class EnchantmentItemPredicate implements ItemPredicate {
             // Validate min level <= max level
             if(minLevel > maxLevel)
                 throw new JsonParseException("Property 'min_level' must be less than or equal to 'max_level'!");
-            return new EnchantmentItemPredicate(enchantment, minLevel, maxLevel);
+            return new EnchantmentItemModelPredicate(enchantment, minLevel, maxLevel);
         }
 
         @Override
-        public JsonObject serialize(EnchantmentItemPredicate value){
+        public JsonObject serialize(EnchantmentItemModelPredicate value){
             JsonObject json = new JsonObject();
             json.addProperty("enchantment", value.enchantment.toString());
             if(value.maxLevel != 0 && value.minLevel != 1)
@@ -72,7 +72,7 @@ public class EnchantmentItemPredicate implements ItemPredicate {
     private final ResourceLocation enchantment;
     private final int minLevel, maxLevel;
 
-    public EnchantmentItemPredicate(ResourceLocation enchantment, int minLevel, int maxLevel){
+    public EnchantmentItemModelPredicate(ResourceLocation enchantment, int minLevel, int maxLevel){
         if(enchantment == null)
             throw new NullPointerException("Enchantment must not be null!");
         if(minLevel < 0 || minLevel > 255)
@@ -103,7 +103,7 @@ public class EnchantmentItemPredicate implements ItemPredicate {
     }
 
     @Override
-    public Serializer<? extends ItemPredicate> getSerializer(){
+    public Serializer<? extends ItemModelPredicate> getSerializer(){
         return SERIALIZER;
     }
 }

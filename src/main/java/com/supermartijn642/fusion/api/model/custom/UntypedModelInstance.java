@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.api.model.custom;
 
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.PropertyGetter;
 import net.minecraft.client.renderer.model.BlockModel;
@@ -82,6 +83,12 @@ public interface UntypedModelInstance extends PropertyGetter {
      * Gets the transformations that should be applied to the model's geometry.
      */
     ModelTransform getTransform();
+
+    /**
+     * Gets the condition for this model.
+     */
+    @Nullable
+    ModelPredicate getCondition();
 
     /**
      * Creates a baked model from the model data.

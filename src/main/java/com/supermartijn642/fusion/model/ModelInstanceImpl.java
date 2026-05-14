@@ -2,9 +2,13 @@ package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
-import com.supermartijn642.fusion.api.model.custom.*;
+import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
+import com.supermartijn642.fusion.api.model.custom.ItemModelBakingContext;
+import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.item.ItemModel;
@@ -92,7 +96,7 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public <X, C> Optional<X> getProperty(ModelProperty<X,C> property, C context){
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context){
         return this.modelType.getProperty(property, context, this.modelData);
     }
 

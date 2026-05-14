@@ -57,7 +57,7 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     }
 
     @Override
-    public List<Either<ResourceLocation,ModelInstance<?>>> getParents(T data){
+    public List<Either<ResourceLocation,UntypedModelInstance>> getParents(T data){
         ResourceLocation parent = data.parent();
         return parent == null ? List.of() : List.of(Either.left(parent));
     }
@@ -131,9 +131,9 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads
-            Boolean ambientOcclusion = findPropertyInStackAndParents(context, stack, ModelInstance::getAmbientOcclusion, null);
-            Boolean shade = findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
-            Boolean emissive = findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
+            Boolean ambientOcclusion = findPropertyInStackAndParents(context, stack, UntypedModelInstance::getAmbientOcclusion, null);
+            Boolean shade = findPropertyInStackAndParents(context, stack, UntypedModelInstance::getShade, null);
+            Boolean emissive = findPropertyInStackAndParents(context, stack, UntypedModelInstance::getEmissive, null);
             if(ambientOcclusion != null || shade != null || emissive != null){
                 quads = quads.mutateQuads((side, quad) -> {
                     if(ambientOcclusion != null)
@@ -215,9 +215,9 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads
-            Boolean ambientOcclusion = findPropertyInStackAndParents(context, stack, ModelInstance::getAmbientOcclusion, null);
-            Boolean shade = findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
-            Boolean emissive = findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
+            Boolean ambientOcclusion = findPropertyInStackAndParents(context, stack, UntypedModelInstance::getAmbientOcclusion, null);
+            Boolean shade = findPropertyInStackAndParents(context, stack, UntypedModelInstance::getShade, null);
+            Boolean emissive = findPropertyInStackAndParents(context, stack, UntypedModelInstance::getEmissive, null);
             if(ambientOcclusion != null || shade != null || emissive != null){
                 quads = quads.mutateQuads((side, quad) -> {
                     if(ambientOcclusion != null)
@@ -268,9 +268,9 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
         return new CompositeModel(subModels);
     }
 
-    public static <T> T findPropertyInStackAndParents(BlockStateModelBakingContext context, ModelWalker.ModelStack currentStack, Function<ModelInstance<?>,T> property, T defaultValue){
+    public static <T> T findPropertyInStackAndParents(BlockStateModelBakingContext context, ModelWalker.ModelStack currentStack, Function<UntypedModelInstance,T> property, T defaultValue){
         // First check the current stack
-        for(ModelInstance<?> modelInstance : currentStack){
+        for(UntypedModelInstance modelInstance : currentStack){
             T value = property.apply(modelInstance);
             if(value != null)
                 return value;

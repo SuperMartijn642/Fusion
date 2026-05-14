@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.model.types.base;
 import com.google.common.base.Suppliers;
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.texture.custom.BlockStateQuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
@@ -63,12 +64,18 @@ public class BaseBlockStateModel implements BlockStateModel {
             return random;
         });
 
-        // Collect texture states
+        // For each part, collect whether the part's conditions are met and collect texture states for the part
+        boolean[] partConditions = new boolean[this.parts.size()];
         //noinspection unchecked
         List<Object>[][] combinedStates = new List[this.parts.size()][];
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(int i = 0; i < this.parts.size(); i++){
             Part part = this.parts.get(i);
+            // Check part condition
+            if(part.conditions != null && !part.conditions.testForBlock(level, pos, state))
+                continue;
+            partConditions[i] = true;
+
             // Extract state for all the textures that need processing
             //noinspection unchecked
             List<Object>[] extractStates = new List[7];
@@ -85,7 +92,7 @@ public class BaseBlockStateModel implements BlockStateModel {
             }
             combinedStates[i] = extractStates;
         }
-        return new RenderData(state, combinedStates, propertyStore);
+        return new RenderData(state, partConditions, combinedStates, propertyStore);
     }
 
     @Override
@@ -115,6 +122,10 @@ public class BaseBlockStateModel implements BlockStateModel {
         // Handle each part
         for(int i = 0; i < this.parts.size(); i++){
             Part part = this.parts.get(i);
+            // Check part condition
+            if(!renderData.partConditions[i])
+                continue;
+
             // Get texture states
             List<Object>[] extractStates = renderData.statesForPart(i);
 
@@ -197,7 +208,7 @@ public class BaseBlockStateModel implements BlockStateModel {
         return this.particleSprite;
     }
 
-    public record Part(Quads quads, TextureAtlasSprite particleSprite) {
+    public record Part(Quads quads, ModelPredicate conditions, TextureAtlasSprite particleSprite) {
     }
 
     public record Quads(List<Quad>[] quads) {
@@ -209,7 +220,7 @@ public class BaseBlockStateModel implements BlockStateModel {
     public record Quad(QuadAccess quad, SpriteInstance sprite, BlockStateQuadProcessor<Object> processor) {
     }
 
-    private record RenderData(BlockState state, List<Object>[][] combinedTextureStates, PropertyStore propertyStore) {
+    private record RenderData(BlockState state, boolean[] partConditions, List<Object>[][] combinedTextureStates, PropertyStore propertyStore) {
         List<Object>[] statesForPart(int index){
             return this.combinedTextureStates[index];
         }

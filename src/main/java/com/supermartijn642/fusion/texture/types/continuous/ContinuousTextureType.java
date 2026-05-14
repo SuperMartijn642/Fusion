@@ -3,20 +3,29 @@ package com.supermartijn642.fusion.texture.types.continuous;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.*;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.api.texture.data.ContinuousTextureData;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.continuous.ContinuousTextureData;
+import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.api.util.UserErrorException;
+import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import net.minecraft.client.resources.metadata.animation.AnimationFrame;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.function.Supplier;
 
 /**
  * Created 22/10/2024 by SuperMartijn642
@@ -99,6 +108,67 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
         output.setCustomData(data);
     }
 
+    @Override
+    public @Nullable QuadProcessor<?> initializeModelQuad(MutableQuad quad, SpriteInstance sprite, ContinuousTextureData data, PropertyStore properties){
+        // Apply base texture properties
+        BaseTextureType.applyProperties(quad, data);
+
+        // Create processor
+        return new QuadProcessor<BlockPos>() {
+            @Override
+            public BlockPos extractState(Supplier<Random> randomSupplier, PropertyStore properties){
+                return null;
+            }
+
+            @Override
+            public BlockPos extractState(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state, Supplier<Random> randomSupplier, PropertyStore properties){
+                return pos;
+            }
+
+            @Override
+            public BlockPos extractState(ItemStack stack, Supplier<Random> randomSupplier, PropertyStore properties){
+                return null;
+            }
+
+            @Override
+            public @Nullable Object createGeometryKey(BlockPos state, PropertyStore properties){
+                return null;
+            }
+
+            @Override
+            public void processQuad(EmittableQuad quad, SpriteInstance sprite, BlockPos pos, PropertyStore properties){
+                if(pos == null)
+                    return;
+
+                // Determine which tile to use
+                Direction side = quad.facing();
+                Direction.Axis axis = side.getAxis();
+                int x = axis == Direction.Axis.X ? pos.getZ() : pos.getX();
+                int y = axis == Direction.Axis.X ? -pos.getY() : axis == Direction.Axis.Y ? -pos.getZ() - 1 : -pos.getY();
+                if(side == Direction.NORTH || side == Direction.EAST)
+                    x = -x - 1;
+                if(side == Direction.UP)
+                    y = -y - 1;
+                x = x < 0 ? ((x % data.getColumns()) + data.getColumns()) % data.getColumns() : x % data.getColumns();
+                y = y < 0 ? ((y % data.getRows()) + data.getRows()) % data.getRows() : y % data.getRows();
+                // Adjust the quad's uv
+                SpriteInstance newSprite = sprite.getTexture().getSprites().get(0);
+                float oldWidth = sprite.getU1() - sprite.getU0();
+                float oldHeight = sprite.getV1() - sprite.getV0();
+                float newWidth = (newSprite.getU1() - newSprite.getU0()) / data.getColumns();
+                float newHeight = (newSprite.getV1() - newSprite.getV0()) / data.getRows();
+                for(int i = 0; i < 4; i++){
+                    quad.uv(
+                        i,
+                        newSprite.getU0() + (quad.u(i) - sprite.getU0()) / oldWidth * newWidth + x * newWidth,
+                        newSprite.getV0() + (quad.v(i) - sprite.getV0()) / oldHeight * newHeight + y * newHeight
+                    );
+                }
+                quad.emit();
+            }
+        };
+    }
+
     private static final int MAX_SIZE = 32; // Two chunks of size, blame resource packs if they blow up the texture atlas
 
     @Override
@@ -142,35 +212,5 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
         if(data.getColumns() != 1)
             json.addProperty("columns", data.getColumns());
         return json;
-    }
-
-    public static void processQuad(MutableQuad quad, BlockPos pos, Direction side, SpriteInstance sprite){
-        if(side == null)
-            return;
-        ContinuousTextureData data = (ContinuousTextureData)sprite.getTexture().getCustomData();
-        // TODO account for the orientation of the texture and quad
-        // Determine which tile to use
-        Direction.Axis axis = side.getAxis();
-        int x = axis == Direction.Axis.X ? pos.getZ() : pos.getX();
-        int y = axis == Direction.Axis.X ? -pos.getY() : axis == Direction.Axis.Y ? -pos.getZ() - 1 : -pos.getY();
-        if(side == Direction.NORTH || side == Direction.EAST)
-            x = -x - 1;
-        if(side == Direction.UP)
-            y = -y - 1;
-        x = x < 0 ? ((x % data.getColumns()) + data.getColumns()) % data.getColumns() : x % data.getColumns();
-        y = y < 0 ? ((y % data.getRows()) + data.getRows()) % data.getRows() : y % data.getRows();
-        // Adjust the quad's uv
-        SpriteInstance newSprite = sprite.getTexture().getSprites().get(0);
-        float oldWidth = sprite.getU1() - sprite.getU0();
-        float oldHeight = sprite.getV1() - sprite.getV0();
-        float newWidth = (newSprite.getU1() - newSprite.getU0()) / data.getColumns();
-        float newHeight = (newSprite.getV1() - newSprite.getV0()) / data.getRows();
-        for(int i = 0; i < 4; i++){
-            quad.uv(
-                i,
-                newSprite.getU0() + (quad.u(i) - sprite.getU0()) / oldWidth * newWidth + x * newWidth,
-                newSprite.getV0() + (quad.v(i) - sprite.getV0()) / oldHeight * newHeight + y * newHeight
-            );
-        }
     }
 }

@@ -1,14 +1,12 @@
 package com.supermartijn642.fusion.model.types.base;
 
-import com.supermartijn642.fusion.api.model.custom.CullableQuads;
-import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
-import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
-import com.supermartijn642.fusion.api.texture.SpriteHelper;
-import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.custom.QuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
-import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureType;
-import com.supermartijn642.fusion.texture.types.random.RandomTextureType;
+import com.supermartijn642.fusion.api.util.PropertyStore;
+import com.supermartijn642.fusion.util.CullingHelper;
+import com.supermartijn642.fusion.util.FallbackPropertyStore;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
@@ -25,6 +23,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
@@ -34,62 +33,55 @@ import java.util.function.Supplier;
  */
 public class BaseBakedModel implements BakedModel, FabricBakedModel {
 
-    public static final Direction[] CULL_DIRECTIONS = {null, Direction.UP, Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST};
-
     private final List<Part> parts;
     private final TextureAtlasSprite particleSprite;
     private final boolean ambientOcclusion;
     private final BlockModel.GuiLight guiLight;
     private final boolean isGui3d;
     private final ItemTransforms transforms;
+    private final PropertyStore propertyStore;
 
-    public BaseBakedModel(List<Part> parts, TextureAtlasSprite particleSprite, boolean ambientOcclusion, BlockModel.GuiLight guiLight, boolean isGui3d, ItemTransforms transforms){
+    public BaseBakedModel(List<Part> parts, TextureAtlasSprite particleSprite, boolean ambientOcclusion, BlockModel.GuiLight guiLight, boolean isGui3d, ItemTransforms transforms, PropertyStore propertyStore){
         this.parts = parts;
         this.particleSprite = particleSprite;
         this.ambientOcclusion = ambientOcclusion;
         this.guiLight = guiLight;
         this.isGui3d = isGui3d;
         this.transforms = transforms;
+        this.propertyStore = propertyStore;
     }
 
     @Override
     public void emitBlockQuads(BlockAndTintGetter level, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context){
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
+
+        // Emit all quads
         QuadEmitter emitter = context.getEmitter();
         for(Part part : this.parts){
-            for(Direction cullDirection : CULL_DIRECTIONS){
+            for(Direction cullDirection : CullingHelper.cullDirections()){
                 // Set cull direction
                 emitter.cullFace(cullDirection);
 
-                MutableQuad mutableQuad = null;
-                for(QuadAccess quad : part.quads().get(cullDirection)){
-                    // Get the sprite instance
-                    SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
-                    if(sprite == null){
-                        quad.toFrapiQuad(emitter);
+                EmittableQuad mutableQuad = null;
+                for(Quad quad : part.quads().get(cullDirection)){
+                    // Simply add quads that don't need further processing
+                    if(quad.processor() == null){
+                        quad.quad().toFrapiQuad(emitter);
                         emitter.emit();
                         continue;
                     }
 
+                    // Create mutable quad
+                    if(mutableQuad == null)
+                        mutableQuad = EmittableQuad.create(q -> {
+                            q.toFrapiQuad(emitter);
+                            emitter.emit();
+                        });
+                    mutableQuad.copyFrom(quad.quad());
+
                     // Process special texture type quads
-                    TextureType<?,?> textureType = sprite.getTexture().getTextureType();
-                    if(textureType == DefaultTextureTypes.RANDOM){
-                        if(mutableQuad == null)
-                            mutableQuad = MutableQuad.create();
-                        mutableQuad.copyFrom(quad);
-                        RandomTextureType.processQuad(mutableQuad, pos, quad.facing(), randomSupplier, sprite);
-                        mutableQuad.toFrapiQuad(emitter);
-                        emitter.emit();
-                    }else if(textureType == DefaultTextureTypes.CONTINUOUS){
-                        if(mutableQuad == null)
-                            mutableQuad = MutableQuad.create();
-                        mutableQuad.copyFrom(quad);
-                        ContinuousTextureType.processQuad(mutableQuad, pos, quad.facing(), sprite);
-                        mutableQuad.toFrapiQuad(emitter);
-                        emitter.emit();
-                    }else{
-                        quad.toFrapiQuad(emitter);
-                        emitter.emit();
-                    }
+                    Object s = quad.processor().extractState(level, pos, state, randomSupplier, propertyStore);
+                    quad.processor().processQuad(mutableQuad, quad.sprite(), s, propertyStore);
                 }
             }
         }
@@ -97,12 +89,31 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
 
     @Override
     public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context){
-        // Emit quads
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
+
+        // Emit all quads
         QuadEmitter emitter = context.getEmitter();
         for(Part part : this.parts){
-            for(QuadAccess quad : part.quads().all()){
-                quad.toFrapiQuad(emitter);
-                emitter.emit();
+            EmittableQuad mutableQuad = null;
+            for(Quad quad : part.quads().all()){
+                // Simply add quads that don't need further processing
+                if(quad.processor() == null){
+                    quad.quad().toFrapiQuad(emitter);
+                    emitter.emit();
+                    continue;
+                }
+
+                // Create mutable quad
+                if(mutableQuad == null)
+                    mutableQuad = EmittableQuad.create(q -> {
+                        q.toFrapiQuad(emitter);
+                        emitter.emit();
+                    });
+                mutableQuad.copyFrom(quad.quad());
+
+                // Process special texture type quads
+                Object s = quad.processor().extractState(stack, randomSupplier, propertyStore);
+                quad.processor().processQuad(mutableQuad, quad.sprite(), s, propertyStore);
             }
         }
     }
@@ -114,7 +125,36 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
 
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, Random random){
-        return List.of();
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
+
+        // Check whether we should use block context
+        boolean hasBlockContext = state != null;
+
+        // Convert all quads to baked quads
+        List<BakedQuad> bakedQuads = new ArrayList<>();
+        EmittableQuad mutableQuad = null;
+        for(Part part : this.parts){
+            // Process quads
+            for(Quad quad : part.quads().get(cullDirection)){
+                // Simply add quads that don't need further processing
+                if(quad.processor() == null){
+                    bakedQuads.add(quad.quad().toBakedQuad());
+                    continue;
+                }
+
+                // Create mutable quad
+                if(mutableQuad == null)
+                    mutableQuad = EmittableQuad.create(q -> bakedQuads.add(q.toBakedQuad()));
+                mutableQuad.copyFrom(quad.quad());
+
+                // Process special texture type quads
+                Object s = hasBlockContext ?
+                    quad.processor().extractState(null, null, state, () -> random, propertyStore) :
+                    quad.processor().extractState(() -> random, propertyStore);
+                quad.processor().processQuad(mutableQuad, quad.sprite(), s, propertyStore);
+            }
+        }
+        return bakedQuads;
     }
 
     @Override
@@ -152,6 +192,22 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
         return ItemOverrides.EMPTY;
     }
 
-    public record Part(CullableQuads quads) {
+    public record Part(Quads quads) {
+    }
+
+    public record Quads(List<Quad>[] quads, List<Quad> all) {
+        public static Quads create(List<Quad>[] quads){
+            List<Quad> combined = new ArrayList<>();
+            for(List<Quad> l : quads)
+                combined.addAll(l);
+            return new Quads(quads, List.copyOf(combined));
+        }
+
+        List<Quad> get(Direction cullDirection){
+            return this.quads[CullingHelper.cullIndex(cullDirection)];
+        }
+    }
+
+    public record Quad(QuadAccess quad, SpriteInstance sprite, QuadProcessor<Object> processor) {
     }
 }

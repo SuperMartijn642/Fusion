@@ -3,22 +3,18 @@ package com.supermartijn642.fusion;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
-import com.supermartijn642.fusion.api.model.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.entity.model.predicates.*;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.model.modifiers.item.predicates.*;
-import com.supermartijn642.fusion.model.types.connecting.predicates.*;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
+import com.supermartijn642.fusion.texture.types.connecting.predicates.*;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.renderer.RenderType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Optional;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -89,27 +85,6 @@ public class FusionClient implements ClientModInitializer {
         ConnectionPredicateRegistryImpl.finalizeRegistration();
         EntityModelPredicateRegistry.finalizeRegistration();
         ItemPredicateRegistry.finalizeRegistration();
-    }
-
-    public static Optional<RenderType> getChunkLayer(BaseTextureData.RenderType renderType){
-        if(renderType == null)
-            return Optional.empty();
-        RenderType material;
-        //noinspection EnhancedSwitchMigration
-        switch(renderType){
-            case OPAQUE:
-                material = RenderType.solid();
-                break;
-            case CUTOUT:
-                material = RenderType.cutout();
-                break;
-            case TRANSLUCENT:
-                material = RenderType.translucent();
-                break;
-            default:
-                throw new AssertionError();
-        }
-        return Optional.of(material);
     }
 
     private static String fusionVersion;

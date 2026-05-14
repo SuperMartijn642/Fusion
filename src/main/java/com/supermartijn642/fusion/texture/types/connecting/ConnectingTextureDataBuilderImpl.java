@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
-import com.supermartijn642.fusion.api.texture.data.BaseTextureData;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureData;
-import com.supermartijn642.fusion.api.texture.data.ConnectingTextureLayout;
+import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.api.texture.types.connecting.ConnectingTextureData;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -13,7 +13,8 @@ public class ConnectingTextureDataBuilderImpl implements ConnectingTextureData.B
     private BaseTextureData.RenderType renderType;
     private boolean emissive = false;
     private BaseTextureData.QuadTinting tinting;
-    private ConnectingTextureLayout layout = ConnectingTextureLayout.FULL;
+    private ConnectingTextureData.Layout layout = ConnectingTextureData.Layout.FULL;
+    private ConnectionPredicate connectionPredicate;
 
     @Override
     public ConnectingTextureDataBuilderImpl renderType(@Nullable BaseTextureData.RenderType renderType){
@@ -34,28 +35,19 @@ public class ConnectingTextureDataBuilderImpl implements ConnectingTextureData.B
     }
 
     @Override
-    public ConnectingTextureData.Builder layout(ConnectingTextureLayout layout){
+    public ConnectingTextureData.Builder layout(ConnectingTextureData.Layout layout){
         this.layout = layout;
         return this;
     }
 
     @Override
-    public ConnectingTextureData.Builder renderType(@Nullable ConnectingTextureData.RenderType type){
-        if(type == null)
-            return this.renderType((BaseTextureData.RenderType)null);
-        switch(type){
-            case OPAQUE:
-                return this.renderType(BaseTextureData.RenderType.OPAQUE);
-            case CUTOUT:
-                return this.renderType(BaseTextureData.RenderType.CUTOUT);
-            case TRANSLUCENT:
-                return this.renderType(BaseTextureData.RenderType.TRANSLUCENT);
-        }
+    public ConnectingTextureData.Builder connectionPredicate(@Nullable ConnectionPredicate predicate){
+        this.connectionPredicate = predicate;
         return this;
     }
 
     @Override
     public ConnectingTextureData build(){
-        return new ConnectingTextureDataImpl(this.renderType, this.emissive, this.tinting, this.layout);
+        return new ConnectingTextureDataImpl(this.renderType, this.emissive, this.tinting, this.layout, this.connectionPredicate);
     }
 }

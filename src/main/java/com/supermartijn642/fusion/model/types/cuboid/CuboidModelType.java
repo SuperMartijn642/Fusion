@@ -56,7 +56,7 @@ public class CuboidModelType extends UnknownModelType<BlockModel> {
     }
 
     @Override
-    public List<Either<ResourceLocation,ModelInstance<?>>> getParents(BlockModel data){
+    public List<Either<ResourceLocation,UntypedModelInstance>> getParents(BlockModel data){
         ResourceLocation parent = data.parentLocation;
         return parent == null ? List.of() : List.of(Either.left(parent));
     }
@@ -113,9 +113,9 @@ public class CuboidModelType extends UnknownModelType<BlockModel> {
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
             // Apply model properties to the quads
-            Boolean ambientOcclusion = findPropertyInStackAndParents(context, stack, ModelInstance::getAmbientOcclusion, null);
-            Boolean shade = findPropertyInStackAndParents(context, stack, ModelInstance::getShade, null);
-            Boolean emissive = findPropertyInStackAndParents(context, stack, ModelInstance::getEmissive, null);
+            Boolean ambientOcclusion = findPropertyInStackAndParents(context, stack, UntypedModelInstance::getAmbientOcclusion, null);
+            Boolean shade = findPropertyInStackAndParents(context, stack, UntypedModelInstance::getShade, null);
+            Boolean emissive = findPropertyInStackAndParents(context, stack, UntypedModelInstance::getEmissive, null);
             if(ambientOcclusion != null || shade != null || emissive != null){
                 quads = quads.mutateQuads((side, quad) -> {
                     if(ambientOcclusion != null)

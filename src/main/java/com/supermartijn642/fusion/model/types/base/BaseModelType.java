@@ -11,6 +11,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.QuadProcessor;
@@ -131,6 +132,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             // Compose transformations
             ModelTransform transforms = stack.composeTransforms();
             transforms = ModelTransform.compose(transforms, context.getTransformation());
+            // Combine conditions
+            ModelPredicate conditions = stack.combineConditions();
             // Bake the geometry
             CullableQuads quads = geometry.bake(transforms, materialResolver);
             if(!missingKeys.isEmpty())
@@ -179,7 +182,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             }
             // Create a new part
             parts.add(new BaseBakedModel.Part(
-                BaseBakedModel.Quads.create(processedQuads)
+                BaseBakedModel.Quads.create(processedQuads),
+                conditions
             ));
             return ModelWalker.Result.endBranch();
         });

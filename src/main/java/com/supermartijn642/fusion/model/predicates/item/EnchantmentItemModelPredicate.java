@@ -17,6 +17,26 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
  */
 public class EnchantmentItemModelPredicate implements ItemModelPredicate {
 
+    public static ItemModelPredicate create(Enchantment enchantment){
+        return create(enchantment, 1, 255);
+    }
+
+    public static ItemModelPredicate create(Enchantment enchantment, int level){
+        return create(enchantment, level, level);
+    }
+
+    public static ItemModelPredicate create(Enchantment enchantment, int minLevel, int maxLevel){
+        if(enchantment == null)
+            throw new NullPointerException("Enchantment must not be null!");
+        if(minLevel < 0 || minLevel > 255)
+            throw new IllegalArgumentException("Min level must be between 0 and 255!");
+        if(maxLevel < 0 || maxLevel > 255)
+            throw new IllegalArgumentException("Max level must be between 0 and 255!");
+        if(minLevel > maxLevel)
+            throw new IllegalArgumentException("Minimum level must be less than or equal to maximum level!");
+        return new EnchantmentItemModelPredicate(enchantment, minLevel, maxLevel);
+    }
+
     public static final Serializer<EnchantmentItemModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
         public EnchantmentItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
@@ -71,15 +91,7 @@ public class EnchantmentItemModelPredicate implements ItemModelPredicate {
     private final Enchantment enchantment;
     private final int minLevel, maxLevel;
 
-    public EnchantmentItemModelPredicate(Enchantment enchantment, int minLevel, int maxLevel){
-        if(enchantment == null)
-            throw new NullPointerException("Enchantment must not be null!");
-        if(minLevel < 0 || minLevel > 255)
-            throw new IllegalArgumentException("Min level must be between 0 and 255!");
-        if(maxLevel < 0 || maxLevel > 255)
-            throw new IllegalArgumentException("Max level must be between 0 and 255!");
-        if(minLevel > maxLevel)
-            throw new IllegalArgumentException("Minimum level must be less than or equal to maximum level!");
+    private EnchantmentItemModelPredicate(Enchantment enchantment, int minLevel, int maxLevel){
         this.enchantment = enchantment;
         this.minLevel = minLevel;
         this.maxLevel = maxLevel;

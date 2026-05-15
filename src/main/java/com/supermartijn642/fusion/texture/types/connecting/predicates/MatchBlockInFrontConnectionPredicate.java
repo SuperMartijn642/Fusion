@@ -13,10 +13,18 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+import java.util.Optional;
+
 /**
  * Created 12/10/2024 by SuperMartijn642
  */
 public class MatchBlockInFrontConnectionPredicate implements ConnectionPredicate {
+
+    public static ConnectionPredicate create(Block block){
+        Objects.requireNonNull(block);
+        return new MatchBlockInFrontConnectionPredicate(block);
+    }
 
     public static final Serializer<MatchBlockInFrontConnectionPredicate> SERIALIZER = new Serializer<>() {
         @Override
@@ -26,10 +34,10 @@ public class MatchBlockInFrontConnectionPredicate implements ConnectionPredicate
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
-            if(!BuiltInRegistries.BLOCK.containsKey(identifier))
+            Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
+            if(block.isEmpty())
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
-            Block block = BuiltInRegistries.BLOCK.get(identifier);
-            return new MatchBlockInFrontConnectionPredicate(block);
+            return new MatchBlockInFrontConnectionPredicate(block.get());
         }
 
         @Override
@@ -42,7 +50,7 @@ public class MatchBlockInFrontConnectionPredicate implements ConnectionPredicate
 
     private final Block block;
 
-    public MatchBlockInFrontConnectionPredicate(Block block){
+    private MatchBlockInFrontConnectionPredicate(Block block){
         this.block = block;
     }
 

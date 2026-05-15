@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionDirection;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
@@ -17,6 +18,10 @@ import java.util.*;
  * Created 12/10/2024 by SuperMartijn642
  */
 public class IsDirectionConnectionPredicate implements ConnectionPredicate {
+
+    public static ConnectionPredicate create(ConnectionDirection... directions){
+        return new IsDirectionConnectionPredicate(directions);
+    }
 
     public static final Serializer<IsDirectionConnectionPredicate> SERIALIZER = new Serializer<>() {
         @Override
@@ -82,9 +87,7 @@ public class IsDirectionConnectionPredicate implements ConnectionPredicate {
 
     private final boolean[] directions = new boolean[ConnectionDirection.values().length];
 
-    public IsDirectionConnectionPredicate(ConnectionDirection... directions){
-        if(directions.length == 0)
-            throw new IllegalArgumentException("Is-direction-predicate must contain at least one valid direction!");
+    private IsDirectionConnectionPredicate(ConnectionDirection... directions){
         for(ConnectionDirection direction : directions)
             this.directions[direction.ordinal()] = true;
     }
@@ -92,6 +95,15 @@ public class IsDirectionConnectionPredicate implements ConnectionPredicate {
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
         return this.directions[direction.ordinal()];
+    }
+
+    @Override
+    public ConnectionPredicate simplify(){
+        for(boolean direction : this.directions){
+            if(direction)
+                return this;
+        }
+        return DefaultConnectionPredicates.never();
     }
 
     @Override

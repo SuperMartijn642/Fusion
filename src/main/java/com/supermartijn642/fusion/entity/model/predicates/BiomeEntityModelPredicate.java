@@ -7,11 +7,13 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,6 +21,14 @@ import java.util.Set;
  * Created 20/09/2024 by SuperMartijn642
  */
 public class BiomeEntityModelPredicate implements EntityModelPredicate {
+
+    public static EntityModelPredicate create(ResourceKey<Biome>... biomes){
+        return create(Arrays.stream(biomes).map(ResourceKey::location).toArray(ResourceLocation[]::new));
+    }
+
+    public static EntityModelPredicate create(ResourceLocation... biomes){
+        return new BiomeEntityModelPredicate(Set.of(biomes));
+    }
 
     public static final Serializer<BiomeEntityModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
@@ -51,7 +61,7 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
 
     private final Set<ResourceLocation> biomes;
 
-    public BiomeEntityModelPredicate(Set<ResourceLocation> biomes){
+    private BiomeEntityModelPredicate(Set<ResourceLocation> biomes){
         this.biomes = Set.copyOf(biomes);
     }
 
@@ -65,6 +75,11 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
         Holder<Biome> biome = level.getBiome(entity.blockPosition());
         //noinspection OptionalGetWithoutIsPresent
         return biome != null && biome.isBound() && this.biomes.contains(biome.unwrapKey().get().location());
+    }
+
+    @Override
+    public EntityModelPredicate simplify(){
+        return this.biomes.isEmpty() ? DefaultEntityModelPredicates.never() : this;
     }
 
     @Override

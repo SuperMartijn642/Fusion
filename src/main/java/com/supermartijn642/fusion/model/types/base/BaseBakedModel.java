@@ -58,7 +58,7 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
         QuadEmitter emitter = context.getEmitter();
         for(Part part : this.parts){
             // Check part condition
-            if(part.conditions != null && !part.conditions.testForBlock(level, pos, state))
+            if(part.conditions != null && !part.conditions.testForBlockState(level, pos, state))
                 continue;
 
             // Process all quads
@@ -144,7 +144,7 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
         EmittableQuad mutableQuad = null;
         for(Part part : this.parts){
             // Check part condition
-            if(part.conditions != null && !part.conditions.testForBlock(null, null, state))
+            if(part.conditions != null && !part.conditions.testForBlockState(null, null, state))
                 continue;
 
             // Process quads

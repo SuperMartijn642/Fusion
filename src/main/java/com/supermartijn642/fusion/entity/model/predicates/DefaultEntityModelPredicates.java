@@ -69,14 +69,14 @@ public final class DefaultEntityModelPredicates {
     /**
      * Creates a predicate that evaluates whether an entity is in the given biomes.
      */
-    public static EntityModelPredicate biomes(ResourceKey<Biome>... biomes){
+    public static EntityModelPredicate biome(ResourceKey<Biome>... biomes){
         return BiomeEntityModelPredicate.create(biomes);
     }
 
     /**
      * Creates a predicate that evaluates whether an entity is in the given biomes.
      */
-    public static EntityModelPredicate biomes(Identifier... biomes){
+    public static EntityModelPredicate biome(Identifier... biomes){
         return BiomeEntityModelPredicate.create(biomes);
     }
 

@@ -1,38 +1,43 @@
-package com.supermartijn642.fusion.entity.model.predicates;
+package com.supermartijn642.fusion.model.predicates.blockstate;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Created 20/09/2024 by SuperMartijn642
+ * Created 15/05/2026 by SuperMartijn642
  */
-public class BiomeEntityModelPredicate implements EntityModelPredicate {
+public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
 
-    public static EntityModelPredicate create(ResourceKey<Biome>... biomes){
+    public static BlockStateModelPredicate create(ResourceKey<Biome>... biomes){
         return create(Arrays.stream(biomes).map(ResourceKey::location).toArray(ResourceLocation[]::new));
     }
 
-    public static EntityModelPredicate create(ResourceLocation... biomes){
-        return new BiomeEntityModelPredicate(Set.of(biomes));
+    public static BlockStateModelPredicate create(ResourceLocation... biomes){
+        return new BiomeBlockStatePredicate(Set.of(biomes));
     }
 
-    public static final Serializer<BiomeEntityModelPredicate> SERIALIZER = new Serializer<>() {
+    public static final Serializer<BiomeBlockStatePredicate> SERIALIZER = new Serializer<>() {
         @Override
-        public BiomeEntityModelPredicate deserialize(JsonObject json) throws JsonParseException{
+        public BiomeBlockStatePredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("biomes") || !json.get("biomes").isJsonArray())
                 throw new JsonParseException("Biome-predicate must have array property 'biomes'!");
             Set<ResourceLocation> biomes = new HashSet<>();
@@ -43,11 +48,11 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
                     throw new JsonParseException("Biome entries must be a valid identifier, not '" + element.getAsString() + "'!");
                 biomes.add(new ResourceLocation(element.getAsString()));
             }
-            return new BiomeEntityModelPredicate(biomes);
+            return new BiomeBlockStatePredicate(biomes);
         }
 
         @Override
-        public JsonObject serialize(BiomeEntityModelPredicate value){
+        public JsonObject serialize(BiomeBlockStatePredicate value){
             JsonObject json = new JsonObject();
             JsonArray biomes = new JsonArray(value.biomes.size());
             value.biomes.stream()
@@ -61,27 +66,26 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
 
     private final Set<ResourceLocation> biomes;
 
-    private BiomeEntityModelPredicate(Set<ResourceLocation> biomes){
+    private BiomeBlockStatePredicate(Set<ResourceLocation> biomes){
         this.biomes = Set.copyOf(biomes);
     }
 
     @Override
-    public boolean test(Entity entity){
-        Level level = entity.level();
-        if(level == null)
+    public boolean test(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
+        if(pos == null || !(level instanceof LevelReader))
             return false;
-        Holder<Biome> biome = level.getBiome(entity.blockPosition());
+        Holder<Biome> biome = ((LevelReader)level).getBiome(pos);
         //noinspection OptionalGetWithoutIsPresent
         return biome != null && biome.isBound() && this.biomes.contains(biome.unwrapKey().get().location());
     }
 
     @Override
-    public EntityModelPredicate simplify(){
-        return this.biomes.isEmpty() ? DefaultEntityModelPredicates.never() : this;
+    public BlockStateModelPredicate simplify(){
+        return this.biomes.isEmpty() ? DefaultBlockStateModelPredicates.never() : this;
     }
 
     @Override
-    public Serializer<? extends EntityModelPredicate> getSerializer(){
+    public Serializer<? extends BlockStateModelPredicate> getSerializer(){
         return SERIALIZER;
     }
 }

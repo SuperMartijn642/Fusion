@@ -45,7 +45,7 @@ public class BaseBlockStateModel implements BlockStateModel {
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(Part part : this.parts){
             // Check part condition
-            if(part.conditions != null && !part.conditions.testForBlock(level, pos, state))
+            if(part.conditions != null && !part.conditions.testForBlockState(level, pos, state))
                 continue;
 
             // Extract state for all the textures that need processing
@@ -125,7 +125,7 @@ public class BaseBlockStateModel implements BlockStateModel {
         for(Part part : this.parts){
             // Check part condition
             if(part.conditions != null){
-                if(!part.conditions.testForBlock(level, pos, state)){
+                if(!part.conditions.testForBlockState(level, pos, state)){
                     identity.add(false);
                     continue;
                 }

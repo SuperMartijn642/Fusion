@@ -90,6 +90,8 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             transforms = ModelTransform.compose(transforms, context.getTransformation());
             // Combine conditions
             ModelPredicate conditions = stack.combineConditions();
+            if(conditions != null)
+                conditions = conditions.simplify();
             // Bake the geometry
             List<Pair<QuadAccess,ConnectionPredicate>>[] quads;
             if(geometry.isCuboidGeometry())
@@ -327,6 +329,8 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             transforms = ModelTransform.compose(transforms, context.getTransformation());
             // Combine conditions
             ModelPredicate conditions = stack.combineConditions();
+            if(conditions != null)
+                conditions = conditions.simplify();
             // Bake the geometry
             List<Pair<QuadAccess,ConnectionPredicate>>[] quads;
             if(geometry.isCuboidGeometry())
@@ -364,7 +368,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                         continue;
                     }
                     // Put the face's connection predicate into the property store
-                    propertyStore.setProperty(FACE_CONNECTION_PREDICATE, pair.right());
+                    propertyStore.setProperty(FACE_CONNECTION_PREDICATE, pair.right().simplify());
                     // Initialize the quad
                     mutableQuad.copyFrom(quad);
                     ItemQuadProcessor<?> processor = sprite.getTexture().initializeItemModelQuad(mutableQuad, sprite, propertyStore);

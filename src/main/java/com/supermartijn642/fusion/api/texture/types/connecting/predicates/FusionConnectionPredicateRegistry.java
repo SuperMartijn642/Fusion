@@ -21,14 +21,14 @@ public final class FusionConnectionPredicateRegistry {
      * @see ConnectionPredicate
      */
     public static void registerConnectionPredicate(ResourceLocation identifier, Serializer<? extends ConnectionPredicate> serializer){
-        ConnectionPredicateRegistryImpl.registerConnectionPredicate(identifier, serializer);
+        ConnectionPredicateRegistryImpl.registerPredicate(identifier, serializer);
     }
 
     /**
      * Serializes the given predicate.
      */
     public static JsonObject serializeConnectionPredicate(ConnectionPredicate predicate){
-        return ConnectionPredicateRegistryImpl.serializeConnectionPredicate(predicate);
+        return ConnectionPredicateRegistryImpl.serializePredicate(predicate);
     }
 
     /**
@@ -36,6 +36,6 @@ public final class FusionConnectionPredicateRegistry {
      * @throws JsonParseException if the given json does not match the expected format
      */
     public static ConnectionPredicate deserializeConnectionPredicate(JsonObject json) throws JsonParseException{
-        return ConnectionPredicateRegistryImpl.deserializeConnectionPredicate(json);
+        return ConnectionPredicateRegistryImpl.deserializePredicate(json);
     }
 }

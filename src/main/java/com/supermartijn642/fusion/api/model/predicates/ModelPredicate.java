@@ -2,7 +2,7 @@ package com.supermartijn642.fusion.api.model.predicates;
 
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
-import com.supermartijn642.fusion.model.predicates.ModelPredicateImpl;
+import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Created 14/05/2026 by SuperMartijn642
  */
-@ApiStatus.NonExtendable
 public interface ModelPredicate {
 
     /**
@@ -21,7 +20,7 @@ public interface ModelPredicate {
      * When possible, the block state is obtained from the item stack.
      */
     static ModelPredicate of(BlockStateModelPredicate predicate){
-        return ModelPredicateImpl.of(predicate);
+        return DefaultModelPredicates.blockStateWrapper(predicate);
     }
 
     /**
@@ -29,34 +28,69 @@ public interface ModelPredicate {
      * When possible, the item is obtained from the block state.
      */
     static ModelPredicate of(ItemModelPredicate predicate){
-        return ModelPredicateImpl.of(predicate);
+        return DefaultModelPredicates.itemWrapper(predicate);
     }
 
-    /**
-     * Combines the given predicates such that all predicates should be satisfied.
-     * @param predicates predicates which need to be satisfied
-     */
-    static ModelPredicate and(ModelPredicate... predicates){
-        return ModelPredicateImpl.and(predicates);
-    }
-
-    /**
-     * Combines the given predicates such that at least one predicate should be satisfied.
-     * @param predicates predicates of which any must be satisfied
-     */
-    static ModelPredicate or(ModelPredicate... predicates){
-        return ModelPredicateImpl.or(predicates);
-    }
-
-    /**
-     * Inverts the given predicate.
-     * @param predicate predicate of which the inverse will be taken
-     */
-    static ModelPredicate not(ModelPredicate predicate){
-        return ModelPredicateImpl.not(predicate);
-    }
-
-    boolean testForBlock(@Nullable IEnviromentBlockReader level, @Nullable BlockPos pos, @Nullable BlockState state);
+    boolean testForBlockState(@Nullable IEnviromentBlockReader level, @Nullable BlockPos pos, @Nullable BlockState state);
 
     boolean testForItem(ItemStack stack);
+
+    /**
+     * Simplifies the predicate. May be used to simplify user properties.
+     * For example, an and-predicate may flatten nested and-predicates or an empty or-predicate may return a false-predicate.
+     */
+    default ModelPredicate simplify(){
+        return this;
+    }
+
+    /**
+     * Serializer for this predicate.
+     */
+    Serializer<? extends ModelPredicate> getSerializer();
+
+    /**
+     * Checks whether this predicate is {@link DefaultModelPredicates#always()}.
+     */
+    @ApiStatus.NonExtendable
+    default boolean alwaysTrue(){
+        return this == DefaultModelPredicates.always();
+    }
+
+    /**
+     * Checks whether this predicate is {@link DefaultModelPredicates#never()}.
+     */
+    @ApiStatus.NonExtendable
+    default boolean alwaysFalse(){
+        return this == DefaultModelPredicates.never();
+    }
+
+    /**
+     * Adds a requirement to this predicate.
+     */
+    @ApiStatus.NonExtendable
+    default ModelPredicate and(ModelPredicate... predicates){
+        ModelPredicate[] allPredicates = new ModelPredicate[predicates.length + 1];
+        allPredicates[0] = this;
+        System.arraycopy(predicates, 0, allPredicates, 1, predicates.length);
+        return DefaultModelPredicates.and(allPredicates);
+    }
+
+    /**
+     * Adds an alternative to this predicate.
+     */
+    @ApiStatus.NonExtendable
+    default ModelPredicate or(ModelPredicate... predicates){
+        ModelPredicate[] allPredicates = new ModelPredicate[predicates.length + 1];
+        allPredicates[0] = this;
+        System.arraycopy(predicates, 0, allPredicates, 1, predicates.length);
+        return DefaultModelPredicates.or(allPredicates);
+    }
+
+    /**
+     * Negates the output of this resource condition.
+     */
+    @ApiStatus.NonExtendable
+    default ModelPredicate negate(){
+        return DefaultModelPredicates.not(this);
+    }
 }

@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionDirection;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.block.BlockState;
@@ -17,6 +18,10 @@ import javax.annotation.Nullable;
  * Created 28/04/2023 by SuperMartijn642
  */
 public class NotConnectionPredicate implements ConnectionPredicate {
+
+    public static ConnectionPredicate create(ConnectionPredicate predicate){
+        return new NotConnectionPredicate(predicate);
+    }
 
     public static final Serializer<NotConnectionPredicate> SERIALIZER = new Serializer<NotConnectionPredicate>() {
         @Override
@@ -38,7 +43,7 @@ public class NotConnectionPredicate implements ConnectionPredicate {
 
     private final ConnectionPredicate predicate;
 
-    public <T extends ConnectionPredicate> NotConnectionPredicate(T predicate){
+    private NotConnectionPredicate(ConnectionPredicate predicate){
         this.predicate = predicate;
     }
 
@@ -55,6 +60,16 @@ public class NotConnectionPredicate implements ConnectionPredicate {
     @Override
     public boolean isSensitive(){
         return this.predicate.isSensitive();
+    }
+
+    @Override
+    public ConnectionPredicate simplify(){
+        ConnectionPredicate simplified = this.predicate.simplify();
+        if(simplified.alwaysTrue())
+            return DefaultConnectionPredicates.never();
+        if(simplified.alwaysFalse())
+            return DefaultConnectionPredicates.always();
+        return new NotConnectionPredicate(simplified);
     }
 
     @Override

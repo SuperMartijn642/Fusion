@@ -20,7 +20,7 @@ public class ConnectionPredicateRegistryImpl {
     private static final Map<Serializer<? extends ConnectionPredicate>,ResourceLocation> SERIALIZER_TO_IDENTIFIER = new HashMap<>();
     private static boolean finalized = false;
 
-    public static synchronized void registerConnectionPredicate(ResourceLocation identifier, Serializer<? extends ConnectionPredicate> serializer){
+    public static synchronized void registerPredicate(ResourceLocation identifier, Serializer<? extends ConnectionPredicate> serializer){
         if(finalized)
             throw new RuntimeException("Predicates must be registered before models get loaded!");
         if(IDENTIFIER_TO_SERIALIZER.containsKey(identifier))
@@ -32,7 +32,7 @@ public class ConnectionPredicateRegistryImpl {
         SERIALIZER_TO_IDENTIFIER.put(serializer, identifier);
     }
 
-    public static JsonObject serializeConnectionPredicate(ConnectionPredicate predicate){
+    public static JsonObject serializePredicate(ConnectionPredicate predicate){
         if(!finalized)
             throw new RuntimeException("Can only serialize predicates after registration has completed!");
         ResourceLocation identifier = SERIALIZER_TO_IDENTIFIER.get(predicate.getSerializer());
@@ -55,7 +55,7 @@ public class ConnectionPredicateRegistryImpl {
         return json;
     }
 
-    public static ConnectionPredicate deserializeConnectionPredicate(JsonObject json){
+    public static ConnectionPredicate deserializePredicate(JsonObject json){
         if(!finalized)
             throw new RuntimeException("Can only deserialize predicates after registration has completed!");
         JsonElement typeJson = json.getAsJsonObject().get("type");
@@ -81,10 +81,6 @@ public class ConnectionPredicateRegistryImpl {
     }
 
     public static void finalizeRegistration(){
-        if(!finalized){
-            synchronized(ConnectionPredicateRegistryImpl.class){
-                finalized = true;
-            }
-        }
+        finalized = true;
     }
 }

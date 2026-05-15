@@ -12,10 +12,17 @@ import net.minecraft.potion.PotionUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
+import java.util.Objects;
+
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
 public class PotionItemModelPredicate implements ItemModelPredicate {
+
+    public static ItemModelPredicate create(PotionType potion){
+        Objects.requireNonNull(potion);
+        return new PotionItemModelPredicate(potion);
+    }
 
     public static final Serializer<PotionItemModelPredicate> SERIALIZER = new Serializer<PotionItemModelPredicate>() {
         @Override
@@ -41,9 +48,7 @@ public class PotionItemModelPredicate implements ItemModelPredicate {
 
     private final PotionType potion;
 
-    public PotionItemModelPredicate(PotionType potion){
-        if(potion == null)
-            throw new NullPointerException("Potion must not be null!");
+    private PotionItemModelPredicate(PotionType potion){
         this.potion = potion;
     }
 

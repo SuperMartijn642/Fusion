@@ -13,11 +13,17 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 import javax.annotation.Nullable;
+import java.util.Objects;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
 public class MatchBlockConnectionPredicate implements ConnectionPredicate {
+
+    public static ConnectionPredicate create(Block block){
+        Objects.requireNonNull(block);
+        return new MatchBlockConnectionPredicate(block);
+    }
 
     public static final Serializer<MatchBlockConnectionPredicate> SERIALIZER = new Serializer<MatchBlockConnectionPredicate>() {
         @Override
@@ -43,7 +49,7 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
 
     private final Block block;
 
-    public MatchBlockConnectionPredicate(Block block){
+    private MatchBlockConnectionPredicate(Block block){
         this.block = block;
     }
 

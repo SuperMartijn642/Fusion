@@ -5,8 +5,8 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A predicate used to determine whether a model should connect to with another block.
@@ -52,13 +52,38 @@ public interface ConnectionPredicate {
     }
 
     /**
-     * @return the serializer for this predicate
+     * Simplifies the predicate. May be used to simplify user properties.
+     * For example, an and-predicate may flatten nested and-predicates or an empty or-predicate may return a false-predicate.
+     */
+    default ConnectionPredicate simplify(){
+        return this;
+    }
+
+    /**
+     * Serializer for this predicate.
      */
     Serializer<? extends ConnectionPredicate> getSerializer();
 
     /**
+     * Checks whether this predicate is {@link DefaultConnectionPredicates#always()}.
+     */
+    @ApiStatus.NonExtendable
+    default boolean alwaysTrue(){
+        return this == DefaultConnectionPredicates.always();
+    }
+
+    /**
+     * Checks whether this predicate is {@link DefaultConnectionPredicates#never()}.
+     */
+    @ApiStatus.NonExtendable
+    default boolean alwaysFalse(){
+        return this == DefaultConnectionPredicates.never();
+    }
+
+    /**
      * Adds a requirement to this predicate.
      */
+    @ApiStatus.NonExtendable
     default ConnectionPredicate and(ConnectionPredicate... predicates){
         ConnectionPredicate[] allPredicates = new ConnectionPredicate[predicates.length + 1];
         allPredicates[0] = this;
@@ -69,6 +94,7 @@ public interface ConnectionPredicate {
     /**
      * Adds an alternative to this predicate.
      */
+    @ApiStatus.NonExtendable
     default ConnectionPredicate or(ConnectionPredicate... predicates){
         ConnectionPredicate[] allPredicates = new ConnectionPredicate[predicates.length + 1];
         allPredicates[0] = this;
@@ -79,6 +105,7 @@ public interface ConnectionPredicate {
     /**
      * Negates the output of this resource condition.
      */
+    @ApiStatus.NonExtendable
     default ConnectionPredicate negate(){
         return DefaultConnectionPredicates.not(this);
     }

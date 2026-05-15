@@ -12,6 +12,40 @@ import net.minecraft.item.ItemStack;
  */
 public class CountItemModelPredicate implements ItemModelPredicate {
 
+    public static ItemModelPredicate create(int count){
+        return create(count, count);
+    }
+
+    public static ItemModelPredicate create(int min, int max){
+        return new CountItemModelPredicate(Either.left(min), Either.left(max));
+    }
+
+    public static ItemModelPredicate create(int min, float maxPercentage){
+        return new CountItemModelPredicate(Either.left(min), Either.right(maxPercentage));
+    }
+
+    public static ItemModelPredicate create(float minPercentage, int max){
+        return new CountItemModelPredicate(Either.right(minPercentage), Either.left(max));
+    }
+
+    public static ItemModelPredicate create(float minPercentage, float maxPercentage){
+        return new CountItemModelPredicate(Either.right(minPercentage), Either.right(maxPercentage));
+    }
+
+    private static ItemModelPredicate create(Either<Integer,Float> min, Either<Integer,Float> max){
+        if(min.isLeft() && min.left() < 0)
+            throw new IllegalArgumentException("Minimum count must be a positive number!");
+        if(min.isRight() && (min.right() < 0 || min.right() > 1))
+            throw new IllegalArgumentException("Minimum percentage must be between 0 and 1!");
+        if(max.isLeft() && max.left() < 0)
+            throw new IllegalArgumentException("Maximum count must be a positive number!");
+        if(max.isRight() && (max.right() < 0 || max.right() > 1))
+            throw new IllegalArgumentException("Maximum percentage must be between 0 and 1!");
+        if((min.isLeft() && max.isLeft() && min.left() > max.left()) || (min.isRight() && max.isRight() && min.right() > max.right()))
+            throw new IllegalArgumentException("Minimum count must be less than or equal to maximum count!");
+        return new CountItemModelPredicate(min, max);
+    }
+
     public static final Serializer<CountItemModelPredicate> SERIALIZER = new Serializer<CountItemModelPredicate>() {
         @Override
         public CountItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
@@ -85,17 +119,7 @@ public class CountItemModelPredicate implements ItemModelPredicate {
     private final float minPercentage, maxPercentage;
     private final boolean isMinPercentage, isMaxPercentage;
 
-    public CountItemModelPredicate(Either<Integer,Float> min, Either<Integer,Float> max){
-        if(min.isLeft() && min.left() < 0)
-            throw new IllegalArgumentException("Minimum count must be a positive number!");
-        if(min.isRight() && (min.right() < 0 || min.right() > 1))
-            throw new IllegalArgumentException("Minimum percentage must be between 0 and 1!");
-        if(max.isLeft() && max.left() < 0)
-            throw new IllegalArgumentException("Maximum count must be a positive number!");
-        if(max.isRight() && (max.right() < 0 || max.right() > 1))
-            throw new IllegalArgumentException("Maximum percentage must be between 0 and 1!");
-        if((min.isLeft() && max.isLeft() && min.left() > max.left()) || (min.isRight() && max.isRight() && min.right() > max.right()))
-            throw new IllegalArgumentException("Minimum count must be less than or equal to maximum count!");
+    private CountItemModelPredicate(Either<Integer,Float> min, Either<Integer,Float> max){
         this.min = min.isLeft() ? min.left() : -1;
         this.max = max.isLeft() ? max.left() : -1;
         this.minPercentage = min.isRight() ? min.right() : -1;

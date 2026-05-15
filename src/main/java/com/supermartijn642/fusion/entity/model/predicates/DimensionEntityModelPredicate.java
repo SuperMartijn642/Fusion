@@ -4,14 +4,26 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+
+import java.util.Objects;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
 public class DimensionEntityModelPredicate implements EntityModelPredicate {
+
+    public static EntityModelPredicate create(ResourceKey<Level> dimension){
+        return new DimensionEntityModelPredicate(dimension.location());
+    }
+
+    public static EntityModelPredicate create(ResourceLocation dimension){
+        Objects.requireNonNull(dimension);
+        return new DimensionEntityModelPredicate(dimension);
+    }
 
     public static final Serializer<DimensionEntityModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
@@ -33,7 +45,7 @@ public class DimensionEntityModelPredicate implements EntityModelPredicate {
 
     private final ResourceLocation dimension;
 
-    public DimensionEntityModelPredicate(ResourceLocation dimension){
+    private DimensionEntityModelPredicate(ResourceLocation dimension){
         this.dimension = dimension;
     }
 

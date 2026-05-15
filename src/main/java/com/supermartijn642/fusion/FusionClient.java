@@ -2,10 +2,15 @@ package com.supermartijn642.fusion;
 
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
+import com.supermartijn642.fusion.api.model.predicates.FusionModelPredicateRegistry;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.FusionBlockStateModelPredicateRegistry;
+import com.supermartijn642.fusion.api.model.predicates.item.FusionItemModelPredicateRegistry;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
+import com.supermartijn642.fusion.model.predicates.*;
+import com.supermartijn642.fusion.model.predicates.blockstate.*;
 import com.supermartijn642.fusion.model.predicates.item.*;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.connecting.predicates.*;
@@ -47,6 +52,8 @@ public class FusionClient {
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("base"), DefaultModelTypes.BASE);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("connecting"), DefaultModelTypes.CONNECTING);
         // Register default connection predicates
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("true"), TrueConnectionPredicate.SERIALIZER);
+        FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("false"), FalseConnectionPredicate.SERIALIZER);
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("and"), AndConnectionPredicate.SERIALIZER);
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("or"), OrConnectionPredicate.SERIALIZER);
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("not"), NotConnectionPredicate.SERIALIZER);
@@ -58,21 +65,40 @@ public class FusionClient {
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_block_in_front"), MatchBlockInFrontConnectionPredicate.SERIALIZER);
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state"), MatchStateConnectionPredicate.SERIALIZER);
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("match_state_in_front"), MatchStateInFrontConnectionPredicate.SERIALIZER);
+        // Register default model predicates
+        FusionModelPredicateRegistry.registerModelPredicate(Fusion.identifier("true"), TrueModelPredicate.SERIALIZER);
+        FusionModelPredicateRegistry.registerModelPredicate(Fusion.identifier("false"), FalseModelPredicate.SERIALIZER);
+        FusionModelPredicateRegistry.registerModelPredicate(Fusion.identifier("and"), AndModelPredicate.SERIALIZER);
+        FusionModelPredicateRegistry.registerModelPredicate(Fusion.identifier("or"), OrModelPredicate.SERIALIZER);
+        FusionModelPredicateRegistry.registerModelPredicate(Fusion.identifier("not"), NotModelPredicate.SERIALIZER);
+        FusionModelPredicateRegistry.registerModelPredicate(Fusion.identifier("block_and_item"), BlockAndItemModelPredicate.SERIALIZER);
+        FusionModelPredicateRegistry.registerModelPredicate(Fusion.identifier("item_wrapper"), ItemWrapperModelPredicate.SERIALIZER);
+        FusionModelPredicateRegistry.registerModelPredicate(Fusion.identifier("block_state_wrapper"), BlockStateWrapperModelPredicate.SERIALIZER);
+        // Register default block state model predicates
+        FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("true"), TrueBlockStateModelPredicate.SERIALIZER);
+        FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("false"), FalseBlockStateModelPredicate.SERIALIZER);
+        FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("and"), AndBlockStateModelPredicate.SERIALIZER);
+        FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("or"), OrBlockStateModelPredicate.SERIALIZER);
+        FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("not"), NotBlockStateModelPredicate.SERIALIZER);
         // Register default item model predicates
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("and"), AndItemModelPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("or"), OrItemModelPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("not"), NotItemModelPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("count"), CountItemModelPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("durability"), DurabilityItemModelPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("enchantment"), EnchantmentItemModelPredicate.SERIALIZER);
-        ItemPredicateRegistry.registerItemPredicate(Fusion.identifier("potion"), PotionItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("true"), TrueItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("false"), FalseItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("and"), AndItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("or"), OrItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("not"), NotItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("count"), CountItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("durability"), DurabilityItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("enchantment"), EnchantmentItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("potion"), PotionItemModelPredicate.SERIALIZER);
     }
 
     public static void finalizeRegistries(){
         TextureTypeRegistryImpl.finalizeRegistration();
         ModelTypeRegistryImpl.finalizeRegistration();
         ConnectionPredicateRegistryImpl.finalizeRegistration();
-        ItemPredicateRegistry.finalizeRegistration();
+        ModelPredicateRegistryImpl.finalizeRegistration();
+        BlockStateModelPredicateRegistryImpl.finalizeRegistration();
+        ItemModelPredicateRegistryImpl.finalizeRegistration();
     }
 
     private static String fusionVersion;

@@ -94,6 +94,8 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
             transforms = ModelTransform.compose(transforms, context.getTransformation());
             // Combine conditions
             ModelPredicate conditions = stack.combineConditions();
+            if(conditions != null)
+                conditions = conditions.simplify();
             // Bake the geometry
             List<Pair<QuadAccess,ConnectionPredicate>>[] quads;
             if(geometry.isCuboidGeometry())

@@ -5,13 +5,25 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+
+import java.util.Objects;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
 public class DimensionEntityModelPredicate implements EntityModelPredicate {
+
+    public static EntityModelPredicate create(ResourceKey<Level> dimension){
+        return new DimensionEntityModelPredicate(dimension.identifier());
+    }
+
+    public static EntityModelPredicate create(Identifier dimension){
+        Objects.requireNonNull(dimension);
+        return new DimensionEntityModelPredicate(dimension);
+    }
 
     public static final Serializer<DimensionEntityModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
@@ -33,7 +45,7 @@ public class DimensionEntityModelPredicate implements EntityModelPredicate {
 
     private final Identifier dimension;
 
-    public DimensionEntityModelPredicate(Identifier dimension){
+    private DimensionEntityModelPredicate(Identifier dimension){
         this.dimension = dimension;
     }
 

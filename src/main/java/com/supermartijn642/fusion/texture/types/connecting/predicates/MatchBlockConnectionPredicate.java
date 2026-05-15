@@ -13,12 +13,18 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
 public class MatchBlockConnectionPredicate implements ConnectionPredicate {
+
+    public static ConnectionPredicate create(Block block){
+        Objects.requireNonNull(block);
+        return new MatchBlockConnectionPredicate(block);
+    }
 
     public static final Serializer<MatchBlockConnectionPredicate> SERIALIZER = new Serializer<>() {
         @Override
@@ -44,7 +50,7 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
 
     private final Block block;
 
-    public MatchBlockConnectionPredicate(Block block){
+    private MatchBlockConnectionPredicate(Block block){
         this.block = block;
     }
 

@@ -10,6 +10,12 @@ import net.minecraft.world.entity.Entity;
  */
 public class AltitudeEntityModelPredicate implements EntityModelPredicate {
 
+    public static EntityModelPredicate create(int minHeight, int maxHeight){
+        if(minHeight > maxHeight)
+            throw new IllegalArgumentException("Minimum height must be less than or equal to maximum height!");
+        return new AltitudeEntityModelPredicate(minHeight, maxHeight);
+    }
+
     public static final Serializer<AltitudeEntityModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
         public AltitudeEntityModelPredicate deserialize(JsonObject json) throws JsonParseException{
@@ -51,7 +57,7 @@ public class AltitudeEntityModelPredicate implements EntityModelPredicate {
 
     private final int min, max;
 
-    public AltitudeEntityModelPredicate(int min, int max){
+    private AltitudeEntityModelPredicate(int min, int max){
         this.min = min;
         this.max = max;
     }
@@ -60,6 +66,12 @@ public class AltitudeEntityModelPredicate implements EntityModelPredicate {
     public boolean test(Entity entity){
         int height = entity.blockPosition().getY();
         return this.min <= height && this.max >= height;
+    }
+
+    @Override
+    public EntityModelPredicate simplify(){
+        return this.min == Integer.MIN_VALUE && this.max == Integer.MAX_VALUE ?
+            DefaultEntityModelPredicates.always() : this;
     }
 
     @Override

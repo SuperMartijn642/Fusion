@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.world.entity.Entity;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -15,21 +16,25 @@ import java.util.List;
  */
 public class AndEntityModelPredicate implements EntityModelPredicate {
 
+    public static AndEntityModelPredicate create(EntityModelPredicate... predicates){
+        return new AndEntityModelPredicate(Arrays.copyOf(predicates, predicates.length));
+    }
+
     public static final Serializer<AndEntityModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
         public AndEntityModelPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("predicates") || !json.get("predicates").isJsonArray())
                 throw new JsonParseException("And-predicate must have array property 'predicates'!");
-            List<EntityModelPredicate> predicates = new ArrayList<>();
             // Deserialize all the predicates from the 'predicates' array
             JsonArray array = json.getAsJsonArray("predicates");
+            List<EntityModelPredicate> predicates = new ArrayList<>(array.size());
             for(JsonElement element : array){
                 if(!element.isJsonObject())
                     throw new JsonParseException("Property 'predicates' must only contain objects!");
-                EntityModelPredicate predicate = EntityModelPredicateRegistry.deserializeEntityModelPredicate(element.getAsJsonObject());
+                EntityModelPredicate predicate = EntityModelPredicateRegistryImpl.deserializePredicate(element.getAsJsonObject());
                 predicates.add(predicate);
             }
-            return new AndEntityModelPredicate(predicates);
+            return new AndEntityModelPredicate(predicates.toArray(new EntityModelPredicate[0]));
         }
 
         @Override
@@ -38,15 +43,15 @@ public class AndEntityModelPredicate implements EntityModelPredicate {
             // Create an array with all the serialized predicates
             JsonArray predicatesJson = new JsonArray();
             for(EntityModelPredicate predicate : value.predicates)
-                predicatesJson.add(EntityModelPredicateRegistry.serializeEntityModelPredicate(predicate));
+                predicatesJson.add(EntityModelPredicateRegistryImpl.serializePredicate(predicate));
             json.add("predicates", predicatesJson);
             return json;
         }
     };
 
-    private final List<EntityModelPredicate> predicates;
+    private final EntityModelPredicate[] predicates;
 
-    public AndEntityModelPredicate(List<EntityModelPredicate> predicates){
+    private AndEntityModelPredicate(EntityModelPredicate[] predicates){
         this.predicates = predicates;
     }
 
@@ -60,7 +65,37 @@ public class AndEntityModelPredicate implements EntityModelPredicate {
     }
 
     @Override
+    public EntityModelPredicate simplify(){
+        List<EntityModelPredicate> flattened = new ArrayList<>(this.predicates.length);
+        for(EntityModelPredicate predicate : this.predicates){
+            predicate = predicate.simplify();
+            if(predicate.alwaysFalse())
+                return DefaultEntityModelPredicates.never();
+            if(predicate instanceof AndEntityModelPredicate)
+                flattened.addAll(Arrays.asList(((AndEntityModelPredicate)predicate).predicates));
+            else if(!predicate.alwaysTrue())
+                flattened.add(predicate);
+        }
+        if(flattened.isEmpty())
+            return DefaultEntityModelPredicates.always();
+        return new AndEntityModelPredicate(flattened.toArray(new EntityModelPredicate[0]));
+    }
+
+    @Override
     public Serializer<? extends EntityModelPredicate> getSerializer(){
         return SERIALIZER;
+    }
+
+    @Override
+    public final boolean equals(Object o){
+        if(this == o) return true;
+        if(!(o instanceof AndEntityModelPredicate that)) return false;
+
+        return Arrays.equals(this.predicates, that.predicates);
+    }
+
+    @Override
+    public int hashCode(){
+        return Arrays.hashCode(this.predicates);
     }
 }

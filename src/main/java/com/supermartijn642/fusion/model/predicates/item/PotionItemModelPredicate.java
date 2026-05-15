@@ -13,12 +13,22 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
 public class PotionItemModelPredicate implements ItemModelPredicate {
+
+    public static ItemModelPredicate create(Potion potion){
+        return create(BuiltInRegistries.POTION.wrapAsHolder(potion));
+    }
+
+    public static ItemModelPredicate create(Holder<Potion> potion){
+        Objects.requireNonNull(potion);
+        return new PotionItemModelPredicate(potion);
+    }
 
     public static final Serializer<PotionItemModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
@@ -44,9 +54,7 @@ public class PotionItemModelPredicate implements ItemModelPredicate {
 
     private final Holder<Potion> potion;
 
-    public PotionItemModelPredicate(Holder<Potion> potion){
-        if(potion == null)
-            throw new NullPointerException("Potion must not be null!");
+    private PotionItemModelPredicate(Holder<Potion> potion){
         this.potion = potion;
     }
 

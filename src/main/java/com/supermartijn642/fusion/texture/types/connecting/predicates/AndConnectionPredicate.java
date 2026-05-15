@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionDirection;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.core.BlockPos;
@@ -15,6 +16,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -22,21 +24,25 @@ import java.util.List;
  */
 public class AndConnectionPredicate implements ConnectionPredicate {
 
+    public static AndConnectionPredicate create(ConnectionPredicate... predicates){
+        return new AndConnectionPredicate(Arrays.copyOf(predicates, predicates.length));
+    }
+
     public static final Serializer<AndConnectionPredicate> SERIALIZER = new Serializer<>() {
         @Override
         public AndConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
             if(!json.has("predicates") || !json.get("predicates").isJsonArray())
                 throw new JsonParseException("And-predicate must have array property 'predicates'!");
-            List<ConnectionPredicate> predicates = new ArrayList<>();
             // Deserialize all the predicates from the 'predicates' array
             JsonArray array = json.getAsJsonArray("predicates");
+            List<ConnectionPredicate> predicates = new ArrayList<>(array.size());
             for(JsonElement element : array){
                 if(!element.isJsonObject())
                     throw new JsonParseException("Property 'predicates' must only contain objects!");
                 ConnectionPredicate predicate = FusionConnectionPredicateRegistry.deserializeConnectionPredicate(element.getAsJsonObject());
                 predicates.add(predicate);
             }
-            return new AndConnectionPredicate(predicates);
+            return new AndConnectionPredicate(predicates.toArray(new ConnectionPredicate[0]));
         }
 
         @Override
@@ -51,12 +57,12 @@ public class AndConnectionPredicate implements ConnectionPredicate {
         }
     };
 
-    private final List<ConnectionPredicate> predicates;
+    private final ConnectionPredicate[] predicates;
     private final boolean isSensitive;
 
-    public AndConnectionPredicate(List<ConnectionPredicate> predicates){
+    private AndConnectionPredicate(ConnectionPredicate[] predicates){
         this.predicates = predicates;
-        this.isSensitive = predicates.stream().anyMatch(ConnectionPredicate::isSensitive);
+        this.isSensitive = Arrays.stream(predicates).anyMatch(ConnectionPredicate::isSensitive);
     }
 
     @Override
@@ -83,6 +89,23 @@ public class AndConnectionPredicate implements ConnectionPredicate {
     }
 
     @Override
+    public ConnectionPredicate simplify(){
+        List<ConnectionPredicate> flattened = new ArrayList<>(this.predicates.length);
+        for(ConnectionPredicate predicate : this.predicates){
+            predicate = predicate.simplify();
+            if(predicate.alwaysFalse())
+                return DefaultConnectionPredicates.never();
+            if(predicate instanceof AndConnectionPredicate)
+                flattened.addAll(Arrays.asList(((AndConnectionPredicate)predicate).predicates));
+            else if(!predicate.alwaysTrue())
+                flattened.add(predicate);
+        }
+        if(flattened.isEmpty())
+            return DefaultConnectionPredicates.always();
+        return new AndConnectionPredicate(flattened.toArray(new ConnectionPredicate[0]));
+    }
+
+    @Override
     public Serializer<? extends ConnectionPredicate> getSerializer(){
         return SERIALIZER;
     }
@@ -92,11 +115,11 @@ public class AndConnectionPredicate implements ConnectionPredicate {
         if(this == o) return true;
         if(!(o instanceof AndConnectionPredicate that)) return false;
 
-        return this.predicates.equals(that.predicates);
+        return Arrays.equals(this.predicates, that.predicates);
     }
 
     @Override
     public int hashCode(){
-        return this.predicates.hashCode();
+        return Arrays.hashCode(this.predicates);
     }
 }

@@ -13,7 +13,7 @@ public class StitchedConnectingTextureData extends ConnectingTextureDataImpl {
     private final List<SpriteInstance> tiles;
 
     public StitchedConnectingTextureData(ConnectingTextureData base, List<SpriteInstance> tiles){
-        super(base.getRenderType(), base.isEmissive(), base.getTinting(), base.getLayout(), base.getConnectionPredicate());
+        super(base.getRenderType(), base.isEmissive(), base.getTinting(), base.getLayout(), base.getConnectionPredicate() == null ? null : base.getConnectionPredicate().simplify());
         this.tiles = tiles;
     }
 

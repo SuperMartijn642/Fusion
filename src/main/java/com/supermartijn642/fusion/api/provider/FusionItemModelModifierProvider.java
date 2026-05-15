@@ -4,11 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.supermartijn642.fusion.api.model.predicates.item.DefaultItemPredicates;
+import com.supermartijn642.fusion.api.model.predicates.item.DefaultItemModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.predicates.item.AndItemModelPredicate;
-import com.supermartijn642.fusion.model.predicates.item.ItemPredicateRegistry;
+import com.supermartijn642.fusion.model.predicates.item.ItemModelPredicateRegistryImpl;
 import net.minecraft.core.Registry;
 import net.minecraft.data.DataGenerator;
 import net.minecraft.data.DataProvider;
@@ -87,7 +87,7 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
             JsonArray conditions = new JsonArray();
             List<ItemModelPredicate> predicates = pair.right() instanceof AndItemModelPredicate ? ((AndItemModelPredicate)pair.right()).getPredicates() : List.of(pair.right());
             predicates.stream()
-                .map(ItemPredicateRegistry::serializeItemPredicate)
+                .map(ItemModelPredicateRegistryImpl::serializePredicate)
                 .forEach(conditions::add);
             model.add("conditions", conditions);
             models.add(model);
@@ -160,7 +160,7 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
          * Appends a conditional to this modifier.
          * Note that the order in which conditional models are added may be relevant.
          * The first conditional models for which its conditions are met will be used.
-         * @see DefaultItemPredicates
+         * @see DefaultItemModelPredicates
          */
         public ModifierBuilder conditionalModel(ResourceLocation model, ItemModelPredicate condition){
             this.conditionalModels.add(Pair.of(model, condition));

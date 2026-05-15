@@ -133,6 +133,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             transforms = ModelTransform.compose(transforms, context.getTransformation());
             // Combine conditions
             ModelPredicate conditions = stack.combineConditions();
+            if(conditions != null)
+                conditions = conditions.simplify();
             // Bake the geometry
             CullableQuads quads = geometry.bake(transforms, materialResolver);
             if(!missingKeys.isEmpty())

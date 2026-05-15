@@ -90,7 +90,7 @@ public class BaseBakedModel implements BakedModel, CustomRenderTypeBakedModel {
         for(int i = 0; i < this.parts.size(); i++){
             Part part = this.parts.get(i);
             // Check part condition
-            if(part.conditions != null && !part.conditions.testForBlock(level, pos, state))
+            if(part.conditions != null && !part.conditions.testForBlockState(level, pos, state))
                 continue;
             partConditions[i] = true;
 

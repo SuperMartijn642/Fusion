@@ -4,9 +4,9 @@ import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.entity.model.predicates.AndEntityModelPredicate;
+import com.supermartijn642.fusion.entity.model.predicates.DefaultEntityModelPredicates;
 import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicate;
-import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicateRegistry;
+import com.supermartijn642.fusion.entity.model.predicates.EntityModelPredicateRegistryImpl;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.model.geom.ModelLayerLocation;
@@ -151,10 +151,11 @@ public class EntityModelModifierReloadListener {
         for(JsonElement element : conditionsJson){
             if(!element.isJsonObject())
                 throw new JsonParseException("Array property 'conditions' must only contain objects!");
-            EntityModelPredicate predicate = EntityModelPredicateRegistry.deserializeEntityModelPredicate(element.getAsJsonObject());
+            EntityModelPredicate predicate = EntityModelPredicateRegistryImpl.deserializePredicate(element.getAsJsonObject());
             conditions.add(predicate);
         }
-        EntityModelPredicate combined = conditions.size() == 1 ? conditions.get(0) : new AndEntityModelPredicate(conditions);
+        EntityModelPredicate combined = conditions.size() == 1 ? conditions.get(0) : DefaultEntityModelPredicates.and(conditions.toArray(new EntityModelPredicate[0]));
+        combined = combined.simplify();
         return Pair.of(combined, options);
     }
 

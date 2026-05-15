@@ -2,10 +2,10 @@ package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.model.predicates.item.DefaultItemModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.predicates.item.AndItemModelPredicate;
-import com.supermartijn642.fusion.model.predicates.item.ItemPredicateRegistry;
+import com.supermartijn642.fusion.model.predicates.item.ItemModelPredicateRegistryImpl;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.resources.model.BakedModel;
@@ -153,9 +153,10 @@ public class ItemModelModifierReloadListener {
         for(JsonElement element : conditionsJson){
             if(!element.isJsonObject())
                 throw new JsonParseException("Model entry property 'conditions' must only contain objects!");
-            predicates.add(ItemPredicateRegistry.deserializeItemPredicate(element.getAsJsonObject()));
+            predicates.add(ItemModelPredicateRegistryImpl.deserializePredicate(element.getAsJsonObject()));
         }
-        ItemModelPredicate predicate = predicates.size() == 1 ? predicates.get(0) : new AndItemModelPredicate(predicates);
+        ItemModelPredicate predicate = predicates.size() == 1 ? predicates.get(0) : DefaultItemModelPredicates.and(predicates.toArray(new ItemModelPredicate[0]));
+        predicate = predicate.simplify();
 
         return Pair.of(predicate, model);
     }

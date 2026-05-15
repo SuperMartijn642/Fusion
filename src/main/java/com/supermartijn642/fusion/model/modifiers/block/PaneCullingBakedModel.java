@@ -3,7 +3,6 @@ package com.supermartijn642.fusion.model.modifiers.block;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
-import com.supermartijn642.fusion.model.custom.quad.MutableQuadImpl;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
@@ -38,7 +37,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         BlockStateProperties.EAST
     };
 
-    private final MutableQuad helperMutableQuad = new MutableQuadImpl();
+    private final ThreadLocal<MutableQuad> helperMutableQuad = ThreadLocal.withInitial(MutableQuad::create);
 
     public PaneCullingBakedModel(BlockStateModel original){
         super(original);
@@ -116,7 +115,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
             return true;
 
         // Find the center of the quad
-        MutableQuad quad = this.helperMutableQuad;
+        MutableQuad quad = this.helperMutableQuad.get();
         quad.copyBakedQuad(bakedQuad);
         float centerX = (quad.x(0) + quad.x(1) + quad.x(2) + quad.x(3)) / 4;
         float centerZ = (quad.z(0) + quad.z(1) + quad.z(2) + quad.z(3)) / 4;

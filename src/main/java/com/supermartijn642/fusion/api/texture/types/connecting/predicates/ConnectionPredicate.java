@@ -5,8 +5,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A predicate used to determine whether a model should connect to with another block.
@@ -22,8 +22,8 @@ public interface ConnectionPredicate {
      * @param otherState   state of the block in the connection direction
      * @param blockInFront state in front of {@code otherstate}
      * @param direction    direction to check
-     * @throws IllegalStateException when the predicate is sensitive, i.e. {@link #isSensitive()} returns {@code true}
      * @return {@code true} if the texture should connect in the given direction
+     * @throws IllegalStateException when the predicate is sensitive, i.e. {@link #isSensitive()} returns {@code true}
      */
     boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction);
 
@@ -52,13 +52,38 @@ public interface ConnectionPredicate {
     }
 
     /**
-     * @return the serializer for this predicate
+     * Simplifies the predicate. May be used to simplify user properties.
+     * For example, an and-predicate may flatten nested and-predicates or an empty or-predicate may return a false-predicate.
+     */
+    default ConnectionPredicate simplify(){
+        return this;
+    }
+
+    /**
+     * Serializer for this predicate.
      */
     Serializer<? extends ConnectionPredicate> getSerializer();
 
     /**
+     * Checks whether this predicate is {@link DefaultConnectionPredicates#always()}.
+     */
+    @ApiStatus.NonExtendable
+    default boolean alwaysTrue(){
+        return this == DefaultConnectionPredicates.always();
+    }
+
+    /**
+     * Checks whether this predicate is {@link DefaultConnectionPredicates#never()}.
+     */
+    @ApiStatus.NonExtendable
+    default boolean alwaysFalse(){
+        return this == DefaultConnectionPredicates.never();
+    }
+
+    /**
      * Adds a requirement to this predicate.
      */
+    @ApiStatus.NonExtendable
     default ConnectionPredicate and(ConnectionPredicate... predicates){
         ConnectionPredicate[] allPredicates = new ConnectionPredicate[predicates.length + 1];
         allPredicates[0] = this;
@@ -69,6 +94,7 @@ public interface ConnectionPredicate {
     /**
      * Adds an alternative to this predicate.
      */
+    @ApiStatus.NonExtendable
     default ConnectionPredicate or(ConnectionPredicate... predicates){
         ConnectionPredicate[] allPredicates = new ConnectionPredicate[predicates.length + 1];
         allPredicates[0] = this;
@@ -79,6 +105,7 @@ public interface ConnectionPredicate {
     /**
      * Negates the output of this resource condition.
      */
+    @ApiStatus.NonExtendable
     default ConnectionPredicate negate(){
         return DefaultConnectionPredicates.not(this);
     }

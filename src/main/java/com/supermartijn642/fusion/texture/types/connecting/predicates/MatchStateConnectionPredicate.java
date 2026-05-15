@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionDirection;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
@@ -26,6 +27,30 @@ import java.util.stream.Stream;
  * Created 22/02/2024 by SuperMartijn642
  */
 public class MatchStateConnectionPredicate implements ConnectionPredicate {
+
+    public static ConnectionPredicate create(Block block, Pair<Property<?>,?>... properties){
+        Map<Property<?>,List<Object>> propertyMap = new HashMap<>();
+        for(Pair<Property<?>,?> pair : properties){
+            Property<?> property = pair.left();
+            if(!block.getStateDefinition().getProperties().contains(property))
+                throw new IllegalArgumentException("Property '" + property.getName() + "' is not a property of block '" + Registry.BLOCK.getKey(block) + "'!");
+            Object value = pair.right();
+            if(!property.getPossibleValues().contains(value))
+                throw new IllegalArgumentException("Invalid value '" + value + "' for property '" + property.getName() + "'!");
+            propertyMap.computeIfAbsent(property, p -> new ArrayList<>()).add(value);
+        }
+        //noinspection unchecked
+        Pair<Property<?>,Set<?>>[] flattenedProperties = new Pair[propertyMap.size()];
+        int index = 0;
+        for(Map.Entry<Property<?>,List<Object>> entry : propertyMap.entrySet())
+            properties[index++] = Pair.of(entry.getKey(), Set.copyOf(entry.getValue()));
+        return new MatchStateConnectionPredicate(block, flattenedProperties);
+    }
+
+    public static ConnectionPredicate create(BlockState state){
+        //noinspection unchecked
+        return new MatchStateConnectionPredicate(state.getBlock(), state.getProperties().stream().map(p -> Pair.of(p, Set.of(state.getValue(p)))).toArray(Pair[]::new));
+    }
 
     public static final Serializer<MatchStateConnectionPredicate> SERIALIZER = new Serializer<>() {
         @Override
@@ -72,9 +97,7 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
                 properties.add(Pair.of(property, builder.build()));
             }
             //noinspection unchecked
-            properties = Arrays.asList(properties.toArray(Pair[]::new));
-
-            return new MatchStateConnectionPredicate(block, properties);
+            return new MatchStateConnectionPredicate(block, properties.toArray(Pair[]::new));
         }
 
         @Override
@@ -82,7 +105,7 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
             JsonObject json = new JsonObject();
             json.addProperty("block", Registry.BLOCK.getKey(value.block).toString());
             JsonObject properties = new JsonObject();
-            value.properties.stream()
+            Arrays.stream(value.properties)
                 .map(p -> p.mapRight(values -> {
                     JsonArray array = new JsonArray();
                     //noinspection rawtypes,unchecked
@@ -98,35 +121,13 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
     };
 
     private final Block block;
-    private final List<Pair<Property<?>,Set<?>>> properties;
+    private final Pair<Property<?>,Set<?>>[] properties;
     private boolean compareStates = false;
     private Set<BlockState> states = null;
 
-    public MatchStateConnectionPredicate(Block block, List<Pair<Property<?>,Set<?>>> properties){
+    private MatchStateConnectionPredicate(Block block, Pair<Property<?>,Set<?>>[] properties){
         this.block = block;
         this.properties = properties;
-        this.computeStates();
-    }
-
-    @SafeVarargs
-    public MatchStateConnectionPredicate(Block block, Pair<Property<?>,?>... propertyPair){
-        this.block = block;
-        Map<Property<?>,List<Object>> propertyMap = new HashMap<>();
-        for(Pair<Property<?>,?> pair : propertyPair){
-            Property<?> property = pair.left();
-            if(!block.getStateDefinition().getProperties().contains(property))
-                throw new IllegalArgumentException("Property '" + property.getName() + "' is not a property of block '" + Registry.BLOCK.getKey(block) + "'!");
-            Object value = pair.right();
-            if(!property.getPossibleValues().contains(value))
-                throw new IllegalArgumentException("Invalid value '" + value + "' for property '" + property.getName() + "'!");
-            propertyMap.computeIfAbsent(property, p -> new ArrayList<>()).add(value);
-        }
-        //noinspection unchecked
-        Pair<Property<?>,Set<?>>[] properties = new Pair[propertyMap.size()];
-        int index = 0;
-        for(Map.Entry<Property<?>,List<Object>> entry : propertyMap.entrySet())
-            properties[index++] = Pair.of(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
-        this.properties = Arrays.asList(properties);
         this.computeStates();
     }
 
@@ -175,6 +176,23 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
     }
 
     @Override
+    public ConnectionPredicate simplify(){
+        List<Pair<Property<?>,Set<?>>> simplifiedProperties = new ArrayList<>(this.properties.length);
+        for(Pair<Property<?>,Set<?>> pair : this.properties){
+            Set<?> allowedValues = pair.right();
+            if(allowedValues.isEmpty())
+                return DefaultConnectionPredicates.never();
+            Property<?> property = pair.left();
+            if(property.getPossibleValues().size() != allowedValues.size())
+                simplifiedProperties.add(pair);
+        }
+        if(simplifiedProperties.isEmpty())
+            return DefaultConnectionPredicates.always();
+        //noinspection unchecked
+        return new MatchStateConnectionPredicate(this.block, simplifiedProperties.toArray(new Pair[0]));
+    }
+
+    @Override
     public Serializer<? extends ConnectionPredicate> getSerializer(){
         return SERIALIZER;
     }
@@ -184,13 +202,13 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
         if(this == o) return true;
         if(!(o instanceof MatchStateConnectionPredicate that)) return false;
 
-        return this.block.equals(that.block) && this.properties.equals(that.properties);
+        return this.block.equals(that.block) && Arrays.equals(this.properties, that.properties);
     }
 
     @Override
     public int hashCode(){
         int result = this.block.hashCode();
-        result = 31 * result + this.properties.hashCode();
+        result = 31 * result + Arrays.hashCode(this.properties);
         return result;
     }
 }

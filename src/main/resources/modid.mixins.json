@@ -23,7 +23,6 @@
     "EntityRenderersMixin",
     "FilePackResourcesMixin",
     "ItemModelGeneratorMixin",
-    "ItemModelShaperMixin",
     "ItemRendererMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",

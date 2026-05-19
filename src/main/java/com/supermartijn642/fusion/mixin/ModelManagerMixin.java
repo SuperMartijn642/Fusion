@@ -40,7 +40,7 @@ public class ModelManagerMixin {
     private void registerBlockModelOverlays(CallbackInfoReturnable<ModelDiscovery> ci){
         ModelDiscovery modelDiscovery = ci.getReturnValue();
         UnbakedModel.Resolver resolver = modelDiscovery.new ResolverImpl();
-        BlockModelModifierReloadListener.INSTANCE.registerOverlays(resolver, modelDiscovery);
+        BlockModelModifierReloadListener.INSTANCE.registerModelDependencies(modelDiscovery, resolver);
         ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver, modelDiscovery);
     }
 
@@ -49,11 +49,11 @@ public class ModelManagerMixin {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/resources/model/ModelBakery;getBakedTopLevelModels()Ljava/util/Map;",
-            shift = At.Shift.AFTER
+            shift = At.Shift.BEFORE
         )
     )
     private void applyBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, Object2IntMap<?> map, CallbackInfoReturnable<?> ci){
-        BlockModelModifierReloadListener.INSTANCE.applyOverlays(modelBakery);
+        BlockModelModifierReloadListener.INSTANCE.applyModelModifiers(modelBakery);
         ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(modelBakery);
     }
 

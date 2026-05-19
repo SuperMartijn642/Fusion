@@ -42,7 +42,7 @@ public class ModelManagerMixin {
     private static void registerBlockModelOverlays(CallbackInfoReturnable<ModelDiscovery> ci){
         ModelDiscovery modelDiscovery = ci.getReturnValue();
         UnbakedModel.Resolver resolver = modelDiscovery.new ResolverImpl();
-        BlockModelModifierReloadListener.INSTANCE.registerOverlays(resolver);
+        BlockModelModifierReloadListener.INSTANCE.registerModelDependencies(resolver);
         ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver);
     }
 

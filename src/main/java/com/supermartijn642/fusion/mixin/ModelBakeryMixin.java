@@ -42,8 +42,9 @@ public class ModelBakeryMixin {
             );
         }
 
+        // Apply Fusion model modifier
         ModelBakery.ModelBakerImpl resolver = ((ModelBakery)(Object)this).new ModelBakerImpl(textureGetter, () -> "Fusion Model Modifiers");
-        BlockModelModifierReloadListener.INSTANCE.applyOverlays(results, resolver);
+        BlockModelModifierReloadListener.INSTANCE.applyModelModifiers(results, resolver);
         ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(results, resolver);
     }
 }

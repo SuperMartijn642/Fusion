@@ -82,7 +82,7 @@ public class BlockModelModifierReloadListener {
 
             // Sort modifier properties by their priority
             List<Properties> modifiers = entry.getValue();
-            modifiers.sort(Comparator.comparingInt(p -> p.priority));
+            modifiers.sort(Comparator.<Properties>comparingInt(p -> p.priority).thenComparing(p -> p.location));
 
             // Resolve default model overwrites
             List<BlockModelModifierBakedModel.ConditionalModel> defaultModelOverrides = createConditionModels(
@@ -164,14 +164,14 @@ public class BlockModelModifierReloadListener {
             }
             JsonObject json = entry.getValue().getAsJsonObject();
             try{
-                this.parseResource(json);
+                this.parseResource(json, location);
             }catch(JsonParseException e){
                 LoggingHelper.logUserError(e, "Failed to parse block model modifier '%s':", location);
             }
         }
     }
 
-    private void parseResource(JsonObject json){
+    private void parseResource(JsonObject json, ResourceLocation location){
         // Get the targets
         if(!json.has("targets") || !json.get("targets").isJsonArray())
             throw new JsonParseException("Model modifier must have array property 'targets'!");
@@ -267,7 +267,7 @@ public class BlockModelModifierReloadListener {
         }
 
         // Put the properties into the map
-        Properties properties = new Properties(priority, defaultModel, appendModels, paneCullingFix, showBreakingOverlay);
+        Properties properties = new Properties(priority, location, defaultModel, appendModels, paneCullingFix, showBreakingOverlay);
         for(ModelResourceLocation target : targets)
             this.modifiers.computeIfAbsent(target, t -> new ArrayList<>(8)).add(properties);
     }
@@ -407,13 +407,15 @@ public class BlockModelModifierReloadListener {
 
     private static final class Properties{
         private final int priority;
+        private final ResourceLocation location;
         private final List<ModelEntry> defaultModelOverrides;
         private final List<List<ModelEntry>> appendModels;
         private final boolean paneCullingFix;
         private final Boolean showBreakingOverlay;
 
-        private Properties(int priority, List<ModelEntry> defaultModelOverrides, List<List<ModelEntry>> appendModels, boolean paneCullingFix, Boolean showBreakingOverlay){
+        private Properties(int priority, ResourceLocation location, List<ModelEntry> defaultModelOverrides, List<List<ModelEntry>> appendModels, boolean paneCullingFix, Boolean showBreakingOverlay){
             this.priority = priority;
+            this.location = location;
             this.defaultModelOverrides = defaultModelOverrides;
             this.appendModels = appendModels;
             this.paneCullingFix = paneCullingFix;

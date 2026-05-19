@@ -23,7 +23,6 @@
     "FilePackResourcesMixin",
     "ForgeHooksClientMixin",
     "ItemModelGeneratorMixin",
-    "ItemModelShaperMixin",
     "ItemRendererMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",

@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -19,74 +20,164 @@ import java.util.List;
 public class BlockModelModifierBakedModel implements BlockStateModel {
 
     private final BlockStateModel original;
-    private final List<BlockStateModel> models;
-    private final boolean showBreakingOverlay;
+    private final List<ConditionalModel> defaultModelOverrides;
+    private final List<List<ConditionalModel>> appendModels;
+    private final TextureAtlasSprite particleSprite;
 
-    public BlockModelModifierBakedModel(BlockStateModel original, List<BlockStateModel> models, boolean showBreakingOverlay){
+    BlockModelModifierBakedModel(BlockStateModel original, List<ConditionalModel> defaultModelOverrides, List<List<ConditionalModel>> appendModels){
         this.original = original;
-        this.models = new ArrayList<>(models.size() + 1);
-        this.models.add(original);
-        this.models.addAll(models);
-        this.showBreakingOverlay = showBreakingOverlay;
+        this.defaultModelOverrides = defaultModelOverrides;
+        this.appendModels = appendModels;
+
+        // Resolve particle material
+        TextureAtlasSprite particleSprite = null;
+        for(ConditionalModel override : this.defaultModelOverrides){
+            if(override.conditions == null || override.conditions.test(null, null, null)){
+                particleSprite = override.model.particleIcon();
+                break;
+            }
+        }
+        if(particleSprite == null)
+            particleSprite = this.original.particleIcon();
+        this.particleSprite = particleSprite;
     }
 
     @Override
     public void collectParts(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random, List<BlockModelPart> parts){
         long seed = random.nextLong();
-        // When rendering breaking overlay, only submit the original model
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+
+        // Check whether the breaking overlay is being rendered
+        boolean isBreakingOverlay = FusionClient.isRenderingBreakingOverlay();
+
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(level, pos, state)){
+                    if(!isBreakingOverlay || override.showBreakingOverlay)
+                        override.model.collectParts(level, pos, state, random, parts);
+                    break overrides;
+                }
+            }
             random.setSeed(seed);
             this.original.collectParts(level, pos, state, random, parts);
-            return;
         }
-        // Submit all models
-        for(BlockStateModel model : this.models){
-            random.setSeed(seed);
-            model.collectParts(level, pos, state, random, parts);
-        }
-    }
 
-    @Override
-    public @Nullable Object createGeometryKey(BlockAndTintGetter blockView, BlockPos pos, BlockState state, RandomSource random){
-        List<Object> keys = new ArrayList<>(this.models.size() + 2);
-        keys.add(this);
-        // Collect keys for all models
-        long seed = random.nextLong();
-        for(BlockStateModel model : this.models){
-            random.setSeed(seed);
-            Object subKey = model.createGeometryKey(blockView, pos, state, random);
-            if(subKey == null)
-                return null;
-            keys.add(subKey);
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(level, pos, state)){
+                    if(!isBreakingOverlay || conditional.showBreakingOverlay){
+                        random.setSeed(seed);
+                        conditional.model.collectParts(level, pos, state, random, parts);
+                    }
+                    break;
+                }
+            }
         }
-        return keys;
     }
 
     @Override
     public void collectParts(RandomSource random, List<BlockModelPart> parts){
         long seed = random.nextLong();
-        // When rendering breaking overlay, only submit the original model
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
+
+        // Check whether the breaking overlay is being rendered
+        boolean isBreakingOverlay = FusionClient.isRenderingBreakingOverlay();
+
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(null, null, null)){
+                    if(!isBreakingOverlay || override.showBreakingOverlay)
+                        override.model.collectParts(random, parts);
+                    break overrides;
+                }
+            }
             random.setSeed(seed);
-            //noinspection deprecation
             this.original.collectParts(random, parts);
-            return;
         }
-        // Submit all models
-        for(BlockStateModel model : this.models){
-            random.setSeed(seed);
-            //noinspection deprecation
-            model.collectParts(random, parts);
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(null, null, null)){
+                    if(!isBreakingOverlay || conditional.showBreakingOverlay){
+                        random.setSeed(seed);
+                        conditional.model.collectParts(random, parts);
+                    }
+                    break;
+                }
+            }
         }
+    }
+
+    @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state, RandomSource random){
+        // Collect keys for all models
+        List<Object> keys = new ArrayList<>(this.appendModels.size() + 2);
+        keys.add(this);
+
+        long seed = random.nextLong();
+        random.setSeed(seed);
+
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(level, pos, state)){
+                    if(override.conditions != null)
+                        keys.add(true);
+                    Object key = override.model.createGeometryKey(level, pos, state, random);
+                    if(key == null)
+                        return null;
+                    keys.add(key);
+                    break overrides;
+                }
+                keys.add(false);
+            }
+            Object key = this.original.createGeometryKey(level, pos, state, random);
+            if(key == null)
+                return null;
+            keys.add(key);
+        }
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(level, pos, state)){
+                    if(conditional.conditions != null)
+                        keys.add(true);
+                    random.setSeed(seed);
+                    Object key = conditional.model.createGeometryKey(level, pos, state, random);
+                    if(key == null)
+                        return null;
+                    keys.add(key);
+                    break;
+                }
+                keys.add(false);
+            }
+        }
+        return keys;
     }
 
     @Override
     public TextureAtlasSprite particleIcon(){
-        return this.original.particleIcon();
+        return this.particleSprite;
     }
 
     @Override
     public TextureAtlasSprite particleIcon(BlockAndTintGetter level, BlockPos pos, BlockState state){
+        for(ConditionalModel override : this.defaultModelOverrides){
+            if(override.conditions == null || override.conditions.test(level, pos, state))
+                return override.model.particleIcon(level, pos, state);
+        }
         return this.original.particleIcon(level, pos, state);
+    }
+
+    record ConditionalModel(BlockStateModel model, @Nullable BlockStateModelPredicate conditions, boolean showBreakingOverlay) {
     }
 }

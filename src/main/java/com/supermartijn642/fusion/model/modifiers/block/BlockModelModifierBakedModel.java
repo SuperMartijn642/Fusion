@@ -1,16 +1,15 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
+import com.supermartijn642.fusion.model.WrappedBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -23,18 +22,104 @@ import java.util.function.Supplier;
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelModifierBakedModel implements BakedModel, FabricBakedModel {
+public class BlockModelModifierBakedModel extends WrappedBakedModel {
 
     private final BakedModel original;
-    private final List<BakedModel> models;
-    private final boolean showBreakingOverlay;
+    private final List<ConditionalModel> defaultModelOverrides;
+    private final List<List<ConditionalModel>> appendModels;
+    private final TextureAtlasSprite particleSprite;
+    private final boolean ambientOcclusion;
 
-    public BlockModelModifierBakedModel(BakedModel original, List<BakedModel> models, boolean showBreakingOverlay){
+    BlockModelModifierBakedModel(BakedModel original, List<ConditionalModel> defaultModelOverrides, List<List<ConditionalModel>> appendModels){
+        super(original);
         this.original = original;
-        this.models = new ArrayList<>(models.size() + 1);
-        this.models.add(original);
-        this.models.addAll(models);
-        this.showBreakingOverlay = showBreakingOverlay;
+        this.defaultModelOverrides = defaultModelOverrides;
+        this.appendModels = appendModels;
+
+        // Resolve default context properties
+        TextureAtlasSprite particleSprite = this.original.getParticleIcon();
+        boolean ambientOcclusion = true;
+        for(ConditionalModel override : this.defaultModelOverrides){
+            if(override.conditions == null || override.conditions.test(null, null, null)){
+                particleSprite = override.model.getParticleIcon();
+                ambientOcclusion = override.model.useAmbientOcclusion();
+                break;
+            }
+        }
+        this.particleSprite = particleSprite;
+        this.ambientOcclusion = ambientOcclusion;
+    }
+
+    @Override
+    public void emitBlockQuads(BlockAndTintGetter level, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context){
+        // Check whether the breaking overlay is being rendered
+        boolean isBreakingOverlay = FusionClient.isRenderingBreakingOverlay();
+
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(level, pos, state)){
+                    if(!isBreakingOverlay || override.showBreakingOverlay)
+                        ((FabricBakedModel)override.model).emitBlockQuads(level, state, pos, randomSupplier, context);
+                    break overrides;
+                }
+            }
+            ((FabricBakedModel)this.original).emitBlockQuads(level, state, pos, randomSupplier, context);
+        }
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(level, pos, state)){
+                    if(!isBreakingOverlay || conditional.showBreakingOverlay){
+                        ((FabricBakedModel)conditional.model).emitBlockQuads(level, state, pos, randomSupplier, context);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, Random random){
+        long seed = random.nextLong();
+        random.setSeed(seed);
+
+        // Check whether the breaking overlay is being rendered
+        boolean isBreakingOverlay = FusionClient.isRenderingBreakingOverlay();
+
+        // Collect all quads
+        List<BakedQuad> quads = new ArrayList<>();
+
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(null, null, null)){
+                    if(!isBreakingOverlay || override.showBreakingOverlay)
+                        quads.addAll(override.model.getQuads(state, cullDirection, random));
+                    break overrides;
+                }
+            }
+            quads.addAll(this.original.getQuads(state, cullDirection, random));
+        }
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(null, null, null)){
+                    if(!isBreakingOverlay || conditional.showBreakingOverlay){
+                        random.setSeed(seed);
+                        quads.addAll(conditional.model.getQuads(state, cullDirection, random));
+                    }
+                    break;
+                }
+            }
+        }
+        return quads;
     }
 
     @Override
@@ -43,88 +128,15 @@ public class BlockModelModifierBakedModel implements BakedModel, FabricBakedMode
     }
 
     @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<Random> randomSupplier, RenderContext context){
-        Random random = randomSupplier.get();
-        long seed = random.nextLong();
-        // When rendering breaking overlay, only submit the original model
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
-            random.setSeed(seed);
-            ((FabricBakedModel)this.original).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-            return;
-        }
-        // Submit all models
-        for(BakedModel model : this.models){
-            random.setSeed(seed);
-            ((FabricBakedModel)model).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-        }
-    }
-
-    @Override
-    public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context){
-        Random random = randomSupplier.get();
-        long seed = random.nextLong();
-        // When rendering breaking overlay, only submit the original model
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
-            random.setSeed(seed);
-            ((FabricBakedModel)this.original).emitItemQuads(stack, randomSupplier, context);
-            return;
-        }
-        // Submit all models
-        for(BakedModel model : this.models){
-            random.setSeed(seed);
-            ((FabricBakedModel)model).emitItemQuads(stack, randomSupplier, context);
-        }
-    }
-
-    @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random random){
-        long seed = random.nextLong();
-        // When rendering breaking overlay, only submit the original model
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
-            random.setSeed(seed);
-            return this.original.getQuads(state, side, random);
-        }
-        // Collect quads for all models
-        List<BakedQuad> quads = new ArrayList<>();
-        for(BakedModel model : this.models){
-            random.setSeed(seed);
-            quads.addAll(model.getQuads(state, side, random));
-        }
-        return quads;
+    public TextureAtlasSprite getParticleIcon(){
+        return this.particleSprite;
     }
 
     @Override
     public boolean useAmbientOcclusion(){
-        return this.original.useAmbientOcclusion();
+        return this.ambientOcclusion;
     }
 
-    @Override
-    public boolean isGui3d(){
-        return this.original.isGui3d();
-    }
-
-    @Override
-    public boolean usesBlockLight(){
-        return this.original.usesBlockLight();
-    }
-
-    @Override
-    public boolean isCustomRenderer(){
-        return this.original.isCustomRenderer();
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon(){
-        return this.original.getParticleIcon();
-    }
-
-    @Override
-    public ItemTransforms getTransforms(){
-        return this.original.getTransforms();
-    }
-
-    @Override
-    public ItemOverrides getOverrides(){
-        return this.original.getOverrides();
+    record ConditionalModel(BakedModel model, @Nullable BlockStateModelPredicate conditions, boolean showBreakingOverlay) {
     }
 }

@@ -132,7 +132,10 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                         continue;
                     }
                     // Put the face's connection predicate into the property store
-                    propertyStore.setProperty(FACE_CONNECTION_PREDICATE, pair.right());
+                    ConnectionPredicate predicate = pair.right();
+                    if(predicate != null)
+                        predicate = predicate.simplify();
+                    propertyStore.setProperty(FACE_CONNECTION_PREDICATE, predicate);
                     // Initialize the quad
                     mutableQuad.copyFrom(quad);
                     BlockStateQuadProcessor<?> processor = sprite.getTexture().initializeBlockStateModelQuad(mutableQuad, sprite, propertyStore);
@@ -354,7 +357,10 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                         continue;
                     }
                     // Put the face's connection predicate into the property store
-                    propertyStore.setProperty(FACE_CONNECTION_PREDICATE, pair.right().simplify());
+                    ConnectionPredicate predicate = pair.right();
+                    if(predicate != null)
+                        predicate = predicate.simplify();
+                    propertyStore.setProperty(FACE_CONNECTION_PREDICATE, predicate);
                     // Initialize the quad
                     mutableQuad.copyFrom(quad);
                     ItemQuadProcessor<?> processor = sprite.getTexture().initializeItemModelQuad(mutableQuad, sprite, propertyStore);

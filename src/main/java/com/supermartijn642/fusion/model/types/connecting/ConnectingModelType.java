@@ -264,7 +264,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                 QuadAccess quad = CuboidModelGeometry.bakeFace(face, element, side, transformation, materialResolver);
                 // Resolve connections key
                 Optional<String> key = face.getProperty(DefaultModelProperties.FACE_CONNECTIONS_KEY);
-                ConnectionPredicate connectionPredicate = connectionsResolver.apply(key.orElse(ConnectingModelData.DEFAULT_KEY));
+                ConnectionPredicate connectionPredicate = connectionsResolver.apply(key.orElse(face.material()));
                 // Add the quad
                 Direction cullDirection = face.cullDirection() == null ? null :
                     Direction.rotate(new Matrix4f(transformation.matrix()), face.cullDirection());

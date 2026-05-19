@@ -33,7 +33,7 @@ public class ModelBakeryMixin {
         if(location == ModelBakery.MISSING_MODEL_LOCATION){
             //noinspection DataFlowIssue
             ModelBakery modelBakery = (ModelBakery)(Object)this;
-            BlockModelModifierReloadListener.INSTANCE.registerOverlays(modelBakery);
+            BlockModelModifierReloadListener.INSTANCE.registerModelDependencies(modelBakery);
             ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(modelBakery);
         }
     }

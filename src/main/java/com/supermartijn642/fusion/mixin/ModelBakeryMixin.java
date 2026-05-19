@@ -2,8 +2,12 @@ package com.supermartijn642.fusion.mixin;
 
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.ModelBakery;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -15,6 +19,10 @@ import java.util.HashMap;
  */
 @Mixin(ModelBakery.class)
 public class ModelBakeryMixin {
+
+    @Final
+    @Shadow
+    private EntityModelSet entityModelSet;
 
     @Inject(
         method = "bakeModels",
@@ -45,6 +53,10 @@ public class ModelBakeryMixin {
         // Apply Fusion model modifier
         ModelBakery.ModelBakerImpl resolver = ((ModelBakery)(Object)this).new ModelBakerImpl(textureGetter, () -> "Fusion Model Modifiers");
         BlockModelModifierReloadListener.INSTANCE.applyModelModifiers(results, resolver);
-        ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(results, resolver);
+        ItemModelModifierReloadListener.INSTANCE.applyModelModifiers(results, new ItemModel.BakingContext(
+            resolver,
+            this.entityModelSet,
+            results.missingItemModel()
+        ));
     }
 }

@@ -1,14 +1,10 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
-import com.supermartijn642.fusion.api.util.Pair;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.item.BlockModelWrapper;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -21,36 +17,44 @@ import java.util.List;
  */
 public class ItemModelModifierItemModel implements ItemModel {
 
-    private final ItemModel defaultModel;
-    private final List<Pair<ItemModelPredicate,BakedModel>> models;
+    private final ItemModel original;
+    private final List<ConditionalModel> defaultModelOverrides;
+    private final List<List<ConditionalModel>> appendModels;
 
-    public ItemModelModifierItemModel(ItemModel defaultModel, List<Pair<ItemModelPredicate,BakedModel>> models){
-        this.defaultModel = defaultModel;
-        this.models = models;
-    }
-
-    private BakedModel forStack(ItemStack stack){
-        for(Pair<ItemModelPredicate,BakedModel> entry : this.models){
-            if(entry.left().test(stack))
-                return entry.right();
-        }
-        return null;
+    ItemModelModifierItemModel(ItemModel original, List<ConditionalModel> defaultModelOverrides, List<List<ConditionalModel>> appendModels){
+        this.original = original;
+        this.defaultModelOverrides = defaultModelOverrides;
+        this.appendModels = appendModels;
     }
 
     @Override
-    public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable LivingEntity entity, int i){
-        BakedModel model = this.forStack(stack);
-        if(model == null)
-            this.defaultModel.update(renderState, stack, modelResolver, displayContext, level, entity, i);
-        else{
-            ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
-            if(stack.hasFoil())
-                layer.setFoilType(
-                    BlockModelWrapper.hasSpecialAnimatedTexture(stack) ?
-                        ItemStackRenderState.FoilType.SPECIAL
-                        : ItemStackRenderState.FoilType.STANDARD
-                );
-            layer.setupBlockModel(model, ItemBlockRenderTypes.getRenderType(stack));
+    public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable LivingEntity owner, int seed){
+        renderState.ensureCapacity(this.appendModels.size());
+
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(stack)){
+                    override.model.update(renderState, stack, modelResolver, displayContext, level, owner, seed);
+                    break overrides;
+                }
+            }
+            this.original.update(renderState, stack, modelResolver, displayContext, level, owner, seed);
         }
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(stack)){
+                    conditional.model.update(renderState, stack, modelResolver, displayContext, level, owner, seed);
+                    break;
+                }
+            }
+        }
+    }
+
+    record ConditionalModel(ItemModel model, @Nullable ItemModelPredicate conditions) {
     }
 }

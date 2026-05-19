@@ -42,7 +42,7 @@ public class ModelManagerMixin {
         ModelDiscovery modelDiscovery = ci.getReturnValue();
         UnbakedModel.Resolver resolver = modelDiscovery.new ResolverImpl();
         BlockModelModifierReloadListener.INSTANCE.registerModelDependencies(resolver);
-        ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver);
+        ItemModelModifierReloadListener.INSTANCE.registerModelDependencies(resolver);
     }
 
     @Inject(

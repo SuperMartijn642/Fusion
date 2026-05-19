@@ -1,13 +1,16 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.*;
 import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.FusionBlockStateModelPredicateRegistry;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.renderer.BlockModelShapes;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.IUnbakedModel;
@@ -19,11 +22,13 @@ import net.minecraft.state.Property;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,18 +39,30 @@ public class BlockModelModifierReloadListener {
 
     private static final Gson GSON = new GsonBuilder().setLenient().create();
     private static final String LOCATION = "fusion/model_modifiers/blocks";
+    private static final int DEFAULT_PRIORITY = 100;
 
     public static final BlockModelModifierReloadListener INSTANCE = new BlockModelModifierReloadListener();
 
-    private final Map<ModelResourceLocation,Properties> models = new HashMap<>();
+    private final Map<ModelResourceLocation,List<Properties>> modifiers = new HashMap<>();
 
     private BlockModelModifierReloadListener(){
     }
 
-    public void registerOverlays(ModelBakery bakery){
+    public void registerModelDependencies(ModelBakery bakery){
+        // Collect all model identifiers
         Set<ResourceLocation> models = new HashSet<>();
-        for(Properties properties : this.models.values())
-            models.addAll(properties.appendModels);
+        for(List<Properties> modifiers : this.modifiers.values()){ // Note: Even models that will technically never be used due to earlier conditions still need to be resolved for user warnings
+            for(Properties modifier : modifiers){
+                for(ModelEntry entry : modifier.defaultModelOverrides)
+                    models.add(entry.model);
+                for(List<ModelEntry> conditionals : modifier.appendModels){
+                    for(ModelEntry entry : conditionals){
+                        models.add(entry.model);
+                    }
+                }
+            }
+        }
+        // Mark the models
         for(ResourceLocation model : models){
             IUnbakedModel unbakedModel = bakery.getModel(model);
             bakery.unbakedCache.put(model, unbakedModel);
@@ -53,26 +70,74 @@ public class BlockModelModifierReloadListener {
         }
     }
 
-    public void applyOverlays(ModelBakery bakery){
-        Map<ResourceLocation,IBakedModel> bakedModels = bakery.getBakedTopLevelModels();
-        for(Map.Entry<ModelResourceLocation,Properties> entry : this.models.entrySet()){
+    public void applyModelModifiers(ModelBakery modelBakery){
+        Map<ResourceLocation,IBakedModel> bakedModels = modelBakery.getBakedTopLevelModels();
+
+        // Create a modifier model for each target
+        for(Map.Entry<ModelResourceLocation,List<Properties>> entry : this.modifiers.entrySet()){
             ModelResourceLocation target = entry.getKey();
             IBakedModel targetModel = bakedModels.get(target);
             if(targetModel == null) continue;
-            Properties properties = entry.getValue();
-            List<ResourceLocation> overlays = properties.appendModels;
-            List<IBakedModel> overlayModels = overlays.stream().map(bakedModels::get).collect(Collectors.toList());
-            IBakedModel model = new BlockModelModifierBakedModel(targetModel, overlayModels, properties.showBreakingOverlay);
-            if(properties.paneCullingFix)
-                model = new PaneCullingBakedModel(model);
-            bakedModels.put(target, model);
+
+            // Sort modifier properties by their priority
+            List<Properties> modifiers = entry.getValue();
+            modifiers.sort(Comparator.comparingInt(p -> p.priority));
+
+            // Resolve default model overwrites
+            List<BlockModelModifierBakedModel.ConditionalModel> defaultModelOverrides = createConditionModels(
+                modifiers.stream().flatMap(p -> p.defaultModelOverrides.stream()).collect(Collectors.toList()),
+                bakedModels::get,
+                false
+            );
+
+            // Resolve append models
+            List<List<BlockModelModifierBakedModel.ConditionalModel>> appendModels = new ArrayList<>();
+            for(Properties modifier : modifiers){
+                for(List<ModelEntry> conditionals : modifier.appendModels){
+                    List<BlockModelModifierBakedModel.ConditionalModel> resolvedConditionals = createConditionModels(
+                        conditionals,
+                        bakedModels::get,
+                        modifier.showBreakingOverlay != Boolean.FALSE
+                    );
+                    if(!resolvedConditionals.isEmpty())
+                        appendModels.add(resolvedConditionals);
+                }
+            }
+            appendModels = ImmutableList.copyOf(appendModels);
+
+            // Create the modifier model
+            BlockModelModifierBakedModel modifierModel = new BlockModelModifierBakedModel(
+                targetModel,
+                defaultModelOverrides,
+                appendModels
+            );
+            bakedModels.put(target, modifierModel);
         }
+
+        // Clear modifier data
+        this.modifiers.clear();
+    }
+
+    private static List<BlockModelModifierBakedModel.ConditionalModel> createConditionModels(List<ModelEntry> modelEntries, Function<ResourceLocation,IBakedModel> modelResolver, boolean showBreakingOverlay){
+        List<BlockModelModifierBakedModel.ConditionalModel> conditionals = new ArrayList<>();
+        for(ModelEntry entry : modelEntries){
+            if(entry.conditions != null && entry.conditions.alwaysFalse()) // Skip models for which the condition is always false
+                continue;
+            conditionals.add(new BlockModelModifierBakedModel.ConditionalModel(
+                modelResolver.apply(entry.model),
+                entry.conditions,
+                entry.showBreakingOverlay == null ? showBreakingOverlay : entry.showBreakingOverlay
+            ));
+            if(entry.conditions == null || entry.conditions.alwaysTrue()) // If the condition is always true, any later entries will never be reached
+                break;
+        }
+        return ImmutableList.copyOf(conditionals);
     }
 
     public void reload(IResourceManager resourceManager){
-        this.models.clear();
+        this.modifiers.clear();
 
-        // Find all overlay files
+        // Find all block model modifier files
         Map<ResourceLocation,JsonElement> resources = new HashMap<>();
         for(ResourceLocation fullLocation : resourceManager.listResources(LOCATION, s -> s.endsWith(".json"))){
             ResourceLocation location = new ResourceLocation(fullLocation.getNamespace(), fullLocation.getPath().substring(LOCATION.length() + 1, fullLocation.getPath().length() - ".json".length()));
@@ -89,18 +154,18 @@ public class BlockModelModifierReloadListener {
             }
         }
 
-        // Parse all the model overlay files
+        // Parse all the block model modifier files
         for(Map.Entry<ResourceLocation,JsonElement> entry : resources.entrySet()){
             ResourceLocation location = entry.getKey();
             if(!entry.getValue().isJsonObject()){
-                FusionClient.LOGGER.error("Block model overlay '{}' must contain a json object!", location);
+                FusionClient.LOGGER.error("Block model modifier '{}' must contain a json object!", location);
                 continue;
             }
             JsonObject json = entry.getValue().getAsJsonObject();
             try{
                 this.parseResource(json);
             }catch(JsonParseException e){
-                LoggingHelper.logUserError(e, "Failed to parse block model overlay '%s':", location);
+                LoggingHelper.logUserError(e, "Failed to parse block model modifier '%s':", location);
             }
         }
     }
@@ -108,38 +173,68 @@ public class BlockModelModifierReloadListener {
     private void parseResource(JsonObject json){
         // Get the targets
         if(!json.has("targets") || !json.get("targets").isJsonArray())
-            throw new JsonParseException("Model overlay must have array property 'targets'!");
+            throw new JsonParseException("Model modifier must have array property 'targets'!");
         JsonArray targetsJson = json.getAsJsonArray("targets");
         Set<ModelResourceLocation> targets = new HashSet<>();
-        for(JsonElement element : targetsJson){
-            if(element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()){ // Handle simple strings
-                if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
-                    throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
-                ResourceLocation identifier = new ResourceLocation(element.getAsString());
-                Block block = Registry.BLOCK.get(identifier);
-                //noinspection ConstantValue
-                if(block == null || block == Blocks.AIR)
-                    throw new JsonParseException("Could not find a block for model overlay target '" + identifier + "'!");
-                block.getStateDefinition().getPossibleStates().stream()
-                    .map(BlockModelShapes::stateToModelLocation)
-                    .forEach(targets::add);
-            }else if(element.isJsonObject()){ // Handle blocks with specific state properties
-                this.parseTarget(element.getAsJsonObject())
-                    .map(BlockModelShapes::stateToModelLocation)
-                    .forEach(targets::add);
-            }else
-                throw new JsonParseException("Model overlay 'targets' array must only contain objects and strings!");
+        try{
+            for(JsonElement element : targetsJson){
+                if(element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()){ // Handle simple strings
+                    if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                        throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
+                    ResourceLocation identifier = new ResourceLocation(element.getAsString());
+                    Optional<Block> block = Registry.BLOCK.getOptional(identifier);
+                    if(!block.isPresent())
+                        throw new JsonParseException("Could not find a block for identifier '" + identifier + "'!");
+                    block.get().getStateDefinition().getPossibleStates().stream()
+                        .map(BlockModelShapes::stateToModelLocation)
+                        .forEach(targets::add);
+                }else if(element.isJsonObject()){ // Handle blocks with specific state properties
+                    parseTarget(element.getAsJsonObject())
+                        .map(BlockModelShapes::stateToModelLocation)
+                        .forEach(targets::add);
+                }else
+                    throw new JsonParseException("Array property 'targets' must only contain objects and strings!");
+            }
+        }catch(JsonParseException e){
+            throw new JsonParseException("Failed to parse a 'targets' entry", e);
         }
         if(targets.isEmpty())
             return;
 
-        // Give warning when json is empty as user likely misspelled something
-        if(!json.has("append") && !json.has("pane_culling_fix"))
-            throw new JsonParseException("Must have either 'append' or 'pane_culling_fix' property!");
+        // Priority
+        int priority = DEFAULT_PRIORITY;
+        if(json.has("priority")){
+            if(!json.get("priority").isJsonPrimitive() || !json.getAsJsonPrimitive("priority").isNumber())
+                throw new JsonParseException("Property 'priority' must be a number!");
+            priority = json.getAsJsonPrimitive("priority").getAsInt();
+        }
 
-        // Get the models
-        Set<ResourceLocation> models = new LinkedHashSet<>(); // This should maintain order
+        // Get default model overrides
+        List<ModelEntry> defaultModel = Collections.emptyList();
+        if(json.has("default_model_overrides")){
+            try{
+                defaultModel = parseModelEntry(json.get("default_model_overrides"));
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse 'default_model_overrides'", e);
+            }
+        }
+
+        // Get append models
+        List<List<ModelEntry>> appendModels = new ArrayList<>();
+        if(json.has("append_models")){
+            if(!json.get("append_models").isJsonArray())
+                throw new JsonParseException("Property 'append_models' must be an array!");
+            try{
+                for(JsonElement e : json.getAsJsonArray("append_models"))
+                    appendModels.add(parseModelEntry(e));
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse 'append_models' entry", e);
+            }
+        }
+
+        // Read legacy 'append' entries
         if(json.has("append")){
+            Set<ResourceLocation> models = new LinkedHashSet<>(); // This should maintain order
             if(!json.get("append").isJsonArray())
                 throw new JsonParseException("Property 'append' must be an array!");
             JsonArray appendJson = json.getAsJsonArray("append");
@@ -150,82 +245,80 @@ public class BlockModelModifierReloadListener {
                     throw new JsonParseException("Model must be a valid identifier, not '" + element.getAsString() + "'!!");
                 models.add(new ResourceLocation(element.getAsString()));
             }
+            for(ResourceLocation model : models)
+                appendModels.add(ImmutableList.of(ModelEntry.simple(model)));
         }
 
-        // Get whether to use the appended models for breaking overlay
+        // Show breaking overlay
         Boolean showBreakingOverlay = null;
         if(json.has("show_breaking_overlay")){
-            if(!json.get("show_breaking_overlay").isJsonPrimitive() || !json.get("show_breaking_overlay").getAsJsonPrimitive().isBoolean())
+            if(!json.get("show_breaking_overlay").isJsonPrimitive() || !json.getAsJsonPrimitive("show_breaking_overlay").isBoolean())
                 throw new JsonParseException("Property 'show_breaking_overlay' must be a boolean!");
             showBreakingOverlay = json.get("show_breaking_overlay").getAsBoolean();
         }
 
         // Pane culling option
-        Boolean paneCullingFix = null;
+        boolean paneCullingFix = false;
         if(json.has("pane_culling_fix")){
             if(!json.get("pane_culling_fix").isJsonPrimitive() || !json.getAsJsonPrimitive("pane_culling_fix").isBoolean())
                 throw new JsonParseException("Property 'pane_culling_fix' must be a boolean!");
             paneCullingFix = json.get("pane_culling_fix").getAsBoolean();
         }
 
-        if(models.isEmpty() && paneCullingFix != Boolean.TRUE)
-            return;
-
         // Put the properties into the map
-        for(ModelResourceLocation target : targets){
-            Properties properties = this.models.computeIfAbsent(target, t -> new Properties());
-            properties.appendModels.addAll(models);
-            if(showBreakingOverlay != null)
-                properties.showBreakingOverlay = showBreakingOverlay;
-            if(paneCullingFix != null)
-                properties.paneCullingFix = paneCullingFix;
-        }
+        Properties properties = new Properties(priority, defaultModel, appendModels, paneCullingFix, showBreakingOverlay);
+        for(ModelResourceLocation target : targets)
+            this.modifiers.computeIfAbsent(target, t -> new ArrayList<>(8)).add(properties);
     }
 
-    private Stream<BlockState> parseTarget(JsonObject json){
+    private static Stream<BlockState> parseTarget(JsonObject json){
         // Block
         if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
-            throw new JsonParseException("Target must have string property 'block'!");
+            throw new JsonParseException("Entry must have string property 'block'!");
         if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
-            throw new JsonParseException("Target property 'block' must be a valid identifier, not '" + json.get("block").getAsString() + "'!!");
+            throw new JsonParseException("Property 'block' must be a valid identifier, not '" + json.get("block").getAsString() + "'!!");
         ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
-        Block block = Registry.BLOCK.get(identifier);
-        //noinspection ConstantValue
-        if(block == null || block == Blocks.AIR)
-            throw new JsonParseException("Could not find a block for model overlay target '" + identifier + "'!");
+        Optional<Block> optional = Registry.BLOCK.getOptional(identifier);
+        if(!optional.isPresent())
+            throw new JsonParseException("Could not find a block for identifier '" + identifier + "'!");
+        Block block = optional.get();
 
         // Properties
         Map<Property<?>,Set<?>> properties = new HashMap<>();
         if(!json.has("properties") || !json.get("properties").isJsonObject())
-            throw new JsonParseException("Match block predicate must have object property 'properties'!");
+            throw new JsonParseException("Entry must have object property 'properties'!");
         if(json.getAsJsonObject("properties").size() == 0)
-            throw new JsonParseException("At least one property must be specified for match state predicate!");
+            throw new JsonParseException("At least one property must be specified!");
         for(Map.Entry<String,JsonElement> entry : json.getAsJsonObject("properties").entrySet()){
-            // Parse the property
-            Property<?> property = block.getStateDefinition().getProperty(entry.getKey());
-            if(property == null)
-                throw new JsonParseException("Block '" + identifier + "' does not have a property named '" + entry.getKey() + "'!");
-            // Parse the values
-            ImmutableSet.Builder<Object> builder = ImmutableSet.builder();
-            if(entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isString()){
-                Optional<?> value = property.getValue(entry.getValue().getAsString());
-                if(!value.isPresent())
-                    throw new JsonParseException("Unknown value '" + entry.getValue().getAsString() + "' for property '" + property.getName() + "' in block '" + identifier + "'!");
-                builder.add(value.get());
-            }else if(entry.getValue().isJsonArray()){
-                if(entry.getValue().getAsJsonArray().size() == 0)
-                    throw new JsonParseException("Valid values for property '" + property.getName() + "' cannot be empty!");
-                for(JsonElement element : entry.getValue().getAsJsonArray()){
-                    if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
-                        throw new JsonParseException("Property '" + entry.getKey() + "' must be a string or an array of strings!");
-                    Optional<?> value = property.getValue(element.getAsString());
+            try{
+                // Parse the property
+                Property<?> property = block.getStateDefinition().getProperty(entry.getKey());
+                if(property == null)
+                    throw new JsonParseException("Block '" + identifier + "' does not have a property named '" + entry.getKey() + "'!");
+                // Parse the values
+                ImmutableSet.Builder<Object> builder = ImmutableSet.builder();
+                if(entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isString()){
+                    Optional<?> value = property.getValue(entry.getValue().getAsString());
                     if(!value.isPresent())
-                        throw new JsonParseException("Unknown value '" + element.getAsString() + "' for property '" + property.getName() + "' in block '" + identifier + "'!");
+                        throw new JsonParseException("Unknown value '" + entry.getValue().getAsString() + "' for property '" + property.getName() + "' in block '" + identifier + "'!");
                     builder.add(value.get());
-                }
-            }else
-                throw new JsonParseException("Property '" + entry.getKey() + "' must be a string or an array of strings!");
-            properties.put(property, builder.build());
+                }else if(entry.getValue().isJsonArray()){
+                    if(entry.getValue().getAsJsonArray().size() == 0)
+                        throw new JsonParseException("Valid values cannot be empty!");
+                    for(JsonElement element : entry.getValue().getAsJsonArray()){
+                        if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                            throw new JsonParseException("Values array must only contain strings!");
+                        Optional<?> value = property.getValue(element.getAsString());
+                        if(!value.isPresent())
+                            throw new JsonParseException("Unknown value '" + element.getAsString() + "' for property '" + property.getName() + "' in block '" + identifier + "'!");
+                        builder.add(value.get());
+                    }
+                }else
+                    throw new JsonParseException("Value must be a string or an array of strings!");
+                properties.put(property, builder.build());
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse properties entry '" + entry.getKey() + "'", e);
+            }
         }
 
         // Find all matching states
@@ -245,9 +338,101 @@ public class BlockModelModifierReloadListener {
         return state.setValue((Property<T>)property, (T)value);
     }
 
-    private static class Properties {
-        final List<ResourceLocation> appendModels = new ArrayList<>();
-        boolean paneCullingFix;
-        boolean showBreakingOverlay = true;
+    private static List<ModelEntry> parseModelEntry(JsonElement element){
+        if(!element.isJsonArray() || !element.isJsonObject() && (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()))
+            throw new JsonParseException("Must be an array, object, or string!");
+
+        // Handle arrays
+        if(element.isJsonArray()){
+            List<ModelEntry> entries = new ArrayList<>(element.getAsJsonArray().size());
+            try{
+                for(JsonElement e : element.getAsJsonArray())
+                    entries.addAll(parseModelEntry(e));
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse entry", e);
+            }
+            return entries;
+        }
+
+        // Handle simple strings
+        if(element.isJsonPrimitive()){
+            String identifier = element.getAsString();
+            if(!IdentifierUtil.isValidIdentifier(identifier))
+                throw new JsonParseException("String must be a valid identifier, not '" + identifier + "'!");
+            return ImmutableList.of(ModelEntry.simple(new ResourceLocation(identifier)));
+        }
+
+        JsonObject object = element.getAsJsonObject();
+
+        // Model identifier
+        if(!object.has("model") || !object.get("model").isJsonPrimitive() || !object.getAsJsonPrimitive("model").isString())
+            throw new JsonParseException("Object must have string property 'model'!");
+        if(!IdentifierUtil.isValidIdentifier(object.get("model").getAsString()))
+            throw new JsonParseException("Property 'model' must be a valid identifier, not '" + object.get("model").getAsString() + "'!");
+        ResourceLocation model = new ResourceLocation(object.get("model").getAsString());
+
+        // Conditions
+        BlockStateModelPredicate conditions = null;
+        if(object.has("conditions")){
+            try{
+                if(object.get("conditions").isJsonObject())
+                    conditions = FusionBlockStateModelPredicateRegistry.deserializeBlockStateModelPredicate(object.get("conditions").getAsJsonObject());
+                else if(object.get("conditions").isJsonArray()){
+                    List<BlockStateModelPredicate> predicates = new ArrayList<>();
+                    for(JsonElement entry : object.get("conditions").getAsJsonArray()){
+                        if(!entry.isJsonObject())
+                            throw new JsonParseException("Array entry must be an object!");
+                        predicates.add(FusionBlockStateModelPredicateRegistry.deserializeBlockStateModelPredicate(entry.getAsJsonObject()));
+                    }
+                    conditions = DefaultBlockStateModelPredicates.and(predicates.toArray(new BlockStateModelPredicate[0]));
+                }else
+                    throw new JsonParseException("Value must an object or array of objects!");
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse conditions for model '" + model + "'", e);
+            }
+            conditions = conditions.simplify();
+        }
+
+        // Breaking overlay
+        Boolean showBreakingOverlay = null;
+        if(object.has("show_breaking_overlay")){
+            if(!object.get("show_breaking_overlay").isJsonPrimitive() || !object.getAsJsonPrimitive("show_breaking_overlay").isBoolean())
+                throw new JsonParseException("Property 'show_breaking_overlay' must be a boolean!");
+            showBreakingOverlay = object.get("show_breaking_overlay").getAsBoolean();
+        }
+
+        return ImmutableList.of(new ModelEntry(model, conditions, showBreakingOverlay));
+    }
+
+    private static final class Properties{
+        private final int priority;
+        private final List<ModelEntry> defaultModelOverrides;
+        private final List<List<ModelEntry>> appendModels;
+        private final boolean paneCullingFix;
+        private final Boolean showBreakingOverlay;
+
+        private Properties(int priority, List<ModelEntry> defaultModelOverrides, List<List<ModelEntry>> appendModels, boolean paneCullingFix, Boolean showBreakingOverlay){
+            this.priority = priority;
+            this.defaultModelOverrides = defaultModelOverrides;
+            this.appendModels = appendModels;
+            this.paneCullingFix = paneCullingFix;
+            this.showBreakingOverlay = showBreakingOverlay;
+        }
+    }
+
+    private static final class ModelEntry{
+        static ModelEntry simple (ResourceLocation model){
+            return new ModelEntry(model, null, null);
+        }
+
+        private final ResourceLocation model;
+        private final @Nullable BlockStateModelPredicate conditions;
+        private final Boolean showBreakingOverlay;
+
+        private ModelEntry(ResourceLocation model, @Nullable BlockStateModelPredicate conditions, Boolean showBreakingOverlay){
+            this.model = model;
+            this.conditions = conditions;
+            this.showBreakingOverlay = showBreakingOverlay;
+        }
     }
 }

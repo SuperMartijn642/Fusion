@@ -1,11 +1,12 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
-import com.google.common.collect.ImmutableList;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.model.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
+import com.supermartijn642.fusion.model.WrappedBakedModel;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.renderer.model.*;
+import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.Direction;
@@ -16,208 +17,210 @@ import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
 import net.minecraftforge.client.model.data.ModelProperty;
-import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.vecmath.Matrix4f;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.IntStream;
 
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
-public class BlockModelModifierBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
+public class BlockModelModifierBakedModel extends WrappedBakedModel {
 
-    private static final ModelProperty<Long> SEED_PROPERTY = new ModelProperty<>();
-    private static final ModelProperty<IModelData[]> DATA_PROPERTY = new ModelProperty<>();
+    private static final ModelProperty<RenderData> RENDER_DATA = new ModelProperty<>();
 
     private final IBakedModel original;
-    private final List<IBakedModel> models;
-    private final boolean showBreakingOverlay;
-    private final boolean isOriginalSimpleModel;
-    private final boolean hasNonSimpleModels;
-    private final List<IBakedModel> nonSimpleModels;
-    private final List<BakedQuad> quads;
-    @SuppressWarnings("unchecked")
-    private final List<BakedQuad>[] culledQuads = new List[6];
+    private final List<ConditionalModel> defaultModelOverrides;
+    private final List<List<ConditionalModel>> appendModels;
+    private final TextureAtlasSprite particleSprite;
+    private final boolean ambientOcclusion;
 
-    public BlockModelModifierBakedModel(IBakedModel original, List<IBakedModel> models, boolean showBreakingOverlay){
+    BlockModelModifierBakedModel(IBakedModel original, List<ConditionalModel> defaultModelOverrides, List<List<ConditionalModel>> appendModels){
+        super(original);
         this.original = original;
-        this.models = new ArrayList<>(models.size() + 1);
-        this.models.add(original);
-        this.models.addAll(models);
-        this.showBreakingOverlay = showBreakingOverlay;
-        List<IBakedModel> nonSimpleModels = new ArrayList<>();
+        this.defaultModelOverrides = defaultModelOverrides;
+        this.appendModels = appendModels;
+
+        // Resolve default context properties
+        TextureAtlasSprite particleSprite = this.original.getParticleIcon();
+        boolean ambientOcclusion = true;
+        for(ConditionalModel override : this.defaultModelOverrides){
+            if(override.conditions == null || override.conditions.test(null, null, null)){
+                particleSprite = override.model.getParticleIcon();
+                ambientOcclusion = override.model.useAmbientOcclusion();
+                break;
+            }
+        }
+        this.particleSprite = particleSprite;
+        this.ambientOcclusion = ambientOcclusion;
+    }
+
+    private RenderData getRenderData(@Nullable IEnviromentBlockReader level, @Nullable BlockPos pos, @Nullable BlockState state, IModelData modelData){
+        boolean hasAllArguments = level != null && pos != null && state != null;
+
+        // Default model
+        int defaultModel = -1;
+        IModelData defaultModelData = null;
+        for(int i = 0; i < this.defaultModelOverrides.size(); i++){
+            ConditionalModel override = this.defaultModelOverrides.get(i);
+            if(override.conditions == null || override.conditions.test(level, pos, state)){
+                defaultModel = i;
+                defaultModelData = hasAllArguments ? override.model.getModelData(level, pos, state, modelData) : modelData;
+            }
+        }
+        if(defaultModel == -1)
+            defaultModelData = hasAllArguments ? this.original.getModelData(level, pos, state, modelData) : modelData;
+
+        // Append models
+        int[] appendModels = new int[this.appendModels.size()];
+        IModelData[] appendModelsData = new IModelData[this.appendModels.size()];
+        for(int i = 0; i < this.appendModels.size(); i++){
+            List<ConditionalModel> appendEntry = this.appendModels.get(i);
+            appendModels[i] = -1;
+            // First model whose conditions are met is submitted
+            for(int j = 0; j < appendEntry.size(); j++){
+                ConditionalModel conditional = appendEntry.get(j);
+                if(conditional.conditions == null || conditional.conditions.test(level, pos, state)){
+                    appendModels[i] = j;
+                    appendModelsData[i] = hasAllArguments ? conditional.model.getModelData(level, pos, state, modelData) : modelData;
+                    break;
+                }
+            }
+        }
+
+        return new RenderData(defaultModel, defaultModelData, appendModels, appendModelsData);
+    }
+
+    @Override
+    public @NotNull IModelData getModelData(@NotNull IEnviromentBlockReader level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull IModelData modelData){
+        return new ModelDataMap.Builder()
+            .withInitial(RENDER_DATA, this.getRenderData(level, pos, state, modelData))
+            .build();
+    }
+
+    @Override
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, Random random, IModelData modelData){
+        // Get render data
+        RenderData renderData = modelData.getData(RENDER_DATA);
+        if(renderData == null)
+            renderData = this.getRenderData(null, null, null, modelData);
+
+        // Get seed to reset random instance
+        long seed = random.nextLong();
+        random.setSeed(seed);
+
+        // Check whether the breaking overlay is being rendered
+        boolean isBreakingOverlay = FusionClient.isRenderingBreakingOverlay();
+
+        // Check whether we need to check the models' render types against the given one
+        BlockRenderLayer renderType = MinecraftForgeClient.getRenderLayer();
+        boolean doRenderTypeCheck = renderType != null && state != null;
+        boolean isDefaultRenderType = !doRenderTypeCheck || ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
+
+        // Collect all quads
         List<BakedQuad> quads = new ArrayList<>();
-        //noinspection unchecked
-        List<BakedQuad>[] culledQuads = IntStream.range(0, 6).mapToObj(i -> new ArrayList<>()).toArray(List[]::new);
-        Random random = new Random();
-        for(IBakedModel model : this.models){
-            if(!model.getClass().equals(SimpleBakedModel.class))
-                nonSimpleModels.add(model);
-            else{
-                //noinspection deprecation
-                quads.addAll(model.getQuads(null, null, random));
-                for(Direction side : Direction.values())
-                    //noinspection deprecation
-                    culledQuads[side.ordinal()].addAll(model.getQuads(null, side, random));
-            }
-        }
-        this.isOriginalSimpleModel = original.getClass().equals(SimpleBakedModel.class);
-        this.hasNonSimpleModels = !nonSimpleModels.isEmpty();
-        this.nonSimpleModels = nonSimpleModels.isEmpty() ? null : ImmutableList.copyOf(nonSimpleModels);
-        this.quads = ImmutableList.copyOf(quads);
-        for(Direction side : Direction.values())
-            this.culledQuads[side.ordinal()] = ImmutableList.copyOf(culledQuads[side.ordinal()]);
-    }
 
-    @Override
-    public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @Nonnull Random random, @Nonnull IModelData data){
-        // Get model data properties
-        Long seed = data.getData(SEED_PROPERTY);
-        IModelData[] arr = data.getData(DATA_PROPERTY);
-        // Check whether quads from simple models should be submitted
-        BlockRenderLayer renderType = MinecraftForgeClient.getRenderLayer();
-        boolean isDefaultRenderType = renderType == null || state == null || ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
-        // When rendering breaking overlay, only submit the original model
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
-            if(this.isOriginalSimpleModel)
-                return isDefaultRenderType ? this.original.getQuads(state, side, random, EmptyModelData.INSTANCE) : Collections.emptyList();
-            if(ModelRenderTypeHelper.canRenderInLayer(this.original, state, renderType, isDefaultRenderType)){
-                IModelData subData = arr == null || arr[0] == null ? EmptyModelData.INSTANCE : arr[0];
-                if(seed != null)
-                    random.setSeed(seed);
-                return this.original.getQuads(state, side, random, subData);
-            }
-            return Collections.emptyList();
-        }
-        // If there's only simple models, return the cached quads
-        if(!this.hasNonSimpleModels)
-            return isDefaultRenderType ? side == null ? this.quads : this.culledQuads[side.ordinal()] : Collections.emptyList();
-        // Start with quads from simple models
-        List<BakedQuad> quads = isDefaultRenderType ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
-        // Gather quads from complex models
-        for(int i = 0; i < this.nonSimpleModels.size(); i++){
-            IBakedModel model = this.nonSimpleModels.get(i);
-            if(ModelRenderTypeHelper.canRenderInLayer(model, state, renderType, isDefaultRenderType)){
-                IModelData subData = arr == null || arr[i] == null ? EmptyModelData.INSTANCE : arr[i];
-                if(seed != null)
-                    random.setSeed(seed);
-                quads.addAll(model.getQuads(state, side, random, subData));
+        // Default model
+        if(renderData.defaultModel != -1){
+            ConditionalModel override = this.defaultModelOverrides.get(renderData.defaultModel);
+            if((!isBreakingOverlay || override.showBreakingOverlay)
+                && (!doRenderTypeCheck || ModelRenderTypeHelper.canRenderInLayer(override.model, state, renderType, isDefaultRenderType)))
+                quads.addAll(override.model.getQuads(state, cullDirection, random, renderData.defaultModelData));
+        }else if(!doRenderTypeCheck || ModelRenderTypeHelper.canRenderInLayer(this.original, state, renderType, isDefaultRenderType))
+            quads.addAll(this.original.getQuads(state, cullDirection, random, renderData.defaultModelData));
+
+        // Append models
+        for(int i = 0; i < this.appendModels.size(); i++){
+            if(renderData.appendModels[i] == -1)
+                continue;
+            ConditionalModel conditional = this.appendModels.get(i).get(renderData.appendModels[i]);
+            if(!isBreakingOverlay || conditional.showBreakingOverlay){
+                random.setSeed(seed);
+                IModelData conditionalData = renderData.appendModelsData[i];
+                if(!doRenderTypeCheck || ModelRenderTypeHelper.canRenderInLayer(conditional.model, state, renderType, isDefaultRenderType))
+                    quads.addAll(conditional.model.getQuads(state, cullDirection, random, conditionalData));
             }
         }
         return quads;
     }
 
     @Override
-    public @Nonnull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random random){
-        // Check whether quads from simple models should be submitted
-        BlockRenderLayer renderType = MinecraftForgeClient.getRenderLayer();
-        boolean isDefaultRenderType = renderType == null || state == null || ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
-        // When rendering breaking overlay, only submit the original model
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null){
-            if(ModelRenderTypeHelper.canRenderInLayer(this.original, state, renderType, isDefaultRenderType))
-                return this.original.getQuads(state, side, random, EmptyModelData.INSTANCE);
-            return Collections.emptyList();
-        }
-        // If there's only simple models, return the cached quads
-        if(!this.hasNonSimpleModels)
-            return isDefaultRenderType ? side == null ? this.quads : this.culledQuads[side.ordinal()] : Collections.emptyList();
-        // Start with quads from simple models
-        List<BakedQuad> quads = isDefaultRenderType ? new ArrayList<>(side == null ? this.quads : this.culledQuads[side.ordinal()]) : new ArrayList<>();
-        // Gather quads from complex models
-        for(IBakedModel model : this.nonSimpleModels){
-            if(ModelRenderTypeHelper.canRenderInLayer(model, state, renderType, isDefaultRenderType))
-                quads.addAll(model.getQuads(state, side, random, EmptyModelData.INSTANCE));
-        }
-        return quads;
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, Random random){
+        return this.getQuads(state, cullDirection, random, EmptyModelData.INSTANCE);
     }
 
     @Override
-    public boolean canRenderInLayer(BlockState state, BlockRenderLayer layer){
-        boolean isDefaultRenderType = ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
-        // When rendering breaking overlay, only submit the original model's render types
-        if(!this.showBreakingOverlay && FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null)
-            return ModelRenderTypeHelper.canRenderInLayer(this.original, state, layer, isDefaultRenderType);
-        // Check if any of the models can render in the layer
-        for(IBakedModel model : this.models){
-            if(ModelRenderTypeHelper.canRenderInLayer(model, state, layer, isDefaultRenderType))
+    public boolean canRenderInLayer(BlockState state, BlockRenderLayer renderType){
+        // Check whether the render type is a default one for the state
+        boolean isDefaultRenderType = ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
+
+        // Default model
+        for(ConditionalModel override : this.defaultModelOverrides){
+            if(ModelRenderTypeHelper.canRenderInLayer(override.model, state, renderType, isDefaultRenderType))
                 return true;
+        }
+        if(ModelRenderTypeHelper.canRenderInLayer(this.original, state, renderType, isDefaultRenderType))
+            return true;
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            for(ConditionalModel conditional : appendEntry){
+                if(ModelRenderTypeHelper.canRenderInLayer(conditional.model, state, renderType, isDefaultRenderType))
+                    return true;
+            }
         }
         return false;
     }
 
     @Override
-    public IModelData getModelData(IEnviromentBlockReader level, BlockPos pos, BlockState state, IModelData data){
-        // If there's only simple models, no need for model data
-        if(!this.hasNonSimpleModels)
-            return EmptyModelData.INSTANCE;
-        // Add seed
-        ModelDataMap.Builder builder = new ModelDataMap.Builder()
-            .withInitial(SEED_PROPERTY, state.getSeed(pos));
-        // Gather model data for complex models
-        IModelData[] arr = new IModelData[this.nonSimpleModels.size()];
-        for(int i = 0; i < this.nonSimpleModels.size(); i++)
-            arr[i] = this.nonSimpleModels.get(i).getModelData(level, pos, state, data);
-        return builder.withInitial(DATA_PROPERTY, arr).build();
+    public TextureAtlasSprite getParticleIcon(){
+        return this.particleSprite;
     }
 
     @Override
-    public ItemCameraTransforms getTransforms(){
-        return this.original.getTransforms();
+    public TextureAtlasSprite getParticleTexture(@NotNull IModelData modelData){
+        // Get render data
+        RenderData renderData = modelData.getData(RENDER_DATA);
+        if(renderData == null)
+            return this.getParticleIcon();
+
+        if(renderData.defaultModel != -1){
+            ConditionalModel override = this.defaultModelOverrides.get(renderData.defaultModel);
+            return override.model.getParticleTexture(renderData.defaultModelData);
+        }
+        return this.original.getParticleTexture(renderData.defaultModelData);
     }
 
     @Override
     public boolean useAmbientOcclusion(){
-        return this.original.useAmbientOcclusion();
+        return this.ambientOcclusion;
     }
 
-    @Override
-    public boolean isGui3d(){
-        return this.original.isGui3d();
+    static final class ConditionalModel {
+        private final IBakedModel model;
+        private final @Nullable BlockStateModelPredicate conditions;
+        private final boolean showBreakingOverlay;
+
+        ConditionalModel(IBakedModel model, @Nullable BlockStateModelPredicate conditions, boolean showBreakingOverlay){
+            this.model = model;
+            this.conditions = conditions;
+            this.showBreakingOverlay = showBreakingOverlay;
+        }
     }
 
-    @Override
-    public boolean isCustomRenderer(){
-        return this.original.isCustomRenderer();
-    }
+    private static final class RenderData {
+        private final int defaultModel;
+        private final IModelData defaultModelData;
+        private final int[] appendModels;
+        private final IModelData[] appendModelsData;
 
-    @Override
-    public TextureAtlasSprite getParticleIcon(){
-        return this.original.getParticleIcon();
-    }
-
-    @Override
-    public ItemOverrideList getOverrides(){
-        return this.original.getOverrides();
-    }
-
-    @Override
-    public boolean isAmbientOcclusion(BlockState state){
-        return this.original.isAmbientOcclusion(state);
-    }
-
-    @Override
-    public boolean doesHandlePerspectives(){
-        return this.original.doesHandlePerspectives();
-    }
-
-    @Override
-    public Pair<? extends IBakedModel,Matrix4f> handlePerspective(ItemCameraTransforms.TransformType transformType){
-        return this.original.handlePerspective(transformType);
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleTexture(@Nonnull IModelData data){
-        if(this.isOriginalSimpleModel)
-            return this.original.getParticleTexture(EmptyModelData.INSTANCE);
-        // Get appropriate model data
-        IModelData[] arr = data.getData(DATA_PROPERTY);
-        IModelData subData = arr == null || arr[0] == null ? EmptyModelData.INSTANCE : arr[0];
-        return this.original.getParticleTexture(subData);
+        private RenderData(int defaultModel, IModelData defaultModelData, int[] appendModels, IModelData[] appendModelsData){
+            this.defaultModel = defaultModel;
+            this.defaultModelData = defaultModelData;
+            this.appendModels = appendModels;
+            this.appendModelsData = appendModelsData;
+        }
     }
 }

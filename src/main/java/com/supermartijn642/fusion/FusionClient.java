@@ -26,7 +26,7 @@ public class FusionClient {
 
     public static final Logger LOGGER = LogManager.getLogger(Fusion.MODID);
 
-    public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
+    public static final ThreadLocal<Object> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
     public static final ThreadLocal<ItemStack> ITEM_STACK_RENDER_CONTEXT = new ThreadLocal<>();
 
     public static void init(){
@@ -107,5 +107,9 @@ public class FusionClient {
             fusionVersion = version;
         }
         return fusionVersion;
+    }
+
+    public static boolean isRenderingBreakingOverlay(){
+        return FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null;
     }
 }

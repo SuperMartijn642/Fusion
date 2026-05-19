@@ -44,7 +44,7 @@ public class ModelManagerMixin {
     )
     private static void registerBlockModelOverlays(Map<Identifier,UnbakedModel> models, BlockStateModelLoader.LoadedModels loadedModels, ClientItemInfoLoader.LoadedClientInfos clientInfos, CallbackInfoReturnable<ModelDiscovery> ci, Zone zone, ModelDiscovery modelDiscovery){
         modelDiscovery.addRoot(resolver -> {
-            BlockModelModifierReloadListener.INSTANCE.registerOverlays(resolver);
+            BlockModelModifierReloadListener.INSTANCE.registerModelDependencies(resolver);
             ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver);
         });
     }

@@ -4,15 +4,15 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.predicates.item.DefaultItemModelPredicates;
+import com.supermartijn642.fusion.api.model.predicates.item.FusionItemModelPredicateRegistry;
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
-import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.predicates.item.ItemModelPredicateRegistryImpl;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.renderer.item.CuboidItemModelWrapper;
@@ -25,10 +25,12 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.world.item.Item;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
@@ -38,47 +40,122 @@ public class ItemModelModifierReloadListener {
     private static final String LOCATION = "fusion/model_modifiers/items";
     private static final FileToIdConverter ID_CONVERTER = FileToIdConverter.json(LOCATION);
     private static final Matrix4fc IDENTITY_MATRIX = new Matrix4f().identity();
+    private static final int DEFAULT_PRIORITY = 100;
 
     public static final ItemModelModifierReloadListener INSTANCE = new ItemModelModifierReloadListener();
 
-    private final Map<Identifier,ItemModelPredicatesProperties> models = new HashMap<>();
+    private final Map<Identifier,List<Properties>> modifiers = new HashMap<>();
 
     private ItemModelModifierReloadListener(){
     }
 
-    public void registerPredicateModels(ResolvableModel.Resolver resolver){
+    public void registerModelDependencies(ResolvableModel.Resolver resolver){
+        // Collect all model identifiers
         Set<Identifier> models = new HashSet<>();
-        for(ItemModelPredicatesProperties properties : this.models.values())
-            models.addAll(properties.dependencies());
+        for(List<Properties> modifiers : this.modifiers.values()){ // Note: Even models that will technically never be used due to earlier conditions still need to be resolved for user warnings
+            for(Properties modifier : modifiers){
+                for(ModelEntry entry : modifier.defaultModelOverrides)
+                    models.add(entry.model);
+                for(List<ModelEntry> conditionals : modifier.appendModels){
+                    for(ModelEntry entry : conditionals){
+                        models.add(entry.model);
+                    }
+                }
+            }
+        }
+        // Mark the models
         models.forEach(resolver::markDependency);
     }
 
-    public void applyPredicateModels(ModelBakery.BakingResult results, ItemModel.BakingContext bakingContext){
+    public void applyModelModifiers(ModelBakery.BakingResult results, ItemModel.BakingContext bakingContext){
         Map<Identifier,ItemModel> bakedModels = results.itemStackModels();
-        for(Map.Entry<Identifier,ItemModelPredicatesProperties> entry : this.models.entrySet()){
+
+        // Create model resolver
+        Function<Identifier,ItemModel> modelResolver = new Function<>() {
+            final Map<Identifier,ItemModel> models = new HashMap<>();
+
+            @Override
+            public ItemModel apply(Identifier identifier){
+                ItemModel model = this.models.get(identifier);
+                if(model != null)
+                    return model;
+                try{
+                    model = new CuboidItemModelWrapper.Unbaked(identifier, Optional.empty(), List.of()).bake(bakingContext, IDENTITY_MATRIX);
+                }catch(Exception e){
+                    FusionClient.LOGGER.error("Caught exception baking model '{}':", identifier, e);
+                    model = results.missingModels().item();
+                }
+                this.models.put(identifier, model);
+                return model;
+            }
+        };
+
+        // Create a modifier model for each target
+        for(Map.Entry<Identifier,List<Properties>> entry : this.modifiers.entrySet()){
             Identifier target = entry.getKey();
-            ItemModelPredicatesProperties properties = entry.getValue();
-            if(!bakedModels.containsKey(target)) continue;
-            ItemModel defaultModel = this.getOrBakeModel(properties.defaultModel == null ? target : properties.defaultModel, bakedModels, bakingContext);
-            List<Pair<ItemModelPredicate,ItemModel>> models = properties.models.stream()
-                .map(pair -> pair.mapRight(location -> this.getOrBakeModel(location, bakedModels, bakingContext)))
-                .toList();
-            bakedModels.put(target, new ItemModelModifierItemModel(defaultModel, models));
+            ItemModel targetModel = bakedModels.get(target);
+            if(targetModel == null) continue;
+
+            // Sort modifier properties by their priority
+            List<Properties> modifiers = entry.getValue();
+            modifiers.sort(Comparator.comparingInt(p -> p.priority));
+
+            // Resolve default model overwrites
+            List<ItemModelModifierItemModel.ConditionalModel> defaultModelOverrides = createConditionModels(
+                modifiers.stream().flatMap(p -> p.defaultModelOverrides.stream()).toList(),
+                modelResolver
+            );
+
+            // Resolve append models
+            List<List<ItemModelModifierItemModel.ConditionalModel>> appendModels = new ArrayList<>();
+            for(Properties modifier : modifiers){
+                for(List<ModelEntry> conditionals : modifier.appendModels){
+                    List<ItemModelModifierItemModel.ConditionalModel> resolvedConditionals = createConditionModels(
+                        conditionals,
+                        modelResolver
+                    );
+                    if(!resolvedConditionals.isEmpty())
+                        appendModels.add(resolvedConditionals);
+                }
+            }
+            appendModels = List.copyOf(appendModels);
+
+            // Create the modifier model
+            ItemModelModifierItemModel modifierModel = new ItemModelModifierItemModel(
+                targetModel,
+                defaultModelOverrides,
+                appendModels
+            );
+            bakedModels.put(target, modifierModel);
         }
+
+        // Clear modifier data
+        this.modifiers.clear();
     }
 
-    private ItemModel getOrBakeModel(Identifier location, Map<Identifier,ItemModel> bakedModels, ItemModel.BakingContext bakingContext){
-        return bakedModels.computeIfAbsent(location, l -> new CuboidItemModelWrapper.Unbaked(l, Optional.empty(), List.of()).bake(bakingContext, IDENTITY_MATRIX));
+    private static List<ItemModelModifierItemModel.ConditionalModel> createConditionModels(List<ModelEntry> modelEntries, Function<Identifier,ItemModel> modelResolver){
+        List<ItemModelModifierItemModel.ConditionalModel> conditionals = new ArrayList<>();
+        for(ModelEntry entry : modelEntries){
+            if(entry.conditions != null && entry.conditions.alwaysFalse()) // Skip models for which the condition is always false
+                continue;
+            conditionals.add(new ItemModelModifierItemModel.ConditionalModel(
+                modelResolver.apply(entry.model),
+                entry.conditions
+            ));
+            if(entry.conditions == null || entry.conditions.alwaysTrue()) // If the condition is always true, any later entries will never be reached
+                break;
+        }
+        return List.copyOf(conditionals);
     }
 
     public void reload(ResourceManager resourceManager){
-        this.models.clear();
+        this.modifiers.clear();
 
-        // Find all item model predicate files
+        // Find all item model modifier files
         Map<Identifier,JsonElement> resources = new HashMap<>();
         SimpleJsonResourceReloadListener.scanDirectory(resourceManager, ID_CONVERTER, JsonOps.INSTANCE, new Codec<>() {
             @Override
-            public <T> DataResult<com.mojang.datafixers.util.Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
+            public <T> DataResult<Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
                 return DataResult.success(com.mojang.datafixers.util.Pair.of(ops.convertTo(JsonOps.INSTANCE, input), input));
             }
 
@@ -88,18 +165,18 @@ public class ItemModelModifierReloadListener {
             }
         }, resources);
 
-        // Parse all the item model predicate files
+        // Parse all the item model modifier files
         for(Map.Entry<Identifier,JsonElement> entry : resources.entrySet()){
             Identifier location = entry.getKey();
             if(!entry.getValue().isJsonObject()){
-                FusionClient.LOGGER.error("Item model modifier file '{}' must contain a json object!", location);
+                FusionClient.LOGGER.error("Item model modifier '{}' must contain a json object!", location);
                 continue;
             }
             JsonObject json = entry.getValue().getAsJsonObject();
             try{
                 this.parseResource(json);
             }catch(JsonParseException e){
-                LoggingHelper.logUserError(e, "Failed to parse item model modifier file '%s':", location);
+                LoggingHelper.logUserError(e, "Failed to parse item model modifier '%s':", location);
             }
         }
     }
@@ -107,94 +184,153 @@ public class ItemModelModifierReloadListener {
     private void parseResource(JsonObject json){
         // Get the targets
         if(!json.has("targets") || !json.get("targets").isJsonArray())
-            throw new JsonParseException("Item model modifier file must have array property 'targets'!");
+            throw new JsonParseException("Model modifier must have array property 'targets'!");
         JsonArray targetsJson = json.getAsJsonArray("targets");
         Set<Identifier> targets = new HashSet<>();
-        for(JsonElement element : targetsJson){
-            if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
-                throw new JsonParseException("Array property 'targets' must only contain strings!");
-            if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
-                throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
-            Identifier identifier = Identifier.parse(element.getAsString());
-            Optional<Item> item = BuiltInRegistries.ITEM.getOptional(identifier);
-            if(item.isEmpty())
-                throw new JsonParseException("Could not find an item for target '" + identifier + "'!");
-            targets.add(identifier);
+        try{
+            for(JsonElement element : targetsJson){
+                if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                    throw new JsonParseException("Array property 'targets' must only contain strings!");
+                if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                    throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!");
+                Identifier identifier = Identifier.parse(element.getAsString());
+                Optional<Item> item = BuiltInRegistries.ITEM.getOptional(identifier);
+                if(item.isEmpty())
+                    throw new JsonParseException("Could not find an item for target '" + identifier + "'!");
+                targets.add(identifier);
+            }
+        }catch(JsonParseException e){
+            throw new JsonParseException("Failed to parse a 'targets' entry", e);
         }
         if(targets.isEmpty())
             return;
 
-        // Get the default model
-        Identifier defaultModel = null;
+        // Priority
+        int priority = DEFAULT_PRIORITY;
+        if(json.has("priority")){
+            if(!json.get("priority").isJsonPrimitive() || !json.getAsJsonPrimitive("priority").isNumber())
+                throw new JsonParseException("Property 'priority' must be a number!");
+            priority = json.getAsJsonPrimitive("priority").getAsInt();
+        }
+
+        // Get default model overrides
+        List<ModelEntry> defaultModel = List.of();
+        if(json.has("default_model_overrides")){
+            try{
+                defaultModel = parseModelEntry(json.get("default_model_overrides"));
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse 'default_model_overrides'", e);
+            }
+        }
+
+        // Read legacy 'default_model' entries
         if(json.has("default_model")){
+            if(json.has("default_model_overrides"))
+                throw new JsonParseException("Cannot use legacy 'default_model' and new 'default_model_overrides' properties at the same time!");
             if(!json.get("default_model").isJsonPrimitive() || !json.getAsJsonPrimitive("default_model").isString())
                 throw new JsonParseException("Property 'default_model' must be a string!");
             if(!IdentifierUtil.isValidIdentifier(json.get("default_model").getAsString()))
                 throw new JsonParseException("Default model must be a valid identifier, not '" + json.get("default_model").getAsString() + "'!");
-            defaultModel = Identifier.parse(json.get("default_model").getAsString());
+            defaultModel = List.of(ModelEntry.simple(Identifier.parse(json.get("default_model").getAsString())));
         }
 
-        // Get the models
-        if(!json.has("models") || !json.get("models").isJsonArray())
-            throw new JsonParseException("Item model modifier file must have array property 'models'!");
-        JsonArray modelsJson = json.getAsJsonArray("models");
-        List<Pair<ItemModelPredicate,Identifier>> models = new ArrayList<>();
-        for(JsonElement element : modelsJson){
-            if(!element.isJsonObject())
-                throw new JsonParseException("Array property 'models' must only contain objects!");
-            models.add(this.parseModelEntry(element.getAsJsonObject()));
+        // Get append models
+        List<List<ModelEntry>> appendModels = new ArrayList<>();
+        if(json.has("append_models")){
+            if(!json.get("append_models").isJsonArray())
+                throw new JsonParseException("Property 'append_models' must be an array!");
+            try{
+                for(JsonElement e : json.getAsJsonArray("append_models"))
+                    appendModels.add(parseModelEntry(e));
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse 'append_models' entry", e);
+            }
         }
-        if(defaultModel == null && models.isEmpty())
-            return;
 
-        // Put everything into the map
-        ItemModelPredicatesProperties properties = new ItemModelPredicatesProperties(defaultModel, models);
+        // Read legacy 'models' entries
+        if(json.has("models")){
+            if(json.has("append_models"))
+                throw new JsonParseException("Cannot use legacy 'models' and new 'append_models' properties at the same time!");
+            if(!json.get("models").isJsonArray())
+                throw new JsonParseException("Property 'models' must be an array!");
+            JsonArray modelsJson = json.getAsJsonArray("models");
+            for(JsonElement e : modelsJson){
+                if(!e.isJsonObject())
+                    throw new JsonParseException("Array property 'models' must only contain objects!");
+                appendModels.add(parseModelEntry(e));
+            }
+        }
+
+        // Put the properties into the map
+        Properties properties = new Properties(priority, defaultModel, appendModels);
         for(Identifier target : targets)
-            this.models.put(target, properties);
+            this.modifiers.computeIfAbsent(target, t -> new ArrayList<>(8)).add(properties);
     }
 
-    private Pair<ItemModelPredicate,Identifier> parseModelEntry(JsonObject json){
-        // Model
-        if(!json.has("model") || !json.get("model").isJsonPrimitive() || !json.getAsJsonPrimitive("model").isString())
-            throw new JsonParseException("Models entry must have string property 'model'!");
-        if(!IdentifierUtil.isValidIdentifier(json.get("model").getAsString()))
-            throw new JsonParseException("Model must be a valid identifier, not '" + json.get("model").getAsString() + "'!");
-        Identifier model = Identifier.parse(json.get("model").getAsString());
+    private static List<ModelEntry> parseModelEntry(JsonElement element){
+        if(!element.isJsonArray() && !element.isJsonObject() && (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()))
+            throw new JsonParseException("Must be an array, object, or string!");
+
+        // Handle arrays
+        if(element.isJsonArray()){
+            List<ModelEntry> entries = new ArrayList<>(element.getAsJsonArray().size());
+            try{
+                for(JsonElement e : element.getAsJsonArray())
+                    entries.addAll(parseModelEntry(e));
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse entry", e);
+            }
+            return entries;
+        }
+
+        // Handle simple strings
+        if(element.isJsonPrimitive()){
+            String identifier = element.getAsString();
+            if(!IdentifierUtil.isValidIdentifier(identifier))
+                throw new JsonParseException("String must be a valid identifier, not '" + identifier + "'!");
+            return List.of(ModelEntry.simple(Identifier.parse(identifier)));
+        }
+
+        JsonObject object = element.getAsJsonObject();
+
+        // Model identifier
+        if(!object.has("model") || !object.get("model").isJsonPrimitive() || !object.getAsJsonPrimitive("model").isString())
+            throw new JsonParseException("Object must have string property 'model'!");
+        if(!IdentifierUtil.isValidIdentifier(object.get("model").getAsString()))
+            throw new JsonParseException("Property 'model' must be a valid identifier, not '" + object.get("model").getAsString() + "'!");
+        Identifier model = Identifier.parse(object.get("model").getAsString());
 
         // Conditions
-        if(!json.has("conditions") || !json.get("conditions").isJsonArray())
-            throw new JsonParseException("Models entry must have array property 'conditions'!");
-        JsonArray conditionsJson = json.getAsJsonArray("conditions");
-        if(conditionsJson.isEmpty())
-            throw new JsonParseException("Model entry property 'conditions' must not be empty!");
-        List<ItemModelPredicate> predicates = new ArrayList<>();
-        for(JsonElement element : conditionsJson){
-            if(!element.isJsonObject())
-                throw new JsonParseException("Model entry property 'conditions' must only contain objects!");
-            predicates.add(ItemModelPredicateRegistryImpl.deserializePredicate(element.getAsJsonObject()));
+        ItemModelPredicate conditions = null;
+        if(object.has("conditions")){
+            try{
+                if(object.get("conditions").isJsonObject())
+                    conditions = FusionItemModelPredicateRegistry.deserializeItemModelPredicate(object.get("conditions").getAsJsonObject());
+                else if(object.get("conditions").isJsonArray()){
+                    List<ItemModelPredicate> predicates = new ArrayList<>();
+                    for(JsonElement entry : object.get("conditions").getAsJsonArray()){
+                        if(!entry.isJsonObject())
+                            throw new JsonParseException("Array entry must be an object!");
+                        predicates.add(FusionItemModelPredicateRegistry.deserializeItemModelPredicate(entry.getAsJsonObject()));
+                    }
+                    conditions = DefaultItemModelPredicates.and(predicates.toArray(new ItemModelPredicate[0]));
+                }else
+                    throw new JsonParseException("Value must an object or array of objects!");
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse conditions for model '" + model + "'", e);
+            }
+            conditions = conditions.simplify();
         }
-        ItemModelPredicate predicate = predicates.size() == 1 ? predicates.getFirst() : DefaultItemModelPredicates.and(predicates.toArray(new ItemModelPredicate[0]));
-        predicate = predicate.simplify();
 
-        return Pair.of(predicate, model);
+        return List.of(new ModelEntry(model, conditions));
     }
 
-    private static class ItemModelPredicatesProperties {
-        final Identifier defaultModel;
-        final List<Pair<ItemModelPredicate,Identifier>> models;
+    private record Properties(int priority, List<ModelEntry> defaultModelOverrides, List<List<ModelEntry>> appendModels) {
+    }
 
-        private ItemModelPredicatesProperties(Identifier defaultModel, List<Pair<ItemModelPredicate,Identifier>> models){
-            this.defaultModel = defaultModel;
-            this.models = models;
-        }
-
-        Collection<Identifier> dependencies(){
-            Set<Identifier> models = new HashSet<>(this.models.size() + 1);
-            if(this.defaultModel != null)
-                models.add(this.defaultModel);
-            for(Pair<ItemModelPredicate,Identifier> entry : this.models)
-                models.add(entry.right());
-            return models;
+    private record ModelEntry(Identifier model, @Nullable ItemModelPredicate conditions) {
+        static ModelEntry simple(Identifier model){
+            return new ModelEntry(model, null);
         }
     }
 }

@@ -24,7 +24,6 @@
     "EntityRenderersMixin",
     "FilePackResourcesMixin",
     "ItemModelGeneratorMixin",
-    "ItemModelShaperMixin",
     "ItemRendererMixin",
     "MinecraftMixin",
     "ModelBakeryMixin",

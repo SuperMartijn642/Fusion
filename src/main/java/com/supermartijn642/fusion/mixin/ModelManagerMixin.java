@@ -41,7 +41,7 @@ public class ModelManagerMixin {
         ModelDiscovery modelDiscovery = ci.getReturnValue();
         UnbakedModel.Resolver resolver = modelDiscovery.new ResolverImpl();
         BlockModelModifierReloadListener.INSTANCE.registerModelDependencies(modelDiscovery, resolver);
-        ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(resolver, modelDiscovery);
+        ItemModelModifierReloadListener.INSTANCE.registerModelDependencies(modelDiscovery, resolver);
     }
 
     @Inject(
@@ -54,7 +54,7 @@ public class ModelManagerMixin {
     )
     private void applyBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, Object2IntMap<?> map, CallbackInfoReturnable<?> ci){
         BlockModelModifierReloadListener.INSTANCE.applyModelModifiers(modelBakery);
-        ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(modelBakery);
+        ItemModelModifierReloadListener.INSTANCE.applyModelModifiers(modelBakery);
     }
 
     @Inject(

@@ -19,7 +19,6 @@
     "GameSettingsMixin",
     "ItemBlockRenderTypesMixin",
     "ItemModelGeneratorMixin",
-    "ItemModelShaperMixin",
     "ItemRendererMixin",
     "LegacyResourcePackWrapperMixin",
     "LegacyResourcePackWrapperV4Mixin",

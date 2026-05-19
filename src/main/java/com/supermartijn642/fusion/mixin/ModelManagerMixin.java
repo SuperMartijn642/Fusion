@@ -49,6 +49,6 @@ public class ModelManagerMixin {
     )
     private void applyBlockModelOverlays(ModelBakery modelBakery, IResourceManager resourceManager, IProfiler profiler, CallbackInfo ci){
         BlockModelModifierReloadListener.INSTANCE.applyModelModifiers(modelBakery);
-        ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(modelBakery);
+        ItemModelModifierReloadListener.INSTANCE.applyModelModifiers(modelBakery);
     }
 }

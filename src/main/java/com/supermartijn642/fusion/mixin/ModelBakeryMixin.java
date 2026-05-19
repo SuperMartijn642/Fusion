@@ -59,7 +59,7 @@ public class ModelBakeryMixin {
 
             // Apply Fusion model modifiers
             ModelBakery.ModelBakerImpl resolver = ((ModelBakery)(Object)this).new ModelBakerImpl(textureGetter, new ModelBakery.PartCacheImpl(), results.missingModels());
-            BlockModelModifierReloadListener.INSTANCE.applyOverlays(results, resolver);
+            BlockModelModifierReloadListener.INSTANCE.applyModelModifiers(results, resolver);
             ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(results, new ItemModel.BakingContext(
                 resolver,
                 this.entityModelSet,

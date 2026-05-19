@@ -34,7 +34,7 @@ public class ModelBakeryMixin {
             //noinspection DataFlowIssue
             ModelBakery modelBakery = (ModelBakery)(Object)this;
             BlockModelModifierReloadListener.INSTANCE.registerModelDependencies(modelBakery);
-            ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(modelBakery);
+            ItemModelModifierReloadListener.INSTANCE.registerModelDependencies(modelBakery);
         }
     }
 

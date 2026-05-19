@@ -18,10 +18,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
@@ -45,18 +44,18 @@ public class ModelLoaderMixin {
         )
     )
     private void loadModelsInject(CallbackInfoReturnable<?> ci){
-        Set<ModelResourceLocation> models = new HashSet<>(BlockModelModifierReloadListener.INSTANCE.registerOverlays());
-        models.addAll(ItemModelModifierReloadListener.INSTANCE.registerPredicateModels());
-        for(ModelResourceLocation modelLocation : models){
+        Consumer<ModelResourceLocation> modelLoader = identifier -> {
             IModel model;
             try{
-                model = ModelLoaderRegistry.getModel(new ResourceLocation(modelLocation.getResourceDomain(), modelLocation.getResourcePath()));
+                model = ModelLoaderRegistry.getModel(new ResourceLocation(identifier.getResourceDomain(), identifier.getResourcePath()));
             }catch(Exception e){
-                this.loadingExceptions.put(modelLocation, e);
+                this.loadingExceptions.put(identifier, e);
                 model = ModelLoaderRegistry.getMissingModel();
             }
-            this.stateModels.put(modelLocation, model);
-        }
+            this.stateModels.put(identifier, model);
+        };
+        BlockModelModifierReloadListener.INSTANCE.gatherModelDependencies().forEach(modelLoader);
+        ItemModelModifierReloadListener.INSTANCE.registerPredicateModels().forEach(modelLoader);
     }
 
     @Inject(
@@ -66,7 +65,7 @@ public class ModelLoaderMixin {
     private void applyBakedModels(CallbackInfoReturnable<?> ci){
         //noinspection DataFlowIssue
         ModelBakery bakery = (ModelBakery)(Object)this;
-        BlockModelModifierReloadListener.INSTANCE.applyOverlays(bakery);
+        BlockModelModifierReloadListener.INSTANCE.applyModelModifiers(bakery);
         ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(bakery);
     }
 

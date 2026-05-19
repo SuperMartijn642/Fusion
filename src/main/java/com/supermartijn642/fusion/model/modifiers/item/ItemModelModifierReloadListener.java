@@ -75,7 +75,7 @@ public class ItemModelModifierReloadListener {
 
             // Sort modifier properties by their priority
             List<Properties> modifiers = entry.getValue();
-            modifiers.sort(Comparator.comparingInt(p -> p.priority));
+            modifiers.sort(Comparator.<Properties>comparingInt(p -> p.priority).thenComparing(p -> p.location));
 
             // Resolve default model overwrites
             List<ItemModelModifierBakedModel.ConditionalModel> defaultModelOverrides = createConditionModels(
@@ -152,14 +152,14 @@ public class ItemModelModifierReloadListener {
             }
             JsonObject json = entry.getValue().getAsJsonObject();
             try{
-                this.parseResource(json);
+                this.parseResource(json, location);
             }catch(JsonParseException e){
                 LoggingHelper.logUserError(e, "Failed to parse item model modifier '%s':", location);
             }
         }
     }
 
-    private void parseResource(JsonObject json){
+    private void parseResource(JsonObject json, ResourceLocation location){
         // Get the targets
         if(!json.has("targets") || !json.get("targets").isJsonArray())
             throw new JsonParseException("Model modifier must have array property 'targets'!");
@@ -240,7 +240,7 @@ public class ItemModelModifierReloadListener {
         }
 
         // Put the properties into the map
-        Properties properties = new Properties(priority, defaultModel, appendModels);
+        Properties properties = new Properties(priority, location, defaultModel, appendModels);
         for(ResourceLocation target : targets)
             this.modifiers.computeIfAbsent(new ModelResourceLocation(target, "inventory"), t -> new ArrayList<>(8)).add(properties);
     }
@@ -303,7 +303,7 @@ public class ItemModelModifierReloadListener {
         return List.of(new ModelEntry(model, conditions));
     }
 
-    private record Properties(int priority, List<ModelEntry> defaultModelOverrides, List<List<ModelEntry>> appendModels) {
+    private record Properties(int priority, ResourceLocation location, List<ModelEntry> defaultModelOverrides, List<List<ModelEntry>> appendModels) {
     }
 
     private record ModelEntry(ResourceLocation model, @Nullable ItemModelPredicate conditions) {

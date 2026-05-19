@@ -1,44 +1,95 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
-import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.model.WrappedBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class ItemModelModifierBakedModel implements BakedModel, FabricBakedModel {
+public class ItemModelModifierBakedModel extends WrappedBakedModel {
 
-    private final BakedModel defaultModel;
-    private final List<Pair<ItemModelPredicate,BakedModel>> models;
+    private final BakedModel original;
+    private final List<ConditionalModel> defaultModelOverrides;
+    private final List<List<ConditionalModel>> appendModels;
 
-    public ItemModelModifierBakedModel(BakedModel defaultModel, List<Pair<ItemModelPredicate,BakedModel>> models){
-        this.defaultModel = defaultModel;
-        this.models = models;
+    ItemModelModifierBakedModel(BakedModel original, List<ConditionalModel> defaultModelOverrides, List<List<ConditionalModel>> appendModels){
+        super(original);
+        this.original = original;
+        this.defaultModelOverrides = defaultModelOverrides;
+        this.appendModels = appendModels;
     }
 
-    public BakedModel forStack(ItemStack stack){
-        for(Pair<ItemModelPredicate,BakedModel> entry : this.models){
-            if(entry.left().test(stack))
-                return entry.right();
+    @Override
+    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(stack)){
+                    ((FabricBakedModel)override.model).emitItemQuads(stack, randomSupplier, context);
+                    break overrides;
+                }
+            }
+            ((FabricBakedModel)this.original).emitItemQuads(stack, randomSupplier, context);
         }
-        return this.defaultModel;
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(stack)){
+                    ((FabricBakedModel)conditional.model).emitItemQuads(stack, randomSupplier, context);
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random){
+        long seed = random.nextLong();
+        random.setSeed(seed);
+
+        // Collect all quads
+        List<BakedQuad> quads = new ArrayList<>();
+
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(ItemStack.EMPTY)){
+                    quads.addAll(override.model.getQuads(state, cullDirection, random));
+                    break overrides;
+                }
+            }
+            quads.addAll(this.original.getQuads(state, cullDirection, random));
+        }
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(ItemStack.EMPTY)){
+                    random.setSeed(seed);
+                    quads.addAll(conditional.model.getQuads(state, cullDirection, random));
+                    break;
+                }
+            }
+        }
+        return quads;
     }
 
     @Override
@@ -46,53 +97,6 @@ public class ItemModelModifierBakedModel implements BakedModel, FabricBakedModel
         return false;
     }
 
-    @Override
-    public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
-        ((FabricBakedModel)this.defaultModel).emitBlockQuads(blockView, state, pos, randomSupplier, context);
-    }
-
-    @Override
-    public void emitItemQuads(ItemStack stack, Supplier<RandomSource> randomSupplier, RenderContext context){
-        ((FabricBakedModel)this.defaultModel).emitItemQuads(stack, randomSupplier, context);
-    }
-
-    @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState blockState, @Nullable Direction direction, RandomSource randomSource){
-        return this.defaultModel.getQuads(blockState, direction, randomSource);
-    }
-
-    @Override
-    public boolean useAmbientOcclusion(){
-        return this.defaultModel.useAmbientOcclusion();
-    }
-
-    @Override
-    public boolean isGui3d(){
-        return this.defaultModel.isGui3d();
-    }
-
-    @Override
-    public boolean usesBlockLight(){
-        return this.defaultModel.usesBlockLight();
-    }
-
-    @Override
-    public boolean isCustomRenderer(){
-        return this.defaultModel.isCustomRenderer();
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleIcon(){
-        return this.defaultModel.getParticleIcon();
-    }
-
-    @Override
-    public ItemTransforms getTransforms(){
-        return this.defaultModel.getTransforms();
-    }
-
-    @Override
-    public ItemOverrides getOverrides(){
-        return this.defaultModel.getOverrides();
+    record ConditionalModel(BakedModel model, @Nullable ItemModelPredicate conditions) {
     }
 }

@@ -28,7 +28,7 @@ public class FusionClient implements ClientModInitializer {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(Fusion.MODID);
 
-    public static final ThreadLocal<Boolean> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
+    public static final ThreadLocal<Object> IS_RENDERING_BREAKING_OVERLAY = new ThreadLocal<>();
 
     private static NativeImage dummyImage;
 
@@ -129,5 +129,9 @@ public class FusionClient implements ClientModInitializer {
             fusionVersion = version;
         }
         return fusionVersion;
+    }
+
+    public static boolean isRenderingBreakingOverlay(){
+        return FusionClient.IS_RENDERING_BREAKING_OVERLAY.get() != null;
     }
 }

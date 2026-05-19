@@ -39,7 +39,7 @@ public class ModelManagerMixin {
         at = @At("HEAD")
     )
     private void registerBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, CallbackInfoReturnable<?> ci){
-        BlockModelModifierReloadListener.INSTANCE.registerOverlays(modelBakery);
+        BlockModelModifierReloadListener.INSTANCE.registerModelDependencies(modelBakery);
         ItemModelModifierReloadListener.INSTANCE.registerPredicateModels(modelBakery);
     }
 
@@ -53,7 +53,7 @@ public class ModelManagerMixin {
         )
     )
     private void applyBlockModelOverlays(ProfilerFiller profiler, Map<ResourceLocation,AtlasSet.StitchResult> textures, ModelBakery modelBakery, CallbackInfoReturnable<?> ci){
-        BlockModelModifierReloadListener.INSTANCE.applyOverlays(modelBakery);
+        BlockModelModifierReloadListener.INSTANCE.applyModelModifiers(modelBakery);
         ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(modelBakery);
     }
 

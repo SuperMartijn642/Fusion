@@ -55,7 +55,7 @@ public class ModelLoaderMixin {
             this.stateModels.put(identifier, model);
         };
         BlockModelModifierReloadListener.INSTANCE.gatherModelDependencies().forEach(modelLoader);
-        ItemModelModifierReloadListener.INSTANCE.registerPredicateModels().forEach(modelLoader);
+        ItemModelModifierReloadListener.INSTANCE.gatherModelDependencies().forEach(modelLoader);
     }
 
     @Inject(
@@ -66,7 +66,7 @@ public class ModelLoaderMixin {
         //noinspection DataFlowIssue
         ModelBakery bakery = (ModelBakery)(Object)this;
         BlockModelModifierReloadListener.INSTANCE.applyModelModifiers(bakery);
-        ItemModelModifierReloadListener.INSTANCE.applyPredicateModels(bakery);
+        ItemModelModifierReloadListener.INSTANCE.applyModelModifiers(bakery);
     }
 
     @Inject(

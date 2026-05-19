@@ -1,83 +1,109 @@
 package com.supermartijn642.fusion.model.modifiers.item;
 
+import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
-import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
+import com.supermartijn642.fusion.model.WrappedBakedModel;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.block.model.ItemOverrideList;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
+import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import javax.vecmath.Matrix4f;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created 20/09/2024 by SuperMartijn642
  */
-public class ItemModelModifierBakedModel implements IBakedModel {
+public class ItemModelModifierBakedModel extends WrappedBakedModel {
 
-    private final IBakedModel defaultModel;
-    private final List<Pair<ItemModelPredicate,IBakedModel>> models;
+    private final IBakedModel original;
+    private final List<ConditionalModel> defaultModelOverrides;
+    private final List<List<ConditionalModel>> appendModels;
 
-    public ItemModelModifierBakedModel(IBakedModel defaultModel, List<Pair<ItemModelPredicate,IBakedModel>> models){
-        this.defaultModel = defaultModel;
-        this.models = models;
+    ItemModelModifierBakedModel(IBakedModel original, List<ConditionalModel> defaultModelOverrides, List<List<ConditionalModel>> appendModels){
+        super(original);
+        this.original = original;
+        this.defaultModelOverrides = defaultModelOverrides;
+        this.appendModels = appendModels;
     }
 
-    public IBakedModel forStack(ItemStack stack){
-        for(Pair<ItemModelPredicate,IBakedModel> entry : this.models){
-            if(entry.left().test(stack))
-                return entry.right();
+    @Override
+    public @NotNull List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing cullDirection, long seed){
+        // Get item stack context
+        ItemStack stack = FusionClient.ITEM_STACK_RENDER_CONTEXT.get();
+
+        // Collect all quads
+        List<BakedQuad> quads = new ArrayList<>();
+
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(stack)){
+                    quads.addAll(override.model.getQuads(state, cullDirection, seed));
+                    break overrides;
+                }
+            }
+            quads.addAll(this.original.getQuads(state, cullDirection, seed));
         }
-        return this.defaultModel;
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(stack)){
+                    quads.addAll(conditional.model.getQuads(state, cullDirection, seed));
+                    break;
+                }
+            }
+        }
+        return quads;
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing cullDirection, long seed){
-        return this.defaultModel.getQuads(state, cullDirection, seed);
+    public boolean canRenderInLayer(IBlockState state, BlockRenderLayer renderType){
+        // Check whether the render type is a default one for the state
+        boolean isDefaultRenderType = ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
+
+        // Default model
+        for(ConditionalModel override : this.defaultModelOverrides){
+            if(ModelRenderTypeHelper.canRenderInLayer(override.model, state, renderType, isDefaultRenderType))
+                return true;
+        }
+        if(ModelRenderTypeHelper.canRenderInLayer(this.original, state, renderType, isDefaultRenderType))
+            return true;
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            for(ConditionalModel conditional : appendEntry){
+                if(ModelRenderTypeHelper.canRenderInLayer(conditional.model, state, renderType, isDefaultRenderType))
+                    return true;
+            }
+        }
+        return false;
     }
 
     @Override
-    public ItemCameraTransforms getItemCameraTransforms(){
-        return this.defaultModel.getItemCameraTransforms();
+    public Pair<? extends IBakedModel,Matrix4f> handlePerspective(ItemCameraTransforms.TransformType transformType){
+        Pair<? extends IBakedModel,Matrix4f> pair = super.handlePerspective(transformType);
+        return Pair.of(this, pair.getRight());
     }
 
-    @Override
-    public boolean isAmbientOcclusion(IBlockState state){
-        return this.defaultModel.isAmbientOcclusion(state);
-    }
+    static final class ConditionalModel {
+        private final IBakedModel model;
+        private final @Nullable ItemModelPredicate conditions;
 
-    @Override
-    public org.apache.commons.lang3.tuple.Pair<? extends IBakedModel,Matrix4f> handlePerspective(ItemCameraTransforms.TransformType transformType){
-        return this.defaultModel.handlePerspective(transformType);
-    }
-
-    @Override
-    public boolean isAmbientOcclusion(){
-        return this.defaultModel.isAmbientOcclusion();
-    }
-
-    @Override
-    public boolean isGui3d(){
-        return this.defaultModel.isGui3d();
-    }
-
-    @Override
-    public boolean isBuiltInRenderer(){
-        return this.defaultModel.isBuiltInRenderer();
-    }
-
-    @Override
-    public TextureAtlasSprite getParticleTexture(){
-        return this.defaultModel.getParticleTexture();
-    }
-
-    @Override
-    public ItemOverrideList getOverrides(){
-        return this.defaultModel.getOverrides();
+        ConditionalModel(IBakedModel model, @Nullable ItemModelPredicate conditions){
+            this.model = model;
+            this.conditions = conditions;
+        }
     }
 }

@@ -22,7 +22,6 @@
     "FileResourcePackMixin",
     "FolderResourcePackMixin",
     "ItemModelGeneratorMixin",
-    "ItemModelShaperMixin",
     "LegacyResourcePackWrapperMixin",
     "ModelBakeryMixin",
     "ModelManagerMixin",

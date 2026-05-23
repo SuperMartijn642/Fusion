@@ -80,9 +80,9 @@ public class BaseItemModel implements ItemModel {
         // Get default render type to use for the item
         RenderType defaultBlockRenderType;
         if(stack.getItem() instanceof BlockItem && ItemBlockRenderTypes.getChunkRenderType(((BlockItem)stack.getItem()).getBlock().defaultBlockState()) != ChunkSectionLayer.TRANSLUCENT)
-            defaultBlockRenderType = Sheets.translucentBlockItemSheet();
-        else
             defaultBlockRenderType = Sheets.cutoutBlockSheet();
+        else
+            defaultBlockRenderType = Sheets.translucentBlockItemSheet();
         // Submit each part
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(Part part : this.parts){

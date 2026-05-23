@@ -78,8 +78,13 @@ public class BaseItemModel implements ItemModel {
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
         for(Part part : this.parts){
             // Check part condition
-            if(part.conditions != null && !part.conditions.testForItem(stack))
-                continue;
+            if(part.conditions != null){
+                if(!part.conditions.testForItem(stack)){
+                    renderState.appendModelIdentityElement(false);
+                    continue;
+                }
+                renderState.appendModelIdentityElement(true);
+            }
 
             ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
             if(tintValues != null)

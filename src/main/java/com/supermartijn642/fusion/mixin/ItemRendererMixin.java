@@ -10,9 +10,11 @@ import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
@@ -20,6 +22,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(ItemRenderer.class)
 public class ItemRendererMixin {
+
+    @ModifyArg(
+        method = "renderItem",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/entity/ItemRenderer;renderModelLists(Lnet/minecraft/client/resources/model/BakedModel;Lnet/minecraft/world/item/ItemStack;IILcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V"
+        ),
+        index = 0
+    )
+    private BakedModel useCorrectModel(BakedModel ignore, @Local(ordinal = 1) BakedModel pass){
+        // Forge incorrectly renders the main model for each #getRenderPasses model rather than that actual model
+        return pass;
+    }
 
     @Inject(
         method = "renderQuadList",

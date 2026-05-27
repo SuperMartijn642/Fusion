@@ -30,7 +30,7 @@ public class SurroundingBlockCache {
     }
 
     public BlockState getCenter(){
-        return this.states[13];
+        return this.getState(0, 0, 0);
     }
 
     public BlockState getState(int x, int y, int z){

@@ -57,12 +57,12 @@ public class CullableQuadsImpl implements CullableQuads {
                 return this.down;
             case NORTH:
                 return this.north;
+            case EAST:
+                return this.east;
             case SOUTH:
                 return this.south;
             case WEST:
                 return this.west;
-            case EAST:
-                return this.east;
         }
         throw new AssertionError();
     }
@@ -157,9 +157,9 @@ public class CullableQuadsImpl implements CullableQuads {
                 this.culled.getOrDefault(EnumFacing.UP, Collections.emptyList()),
                 this.culled.getOrDefault(EnumFacing.DOWN, Collections.emptyList()),
                 this.culled.getOrDefault(EnumFacing.NORTH, Collections.emptyList()),
+                this.culled.getOrDefault(EnumFacing.EAST, Collections.emptyList()),
                 this.culled.getOrDefault(EnumFacing.SOUTH, Collections.emptyList()),
-                this.culled.getOrDefault(EnumFacing.WEST, Collections.emptyList()),
-                this.culled.getOrDefault(EnumFacing.EAST, Collections.emptyList())
+                this.culled.getOrDefault(EnumFacing.WEST, Collections.emptyList())
             );
         }
     }

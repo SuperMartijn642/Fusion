@@ -56,9 +56,9 @@ public class CullableQuadsImpl implements CullableQuads {
             case UP -> this.up;
             case DOWN -> this.down;
             case NORTH -> this.north;
-            case SOUTH -> this.east;
-            case WEST -> this.south;
-            case EAST -> this.west;
+            case EAST -> this.east;
+            case SOUTH -> this.south;
+            case WEST -> this.west;
         };
     }
 
@@ -152,9 +152,9 @@ public class CullableQuadsImpl implements CullableQuads {
                 this.culled.getOrDefault(Direction.UP, List.of()),
                 this.culled.getOrDefault(Direction.DOWN, List.of()),
                 this.culled.getOrDefault(Direction.NORTH, List.of()),
+                this.culled.getOrDefault(Direction.EAST, List.of()),
                 this.culled.getOrDefault(Direction.SOUTH, List.of()),
-                this.culled.getOrDefault(Direction.WEST, List.of()),
-                this.culled.getOrDefault(Direction.EAST, List.of())
+                this.culled.getOrDefault(Direction.WEST, List.of())
             );
         }
     }

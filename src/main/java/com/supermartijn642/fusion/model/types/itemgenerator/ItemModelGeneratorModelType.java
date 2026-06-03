@@ -3,9 +3,7 @@ package com.supermartijn642.fusion.model.types.itemgenerator;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.ModelType;
-import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
@@ -60,19 +58,27 @@ public class ItemModelGeneratorModelType implements ModelType<Void> {
 
     @Override
     public @Nullable ModelGeometry getGeometry(Void data){
-        return (transformation, materialResolver) -> {
-            // Create elements
-            List<CuboidModelGeometry.Element> elements = new ArrayList<>();
-            for(int layerIndex = 0; layerIndex < ItemModelGenerator.LAYERS.size(); layerIndex++){
-                String layerName = ItemModelGenerator.LAYERS.get(layerIndex);
-                TextureAtlasSprite sprite = materialResolver.get(layerName, false);
-                if(ModelMaterial.isMissingSprite(sprite))
-                    break;
-                ITEM_MODEL_GENERATOR.processFrames(layerIndex, layerName, sprite.contents())
-                    .forEach(e -> elements.add(CuboidModelGeometry.Element.of(e)));
+        return new ModelGeometry() {
+            @Override
+            public boolean isGui3d(){
+                return false;
             }
-            // Bake as cuboid geometry
-            return CuboidModelGeometry.of(elements).bake(transformation, materialResolver);
+
+            @Override
+            public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
+                // Create elements
+                List<CuboidModelGeometry.Element> elements = new ArrayList<>();
+                for(int layerIndex = 0; layerIndex < ItemModelGenerator.LAYERS.size(); layerIndex++){
+                    String layerName = ItemModelGenerator.LAYERS.get(layerIndex);
+                    TextureAtlasSprite sprite = materialResolver.get(layerName, false);
+                    if(ModelMaterial.isMissingSprite(sprite))
+                        break;
+                    ITEM_MODEL_GENERATOR.processFrames(layerIndex, layerName, sprite.contents())
+                        .forEach(e -> elements.add(CuboidModelGeometry.Element.of(e)));
+                }
+                // Bake as cuboid geometry
+                return CuboidModelGeometry.of(elements).bake(transformation, materialResolver);
+            }
         };
     }
 

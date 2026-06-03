@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.MixinReEntrancePreventer;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
-import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.IUnbakedModel;
 import net.minecraft.util.ResourceLocation;
@@ -43,7 +43,7 @@ public class BlockModelMixin implements BlockModelExtension {
     private void getTextures(Function<ResourceLocation,IUnbakedModel> modelGetter, Set<String> missingMaterials, CallbackInfoReturnable<Collection<ResourceLocation>> ci){
         //noinspection DataFlowIssue
         BlockModel model = (BlockModel)(Object)this;
-        Collection<ResourceLocation> materials = FusionBlockModelData.gatherBlockModelMaterials(model, modelGetter, missingMaterials);
+        Collection<ResourceLocation> materials = MixinReEntrancePreventer.fusionBlockModelData$gatherBlockModelMaterials(model, modelGetter, missingMaterials);
         if(materials != null)
             ci.setReturnValue(materials);
     }

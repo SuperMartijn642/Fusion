@@ -1,6 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.model.FusionBlockModelData;
+import com.supermartijn642.fusion.MixinReEntrancePreventer;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.client.renderer.model.ModelBakery;
@@ -36,7 +36,7 @@ public class ModelBakeryMixin {
         at = @At("HEAD")
     )
     private void storeBlockModelName(ResourceLocation identifier, CallbackInfoReturnable<?> ci){
-        FusionBlockModelData.CURRENT_MODEL.set(identifier);
+        MixinReEntrancePreventer.fusionBlockModel$CURRENT_MODEL().set(identifier);
     }
 
     @Inject(
@@ -44,6 +44,6 @@ public class ModelBakeryMixin {
         at = @At("RETURN")
     )
     private void clearBlockModelName(ResourceLocation identifier, CallbackInfoReturnable<?> ci){
-        FusionBlockModelData.CURRENT_MODEL.remove();
+        MixinReEntrancePreventer.fusionBlockModel$CURRENT_MODEL().remove();
     }
 }

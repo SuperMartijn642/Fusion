@@ -61,6 +61,11 @@ public class ItemModelGeneratorModelType implements ModelType<Void> {
             }
 
             @Override
+            public boolean isGui3d(){
+                return false;
+            }
+
+            @Override
             public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
                 // Create elements
                 List<CuboidModelGeometry.Element> elements = new ArrayList<>();

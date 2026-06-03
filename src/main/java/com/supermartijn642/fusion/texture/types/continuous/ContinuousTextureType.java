@@ -137,8 +137,10 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
 
             @Override
             public void processQuad(EmittableQuad quad, SpriteInstance sprite, BlockPos pos, PropertyStore properties){
-                if(pos == null)
+                if(pos == null){
+                    quad.emit();
                     return;
+                }
 
                 // Determine which tile to use
                 EnumFacing side = quad.facing();

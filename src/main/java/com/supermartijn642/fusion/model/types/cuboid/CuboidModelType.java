@@ -4,11 +4,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
+import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.util.IdentifierUtil;
@@ -228,7 +230,29 @@ public class CuboidModelType extends UnknownModelType<BlockModel> {
     }
 
     @Override
-    public JsonObject serialize(BlockModel value){
-        return (JsonObject)CuboidModelSerializer.GSON.toJsonTree(value);
+    public JsonObject serialize(BlockModel model){
+        // Use base model type to serialize vanilla cuboid model
+        BaseModelData.Builder<?,BaseModelData> builder = BaseModelData.builder();
+        // Copy properties
+        builder.parent(model.getParentLocation())
+            .isGui3d(model.isGui3d())
+            .ambientOcclusion(model.hasAmbientOcclusion)
+            .itemTransforms(model.transforms);
+        // Copy materials
+        for(Map.Entry<String,String> entry : model.textureMap.entrySet()){
+            String value = entry.getValue();
+            if(IdentifierUtil.isValidIdentifier(value))
+                builder.material(entry.getKey(), new ResourceLocation(entry.getValue()));
+            else{
+                if(value.startsWith("#"))
+                    value = value.substring(1);
+                builder.material(entry.getKey(), value);
+            }
+        }
+        // Copy elements
+        for(BlockPart element : model.elements)
+            builder.elements(CuboidModelGeometry.Element.of(element));
+        // Serialize data
+        return DefaultModelTypes.BASE.serialize(builder.build());
     }
 }

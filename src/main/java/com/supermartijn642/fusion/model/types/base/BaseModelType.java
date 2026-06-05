@@ -365,6 +365,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             if(transform != null)
                 itemTransformsJson.add(type.getSerializedName(), this.serializeItemTransform(transform));
         }
+        if(!itemTransformsJson.isEmpty())
+            json.add("display", itemTransformsJson);
         return json;
     }
 

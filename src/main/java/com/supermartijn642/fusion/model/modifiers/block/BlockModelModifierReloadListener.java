@@ -106,6 +106,10 @@ public class BlockModelModifierReloadListener {
             }
             appendModels = ImmutableList.copyOf(appendModels);
 
+            // Apply pane culling fix
+            if(modifiers.stream().anyMatch(p -> p.paneCullingFix))
+                targetModel = new PaneCullingBakedModel(targetModel);
+
             // Create the modifier model
             BlockModelModifierBakedModel modifierModel = new BlockModelModifierBakedModel(
                 targetModel,

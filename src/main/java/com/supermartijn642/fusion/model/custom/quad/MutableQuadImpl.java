@@ -308,7 +308,7 @@ public class MutableQuadImpl implements MutableQuad {
                 this.tintIndex,
                 this.facing,
                 this.sprite,
-                this.emissive || this.shade,
+                !this.emissive && this.shade,
                 this.emissive ? 15 : this.lightEmission
             );
         }
@@ -345,8 +345,8 @@ public class MutableQuadImpl implements MutableQuad {
 
         quad.renderLayer(this.chunkLayer);
         quad.tintIndex(this.tintIndex);
-        quad.diffuseShade(this.shade);
-        quad.ambientOcclusion(this.ambientOcclusion ? TriState.TRUE : TriState.FALSE);
+        quad.diffuseShade(!this.emissive && this.shade);
+        quad.ambientOcclusion(!this.emissive && this.ambientOcclusion ? TriState.TRUE : TriState.FALSE);
         quad.emissive(this.emissive);
     }
 }

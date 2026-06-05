@@ -328,7 +328,7 @@ public class MutableQuadImpl implements MutableQuad {
                 this.tintIndex,
                 this.facing,
                 this.sprite,
-                this.emissive || this.shade
+                !this.emissive && this.shade
             );
         }
         return this.bakedQuadCache;
@@ -361,7 +361,7 @@ public class MutableQuadImpl implements MutableQuad {
         quad.material(
             RendererAccess.INSTANCE.getRenderer().materialFinder()
                 .blendMode(0, BlendMode.fromRenderLayer(this.chunkRenderType))
-                .disableDiffuse(0, !this.emissive && !this.shade)
+                .disableDiffuse(0, this.emissive || !this.shade)
                 .disableAo(0, this.emissive || !this.ambientOcclusion)
                 .emissive(0, this.emissive)
                 .find()

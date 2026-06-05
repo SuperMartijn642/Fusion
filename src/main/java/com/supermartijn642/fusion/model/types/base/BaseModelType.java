@@ -581,7 +581,7 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
 
     protected JsonObject serializeRotation(BlockElementRotation rotation){
         JsonObject rotationJson = new JsonObject();
-        rotationJson.add("origin", this.serializeVector3f(rotation.origin()));
+        rotationJson.add("origin", this.serializeVector3f(new Vector3f(rotation.origin()).mul(16)));
         rotationJson.addProperty("axis", rotation.axis().name().toLowerCase(Locale.ROOT));
         rotationJson.addProperty("angle", rotation.angle());
         if(rotation.rescale())

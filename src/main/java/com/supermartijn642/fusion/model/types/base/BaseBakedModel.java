@@ -279,7 +279,7 @@ public class BaseBakedModel implements BakedModel {
 
                     @Override
                     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random){
-                        return bakedQuads;
+                        return cullDirection == null ? bakedQuads : List.of();
                     }
 
                     @Override

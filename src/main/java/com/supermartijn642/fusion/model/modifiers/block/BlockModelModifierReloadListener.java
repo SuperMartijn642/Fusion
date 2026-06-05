@@ -99,6 +99,10 @@ public class BlockModelModifierReloadListener {
             }
             appendModels = List.copyOf(appendModels);
 
+            // Apply pane culling fix
+            if(modifiers.stream().anyMatch(Properties::paneCullingFix))
+                targetModel = new PaneCullingBakedModel(targetModel);
+
             // Create the modifier model
             BlockModelModifierBakedModel modifierModel = new BlockModelModifierBakedModel(
                 targetModel,

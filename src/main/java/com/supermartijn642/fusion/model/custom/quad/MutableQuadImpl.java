@@ -353,7 +353,7 @@ public class MutableQuadImpl implements MutableQuad {
                     this.sprite,
                     this.chunkLayer, this.itemRenderType,
                     this.tintIndex,
-                    this.emissive || this.shade,
+                    !this.emissive && this.shade,
                     this.emissive ? 15 : this.lightEmission
                 );
                 MaterialInfoExtension.setAmbientOcclusion(this.materialInfoCache, !this.emissive && this.ambientOcclusion);

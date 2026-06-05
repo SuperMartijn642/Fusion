@@ -255,7 +255,7 @@ public class MutableQuadImpl implements MutableQuad {
                 this.tintIndex,
                 this.facing,
                 this.sprite,
-                this.emissive || this.shade,
+                !this.emissive && this.shade,
                 format
             );
         }

@@ -119,6 +119,9 @@ public class BaseItemModel implements ItemModel {
 
                 @Override
                 public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource randomSource){
+                    if(cullDirection != null)
+                        return List.of();
+
                     // Convert all quads to baked quads
                     List<BakedQuad> bakedQuads = new ArrayList<>();
                     EmittableQuad mutableQuad = null;

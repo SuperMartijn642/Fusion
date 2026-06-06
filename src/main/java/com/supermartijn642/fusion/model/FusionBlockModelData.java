@@ -5,10 +5,7 @@ import com.mojang.datafixers.util.Either;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
@@ -324,13 +321,15 @@ public class FusionBlockModelData extends BlockModel {
         // Let the custom model handle the actual baking
         BakedModel bakedModel;
         try{
-            bakedModel = this.model.bakeModel(context);
+            bakedModel = this.model.bakeModel(context, ModelStack.empty().push(this.model, this.identifier));
         }catch(Exception e){
             if(this.model instanceof ModelInstance<?>)
                 throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
             else
                 throw new RuntimeException("Encountered an exception while baking untyped block model for '" + this.identifier + "'!", e);
         }
+        if(bakedModel == null)
+            bakedModel = context.getMissingBakedModel();
         // Log warnings
         if(!warnings.isEmpty())
             LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.identifier);

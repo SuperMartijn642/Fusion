@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.integration.framedblocks.FusionFramedBlocksIntegration;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -76,11 +77,14 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
 
     @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
-        return super.getModelData(level, pos, state, data).derive()
-            .with(NEIGHBOR_PROPERTY, Pair.of(
-                level.getBlockState(pos.above()).getAppearance(level, pos.above(), Direction.DOWN, state, pos),
-                level.getBlockState(pos.below()).getAppearance(level, pos.below(), Direction.UP, state, pos)
-            ))
+        data = super.getModelData(level, pos, state, data);
+        Pair<BlockState,BlockState> neighbors = Pair.of(
+            level.getBlockState(pos.above()).getAppearance(level, pos.above(), Direction.DOWN, state, pos),
+            level.getBlockState(pos.below()).getAppearance(level, pos.below(), Direction.UP, state, pos)
+        );
+        return data.derive()
+            .with(NEIGHBOR_PROPERTY, neighbors)
+            .with(FusionFramedBlocksIntegration.getCacheKeyProperty(), Pair.of(neighbors, FusionFramedBlocksIntegration.getCacheProperty(data)))
             .build();
     }
 

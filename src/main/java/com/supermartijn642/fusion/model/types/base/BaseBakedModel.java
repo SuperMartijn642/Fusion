@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.texture.custom.QuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
+import com.supermartijn642.fusion.integration.framedblocks.FusionFramedBlocksIntegration;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import com.supermartijn642.fusion.util.ChunkRenderTypeMap;
 import com.supermartijn642.fusion.util.CullingHelper;
@@ -117,9 +118,11 @@ public class BaseBakedModel implements BakedModel {
 
     @Override
     public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
+        RenderData renderData = this.getRenderData(level, pos, state);
         return ModelData.builder()
-            .with(RENDER_DATA, this.getRenderData(level, pos, state))
+            .with(RENDER_DATA, renderData)
             .with(QUAD_PROCESSORS, new LazyQuadProcessor())
+            .with(FusionFramedBlocksIntegration.getCacheKeyProperty(), FusionFramedBlocksIntegration.lazyCacheable(() -> this.createCacheKey(renderData)))
             .build();
     }
 
@@ -328,6 +331,33 @@ public class BaseBakedModel implements BakedModel {
     @Override
     public ItemOverrides getOverrides(){
         return ItemOverrides.EMPTY;
+    }
+
+    private Object createCacheKey(RenderData renderData){
+        List<Object> keys = new ArrayList<>();
+        // Handle each part
+        for(int i = 0; i < this.parts.size(); i++){
+            Part part = this.parts.get(i);
+            // Add part condition
+            keys.add(renderData.partConditions[i]);
+            if(!renderData.partConditions[i])
+                continue;
+            // Add quad processor states
+            List<Object>[] cullableTextureStates = renderData.combinedTextureStates[i];
+            for(Direction cullDirection : CullingHelper.cullDirections()){
+                List<Object> textureStates = cullableTextureStates[CullingHelper.cullIndex(cullDirection)];
+                if(textureStates == null)
+                    continue;
+                int stateIndex = 0;
+                for(Quad quad : part.quads().get(cullDirection)){
+                    if(quad.processor() == null)
+                        continue;
+                    Object state = textureStates.get(stateIndex++);
+                    keys.add(quad.processor().createGeometryKey(state, renderData.propertyStore));
+                }
+            }
+        }
+        return keys;
     }
 
     public record Part(Quads quads, ModelPredicate conditions) {

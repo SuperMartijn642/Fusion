@@ -9,15 +9,21 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.entity.model.predicates.*;
+import com.supermartijn642.fusion.integration.framedblocks.FusionFramedBlocksIntegration;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.model.predicates.*;
 import com.supermartijn642.fusion.model.predicates.blockstate.*;
 import com.supermartijn642.fusion.model.predicates.item.*;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.connecting.predicates.*;
+import net.minecraftforge.fml.InterModComms;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.function.Consumer;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -95,10 +101,11 @@ public class FusionClient {
         EntityModelPredicateRegistryImpl.registerPredicate(Fusion.identifier("biome"), BiomeEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistryImpl.registerPredicate(Fusion.identifier("dimension"), DimensionEntityModelPredicate.SERIALIZER);
 
-        // Integration with FramedBlocks TODO
-//        ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
-//            InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBlockStateModel.PREDICATES_EVALUATION_PROPERTY);
-//        });
+        // Integration with FramedBlocks
+        //noinspection removal
+        FMLJavaModLoadingContext.get().getModEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
+            InterModComms.sendTo("framedblocks", "add_ct_property", FusionFramedBlocksIntegration::getCacheKeyProperty);
+        });
     }
 
     public static void finalizeRegistries(){

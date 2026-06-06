@@ -7,33 +7,27 @@ import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
-import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
-import com.supermartijn642.fusion.api.texture.SpriteHelper;
-import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
-import com.supermartijn642.fusion.api.util.PropertyGetter;
-import com.supermartijn642.fusion.api.util.PropertyStore;
-import com.supermartijn642.fusion.model.types.UnknownModelType;
-import com.supermartijn642.fusion.util.FallbackPropertyStore;
-import net.minecraft.client.renderer.block.model.*;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
+import com.supermartijn642.fusion.model.SimpleModelType;
+import net.minecraft.client.renderer.block.model.BlockElement;
+import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.Material;
-import net.minecraft.client.resources.model.SimpleBakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
  */
-public class CuboidModelType extends UnknownModelType<BlockModel> {
+public class CuboidModelType extends SimpleModelType<BlockModel> {
 
     public static Map<String,Either<String,ModelMaterial>> convertMaterials(Map<String,com.mojang.datafixers.util.Either<Material,String>> materials){
         if(materials.isEmpty())
@@ -87,97 +81,28 @@ public class CuboidModelType extends UnknownModelType<BlockModel> {
     }
 
     @Override
-    public BakedModel bakeModel(ModelBakingContext context, ModelStack modelStack, BlockModel data){
-        // Bake geometry
-        ModelGeometry geometry = this.getGeometry(data);
-        if(geometry != null){
-            // Resolve materials
-            Set<String> missingKeys = new HashSet<>();
-            ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
-                key -> modelStack.findMaterialIncludingParents(key, context),
-                context::getMaterial,
-                missingKeys::add,
-                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + modelStack + ")!")
-            );
-            // Compose transformations
-            ModelTransform transforms = modelStack.composeTransforms();
-            transforms = ModelTransform.compose(transforms, context.getTransformation());
-            // Bake the geometry
-            CullableQuads quads = geometry.bake(transforms, materialResolver);
-            if(!missingKeys.isEmpty())
-                context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + modelStack + ")!");
-            // Apply model properties to the quads
-            Boolean ambientOcclusion = modelStack.findAmbientOcclusionIncludingParents(context);
-            Boolean shade = modelStack.findShadeIncludingParents(context);
-            Boolean emissive = modelStack.findEmissiveIncludingParents(context);
-            PropertyGetter modelPropertyGetter = new PropertyGetter() {
-                @Override
-                public <X, C> Optional<X> getProperty(Property<X,C> property, C c){
-                    return modelStack.findPropertyIncludingParents(property, c, context);
-                }
-            };
-            // Initialize quads
-            PropertyStore propertyStore = FallbackPropertyStore.create(modelPropertyGetter);
-            quads = quads.mutateQuads((side, quad) -> {
-                // Get the sprite instance
-                SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
-                // Initialize the quad
-                if(sprite != null)
-                    sprite.getTexture().initializeModelQuad(quad, sprite, propertyStore);
-                // Apply properties
-                if(ambientOcclusion != null)
-                    quad.ambientOcclusion(ambientOcclusion);
-                if(shade != null)
-                    quad.shade(shade);
-                if(emissive != null)
-                    quad.emissive(emissive);
-                return true;
-            });
-            // Resolve particle material
-            TextureAtlasSprite particleSprite = materialResolver.get("particle");
-            if(ModelMaterial.isMissingSprite(particleSprite))
-                context.pushWarning("Could not resolve 'particle' material for model stack (" + modelStack + ")!");
-            // Resolve gui light
-            BlockModel.GuiLight guiLight = modelStack.findGuiLightIncludingParents(context);
-            if(guiLight == null)
-                guiLight = BlockModel.GuiLight.SIDE;
-            // Resolve item transforms
-            BiFunction<ItemDisplayContext,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) -> {
-                ItemTransform transform = modelStack.findItemTransformIncludingParents(type, context);
-                return transform == null ? fallback : transform;
-            };
-            ItemTransforms itemTransforms = new ItemTransforms(
-                itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.FIRST_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.HEAD, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.GUI, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.GROUND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.FIXED, ItemTransform.NO_TRANSFORM)
-            );
-            // Create the model
-            return new SimpleBakedModel(
-                quads.all().stream().map(QuadAccess::toBakedQuad).toList(),
-                EMPTY_CULLED_QUADS,
-                true, // Ambient occlusion is handled by quads themselves
-                guiLight.lightLikeBlock(),
-                geometry.isGui3d(),
-                particleSprite,
-                itemTransforms,
-                ItemOverrides.EMPTY
-            );
-        }
-
-        // Bake parent
-        ResourceLocation parent = data.parentLocation;
-        if(parent != null){
-            UntypedModelInstance parentModel = context.getModelOrMissing(parent);
-            return parentModel.bakeModel(context, modelStack.push(parentModel, parent));
-        }
-
-        // If there's no geometry, return null
+    public @Nullable Boolean getShade(BlockModel data){
         return null;
+    }
+
+    @Override
+    public @Nullable Boolean getEmissive(BlockModel data){
+        return null;
+    }
+
+    @Override
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context, BlockModel data){
+        return Optional.empty();
+    }
+
+    @Override
+    protected @Nullable ResourceLocation getParent(BlockModel data){
+        return data.parentLocation;
+    }
+
+    @Override
+    protected void bakeGeometry(ModelBakingContext context, ModelStack modelStack, BlockModel data, ModelTransform transform, ModelGeometry.MaterialResolver materialResolver, ModelGeometry.QuadConsumer quadConsumer){
+        this.getGeometry(data).bake(quadConsumer, transform, materialResolver);
     }
 
     @Override

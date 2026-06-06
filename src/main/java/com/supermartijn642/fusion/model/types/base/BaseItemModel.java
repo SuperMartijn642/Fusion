@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.model.types.base;
 
-import com.google.common.base.Suppliers;
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
@@ -39,22 +38,58 @@ import java.util.function.Supplier;
  */
 public class BaseItemModel implements ItemModel {
 
-    private final List<Part> parts;
-    private final List<ItemTintSource> tints;
-    private final boolean animated;
+    private final List<Quad> quads;
+    private final ModelPredicate conditions;
     private final PropertyStore propertyStore;
+    private final UnbakedModel.GuiLight guiLight;
+    private final TextureAtlasSprite particleSprite;
+    private final ItemTransforms transforms;
+    private final List<ItemTintSource> tints;
+    private final Supplier<Vector3f[]> extents;
+    private final boolean animated;
 
-    public BaseItemModel(List<Part> parts, List<ItemTintSource> tints, PropertyStore propertyStore){
-        this.parts = parts;
-        this.tints = tints;
-        this.animated = parts.stream().anyMatch(p -> p.animated);
+    public BaseItemModel(List<Quad> quads, ModelPredicate conditions, PropertyStore propertyStore, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms transforms, List<ItemTintSource> tints){
+        this.quads = quads;
+        this.conditions = conditions;
         this.propertyStore = propertyStore;
+        this.guiLight = guiLight;
+        this.particleSprite = particleSprite;
+        this.transforms = transforms;
+        this.tints = tints;
+        this.extents = () -> {
+            Set<Vector3f> positions = new HashSet<>();
+            for(Quad quad : this.quads){
+                for(int vertex = 0; vertex < 4; vertex++){
+                    positions.add(new Vector3f(quad.quad().position(vertex)));
+                }
+            }
+            return positions.toArray(Vector3f[]::new);
+        };
+
+        // Check whether the quads contain animated textures
+        boolean animated = false;
+        for(Quad quad : this.quads){
+            if(quad.quad().sprite().isAnimated()){
+                animated = true;
+                break;
+            }
+        }
+        this.animated = animated;
     }
 
     @Override
     public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable LivingEntity owner, int seed){
-        renderState.ensureCapacity(this.parts.size());
         renderState.appendModelIdentityElement(this);
+
+        // Check conditions
+        if(this.conditions != null){
+            if(!this.conditions.testForItem(stack)){
+                renderState.appendModelIdentityElement(false);
+                return;
+            }
+            renderState.appendModelIdentityElement(true);
+        }
+
         // Set animated
         if(this.animated)
             renderState.setAnimated();
@@ -85,94 +120,47 @@ public class BaseItemModel implements ItemModel {
             defaultRenderType = Sheets.translucentItemSheet();
         // Submit each part
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
-        for(Part part : this.parts){
-            // Check part condition
-            if(part.conditions != null){
-                if(!part.conditions.testForItem(stack)){
-                    renderState.appendModelIdentityElement(false);
-                    continue;
-                }
-                renderState.appendModelIdentityElement(true);
+
+        // Create and configure layer
+        ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
+        if(tintValues != null)
+            System.arraycopy(tintValues, 0, layer.prepareTintLayers(tintValues.length), 0, tintValues.length);
+        if(foilType != null)
+            layer.setFoilType(foilType);
+        layer.setExtents(this.extents);
+        layer.setUsesBlockLight(this.guiLight.lightLikeBlock());
+        layer.setParticleIcon(this.particleSprite);
+        layer.setTransform(this.transforms.getTransform(displayContext));
+        layer.setRenderType(defaultRenderType);
+
+        // Process all quads
+        QuadEmitter emitter = layer.emitter();
+        EmittableQuad mutableQuad = null;
+        for(Quad quad : this.quads){
+            // Simply add quads that don't need further processing
+            if(quad.processor() == null){
+                quad.quad().toFrapiQuad(emitter);
+                emitter.emit();
+                continue;
             }
 
-            // Create and configure layer
-            ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
-            if(tintValues != null)
-                System.arraycopy(tintValues, 0, layer.prepareTintLayers(tintValues.length), 0, tintValues.length);
-            if(foilType != null)
-                layer.setFoilType(foilType);
-            layer.setExtents(part.extents);
-            layer.setUsesBlockLight(part.guiLight.lightLikeBlock());
-            layer.setParticleIcon(part.particleSprite);
-            layer.setTransform(part.transforms.getTransform(displayContext));
-            layer.setRenderType(Sheets.translucentItemSheet());
+            // Extract state
+            Object state = quad.processor().extractState(stack, propertyStore);
 
-            // Process all quads
-            QuadEmitter emitter = layer.emitter();
-            EmittableQuad mutableQuad = null;
-            for(Quad quad : part.quads){
-                // Simply add quads that don't need further processing
-                if(quad.processor() == null){
-                    quad.quad().toFrapiQuad(emitter);
+            // Create geometry key
+            renderState.appendModelIdentityElement(quad.processor().createGeometryKey(state, propertyStore));
+
+            // Create mutable quad
+            if(mutableQuad == null){
+                mutableQuad = EmittableQuad.create(q -> {
+                    q.toFrapiQuad(emitter);
                     emitter.emit();
-                    continue;
-                }
-
-                // Extract state
-                Object state = quad.processor().extractState(stack, propertyStore);
-
-                // Create geometry key
-                renderState.appendModelIdentityElement(quad.processor().createGeometryKey(state, propertyStore));
-
-                // Create mutable quad
-                if(mutableQuad == null){
-                    mutableQuad = EmittableQuad.create(q -> {
-                        q.toFrapiQuad(emitter);
-                        emitter.emit();
-                    });
-                }
-                mutableQuad.copyFrom(quad.quad());
-
-                // Process quad
-                quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
+                });
             }
-        }
-    }
+            mutableQuad.copyFrom(quad.quad());
 
-    public static class Part {
-        private final List<Quad> quads;
-        private final ModelPredicate conditions;
-        private final UnbakedModel.GuiLight guiLight;
-        private final TextureAtlasSprite particleSprite;
-        private final ItemTransforms transforms;
-        private final Supplier<Vector3f[]> extents;
-        private final boolean animated;
-
-        public Part(List<Quad> quads, ModelPredicate conditions, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms transforms){
-            this.quads = quads;
-            this.conditions = conditions;
-            this.guiLight = guiLight;
-            this.particleSprite = particleSprite;
-            this.transforms = transforms;
-            this.extents = Suppliers.memoize(() -> {
-                Set<Vector3f> positions = new HashSet<>();
-                for(Quad quad : this.quads){
-                    for(int vertex = 0; vertex < 4; vertex++){
-                        positions.add(new Vector3f(quad.quad().position(vertex)));
-                    }
-                }
-                return positions.toArray(Vector3f[]::new);
-            });
-
-            // Check whether the quads contain animated textures
-            boolean animated = false;
-            for(Quad quad : this.quads){
-                if(quad.quad().sprite().isAnimated()){
-                    animated = true;
-                    break;
-                }
-            }
-            this.animated = animated;
+            // Process quad
+            quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
         }
     }
 

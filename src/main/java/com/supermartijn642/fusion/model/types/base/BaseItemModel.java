@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.model.types.base;
 
-import com.google.common.base.Suppliers;
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
@@ -40,19 +39,40 @@ import java.util.function.Supplier;
  */
 public class BaseItemModel implements ItemModel {
 
-    private final List<Part> parts;
-    private final List<ItemTintSource> tints;
+    private final List<Quad> quads;
+    private final ModelPredicate conditions;
     private final PropertyStore propertyStore;
+    private final UnbakedModel.GuiLight guiLight;
+    private final TextureAtlasSprite particleSprite;
+    private final ItemTransforms transforms;
+    private final List<ItemTintSource> tints;
+    private final Supplier<Vector3f[]> extents;
 
-    public BaseItemModel(List<Part> parts, List<ItemTintSource> tints, PropertyStore propertyStore){
-        this.parts = parts;
-        this.tints = tints;
+    public BaseItemModel(List<Quad> quads, ModelPredicate conditions, PropertyStore propertyStore, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms transforms, List<ItemTintSource> tints){
+        this.quads = quads;
+        this.conditions = conditions;
         this.propertyStore = propertyStore;
+        this.guiLight = guiLight;
+        this.particleSprite = particleSprite;
+        this.transforms = transforms;
+        this.tints = tints;
+        this.extents = () -> {
+            Set<Vector3f> positions = new HashSet<>();
+            for(Quad quad : this.quads){
+                for(int vertex = 0; vertex < 4; vertex++){
+                    positions.add(new Vector3f(quad.quad().position(vertex)));
+                }
+            }
+            return positions.toArray(Vector3f[]::new);
+        };
     }
 
     @Override
     public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable LivingEntity owner, int seed){
-        renderState.ensureCapacity(this.parts.size());
+        // Check conditions
+        if(this.conditions != null && !this.conditions.testForItem(stack))
+            return;
+
         // Compute tint values
         int[] tintValues;
         if(!this.tints.isEmpty()){
@@ -73,10 +93,6 @@ public class BaseItemModel implements ItemModel {
             defaultRenderType = Sheets.translucentItemSheet();
         // Submit each part
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
-        for(Part part : this.parts){
-            // Check part condition
-            if(part.conditions != null && !part.conditions.testForItem(stack))
-                continue;
 
             // Create function to create layers
             Function<RenderType,ItemStackRenderState.LayerRenderState> layerConfigurer = renderType -> {
@@ -85,10 +101,10 @@ public class BaseItemModel implements ItemModel {
                     System.arraycopy(tintValues, 0, layer.prepareTintLayers(tintValues.length), 0, tintValues.length);
                 if(foilType != null)
                     layer.setFoilType(foilType);
-                layer.setExtents(part.extents);
-                layer.setUsesBlockLight(part.guiLight.lightLikeBlock());
-                layer.setParticleIcon(part.particleSprite);
-                layer.setTransform(part.transforms.getTransform(displayContext));
+                layer.setExtents(this.extents);
+                layer.setUsesBlockLight(this.guiLight.lightLikeBlock());
+                layer.setParticleIcon(this.particleSprite);
+                layer.setTransform(this.transforms.getTransform(displayContext));
                 layer.setRenderType(renderType);
                 return layer;
             };
@@ -116,48 +132,21 @@ public class BaseItemModel implements ItemModel {
 
             // Process all quads
             EmittableQuad mutableQuad = null;
-            for(Quad quad : part.quads){
+            for(Quad quad : this.quads){
                 // Simply add quads that don't need further processing
                 if(quad.processor() == null){
                     submitter.accept(quad.quad());
                     continue;
                 }
 
-                // Create mutable quad
-                if(mutableQuad == null)
-                    mutableQuad = EmittableQuad.create(submitter::accept);
-                mutableQuad.copyFrom(quad.quad());
+            // Create mutable quad
+            if(mutableQuad == null)
+                mutableQuad = EmittableQuad.create(submitter::accept);
+            mutableQuad.copyFrom(quad.quad());
 
-                // Process quad
-                Object state = quad.processor().extractState(stack, propertyStore);
-                quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
-            }
-        }
-    }
-
-    public static class Part {
-        private final List<Quad> quads;
-        private final ModelPredicate conditions;
-        private final UnbakedModel.GuiLight guiLight;
-        private final TextureAtlasSprite particleSprite;
-        private final ItemTransforms transforms;
-        private final Supplier<Vector3f[]> extents;
-
-        public Part(List<Quad> quads, ModelPredicate conditions, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms transforms){
-            this.quads = quads;
-            this.conditions = conditions;
-            this.guiLight = guiLight;
-            this.particleSprite = particleSprite;
-            this.transforms = transforms;
-            this.extents = Suppliers.memoize(() -> {
-                Set<Vector3f> positions = new HashSet<>();
-                for(Quad quad : this.quads){
-                    for(int vertex = 0; vertex < 4; vertex++){
-                        positions.add(new Vector3f(quad.quad().position(vertex)));
-                    }
-                }
-                return positions.toArray(Vector3f[]::new);
-            });
+            // Process quad
+            Object state = quad.processor().extractState(stack, propertyStore);
+            quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
         }
     }
 

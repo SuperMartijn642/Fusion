@@ -4,6 +4,7 @@ import com.supermartijn642.fusion.api.model.custom.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.context.ContextMap;
@@ -33,5 +34,10 @@ public class ItemModelBakingContextImpl extends BlockStateModelBakingContextImpl
     @Override
     public EntityModelSet getEntityModels(){
         return this.entityModelSet;
+    }
+
+    @Override
+    public ItemModel getMissingItemModel(){
+        return this.getMissingModels().item();
     }
 }

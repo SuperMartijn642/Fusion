@@ -41,7 +41,7 @@ public class ModelGeometryImpl implements ModelGeometry {
         return new ModelGeometryImpl(geometry);
     }
 
-    public static TextureSlots createTextureSlots(MaterialResolver materialResolver){
+    public static TextureSlots createTextureSlots(MaterialKeyResolver materialResolver){
         return new TextureSlots(Map.of()) {
             @Override
             public @Nullable Material getMaterial(String reference){
@@ -53,10 +53,10 @@ public class ModelGeometryImpl implements ModelGeometry {
         };
     }
 
-    public static MaterialResolver fromKeyLookup(Function<String,Either<String,ModelMaterial>> lookup,
-                                                 Function<ModelMaterial,ModelMaterial.Resolved> materialResolver,
-                                                 Consumer<String> reportMissing,
-                                                 Consumer<List<String>> reportCircular){
+    public static MaterialKeyResolver fromKeyLookup(Function<String,Either<String,ModelMaterial>> lookup,
+                                                    Function<ModelMaterial,ModelMaterial.Resolved> materialResolver,
+                                                    Consumer<String> reportMissing,
+                                                    Consumer<List<String>> reportCircular){
         Map<String,ModelMaterial.Resolved> resolvedMaterials = new HashMap<>();
         return (key, required) -> {
             // Check if the key has already been resolved
@@ -118,7 +118,7 @@ public class ModelGeometryImpl implements ModelGeometry {
     }
 
     @Override
-    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver){
+    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialKeyResolver materialResolver){
         // Create dummy texture slots instance
         TextureSlots textureSlots = createTextureSlots(materialResolver);
         // Create dummy model baker

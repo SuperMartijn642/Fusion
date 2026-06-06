@@ -55,7 +55,7 @@ public interface ModelGeometry {
      * @param materialResolver resolver for material keys
      */
     @ApiStatus.NonExtendable
-    default CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
+    default CullableQuads bake(ModelTransform transformation, MaterialKeyResolver materialResolver){
         CullableQuads.Builder quads = CullableQuads.builder();
         this.bake(
             (quad, cullDirection, properties) -> quads.add(cullDirection, quad),
@@ -71,7 +71,7 @@ public interface ModelGeometry {
      * @param materialResolver resolver for material keys
      * @param consumer         consumer for the quads along with properties from the geometry
      */
-    void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver);
+    void bake(QuadConsumer consumer, ModelTransform transformation, MaterialKeyResolver materialResolver);
 
     @FunctionalInterface
     interface QuadConsumer {
@@ -88,7 +88,7 @@ public interface ModelGeometry {
      * Resolver for material keys into resolved materials.
      */
     @FunctionalInterface
-    interface MaterialResolver {
+    interface MaterialKeyResolver {
 
         /**
          * Creates a material resolver from a lookup for material references.
@@ -97,10 +97,10 @@ public interface ModelGeometry {
          * @param reportMissing    consumer for reporting missing required material keys, the missing key is given as an argument
          * @param reportCircular   consumer for reporting circular material references, the chain of references is given as an argument
          */
-        static MaterialResolver fromKeyLookup(Function<String,@Nullable Either<String,ModelMaterial>> lookup,
-                                              Function<ModelMaterial,ModelMaterial.Resolved> materialResolver,
-                                              Consumer<String> reportMissing,
-                                              Consumer<List<String>> reportCircular){
+        static MaterialKeyResolver fromKeyLookup(Function<String,@Nullable Either<String,ModelMaterial>> lookup,
+                                                 Function<ModelMaterial,ModelMaterial.Resolved> materialResolver,
+                                                 Consumer<String> reportMissing,
+                                                 Consumer<List<String>> reportCircular){
             return ModelGeometryImpl.fromKeyLookup(lookup, materialResolver, reportMissing, reportCircular);
         }
 

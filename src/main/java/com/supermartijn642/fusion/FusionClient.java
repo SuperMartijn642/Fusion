@@ -104,11 +104,6 @@ public class FusionClient {
             .addAll(SpriteLoader.DEFAULT_METADATA_SECTIONS)
             .add(FusionTextureMetadataSection.INSTANCE)
             .build();
-
-        // Integration with FramedBlocks TODO
-//        ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
-//            InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBlockStateModel.PREDICATES_EVALUATION_PROPERTY);
-//        });
     }
 
     public static void finalizeRegistries(){

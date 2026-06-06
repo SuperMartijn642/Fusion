@@ -7,7 +7,7 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelWalker;
+import com.supermartijn642.fusion.api.model.custom.ModelStack;
 import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
@@ -96,35 +96,18 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     }
 
     @Override
-    public BakedModel bakeModel(ModelBakingContext context, T data){
-        // Create dummy model baker instance
+    public BakedModel bakeModel(ModelBakingContext context, ModelStack modelStack, T data){
+        // Create dummy model baker
         Function<Material,TextureAtlasSprite> spriteGetter = material -> context.getMaterial(ModelMaterial.of(material));
         ModelBaker modelBaker = (identifier, modelState) -> {
             ModelInstance<?> model = context.getModel(identifier);
             if(model == null)
-                return context.getMissingModel();
-            return model.bakeModel(context);
+                return context.getMissingBakedModel();
+            BakedModel bakedModel = model.bakeModel(context, ModelStack.empty().push(model, identifier));
+            return bakedModel == null ? context.getMissingBakedModel() : bakedModel;
         };
         // Bake the model
         return data.bake(modelBaker, spriteGetter, context.getTransformation().toModelState());
-    }
-
-    public static <T> T findPropertyInStackAndParents(ModelBakingContext context, ModelWalker.ModelStack currentStack, Function<UntypedModelInstance,T> property, T defaultValue){
-        // First check the current stack
-        for(UntypedModelInstance modelInstance : currentStack){
-            T value = property.apply(modelInstance);
-            if(value != null)
-                return value;
-        }
-        // Check parents of the last model in the stack
-        Optional<T> result = context.walkModelTree(
-            currentStack.get(currentStack.size() - 1),
-            (modelInstance, stack) -> {
-                T value = property.apply(modelInstance);
-                return value == null ? ModelWalker.Result.proceed() : ModelWalker.Result.stop(value);
-            }
-        );
-        return result.orElse(defaultValue);
     }
 
     @Override

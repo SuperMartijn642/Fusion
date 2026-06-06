@@ -12,13 +12,18 @@ import java.util.Optional;
 public class FallbackPropertyStore implements PropertyStore {
 
     public static PropertyStore create(PropertyGetter fallback){
-        return new FallbackPropertyStore(fallback);
+        return new FallbackPropertyStore(null, fallback);
+    }
+
+    public static PropertyStore create(PropertyStore propertyStore, PropertyGetter fallback){
+        return new FallbackPropertyStore(propertyStore, fallback);
     }
 
     private final PropertyGetter fallback;
     private PropertyStore store;
 
-    private FallbackPropertyStore(PropertyGetter fallback){
+    private FallbackPropertyStore(PropertyStore propertyStore, PropertyGetter fallback){
+        this.store = propertyStore;
         this.fallback = fallback;
     }
 

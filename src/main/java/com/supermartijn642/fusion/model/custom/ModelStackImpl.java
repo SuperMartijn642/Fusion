@@ -321,18 +321,25 @@ public class ModelStackImpl implements ModelStack {
             if(value.isPresent())
                 return value;
         }
+        if(property == DefaultModelProperties.MATERIAL)
+            //noinspection unchecked
+            return Optional.ofNullable((X)this.findMaterial((String)context));
         return Optional.empty();
     }
 
     @Override
     public <X, C> Optional<X> findPropertyIncludingParents(Property<X,C> property, C context, ModelResolver modelResolver){
-        return this.walkStackAndParents(
+        Optional<X> value = this.walkStackAndParents(
             modelResolver,
             (modelInstance, stack) -> {
                 Optional<X> v = modelInstance.getProperty(property, context);
                 return ModelWalker.Result.stopIfPresent(v);
             }
         );
+        if(!value.isPresent() && property == DefaultModelProperties.MATERIAL)
+            //noinspection unchecked
+            return Optional.ofNullable((X)this.findMaterialIncludingParents((String)context, modelResolver));
+        return value;
     }
 
     @Override

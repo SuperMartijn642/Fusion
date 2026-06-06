@@ -1,306 +1,38 @@
 package com.supermartijn642.fusion.model.types.connecting;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.math.Matrix4f;
-import com.mojang.math.Vector3f;
-import com.supermartijn642.fusion.api.model.custom.*;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
-import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
-import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
-import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
-import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.model.types.connecting.ConnectingModelData;
-import com.supermartijn642.fusion.api.texture.SpriteHelper;
-import com.supermartijn642.fusion.api.texture.custom.QuadProcessor;
-import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Either;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.Property;
-import com.supermartijn642.fusion.api.util.PropertyStore;
-import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
 import com.supermartijn642.fusion.model.types.base.BaseModelType;
-import com.supermartijn642.fusion.util.CullingHelper;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransform;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
  */
 public class ConnectingModelType extends BaseModelType<ConnectingModelData,ConnectingModelDataBuilderImpl> {
 
-    public static final Property<ConnectionPredicate,Void> FACE_CONNECTION_PREDICATE = Property.create();
-
     @Override
     public <X, C> Optional<X> getProperty(Property<X,C> property, C context, ConnectingModelData data){
-        if(property == DefaultModelProperties.MODEL_CONNECTION_PREDICATES)
+        if(property == DefaultModelProperties.CONNECTION_PREDICATES)
             //noinspection unchecked
             return Optional.of((X)data.getAllConnectionPredicates());
-        if(property == DefaultModelProperties.MODEL_CONNECTION_PREDICATE)
+        if(property == DefaultModelProperties.CONNECTION_PREDICATE)
             //noinspection unchecked,SuspiciousMethodCalls
             return Optional.ofNullable((X)data.getAllConnectionPredicates().get(context));
         return super.getProperty(property, context, data);
-    }
-
-    @Override
-    public @Nullable BakedModel bakeModel(ModelBakingContext context, ModelStack modelStack, ConnectingModelData data){
-        // Bake geometry
-        ModelGeometry geometry = this.getGeometry(data);
-        if(geometry != null){
-            // Create shared property store
-            PropertyStore propertyStore = PropertyStore.create();
-            // Resolve materials
-            Set<String> missingKeys = new HashSet<>();
-            ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
-                key -> modelStack.findMaterialIncludingParents(key, context),
-                context::getMaterial,
-                missingKeys::add,
-                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + modelStack + ")!")
-            );
-            // Resolve connection predicates
-            Function<String,@Nullable ConnectionPredicate> connectionsResolver = createConnectionsResolver(
-                context,
-                modelStack,
-                keys -> context.pushWarning("Found circular connections key chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + modelStack + ")!")
-            );
-            // Compose transformations
-            ModelTransform transforms = modelStack.composeTransforms();
-            transforms = ModelTransform.compose(transforms, context.getTransformation());
-            // Combine conditions
-            ModelPredicate conditions = modelStack.combineConditions();
-            if(conditions != null)
-                conditions = conditions.simplify();
-            // Bake the geometry
-            List<Pair<QuadAccess,ConnectionPredicate>>[] quads;
-            if(geometry.isCuboidGeometry())
-                quads = bakeCuboidGeometry((CuboidModelGeometry)geometry, transforms, materialResolver, connectionsResolver);
-            else{
-                //noinspection unchecked
-                quads = new List[7];
-                CullableQuads bakedGeometry = geometry.bake(transforms, materialResolver);
-                for(Direction cullDirection : CullingHelper.cullDirections()){
-                    quads[CullingHelper.cullIndex(cullDirection)] = bakedGeometry.get(cullDirection).stream()
-                        .map(q -> Pair.of(q, (ConnectionPredicate)null))
-                        .toList();
-                }
-            }
-            if(!missingKeys.isEmpty())
-                context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + modelStack + ")!");
-            // Apply model properties to the quads
-            Boolean shade = modelStack.findShadeIncludingParents(context);
-            Boolean emissive = modelStack.findEmissiveIncludingParents(context);
-            // Initialize quads
-            //noinspection unchecked
-            List<BaseBakedModel.Quad>[] processedQuads = new List[7];
-            MutableQuad mutableQuad = MutableQuad.create();
-            for(Direction cullDirection : CullingHelper.cullDirections()){
-                List<BaseBakedModel.Quad> directionQuads = new ArrayList<>(quads[CullingHelper.cullIndex(cullDirection)].size());
-                for(Pair<QuadAccess,ConnectionPredicate> pair : quads[CullingHelper.cullIndex(cullDirection)]){
-                    QuadAccess quad = pair.left();
-                    // Get the sprite instance
-                    SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
-                    // Put the face's connection predicate into the property store
-                    ConnectionPredicate predicate = pair.right();
-                    if(predicate != null)
-                        predicate = predicate.simplify();
-                    propertyStore.setProperty(FACE_CONNECTION_PREDICATE, predicate);
-                    // Initialize the quad
-                    QuadProcessor<?> processor = null;
-                    if(sprite != null){
-                        mutableQuad.copyFrom(quad);
-                        processor = sprite.getTexture().initializeModelQuad(mutableQuad, sprite, propertyStore);
-                        quad = mutableQuad.createCopy();
-                        SpriteInstance newSprite = SpriteHelper.getSpriteInstance(quad.sprite());
-                        if(newSprite != null)
-                            sprite = newSprite;
-                    }
-                    // Apply model properties
-                    if(shade != null)
-                        mutableQuad.shade(shade);
-                    if(emissive != null)
-                        mutableQuad.emissive(emissive);
-                    // Create quad
-                    //noinspection unchecked
-                    directionQuads.add(new BaseBakedModel.Quad(
-                        quad,
-                        sprite,
-                        (QuadProcessor<Object>)processor
-                    ));
-                }
-                processedQuads[CullingHelper.cullIndex(cullDirection)] = List.copyOf(directionQuads);
-            }
-            propertyStore.setProperty(FACE_CONNECTION_PREDICATE, null);
-            // Resolve particle material
-            TextureAtlasSprite particleSprite = materialResolver.get("particle");
-            if(ModelMaterial.isMissingSprite(particleSprite))
-                context.pushWarning("Could not resolve 'particle' material for model stack (" + modelStack + ")!");
-            // Resolve ambient occlusion
-            Boolean ambientOcclusion = modelStack.findAmbientOcclusionIncludingParents(context);
-            if(ambientOcclusion == null)
-                ambientOcclusion = true;
-            // Resolve gui light
-            BlockModel.GuiLight guiLight = modelStack.findGuiLightIncludingParents(context);
-            if(guiLight == null)
-                guiLight = BlockModel.GuiLight.SIDE;
-            // Resolve item transforms
-            BiFunction<ItemTransforms.TransformType,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) -> {
-                ItemTransform transform = modelStack.findItemTransformIncludingParents(type, context);
-                return transform == null ? fallback : transform;
-            };
-            ImmutableMap.Builder<ItemTransforms.TransformType,ItemTransform> moddedTransforms = ImmutableMap.builder();
-            for(ItemTransforms.TransformType type : ItemTransforms.TransformType.values()){
-                if(type.isModded()){
-                    ItemTransform transform = itemTransformResolver.apply(type, null);
-                    if(transform != null)
-                        moddedTransforms.put(type, transform);
-                }
-            }
-            ItemTransforms itemTransforms = new ItemTransforms(
-                itemTransformResolver.apply(ItemTransforms.TransformType.THIRD_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.THIRD_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.HEAD, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.GUI, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.GROUND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.FIXED, ItemTransform.NO_TRANSFORM),
-                moddedTransforms.build()
-            );
-            // Create the model
-            return new BaseBakedModel(
-                BaseBakedModel.Quads.create(processedQuads),
-                conditions,
-                propertyStore,
-                particleSprite,
-                ambientOcclusion,
-                guiLight,
-                geometry.isGui3d(),
-                itemTransforms
-            );
-        }
-
-        // Bake parent
-        ResourceLocation parent = data.getParent();
-        if(parent != null){
-            UntypedModelInstance parentModel = context.getModelOrMissing(parent);
-            return parentModel.bakeModel(context, modelStack.push(parentModel, parent));
-        }
-
-        // If there's no geometry, return null
-        return null;
-    }
-
-    private static List<Pair<QuadAccess,ConnectionPredicate>>[] bakeCuboidGeometry(CuboidModelGeometry geometry,
-                                                                                   ModelTransform transformation,
-                                                                                   ModelGeometry.MaterialResolver materialResolver,
-                                                                                   Function<String,@Nullable ConnectionPredicate> connectionsResolver){
-        //noinspection unchecked
-        List<Pair<QuadAccess,ConnectionPredicate>>[] quads = new List[7];
-        for(int cullIndex = 0; cullIndex < 7; cullIndex++)
-            quads[cullIndex] = new ArrayList<>();
-        for(CuboidModelGeometry.Element element : geometry.elements()){
-            // Create quads the same way as vanilla
-            // Check whether the size is 0 for any axis
-            Vector3f from = element.from();
-            Vector3f to = element.to();
-            boolean drawXFaces = from.y() != to.y() && from.z() != to.z();
-            boolean drawYFaces = from.x() != to.x() && from.z() != to.z();
-            boolean drawZFaces = from.x() != to.x() && from.y() != to.y();
-            if(!drawXFaces && !drawYFaces && !drawZFaces)
-                continue;
-
-            // Create the quads for each side
-            for(Direction side : Direction.values()){
-                CuboidModelGeometry.Face face = element.face(side);
-                if(face == null)
-                    continue;
-
-                boolean shouldDrawFace = switch(side.getAxis()){
-                    case X -> drawXFaces;
-                    case Y -> drawYFaces;
-                    case Z -> drawZFaces;
-                };
-                if(!shouldDrawFace)
-                    continue;
-
-                // Bake the face
-                QuadAccess quad = CuboidModelGeometry.bakeFace(face, element, side, transformation, materialResolver);
-                // Resolve connections key
-                Optional<String> key = face.getProperty(DefaultModelProperties.FACE_CONNECTIONS_KEY);
-                ConnectionPredicate connectionPredicate = connectionsResolver.apply(key.orElse(face.material()));
-                // Add the quad
-                Direction cullDirection = face.cullDirection() == null ? null :
-                    Direction.rotate(new Matrix4f(transformation.matrix()), face.cullDirection());
-                quads[CullingHelper.cullIndex(cullDirection)].add(Pair.of(quad, connectionPredicate));
-            }
-        }
-        return quads;
-    }
-
-    private static Function<String,@Nullable ConnectionPredicate> createConnectionsResolver(ModelBakingContext context, ModelStack stack, Consumer<List<String>> reportCircular){
-        // Create function to resolve specific key
-        Map<String,ConnectionPredicate> resolvedConnections = new HashMap<>();
-        return key -> {
-            // Check if the key has already been resolved
-            if(resolvedConnections.containsKey(key))
-                return resolvedConnections.get(key);
-            // Resolve the key
-            List<String> encounteredKeys = new ArrayList<>();
-            while(true){
-                encounteredKeys.add(key);
-                final String finalKey = key;
-                Either<String,ConnectionPredicate> next = stack.findPropertyIncludingParents(DefaultModelProperties.MODEL_CONNECTION_PREDICATE, finalKey, context).orElse(null);
-                if(next != null){
-                    if(next.isRight()){
-                        ConnectionPredicate predicate = next.right();
-                        for(String encounteredKey : encounteredKeys)
-                            resolvedConnections.put(encounteredKey, predicate);
-                        return predicate;
-                    }
-                    key = next.left();
-                }else{ // Check materials map
-                    Either<String,ModelMaterial> material = stack.findMaterialIncludingParents(finalKey, context);
-                    if(material == null){
-                        if(key.equals(ConnectingModelData.DEFAULT_KEY))
-                            break;
-                        key = ConnectingModelData.DEFAULT_KEY;
-                    }else
-                        key = material.flatMap(Function.identity(), m -> m.texture().toString());
-                }
-                if(encounteredKeys.contains(key)){
-                    encounteredKeys.add(key);
-                    reportCircular.accept(Collections.unmodifiableList(encounteredKeys));
-                    break;
-                }
-                if(resolvedConnections.containsKey(key)){
-                    ConnectionPredicate previouslyResolved = resolvedConnections.get(key);
-                    for(String encounteredKey : encounteredKeys)
-                        resolvedConnections.put(encounteredKey, previouslyResolved);
-                    return previouslyResolved;
-                }
-            }
-            for(String encounteredKey : encounteredKeys)
-                resolvedConnections.put(encounteredKey, null);
-            return null;
-        };
     }
 
     @Override

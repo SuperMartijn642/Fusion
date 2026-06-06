@@ -118,7 +118,7 @@ public class UnknownModelType<T extends UnbakedModel> extends SimpleModelType<T>
     }
 
     @Override
-    protected void bakeGeometry(BlockStateModelBakingContext context, ModelStack modelStack, T data, ModelTransform transform, ModelGeometry.MaterialResolver materialResolver, ModelGeometry.QuadConsumer quadConsumer){
+    protected void bakeGeometry(BlockStateModelBakingContext context, ModelStack modelStack, T data, ModelTransform transform, ModelGeometry.MaterialKeyResolver materialResolver, ModelGeometry.QuadConsumer quadConsumer){
         // Create dummy texture slots instance
         TextureSlots textureSlots = ModelGeometryImpl.createTextureSlots(materialResolver);
         // Create dummy model baker

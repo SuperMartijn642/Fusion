@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.api.model.custom;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.resources.ResourceLocation;
@@ -13,10 +14,10 @@ import java.util.Optional;
  * Context for baking block state models.
  * <p>
  * Created 27/04/2023 by SuperMartijn642
- * @see com.supermartijn642.fusion.api.model.ModelType#bakeBlockStateModel(BlockStateModelBakingContext, Object)
+ * @see com.supermartijn642.fusion.api.model.ModelType#bakeBlockStateModel(BlockStateModelBakingContext, ModelStack, Object)
  */
 @ApiStatus.NonExtendable
-public interface BlockStateModelBakingContext {
+public interface BlockStateModelBakingContext extends ModelResolver {
 
     /**
      * Pushes a user-facing warning message that should be logged.
@@ -40,12 +41,12 @@ public interface BlockStateModelBakingContext {
      */
     TextureAtlasSprite getMaterial(ModelMaterial material);
 
+    @Nullable ModelInstance<?> getModel(ResourceLocation identifier);
+
     /**
-     * Gets the model corresponding to the given identifier.
-     * @param identifier identifier for the model
+     * Gets the missing block state model.
      */
-    @Nullable
-    ModelInstance<?> getModel(ResourceLocation identifier);
+    BlockStateModel getMissingBlockStateModel();
 
     /**
      * Gets the model baker instance.
@@ -60,7 +61,7 @@ public interface BlockStateModelBakingContext {
      * @return an optional value that was returned by given the walker
      */
     default <T> Optional<T> walkModelTree(UntypedModelInstance modelInstance, ModelWalker<T> walker){
-        return ModelWalker.walkModelTree(this::getModel, modelInstance, walker);
+        return ModelWalker.walkModelTree(this, modelInstance, walker);
     }
 
     /**
@@ -71,6 +72,6 @@ public interface BlockStateModelBakingContext {
      * @return an optional value that was returned by given the walker
      */
     default <T> Optional<T> walkModelTree(ResourceLocation model, ModelWalker<T> walker){
-        return ModelWalker.walkModelTree(this::getModel, model, walker);
+        return ModelWalker.walkModelTree(this, model, walker);
     }
 }

@@ -1,12 +1,11 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
+import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +20,7 @@ public class BlockStateModelBakingContextImpl implements BlockStateModelBakingCo
     private final ResourceLocation identifier;
     private final ModelTransform transform;
     private final ModelBaker modelBaker;
+    private ModelBakery.MissingModels missingModels;
 
     public BlockStateModelBakingContextImpl(Consumer<String> warnings, ResourceLocation identifier, ModelTransform transform, ModelBaker modelBaker){
         this.warnings = warnings;
@@ -53,6 +53,17 @@ public class BlockStateModelBakingContextImpl implements BlockStateModelBakingCo
     public @Nullable ModelInstance<?> getModel(ResourceLocation identifier){
         UntypedModelInstance modelInstance = FusionBlockModelData.getModelInstance(this.modelBaker.getModel(identifier).wrapped());
         return modelInstance instanceof ModelInstance<?> ? (ModelInstance<?>)modelInstance : null;
+    }
+
+    protected ModelBakery.MissingModels getMissingModels(){
+        if(this.missingModels == null)
+            this.missingModels = ModelBakery.MissingModels.bake(this.modelBaker.getModel(ModelResolver.MISSING_MODEL), this.modelBaker.sprites());
+        return this.missingModels;
+    }
+
+    @Override
+    public BlockStateModel getMissingBlockStateModel(){
+        return this.getMissingModels().block();
     }
 
     @Override

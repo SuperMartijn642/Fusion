@@ -5,8 +5,11 @@ import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.client.model.ModelLoaderRegistry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -23,6 +26,7 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     private final ModelTransform transform;
     private final Function<ResourceLocation,TextureAtlasSprite> textureGetter;
     private final Map<ResourceLocation,UntypedModelInstance> dependencies;
+    private IBakedModel missingModel;
 
     public ModelBakingContextImpl(Consumer<String> warnings, ResourceLocation identifier, ModelTransform transform, Function<ResourceLocation,TextureAtlasSprite> textureGetter, Map<ResourceLocation,UntypedModelInstance> dependencies){
         this.warnings = warnings;
@@ -56,5 +60,12 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     public @Nullable ModelInstance<?> getModel(ResourceLocation identifier){
         UntypedModelInstance model = this.dependencies.get(identifier);
         return model instanceof ModelInstance<?> ? (ModelInstance<?>)model : null;
+    }
+
+    @Override
+    public IBakedModel getMissingBakedModel(){
+        if(this.missingModel == null)
+            this.missingModel = ModelLoaderRegistry.getMissingModel().bake(ModelTransform.identity().toModelState(), DefaultVertexFormats.ITEM, this.textureGetter);
+        return this.missingModel;
     }
 }

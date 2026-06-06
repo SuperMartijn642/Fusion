@@ -1,9 +1,6 @@
 package com.supermartijn642.fusion.api.model;
 
-import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
@@ -104,5 +101,6 @@ public interface ModelType<T> extends Serializer<T> {
      * Creates a baked model from the model data.
      * @see ModelBakingContext
      */
-    IBakedModel bakeModel(ModelBakingContext context, T data);
+    @Nullable
+    IBakedModel bakeModel(ModelBakingContext context, ModelStack modelStack, T data);
 }

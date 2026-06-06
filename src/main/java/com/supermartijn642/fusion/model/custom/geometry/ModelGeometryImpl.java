@@ -1,12 +1,12 @@
 package com.supermartijn642.fusion.model.custom.geometry;
 
-import com.supermartijn642.fusion.api.model.custom.CullableQuads;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
 import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
 import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.IdentifierUtil;
@@ -103,7 +103,7 @@ public class ModelGeometryImpl implements ModelGeometry {
     }
 
     @Override
-    public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
+    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver){
         // Bake the model
         Function<ResourceLocation,TextureAtlasSprite> spriteGetter = material -> materialResolver.get(material.toString());
         IBakedModel baked;
@@ -114,7 +114,6 @@ public class ModelGeometryImpl implements ModelGeometry {
         }
 
         // Collect all quads from the model
-        CullableQuads.Builder quads = CullableQuads.builder();
         for(BlockRenderLayer renderType : BlockRenderLayer.values()){
             if(!ModelRenderTypeHelper.canRenderInLayer(baked, Blocks.AIR.getDefaultState(), renderType, renderType == BlockRenderLayer.SOLID))
                 continue;
@@ -123,11 +122,10 @@ public class ModelGeometryImpl implements ModelGeometry {
                 baked.getQuads(Blocks.AIR.getDefaultState(), cullDirection, 42).forEach(q -> {
                     MutableQuad mutableQuad = MutableQuad.create(q);
                     mutableQuad.renderLayer(renderType);
-                    quads.add(cullDirection, mutableQuad);
+                    consumer.consume(mutableQuad, cullDirection, PropertyGetter.empty());
                 });
             }
         }
         ForgeHooksClient.setRenderLayer(null);
-        return quads.build();
     }
 }

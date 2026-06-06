@@ -50,11 +50,11 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
     public BaseBakedModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, TextureAtlasSprite particleSprite, boolean ambientOcclusion, boolean isGui3d, ItemCameraTransforms transforms){
         this.quads = quads;
         this.conditions = conditions;
+        this.propertyStore = propertyStore;
         this.particleSprite = particleSprite;
         this.ambientOcclusion = ambientOcclusion;
         this.isGui3d = isGui3d;
         this.transforms = transforms;
-        this.propertyStore = propertyStore;
     }
 
     private RenderData getRenderData(@Nullable IBlockAccess level, @Nullable BlockPos pos, @Nullable IBlockState state){

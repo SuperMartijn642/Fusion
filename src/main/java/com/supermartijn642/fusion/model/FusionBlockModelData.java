@@ -138,13 +138,15 @@ public class FusionBlockModelData extends BlockModel {
         // Let the custom model handle the actual baking
         BakedModel bakedModel;
         try{
-            bakedModel = this.model.bakeModel(context);
+            bakedModel = this.model.bakeModel(context, ModelStack.empty().push(this.model, this.identifier));
         }catch(Exception e){
             if(this.model instanceof ModelInstance<?>)
                 throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
             else
                 throw new RuntimeException("Encountered an exception while baking untyped block model for '" + this.identifier + "'!", e);
         }
+        if(bakedModel == null)
+            bakedModel = context.getMissingBakedModel();
         // Log warnings
         if(!warnings.isEmpty())
             LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.identifier);

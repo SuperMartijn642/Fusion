@@ -17,6 +17,10 @@ public class DefaultModelProperties {
      */
     public static final Property<Map<String,Either<String,ConnectionPredicate>>,Void> MODEL_CONNECTION_PREDICATES = Property.create();
     /**
+     * The connections definition for a given key on a model.
+     */
+    public static final Property<Either<String,ConnectionPredicate>,String> MODEL_CONNECTION_PREDICATE = Property.create(String.class);
+    /**
      * The connections key to use for a face.
      */
     public static final Property<String,Void> FACE_CONNECTIONS_KEY = Property.create();

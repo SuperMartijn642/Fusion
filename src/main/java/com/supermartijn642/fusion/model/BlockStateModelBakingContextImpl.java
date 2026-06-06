@@ -1,11 +1,9 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
@@ -22,6 +20,7 @@ public class BlockStateModelBakingContextImpl implements BlockStateModelBakingCo
     private final ResourceLocation identifier;
     private final ModelTransform transform;
     private final ModelBaker modelBaker;
+    private BakedModel missingModel;
 
     public BlockStateModelBakingContextImpl(Consumer<String> warnings, ResourceLocation identifier, ModelTransform transform, ModelBaker modelBaker){
         this.warnings = warnings;
@@ -56,6 +55,13 @@ public class BlockStateModelBakingContextImpl implements BlockStateModelBakingCo
             return null;
         UntypedModelInstance modelInstance = FusionBlockModelData.getModelInstance(impl.getModel(identifier));
         return modelInstance instanceof ModelInstance<?> ? (ModelInstance<?>)modelInstance : null;
+    }
+
+    @Override
+    public BakedModel getMissingBakedModel(){
+        if(this.missingModel == null)
+            this.missingModel = this.modelBaker.bake(ModelResolver.MISSING_MODEL, ModelTransform.identity().toModelState());
+        return this.missingModel;
     }
 
     @Override

@@ -37,19 +37,30 @@ import java.util.function.Consumer;
  */
 public class BaseItemModel implements ItemModel {
 
-    private final List<Part> parts;
-    private final List<ItemTintSource> tints;
+    private final List<Quad> quads;
+    private final ModelPredicate conditions;
     private final PropertyStore propertyStore;
+    private final UnbakedModel.GuiLight guiLight;
+    private final TextureAtlasSprite particleSprite;
+    private final ItemTransforms transforms;
+    private final List<ItemTintSource> tints;
 
-    public BaseItemModel(List<Part> parts, List<ItemTintSource> tints, PropertyStore propertyStore){
-        this.parts = parts;
-        this.tints = tints;
+    public BaseItemModel(List<Quad> quads, ModelPredicate conditions, PropertyStore propertyStore, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms transforms, List<ItemTintSource> tints){
+        this.quads = quads;
+        this.conditions = conditions;
         this.propertyStore = propertyStore;
+        this.guiLight = guiLight;
+        this.particleSprite = particleSprite;
+        this.transforms = transforms;
+        this.tints = tints;
     }
 
     @Override
     public void update(ItemStackRenderState renderState, ItemStack stack, ItemModelResolver modelResolver, ItemDisplayContext displayContext, @Nullable ClientLevel level, @Nullable LivingEntity owner, int seed){
-        renderState.ensureCapacity(this.parts.size());
+        // Check conditions
+        if(this.conditions != null && !this.conditions.testForItem(stack))
+            return;
+
         // Compute tint values
         int[] tintValues;
         if(!this.tints.isEmpty()){
@@ -70,90 +81,69 @@ public class BaseItemModel implements ItemModel {
             defaultRenderType = Sheets.translucentItemSheet();
         // Submit each part
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
-        for(Part part : this.parts){
-            // Check part condition
-            if(part.conditions != null && !part.conditions.testForItem(stack))
+
+        // Collect quads by render type
+        List<RenderType> renderTypes = new ArrayList<>(4);
+        List<List<BakedQuad>> quadsByRenderType = new ArrayList<>(4);
+        Consumer<QuadAccess> submitter = quad -> {
+            // Get render type
+            RenderType renderType = quad.itemRenderType();
+            if(renderType == null)
+                renderType = defaultRenderType;
+            // Get or quad list
+            int i = renderTypes.indexOf(renderType);
+            List<BakedQuad> bakedQuads;
+            if(i == -1){
+                renderTypes.add(renderType);
+                bakedQuads = new ArrayList<>();
+                quadsByRenderType.add(bakedQuads);
+            }else
+                bakedQuads = quadsByRenderType.get(i);
+            // Add the quad to the list
+            bakedQuads.add(quad.toBakedQuad());
+        };
+
+        // Process all quads
+        EmittableQuad mutableQuad = null;
+        for(Quad quad : this.quads){
+            // Simply add quads that don't need further processing
+            if(quad.processor() == null){
+                submitter.accept(quad.quad());
                 continue;
-
-            // Collect quads by render type
-            List<RenderType> renderTypes = new ArrayList<>(4);
-            List<List<BakedQuad>> quadsByRenderType = new ArrayList<>(4);
-            Consumer<QuadAccess> submitter = quad -> {
-                // Get render type
-                RenderType renderType = quad.itemRenderType();
-                if(renderType == null)
-                    renderType = defaultRenderType;
-                // Get or quad list
-                int i = renderTypes.indexOf(renderType);
-                List<BakedQuad> bakedQuads;
-                if(i == -1){
-                    renderTypes.add(renderType);
-                    bakedQuads = new ArrayList<>();
-                    quadsByRenderType.add(bakedQuads);
-                }else
-                    bakedQuads = quadsByRenderType.get(i);
-                // Add the quad to the list
-                bakedQuads.add(quad.toBakedQuad());
-            };
-
-            // Process all quads
-            EmittableQuad mutableQuad = null;
-            for(Quad quad : part.quads){
-                // Simply add quads that don't need further processing
-                if(quad.processor() == null){
-                    submitter.accept(quad.quad());
-                    continue;
-                }
-
-                // Create mutable quad
-                if(mutableQuad == null)
-                    mutableQuad = EmittableQuad.create(submitter::accept);
-                mutableQuad.copyFrom(quad.quad());
-
-                // Process quad
-                Object state = quad.processor().extractState(stack, propertyStore);
-                quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
             }
 
-            // Create layer for each render type
-            for(int i = 0; i < renderTypes.size(); i++){
-                RenderType renderType = renderTypes.get(i);
-                List<BakedQuad> bakedQuads = quadsByRenderType.get(i);
-                // Create layer
-                ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
-                if(tintValues != null)
-                    System.arraycopy(tintValues, 0, layer.prepareTintLayers(tintValues.length), 0, tintValues.length);
-                if(foilType != null)
-                    layer.setFoilType(foilType);
-                layer.setupBlockModel(
-                    new SimpleBakedModel(
-                        bakedQuads,
-                        UnknownModelType.EMPTY_CULLED_QUADS,
-                        true,
-                        part.guiLight.lightLikeBlock(),
-                        true,
-                        part.particleSprite,
-                        part.transforms
-                    ),
-                    renderType
-                );
-            }
+            // Create mutable quad
+            if(mutableQuad == null)
+                mutableQuad = EmittableQuad.create(submitter::accept);
+            mutableQuad.copyFrom(quad.quad());
+
+            // Process quad
+            Object state = quad.processor().extractState(stack, propertyStore);
+            quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
         }
-    }
 
-    public static class Part {
-        private final List<Quad> quads;
-        private final ModelPredicate conditions;
-        private final UnbakedModel.GuiLight guiLight;
-        private final TextureAtlasSprite particleSprite;
-        private final ItemTransforms transforms;
-
-        public Part(List<Quad> quads, ModelPredicate conditions, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms transforms){
-            this.quads = quads;
-            this.conditions = conditions;
-            this.guiLight = guiLight;
-            this.particleSprite = particleSprite;
-            this.transforms = transforms;
+        // Create layer for each render type
+        for(int i = 0; i < renderTypes.size(); i++){
+            RenderType renderType = renderTypes.get(i);
+            List<BakedQuad> bakedQuads = quadsByRenderType.get(i);
+            // Create layer
+            ItemStackRenderState.LayerRenderState layer = renderState.newLayer();
+            if(tintValues != null)
+                System.arraycopy(tintValues, 0, layer.prepareTintLayers(tintValues.length), 0, tintValues.length);
+            if(foilType != null)
+                layer.setFoilType(foilType);
+            layer.setupBlockModel(
+                new SimpleBakedModel(
+                    bakedQuads,
+                    UnknownModelType.EMPTY_CULLED_QUADS,
+                    true,
+                    this.guiLight.lightLikeBlock(),
+                    true,
+                    this.particleSprite,
+                    this.transforms
+                ),
+                renderType
+            );
         }
     }
 

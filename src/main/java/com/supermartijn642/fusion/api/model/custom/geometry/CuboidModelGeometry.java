@@ -50,7 +50,7 @@ public interface CuboidModelGeometry extends ModelGeometry {
      * @param transformation   transformation to apply to the element
      * @param materialResolver resolver for material keys
      */
-    static CullableQuads bakeElement(Element element, ModelTransform transformation, MaterialResolver materialResolver){
+    static CullableQuads bakeElement(Element element, ModelTransform transformation, MaterialKeyResolver materialResolver){
         return CuboidModelGeometryImpl.bakeElement(element, transformation, materialResolver);
     }
 
@@ -61,7 +61,7 @@ public interface CuboidModelGeometry extends ModelGeometry {
      * @param transformation   transformation to apply to the element
      * @param materialResolver resolver for material keys
      */
-    static void bakeElement(QuadConsumer consumer, Element element, ModelTransform transformation, MaterialResolver materialResolver){
+    static void bakeElement(QuadConsumer consumer, Element element, ModelTransform transformation, MaterialKeyResolver materialResolver){
         CuboidModelGeometryImpl.bakeElement(consumer, element, transformation, materialResolver);
     }
 
@@ -73,7 +73,7 @@ public interface CuboidModelGeometry extends ModelGeometry {
      * @param transformation   transformation to apply to the face
      * @param materialResolver resolver for material keys
      */
-    static QuadAccess bakeFace(Face face, Element element, Direction side, ModelTransform transformation, MaterialResolver materialResolver){
+    static QuadAccess bakeFace(Face face, Element element, Direction side, ModelTransform transformation, MaterialKeyResolver materialResolver){
         return CuboidModelGeometryImpl.bakeFace(face, element, side, transformation, materialResolver);
     }
 
@@ -86,7 +86,7 @@ public interface CuboidModelGeometry extends ModelGeometry {
      * @param transformation   transformation to apply to the face
      * @param materialResolver resolver for material keys
      */
-    static void bakeFace(QuadConsumer consumer, Face face, Element element, Direction side, ModelTransform transformation, MaterialResolver materialResolver){
+    static void bakeFace(QuadConsumer consumer, Face face, Element element, Direction side, ModelTransform transformation, MaterialKeyResolver materialResolver){
         CuboidModelGeometryImpl.bakeFace(consumer, face, element, side, transformation, materialResolver);
     }
 

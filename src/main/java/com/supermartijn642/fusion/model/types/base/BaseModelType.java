@@ -5,7 +5,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.math.Quadrant;
-import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
@@ -21,7 +20,6 @@ import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.api.util.PropertyStore;
-import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.*;
@@ -106,40 +104,36 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
     }
 
     @Override
-    public BlockStateModel bakeBlockStateModel(BlockStateModelBakingContext context, T data){
-        // Create shared property store
-        PropertyStore propertyStore = PropertyStore.create();
-
+    public @Nullable BlockStateModel bakeBlockStateModel(BlockStateModelBakingContext context, ModelStack modelStack, T data){
         // Bake geometry
-        List<BaseBlockStateModel.Part> parts = new ArrayList<>();
-        context.walkModelTree(ModelInstance.of(this, data), (modelInstance, stack) -> {
-            ModelGeometry geometry = modelInstance.getGeometry();
-            if(geometry == null)
-                return ModelWalker.Result.proceed();
+        ModelGeometry geometry = this.getGeometry(data);
+        if(geometry != null){
+            // Create shared property store
+            PropertyStore propertyStore = PropertyStore.create();
             // Resolve materials
             Set<String> missingKeys = new HashSet<>();
             ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
-                key -> UnknownModelType.findPropertyInStackAndParents(context, stack, m -> m.getMaterial(key), null),
+                key -> modelStack.findMaterialIncludingParents(key, context),
                 context::getMaterial,
                 missingKeys::add,
-                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + stack + ")!")
+                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + modelStack + ")!")
             );
             // Compose transformations
-            ModelTransform transforms = stack.composeTransforms();
+            ModelTransform transforms = modelStack.composeTransforms();
             transforms = ModelTransform.compose(transforms, context.getTransformation());
             // Combine conditions
-            ModelPredicate conditions = stack.combineConditions();
+            ModelPredicate conditions = modelStack.combineConditions();
             if(conditions != null)
                 conditions = conditions.simplify();
             // Bake the geometry
             CullableQuads quads = geometry.bake(transforms, materialResolver);
             if(!missingKeys.isEmpty())
-                context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
+                context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + modelStack + ")!");
             // Apply model properties to the quads
-            Boolean ambientOcclusion = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getAmbientOcclusion, null);
-            Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getShade, null);
-            Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getEmissive, null);
-            // Initialize special texture quads
+            Boolean ambientOcclusion = modelStack.findAmbientOcclusionIncludingParents(context);
+            Boolean shade = modelStack.findShadeIncludingParents(context);
+            Boolean emissive = modelStack.findEmissiveIncludingParents(context);
+            // Initialize quads
             //noinspection unchecked
             List<BaseBlockStateModel.Quad>[] processedQuads = new List[7];
             MutableQuad mutableQuad = MutableQuad.create();
@@ -148,18 +142,16 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                 for(QuadAccess quad : quads.get(cullDirection)){
                     // Get the sprite instance
                     SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
-                    if(sprite == null){
-                        directionQuads.add(new BaseBlockStateModel.Quad(
-                            quad,
-                            null,
-                            null
-                        ));
-                        continue;
-                    }
                     // Initialize the quad
-                    mutableQuad.copyFrom(quad);
-                    BlockStateQuadProcessor<?> processor = sprite.getTexture().initializeBlockStateModelQuad(mutableQuad, sprite, propertyStore);
-                    SpriteInstance newSprite = SpriteHelper.getSpriteInstance(mutableQuad.sprite());
+                    BlockStateQuadProcessor<?> processor = null;
+                    if(sprite != null){
+                        mutableQuad.copyFrom(quad);
+                        processor = sprite.getTexture().initializeBlockStateModelQuad(mutableQuad, sprite, propertyStore);
+                        quad = mutableQuad.createCopy();
+                        SpriteInstance newSprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                        if(newSprite != null)
+                            sprite = newSprite;
+                    }
                     // Apply model properties
                     if(ambientOcclusion != null)
                         mutableQuad.ambientOcclusion(ambientOcclusion);
@@ -170,8 +162,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                     // Create quad
                     //noinspection unchecked
                     directionQuads.add(new BaseBlockStateModel.Quad(
-                        mutableQuad.createCopy(),
-                        newSprite == null ? sprite : newSprite,
+                        quad,
+                        sprite,
                         (BlockStateQuadProcessor<Object>)processor
                     ));
                 }
@@ -179,90 +171,73 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             }
             // Resolve particle material
             TextureAtlasSprite particleSprite = materialResolver.get("particle");
-            if(particleSprite == null)
-                context.pushWarning("Could not resolve 'particle' material for model stack (" + stack + ")!");
-            // Create a new part
-            parts.add(new BaseBlockStateModel.Part(
+            if(ModelMaterial.isMissingSprite(particleSprite))
+                context.pushWarning("Could not resolve 'particle' material for model stack (" + modelStack + ")!");
+            // Create the model
+            return new BaseBlockStateModel(
                 new BaseBlockStateModel.Quads(processedQuads),
                 conditions,
-                particleSprite
-            ));
-            return ModelWalker.Result.endBranch();
-        });
-
-        // Find particle sprite
-        ModelMaterial particleMaterial = context.walkModelTree(ModelInstance.of(this, data), (modelInstance, stack) -> {
-            ModelMaterial material = stack.findMaterialRecursive(
-                "particle",
-                l -> {}
+                particleSprite,
+                propertyStore
             );
-            return material == null ? ModelWalker.Result.proceed() : ModelWalker.Result.stop(material);
-        }).orElse(null);
-        if(particleMaterial == null){
-            context.pushWarning("Could not resolve 'particle' material!");
-            particleMaterial = ModelMaterial.missingBlockOrItemAtlas();
         }
-        TextureAtlasSprite resolvedParticleMaterial = context.getMaterial(particleMaterial);
 
-        // Finally, create the model
-        return new BaseBlockStateModel(
-            parts,
-            resolvedParticleMaterial,
-            propertyStore
-        );
+        // Bake parent
+        Identifier parent = data.getParent();
+        if(parent != null){
+            UntypedModelInstance parentModel = context.getModelOrMissing(parent);
+            return parentModel.bakeBlockStateModel(context, modelStack.push(parentModel, parent));
+        }
+
+        // If there's no geometry, return null
+        return null;
     }
 
     @Override
-    public ItemModel bakeItemModel(ItemModelBakingContext context, T data){
-        // Create shared property store
-        PropertyStore propertyStore = PropertyStore.create();
-
-        // Create a submodel for each geometry
-        List<BaseItemModel.Part> parts = new ArrayList<>();
-        context.walkModelTree(ModelInstance.of(this, data), (modelInstance, stack) -> {
-            ModelGeometry geometry = modelInstance.getGeometry();
-            if(geometry == null)
-                return ModelWalker.Result.proceed();
+    public @Nullable ItemModel bakeItemModel(ItemModelBakingContext context, ModelStack modelStack, T data){
+        // Bake geometry
+        ModelGeometry geometry = this.getGeometry(data);
+        if(geometry != null){
+            // Create shared property store
+            PropertyStore propertyStore = PropertyStore.create();
             // Resolve materials
             Set<String> missingKeys = new HashSet<>();
             ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
-                key -> UnknownModelType.findPropertyInStackAndParents(context, stack, m -> m.getMaterial(key), null),
+                key -> modelStack.findMaterialIncludingParents(key, context),
                 context::getMaterial,
                 missingKeys::add,
-                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + stack + ")!")
+                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + modelStack + ")!")
             );
             // Compose transformations
-            ModelTransform transforms = stack.composeTransforms();
+            ModelTransform transforms = modelStack.composeTransforms();
             // Combine conditions
-            ModelPredicate conditions = stack.combineConditions();
+            ModelPredicate conditions = modelStack.combineConditions();
             if(conditions != null)
                 conditions = conditions.simplify();
             // Bake the geometry
             CullableQuads quads = geometry.bake(transforms, materialResolver);
             if(!missingKeys.isEmpty())
-                context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + stack + ")!");
+                context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + modelStack + ")!");
             // Apply model properties to the quads
-            Boolean ambientOcclusion = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getAmbientOcclusion, null);
-            Boolean shade = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getShade, null);
-            Boolean emissive = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getEmissive, null);
-            // Initialize special texture quads
+            Boolean ambientOcclusion = modelStack.findAmbientOcclusionIncludingParents(context);
+            Boolean shade = modelStack.findShadeIncludingParents(context);
+            Boolean emissive = modelStack.findEmissiveIncludingParents(context);
+            // Initialize quads
             List<BaseItemModel.Quad> processedQuads = new ArrayList<>(quads.all().size());
             MutableQuad mutableQuad = MutableQuad.create();
             for(QuadAccess quad : quads.all()){
                 // Get the sprite instance
                 SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
-                if(sprite == null){
-                    processedQuads.add(new BaseItemModel.Quad(
-                        quad,
-                        null,
-                        null
-                    ));
-                    continue;
-                }
                 // Initialize the quad
-                mutableQuad.copyFrom(quad);
-                ItemQuadProcessor<?> processor = sprite.getTexture().initializeItemModelQuad(mutableQuad, sprite, propertyStore);
-                SpriteInstance newSprite = SpriteHelper.getSpriteInstance(mutableQuad.sprite());
+                ItemQuadProcessor<?> processor = null;
+                if(sprite != null){
+                    mutableQuad.copyFrom(quad);
+                    processor = sprite.getTexture().initializeItemModelQuad(mutableQuad, sprite, propertyStore);
+                    quad = mutableQuad.createCopy();
+                    SpriteInstance newSprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                    if(newSprite != null)
+                        sprite = newSprite;
+                }
                 // Apply model properties
                 if(ambientOcclusion != null)
                     mutableQuad.ambientOcclusion(ambientOcclusion);
@@ -273,20 +248,24 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                 // Create quad
                 //noinspection unchecked
                 processedQuads.add(new BaseItemModel.Quad(
-                    mutableQuad.createCopy(),
-                    newSprite == null ? sprite : newSprite,
+                    quad,
+                    sprite,
                     (ItemQuadProcessor<Object>)processor
                 ));
             }
             // Resolve particle material
             TextureAtlasSprite particleSprite = materialResolver.get("particle");
-            if(particleSprite == null)
-                context.pushWarning("Could not resolve 'particle' material for model stack (" + stack + ")!");
+            if(ModelMaterial.isMissingSprite(particleSprite))
+                context.pushWarning("Could not resolve 'particle' material for model stack (" + modelStack + ")!");
             // Resolve gui light
-            UnbakedModel.GuiLight guiLight = UnknownModelType.findPropertyInStackAndParents(context, stack, UntypedModelInstance::getGuiLight, UnbakedModel.GuiLight.SIDE);
+            UnbakedModel.GuiLight guiLight = modelStack.findGuiLightIncludingParents(context);
+            if(guiLight == null)
+                guiLight = UnbakedModel.GuiLight.SIDE;
             // Resolve item transforms
-            BiFunction<ItemDisplayContext,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) ->
-                UnknownModelType.findPropertyInStackAndParents(context, stack, m -> m.getItemTransform(type), fallback);
+            BiFunction<ItemDisplayContext,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) -> {
+                ItemTransform transform = modelStack.findItemTransformIncludingParents(type, context);
+                return transform == null ? fallback : transform;
+            };
             ItemTransforms itemTransforms = new ItemTransforms(
                 itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
                 itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
@@ -298,19 +277,27 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                 itemTransformResolver.apply(ItemDisplayContext.FIXED, ItemTransform.NO_TRANSFORM),
                 itemTransformResolver.apply(ItemDisplayContext.ON_SHELF, ItemTransform.NO_TRANSFORM)
             );
-            // Create the item model
-            parts.add(new BaseItemModel.Part(
-                List.copyOf(processedQuads),
+            // Create the model
+            return new BaseItemModel(
+                processedQuads,
                 conditions,
+                propertyStore,
                 guiLight,
                 particleSprite,
-                itemTransforms
-            ));
-            return ModelWalker.Result.endBranch();
-        });
+                itemTransforms,
+                context.getTintSources()
+            );
+        }
 
-        // Create one composite model of all the sub-models
-        return new BaseItemModel(parts, context.getTintSources(), propertyStore);
+        // Bake parent
+        Identifier parent = data.getParent();
+        if(parent != null){
+            UntypedModelInstance parentModel = context.getModelOrMissing(parent);
+            return parentModel.bakeItemModel(context, modelStack.push(parentModel, parent));
+        }
+
+        // If there's no geometry, return null
+        return null;
     }
 
     protected abstract BUILDER builder();

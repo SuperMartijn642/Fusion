@@ -1,16 +1,20 @@
 package com.supermartijn642.fusion.model.custom.geometry;
 
-import com.supermartijn642.fusion.api.model.custom.CullableQuads;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
+import com.supermartijn642.fusion.util.CullingHelper;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.SimpleUnbakedGeometry;
 import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +33,7 @@ public class ModelGeometryImpl implements ModelGeometry {
         return new ModelGeometryImpl(geometry);
     }
 
-    public static TextureSlots createTextureSlots(MaterialResolver materialResolver) {
+    public static TextureSlots createTextureSlots(MaterialResolver materialResolver){
         return new TextureSlots(Map.of()) {
             @Override
             public @Nullable Material getMaterial(String reference){
@@ -94,7 +98,7 @@ public class ModelGeometryImpl implements ModelGeometry {
     }
 
     @Override
-    public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
+    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver){
         // Create dummy texture slots instance
         TextureSlots textureSlots = createTextureSlots(materialResolver);
         // Create dummy sprite getter
@@ -129,10 +133,17 @@ public class ModelGeometryImpl implements ModelGeometry {
             }
         };
         // Bake the model
+        QuadCollection quadCollection;
         try{
-            return CullableQuads.of(this.geometry.bake(textureSlots, modelBaker, transformation.toModelState(), () -> ""));
+            quadCollection = this.geometry.bake(textureSlots, modelBaker, transformation.toModelState(), () -> "");
         }catch(Exception e){
             throw new RuntimeException("Encountered an exception baking geometry of class '" + this.geometry.getClass().getName() + "'!", e);
+        }
+        // Emit the quads
+        for(Direction cullDirection : CullingHelper.cullDirections()){
+            for(BakedQuad quad : quadCollection.getQuads(cullDirection)){
+                consumer.consume(MutableQuad.create(quad), cullDirection, PropertyGetter.empty());
+            }
         }
     }
 }

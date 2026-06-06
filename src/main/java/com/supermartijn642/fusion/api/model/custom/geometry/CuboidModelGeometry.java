@@ -55,6 +55,17 @@ public interface CuboidModelGeometry extends ModelGeometry {
     }
 
     /**
+     * Bakes the given element into quads.
+     * @param consumer         consumer for the quads along with properties from the geometry
+     * @param element          element to be baked
+     * @param transformation   transformation to apply to the element
+     * @param materialResolver resolver for material keys
+     */
+    static void bakeElement(QuadConsumer consumer, Element element, ModelTransform transformation, MaterialResolver materialResolver){
+        CuboidModelGeometryImpl.bakeElement(consumer, element, transformation, materialResolver);
+    }
+
+    /**
      * Bakes the given face into a quad.
      * @param face             face to be baked
      * @param element          element that the face belongs to
@@ -64,6 +75,19 @@ public interface CuboidModelGeometry extends ModelGeometry {
      */
     static QuadAccess bakeFace(Face face, Element element, Direction side, ModelTransform transformation, MaterialResolver materialResolver){
         return CuboidModelGeometryImpl.bakeFace(face, element, side, transformation, materialResolver);
+    }
+
+    /**
+     * Bakes the given face into a quad.
+     * @param consumer         consumer for the quad along with properties from the geometry
+     * @param face             face to be baked
+     * @param element          element that the face belongs to
+     * @param side             side of the element that the face is on
+     * @param transformation   transformation to apply to the face
+     * @param materialResolver resolver for material keys
+     */
+    static void bakeFace(QuadConsumer consumer, Face face, Element element, Direction side, ModelTransform transformation, MaterialResolver materialResolver){
+        CuboidModelGeometryImpl.bakeFace(consumer, face, element, side, transformation, materialResolver);
     }
 
     /**

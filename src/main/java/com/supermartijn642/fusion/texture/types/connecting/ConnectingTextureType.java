@@ -5,8 +5,12 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.supermartijn642.fusion.FusionClient;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
+import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
+import com.supermartijn642.fusion.api.model.types.connecting.ConnectingModelData;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.*;
@@ -16,11 +20,7 @@ import com.supermartijn642.fusion.api.texture.types.connecting.predicates.Connec
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
-import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.api.util.Property;
-import com.supermartijn642.fusion.api.util.PropertyStore;
-import com.supermartijn642.fusion.api.util.UserErrorException;
-import com.supermartijn642.fusion.model.types.connecting.ConnectingModelType;
+import com.supermartijn642.fusion.api.util.*;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
@@ -36,7 +36,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -151,9 +154,16 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         BaseTextureType.applyProperties(quad, data);
 
         // Get connections predicate
-        ConnectionPredicate predicate = properties.getProperty(ConnectingModelType.FACE_CONNECTION_PREDICATE)
-            .or(() -> Optional.ofNullable(data.getConnectionPredicate()))
-            .orElse(FALLBACK_PREDICATE);
+        String key = properties.getProperty(DefaultModelProperties.FACE_CONNECTIONS_KEY)
+            .or(() -> properties.getProperty(DefaultModelProperties.FACE_MATERIAL_KEY))
+            .orElse(null);
+        ConnectionPredicate predicate = key == null ?
+            FALLBACK_PREDICATE :
+            resolveConnectionsKey(
+                key,
+                properties,
+                keys -> FusionClient.LOGGER.error("Found circular connections key chain ({})!", keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")))
+            );
 
         // Create predicates key
         QuadPredicatesKey predicatesKey = new QuadPredicatesKey(
@@ -219,9 +229,16 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         BaseTextureType.applyProperties(quad, data);
 
         // Get connections predicate
-        ConnectionPredicate predicate = properties.getProperty(ConnectingModelType.FACE_CONNECTION_PREDICATE)
-            .or(() -> Optional.ofNullable(data.getConnectionPredicate()))
-            .orElse(FALLBACK_PREDICATE);
+        String key = properties.getProperty(DefaultModelProperties.FACE_CONNECTIONS_KEY)
+            .or(() -> properties.getProperty(DefaultModelProperties.FACE_MATERIAL_KEY))
+            .orElse(null);
+        ConnectionPredicate predicate = key == null ?
+            FALLBACK_PREDICATE :
+            resolveConnectionsKey(
+                key,
+                properties,
+                keys -> FusionClient.LOGGER.error("Found circular connections key chain ({})!", keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")))
+            );
         // Get quad orientation
         TextureOrientation orientation = TextureOrientation.findOrientation(quad);
         // Get layout handler
@@ -307,6 +324,34 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         BlockState otherStateAppearance = neighborState.getAppearance(level, mutablePos, face, self, position);
         BlockState stateInFront = blocks.getState(neighborX + face.getStepX(), neighborY + face.getStepY(), neighborZ + face.getStepZ());
         return predicate.shouldConnect(level, position, face, selfAppearance, otherStateAppearance, stateInFront, direction);
+    }
+
+    private static ConnectionPredicate resolveConnectionsKey(String key, PropertyGetter properties, Consumer<List<String>> reportCircular){
+        // Resolve the key
+        List<String> encounteredKeys = new ArrayList<>();
+        while(true){
+            encounteredKeys.add(key);
+            Either<String,ConnectionPredicate> next = properties.getProperty(DefaultModelProperties.CONNECTION_PREDICATE, key).orElse(null);
+            if(next != null){
+                if(next.isRight())
+                    return next.right();
+                key = next.left();
+            }else{ // Check materials map
+                Either<String,ModelMaterial> material = properties.getProperty(DefaultModelProperties.MATERIAL, key).orElse(null);
+                if(material == null){
+                    if(key.equals(ConnectingModelData.DEFAULT_KEY))
+                        break;
+                    key = ConnectingModelData.DEFAULT_KEY;
+                }else
+                    key = material.flatMap(Function.identity(), m -> m.texture().toString());
+            }
+            if(encounteredKeys.contains(key)){
+                encounteredKeys.add(key);
+                reportCircular.accept(Collections.unmodifiableList(encounteredKeys));
+                break;
+            }
+        }
+        return FALLBACK_PREDICATE;
     }
 
     @Override

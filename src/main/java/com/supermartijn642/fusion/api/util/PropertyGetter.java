@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.api.util;
 
+import com.supermartijn642.fusion.util.PropertyGetterImpl;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Optional;
@@ -11,6 +12,22 @@ import java.util.Optional;
  */
 @FunctionalInterface
 public interface PropertyGetter {
+
+    /**
+     * An empty property getter.
+     */
+    static PropertyGetter empty(){
+        return PropertyGetterImpl.empty();
+    }
+
+    /**
+     * Composes the given property getters.
+     * The given getters are traversed in order until a property is found or no getters remain.
+     */
+    static PropertyGetter compose(PropertyGetter... delegates){
+        return PropertyGetterImpl.compose(delegates);
+    }
+
     /**
      * Gets an arbitrary property.
      */

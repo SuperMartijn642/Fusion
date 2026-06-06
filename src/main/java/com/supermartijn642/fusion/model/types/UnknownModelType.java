@@ -3,30 +3,32 @@ package com.supermartijn642.fusion.model.types;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
+import com.supermartijn642.fusion.model.SimpleModelType;
 import com.supermartijn642.fusion.model.custom.geometry.ModelGeometryImpl;
+import com.supermartijn642.fusion.util.CullingHelper;
 import net.minecraft.client.renderer.block.model.*;
-import net.minecraft.client.renderer.item.BlockModelWrapper;
-import net.minecraft.client.renderer.item.ItemModel;
-import net.minecraft.client.renderer.item.ModelRenderProperties;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
  */
-public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
+public class UnknownModelType<T extends UnbakedModel> extends SimpleModelType<T> {
 
     public static Map<String,Either<String,ModelMaterial>> convertTextureSlots(TextureSlots.Data textureSlots){
         if(textureSlots.values().isEmpty())
@@ -99,203 +101,71 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     }
 
     @Override
-    public BlockStateModel bakeBlockStateModel(BlockStateModelBakingContext context, ModelStack modelStack, T data){
-        // Bake geometry
-        UnbakedGeometry geometry = data.geometry();
-        if(geometry != null){
-            // Resolve materials
-            Set<String> missingKeys = new HashSet<>();
-            ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
-                key -> modelStack.findMaterialIncludingParents(key, context),
-                context::getMaterial,
-                missingKeys::add,
-                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + modelStack + ")!")
-            );
-            TextureSlots textureSlots = ModelGeometryImpl.createTextureSlots(materialResolver);
-            // Create dummy model baker
-            SpriteGetter spriteGetter = new SpriteGetter() {
-                @Override
-                public TextureAtlasSprite get(Material material, ModelDebugName name){
-                    return context.getMaterial(ModelMaterial.of(material));
-                }
-
-                @Override
-                public TextureAtlasSprite reportMissingReference(String reference, ModelDebugName name){
-                    return materialResolver.get(reference);
-                }
-            };
-            ModelBaker modelBaker = new ModelBaker() {
-                @Override
-                public ResolvedModel getModel(Identifier location){
-                    return context.getModelBaker().getModel(location);
-                }
-
-                @Override
-                public BlockModelPart missingBlockModelPart(){
-                    return context.getMissingBlockStateModelPart();
-                }
-
-                @Override
-                public SpriteGetter sprites(){
-                    return spriteGetter;
-                }
-
-                @Override
-                public PartCache parts(){
-                    return context.getModelBaker().parts();
-                }
-
-                @Override
-                public <X> X compute(SharedOperationKey<X> key){
-                    return context.getModelBaker().compute(key);
-                }
-            };
-            // Compose transformations
-            ModelTransform transforms = modelStack.composeTransforms();
-            transforms = ModelTransform.compose(transforms, context.getTransformation());
-            // Bake the geometry
-            QuadCollection quads = geometry.bake(
-                textureSlots,
-                modelBaker,
-                transforms.toModelState(),
-                context.getModelIdentifier()::toString
-            );
-            if(!missingKeys.isEmpty())
-                context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + modelStack + ")!");
-            // Find ambient occlusion property
-            Boolean ambientOcclusion = modelStack.findAmbientOcclusionIncludingParents(context);
-            // Resolve particle material
-            TextureAtlasSprite particleSprite = materialResolver.get("particle");
-            if(ModelMaterial.isMissingSprite(particleSprite))
-                context.pushWarning("Could not resolve 'particle' material for model stack (" + modelStack + ")!");
-            // Create the model
-            return new SingleVariant(new SimpleModelWrapper(
-                quads,
-                ambientOcclusion == null || ambientOcclusion,
-                particleSprite
-            ));
-        }
-
-        // Bake parent
-        Identifier parent = data.parent();
-        if(parent != null){
-            UntypedModelInstance parentModel = context.getModelOrMissing(parent);
-            return parentModel.bakeBlockStateModel(context, modelStack.push(parentModel, parent));
-        }
-
-        // If there's no geometry, return null
-        return null;
+    protected @Nullable Identifier getParent(T data){
+        return data.parent();
     }
 
     @Override
-    public @Nullable ItemModel bakeItemModel(ItemModelBakingContext context, ModelStack modelStack, T data){
-        // Bake geometry
+    protected void bakeGeometry(BlockStateModelBakingContext context, ModelStack modelStack, T data, ModelTransform transform, ModelGeometry.MaterialResolver materialResolver, ModelGeometry.QuadConsumer quadConsumer){
+        // Create dummy texture slots instance
+        TextureSlots textureSlots = ModelGeometryImpl.createTextureSlots(materialResolver);
+        // Create dummy model baker
+        SpriteGetter spriteGetter = new SpriteGetter() {
+            @Override
+            public TextureAtlasSprite get(Material material, ModelDebugName name){
+                return context.getMaterial(ModelMaterial.of(material));
+            }
+
+            @Override
+            public TextureAtlasSprite reportMissingReference(String reference, ModelDebugName name){
+                return materialResolver.get(reference);
+            }
+        };
+        ModelBaker modelBaker = new ModelBaker() {
+            @Override
+            public ResolvedModel getModel(Identifier location){
+                return context.getModelBaker().getModel(location);
+            }
+
+            @Override
+            public BlockModelPart missingBlockModelPart(){
+                return context.getMissingBlockStateModelPart();
+            }
+
+            @Override
+            public SpriteGetter sprites(){
+                return spriteGetter;
+            }
+
+            @Override
+            public PartCache parts(){
+                return context.getModelBaker().parts();
+            }
+
+            @Override
+            public <X> X compute(SharedOperationKey<X> key){
+                return context.getModelBaker().compute(key);
+            }
+        };
+        // Bake the geometry
         UnbakedGeometry geometry = data.geometry();
-        if(geometry != null){
-            // Resolve materials
-            Set<String> missingKeys = new HashSet<>();
-            ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
-                key -> modelStack.findMaterialIncludingParents(key, context),
-                context::getMaterial,
-                missingKeys::add,
-                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + modelStack + ")!")
-            );
-            TextureSlots textureSlots = ModelGeometryImpl.createTextureSlots(materialResolver);
-            // Create dummy model baker
-            SpriteGetter spriteGetter = new SpriteGetter() {
-                @Override
-                public TextureAtlasSprite get(Material material, ModelDebugName name){
-                    return context.getMaterial(ModelMaterial.of(material));
-                }
-
-                @Override
-                public TextureAtlasSprite reportMissingReference(String reference, ModelDebugName name){
-                    return materialResolver.get(reference);
-                }
-            };
-            ModelBaker modelBaker = new ModelBaker() {
-                @Override
-                public ResolvedModel getModel(Identifier location){
-                    return context.getModelBaker().getModel(location);
-                }
-
-                @Override
-                public BlockModelPart missingBlockModelPart(){
-                    return context.getMissingBlockStateModelPart();
-                }
-
-                @Override
-                public SpriteGetter sprites(){
-                    return spriteGetter;
-                }
-
-                @Override
-                public PartCache parts(){
-                    return context.getModelBaker().parts();
-                }
-
-                @Override
-                public <X> X compute(SharedOperationKey<X> key){
-                    return context.getModelBaker().compute(key);
-                }
-            };
-            // Compose transformations
-            ModelTransform transforms = modelStack.composeTransforms();
-            // Bake the geometry
-            QuadCollection quads = geometry.bake(
+        QuadCollection quadCollection;
+        try{
+            quadCollection = geometry.bake(
                 textureSlots,
                 modelBaker,
-                transforms.toModelState(),
+                transform.toModelState(),
                 context.getModelIdentifier()::toString
             );
-            if(!missingKeys.isEmpty())
-                context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + modelStack + ")!");
-            // Resolve particle material
-            TextureAtlasSprite particleSprite = materialResolver.get("particle");
-            if(ModelMaterial.isMissingSprite(particleSprite))
-                context.pushWarning("Could not resolve 'particle' material for model stack (" + modelStack + ")!");
-            // Resolve gui light
-            UnbakedModel.GuiLight guiLight = modelStack.findGuiLightIncludingParents(context);
-            if(guiLight == null)
-                guiLight = UnbakedModel.GuiLight.SIDE;
-            // Resolve item transforms
-            BiFunction<ItemDisplayContext,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) -> {
-                ItemTransform transform = modelStack.findItemTransformIncludingParents(type, context);
-                return transform == null ? fallback : transform;
-            };
-            ItemTransforms itemTransforms = new ItemTransforms(
-                itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.FIRST_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.HEAD, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.GUI, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.GROUND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.FIXED, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.ON_SHELF, ItemTransform.NO_TRANSFORM)
-            );
-            // Create the model
-            return new BlockModelWrapper(
-                context.getTintSources(),
-                quads.getAll(),
-                new ModelRenderProperties(
-                    guiLight.lightLikeBlock(),
-                    particleSprite,
-                    itemTransforms
-                ),
-                BlockModelWrapper.detectRenderType(quads.getAll())
-            );
+        }catch(Exception e){
+            throw new RuntimeException("Encountered an exception baking geometry of class '" + geometry.getClass().getName() + "'!", e);
         }
-
-        // Bake parent
-        Identifier parent = data.parent();
-        if(parent != null){
-            UntypedModelInstance parentModel = context.getModelOrMissing(parent);
-            return parentModel.bakeItemModel(context, modelStack.push(parentModel, parent));
+        // Emit the quads
+        for(Direction cullDirection : CullingHelper.cullDirections()){
+            for(BakedQuad quad : quadCollection.getQuads(cullDirection)){
+                quadConsumer.consume(MutableQuad.create(quad), cullDirection, PropertyGetter.empty());
+            }
         }
-
-        // If there's no geometry, return null
-        return null;
     }
 
     @Override

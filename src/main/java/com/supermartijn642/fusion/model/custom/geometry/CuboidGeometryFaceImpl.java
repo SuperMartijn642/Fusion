@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.custom.geometry;
 
 import com.google.common.collect.ImmutableMap;
 import com.mojang.math.Quadrant;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.BlockElementFace;
@@ -104,6 +105,9 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
     @Override
     public <X, C> Optional<X> getProperty(Property<X,C> property, C context){
         Function<?,?> function = this.properties.get(property);
+        if(function == null && property == DefaultModelProperties.FACE_MATERIAL_KEY)
+            //noinspection unchecked
+            return Optional.of((X)this.material);
         //noinspection unchecked,rawtypes
         return function == null ?
             Optional.empty() :

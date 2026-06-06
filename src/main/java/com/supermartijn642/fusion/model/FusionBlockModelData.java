@@ -3,10 +3,7 @@ package com.supermartijn642.fusion.model;
 import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ItemModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
@@ -104,13 +101,15 @@ public class FusionBlockModelData extends BlockModel {
         // Let the custom model handle the actual baking
         BakedModel bakedModel;
         try{
-            bakedModel = modelInstance.bakeBlockStateModel(context);
+            bakedModel = modelInstance.bakeBlockStateModel(context, ModelStack.empty().push(modelInstance, identifier));
         }catch(Exception e){
             if(modelInstance instanceof ModelInstance<?>)
                 throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)modelInstance).getModelType()) + "' for  '" + identifier + "'!", e);
             else
                 throw new RuntimeException("Encountered an exception while baking untyped block model for '" + identifier + "'!", e);
         }
+        if(bakedModel == null)
+            bakedModel = context.getMissingBakedModel();
         // Log warnings
         if(!warnings.isEmpty())
             LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", identifier);
@@ -132,13 +131,15 @@ public class FusionBlockModelData extends BlockModel {
         // Let the custom model handle the actual baking
         ItemModel model;
         try{
-            model = this.model.bakeItemModel(context);
+            model = this.model.bakeItemModel(context, ModelStack.empty().push(this.model, this.identifier));
         }catch(Exception e){
             if(this.model instanceof ModelInstance<?>)
                 throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
             else
                 throw new RuntimeException("Encountered an exception while baking untyped item model for '" + this.identifier + "'!", e);
         }
+        if(model == null)
+            model = context.getMissingItemModel();
         // Log warnings
         if(!warnings.isEmpty())
             LoggingHelper.logUserWarnings(warnings, "Warnings for item model '{}':", this.identifier);

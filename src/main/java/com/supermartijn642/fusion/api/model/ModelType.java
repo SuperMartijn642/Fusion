@@ -103,11 +103,13 @@ public interface ModelType<T> extends Serializer<T> {
      * Creates a block state model from the model data.
      * @see BlockStateModelBakingContext
      */
-    BakedModel bakeBlockStateModel(BlockStateModelBakingContext context, T data);
+    @Nullable
+    BakedModel bakeBlockStateModel(BlockStateModelBakingContext context, ModelStack modelStack, T data);
 
     /**
      * Creates an item model from the model data.
      * @see ItemModelBakingContext
      */
-    ItemModel bakeItemModel(ItemModelBakingContext context, T data);
+    @Nullable
+    ItemModel bakeItemModel(ItemModelBakingContext context, ModelStack modelStack, T data);
 }

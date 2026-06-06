@@ -94,10 +94,10 @@ public interface UntypedModelInstance extends PropertyGetter {
     /**
      * Creates a block state model from the model data.
      */
-    BakedModel bakeBlockStateModel(BlockStateModelBakingContext context);
+    BakedModel bakeBlockStateModel(BlockStateModelBakingContext context, ModelStack modelStack);
 
     /**
      * Creates an item model from the model data.
      */
-    ItemModel bakeItemModel(ItemModelBakingContext context);
+    ItemModel bakeItemModel(ItemModelBakingContext context, ModelStack modelStack);
 }

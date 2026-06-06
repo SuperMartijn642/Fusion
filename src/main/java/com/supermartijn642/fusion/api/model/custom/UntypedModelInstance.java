@@ -93,5 +93,6 @@ public interface UntypedModelInstance extends PropertyGetter {
     /**
      * Creates a baked model from the model data.
      */
-    IBakedModel bakeModel(ModelBakingContext context);
+    @Nullable
+    IBakedModel bakeModel(ModelBakingContext context, ModelStack modelStack);
 }

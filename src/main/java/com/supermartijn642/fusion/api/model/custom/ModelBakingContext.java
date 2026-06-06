@@ -13,10 +13,10 @@ import java.util.Optional;
  * Context for baking block state models.
  * <p>
  * Created 27/04/2023 by SuperMartijn642
- * @see com.supermartijn642.fusion.api.model.ModelType#bakeBlockStateModel(ModelBakingContext, Object)
+ * @see com.supermartijn642.fusion.api.model.ModelType#bakeBlockStateModel(ModelBakingContext, ModelStack, Object)
  */
 @ApiStatus.NonExtendable
-public interface ModelBakingContext {
+public interface ModelBakingContext extends ModelResolver {
 
     /**
      * Pushes a user-facing warning message that should be logged.
@@ -40,17 +40,12 @@ public interface ModelBakingContext {
      */
     TextureAtlasSprite getMaterial(ModelMaterial material);
 
-    /**
-     * Gets the model corresponding to the given identifier.
-     * @param identifier identifier for the model
-     */
-    @Nullable
-    ModelInstance<?> getModel(ResourceLocation identifier);
+    @Nullable ModelInstance<?> getModel(ResourceLocation identifier);
 
     /**
      * Gets the missing baked model.
      */
-    BakedModel getMissingModel();
+    BakedModel getMissingBakedModel();
 
     /**
      * Walks the model tree of the given model.
@@ -60,7 +55,7 @@ public interface ModelBakingContext {
      * @return an optional value that was returned by given the walker
      */
     default <T> Optional<T> walkModelTree(UntypedModelInstance modelInstance, ModelWalker<T> walker){
-        return ModelWalker.walkModelTree(this::getModel, modelInstance, walker);
+        return ModelWalker.walkModelTree(this, modelInstance, walker);
     }
 
     /**
@@ -71,6 +66,6 @@ public interface ModelBakingContext {
      * @return an optional value that was returned by given the walker
      */
     default <T> Optional<T> walkModelTree(ResourceLocation model, ModelWalker<T> walker){
-        return ModelWalker.walkModelTree(this::getModel, model, walker);
+        return ModelWalker.walkModelTree(this, model, walker);
     }
 }

@@ -41,19 +41,27 @@ import java.util.function.Supplier;
 public class BaseBlockStateModel implements BlockStateModel {
 
     private static final ModelProperty<RenderData> RENDER_DATA = new ModelProperty<>();
-    private static final ModelProperty<LazyQuadProcessor[]> QUAD_PROCESSORS = new ModelProperty<>();
+    private static final ModelProperty<LazyQuadProcessor> QUAD_PROCESSORS = new ModelProperty<>();
 
-    private final List<Part> parts;
+    private final Quads quads;
+    private final ModelPredicate conditions;
     private final TextureAtlasSprite particleSprite;
     private final PropertyStore propertyStore;
 
-    public BaseBlockStateModel(List<Part> parts, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
-        this.parts = parts;
+    public BaseBlockStateModel(Quads quads, ModelPredicate conditions, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
+        this.quads = quads;
+        this.conditions = conditions;
         this.particleSprite = particleSprite;
         this.propertyStore = propertyStore;
     }
 
     private RenderData getRenderData(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
+        // Check conditions
+        if(this.conditions != null && !this.conditions.testForBlockState(level, pos, state))
+            return RenderData.FAILED_CONDITIONS;
+
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
+
         // Create random supplier
         Supplier<RandomSource> randomSupplier = Suppliers.memoize(() -> {
             long seed = state == null ?
@@ -64,42 +72,28 @@ public class BaseBlockStateModel implements BlockStateModel {
             return random;
         });
 
-        // For each part, collect whether the part's conditions are met and collect texture states for the part
-        boolean[] partConditions = new boolean[this.parts.size()];
+        // Extract state for all the textures that need processing
         //noinspection unchecked
-        List<Object>[][] combinedStates = new List[this.parts.size()][];
-        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
-        for(int i = 0; i < this.parts.size(); i++){
-            Part part = this.parts.get(i);
-            // Check part condition
-            if(part.conditions != null && !part.conditions.testForBlockState(level, pos, state))
-                continue;
-            partConditions[i] = true;
-
-            // Extract state for all the textures that need processing
-            //noinspection unchecked
-            List<Object>[] extractStates = new List[7];
-            for(Direction cullDirection : CullingHelper.cullDirections()){
-                int cullIndex = CullingHelper.cullIndex(cullDirection);
-                for(Quad quad : part.quads().get(cullDirection)){
-                    // Ignore quads that don't need processing
-                    if(quad.processor() == null)
-                        continue;
-                    if(extractStates[cullIndex] == null)
-                        extractStates[cullIndex] = new ArrayList<>();
-                    extractStates[cullIndex].add(quad.processor().extractState(level, pos, state, randomSupplier, propertyStore));
-                }
+        List<Object>[] extractStates = new List[7];
+        for(Direction cullDirection : CullingHelper.cullDirections()){
+            int cullIndex = CullingHelper.cullIndex(cullDirection);
+            for(Quad quad : this.quads.get(cullDirection)){
+                // Ignore quads that don't need processing
+                if(quad.processor() == null)
+                    continue;
+                if(extractStates[cullIndex] == null)
+                    extractStates[cullIndex] = new ArrayList<>();
+                extractStates[cullIndex].add(quad.processor().extractState(level, pos, state, randomSupplier, propertyStore));
             }
-            combinedStates[i] = extractStates;
         }
-        return new RenderData(state, partConditions, combinedStates, propertyStore);
+        return new RenderData(state, true, extractStates, propertyStore);
     }
 
     @Override
     public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
         return ModelData.builder()
             .with(RENDER_DATA, this.getRenderData(level, pos, state))
-            .with(QUAD_PROCESSORS, new LazyQuadProcessor[this.parts.size()])
+            .with(QUAD_PROCESSORS, new LazyQuadProcessor())
             .build();
     }
 
@@ -109,55 +103,50 @@ public class BaseBlockStateModel implements BlockStateModel {
         RenderData renderData = modelData.get(RENDER_DATA);
         if(renderData == null)
             renderData = this.getRenderData(null, null, null);
-        PropertyStore propertyStore = renderData.propertyStore;
 
-        // Get quad processor caches
-        LazyQuadProcessor[] lazyQuadProcessors = modelData.get(QUAD_PROCESSORS);
+        // Check conditions
+        if(!renderData.conditions)
+            return;
+
+        PropertyStore propertyStore = renderData.propertyStore;
 
         // Get whether the giving render type is the default render type
         RenderType defaultRenderType = renderData.state == null ?
             RenderType.solid() :
             ItemBlockRenderTypes.getChunkRenderType(renderData.state);
 
-        // Handle each part
-        for(int i = 0; i < this.parts.size(); i++){
-            Part part = this.parts.get(i);
-            // Check part condition
-            if(!renderData.partConditions[i])
-                continue;
+        // Get texture states
+        List<Object>[] extractStates = renderData.combinedTextureStates;
 
-            // Get texture states
-            List<Object>[] extractStates = renderData.statesForPart(i);
+        // Get quad processor cache
+        LazyQuadProcessor lazyQuadProcessor = modelData.get(QUAD_PROCESSORS) == null ?
+            new LazyQuadProcessor() :
+            modelData.get(QUAD_PROCESSORS);
+        assert lazyQuadProcessor != null;
+        lazyQuadProcessor.setCalculator(cullDirection -> processQuads(
+            this.quads.get(cullDirection),
+            extractStates[CullingHelper.cullIndex(cullDirection)],
+            propertyStore,
+            defaultRenderType
+        ));
 
-            // Get quad processor cache
-            LazyQuadProcessor lazyQuadProcessor = lazyQuadProcessors == null ? new LazyQuadProcessor()
-                : lazyQuadProcessors[i] == null ? lazyQuadProcessors[i] = new LazyQuadProcessor()
-                : lazyQuadProcessors[i];
-            lazyQuadProcessor.setCalculator(cullDirection -> processQuads(
-                part.quads().get(cullDirection),
-                extractStates[CullingHelper.cullIndex(cullDirection)],
-                propertyStore,
-                defaultRenderType
-            ));
+        // Create model parts
+        parts.add(new BlockModelPart() {
+            @Override
+            public List<BakedQuad> getQuads(@Nullable Direction cullDirection){
+                return lazyQuadProcessor.get(cullDirection, renderType);
+            }
 
-            // Create model parts
-            parts.add(new BlockModelPart() {
-                @Override
-                public List<BakedQuad> getQuads(@Nullable Direction cullDirection){
-                    return lazyQuadProcessor.get(cullDirection, renderType);
-                }
+            @Override
+            public boolean useAmbientOcclusion(){
+                return true;
+            }
 
-                @Override
-                public boolean useAmbientOcclusion(){
-                    return true;
-                }
-
-                @Override
-                public TextureAtlasSprite particleIcon(){
-                    return part.particleSprite();
-                }
-            });
-        }
+            @Override
+            public TextureAtlasSprite particleIcon(){
+                return BaseBlockStateModel.this.particleSprite;
+            }
+        });
     }
 
     private static Map<RenderType,List<BakedQuad>> processQuads(List<Quad> quads, List<Object> states, PropertyStore propertyStore, RenderType defaultRenderType){
@@ -208,9 +197,6 @@ public class BaseBlockStateModel implements BlockStateModel {
         return this.particleSprite;
     }
 
-    public record Part(Quads quads, ModelPredicate conditions, TextureAtlasSprite particleSprite) {
-    }
-
     public record Quads(List<Quad>[] quads) {
         List<Quad> get(Direction cullDirection){
             return this.quads[CullingHelper.cullIndex(cullDirection)];
@@ -220,10 +206,8 @@ public class BaseBlockStateModel implements BlockStateModel {
     public record Quad(QuadAccess quad, SpriteInstance sprite, BlockStateQuadProcessor<Object> processor) {
     }
 
-    private record RenderData(BlockState state, boolean[] partConditions, List<Object>[][] combinedTextureStates, PropertyStore propertyStore) {
-        List<Object>[] statesForPart(int index){
-            return this.combinedTextureStates[index];
-        }
+    private record RenderData(BlockState state, boolean conditions, List<Object>[] combinedTextureStates, PropertyStore propertyStore) {
+        static final RenderData FAILED_CONDITIONS = new RenderData(null, false, null, null);
     }
 
     private static class LazyQuadProcessor {

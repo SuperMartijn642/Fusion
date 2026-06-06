@@ -3,10 +3,7 @@ package com.supermartijn642.fusion.model;
 import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ItemModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Pair;
@@ -34,6 +31,7 @@ import org.joml.Matrix4fc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -49,8 +47,8 @@ public class FusionBlockModelData {
     }
 
     private final CuboidModel cuboidModel;
-    private final Identifier name;
-    private final ModelInstance<?> model;
+    private final Identifier identifier;
+    private final UntypedModelInstance model;
 
     private UnbakedGeometry geometry;
     private boolean resolvedGeometry;
@@ -60,13 +58,16 @@ public class FusionBlockModelData {
     private Identifier parent;
     private boolean resolvedParent = false;
 
-    public FusionBlockModelData(ModelInstance<?> model){
+    public FusionBlockModelData(Identifier identifier, UntypedModelInstance model){
         this.cuboidModel = new CuboidModel(null, null, null, null, new TextureSlots.Data(Map.of()), null);
         //noinspection DataFlowIssue
-        ((CuboidModelExtension)(Object)this.cuboidModel).setFusionData(this);
-        Identifier name = CURRENT_MODEL.get();
-        this.name = name == null ? IdentifierUtil.withFusionNamespace("unknown") : name;
+        ((CuboidModelExtension)this.cuboidModel).setFusionData(this);
+        this.identifier = identifier;
         this.model = model;
+    }
+
+    public FusionBlockModelData(ModelInstance<?> model){
+        this(Optional.ofNullable(CURRENT_MODEL.get()).orElseGet(() -> IdentifierUtil.withFusionNamespace("unknown")), model);
     }
 
     public CuboidModel asCuboidModel(){
@@ -82,7 +83,7 @@ public class FusionBlockModelData {
         // Create baking context
         BlockStateModelBakingContext context = new BlockStateModelBakingContextImpl(
             warnings::add,
-            this.name,
+            this.identifier,
             ModelTransform.of(modelState),
             modelBakery,
             material -> modelBakery.materials().get(material, wrapper)
@@ -92,11 +93,14 @@ public class FusionBlockModelData {
         try{
             model = this.model.bakeBlockStateModel(context);
         }catch(Exception e){
-            throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
+            if(this.model instanceof ModelInstance<?>)
+                throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
+            else
+                throw new RuntimeException("Encountered an exception while baking untyped block model for '" + this.identifier + "'!", e);
         }
         // Log warnings
         if(!warnings.isEmpty())
-            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.name);
+            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.identifier);
 
         // Clear missing models
         MISSING_MODEL.remove();
@@ -112,7 +116,7 @@ public class FusionBlockModelData {
         // Create baking context
         ItemModelBakingContext context = new ItemModelBakingContextImpl(
             warnings::add,
-            this.name,
+            this.identifier,
             ModelTransform.of(transformation, false),
             modelBakery,
             material -> modelBakery.materials().get(material, wrapper),
@@ -124,11 +128,14 @@ public class FusionBlockModelData {
         try{
             model = this.model.bakeItemModel(context);
         }catch(Exception e){
-            throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(this.model.getModelType()) + "' for  '" + this.name + "'!", e);
+            if(this.model instanceof ModelInstance<?>)
+                throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
+            else
+                throw new RuntimeException("Encountered an exception while baking untyped item model for '" + this.identifier + "'!", e);
         }
         // Log warnings
         if(!warnings.isEmpty())
-            LoggingHelper.logUserWarnings(warnings, "Warnings for item model '{}':", this.name);
+            LoggingHelper.logUserWarnings(warnings, "Warnings for item model '{}':", this.identifier);
 
         // Clear missing models
         MISSING_MODEL.remove();
@@ -216,16 +223,14 @@ public class FusionBlockModelData {
         return this.parent;
     }
 
-    public static ModelInstance<?> getModelInstance(UnbakedModel model){
+    public static UntypedModelInstance getModelInstance(UnbakedModel model){
         FusionBlockModelData fusionData = get(model);
         if(fusionData != null)
             return fusionData.model;
         if(model instanceof CuboidModel){
-            //noinspection DataFlowIssue
             ModelInstance<?> modelInstance = ((CuboidModelExtension)model).getFusionModel();
             if(modelInstance == null){
                 modelInstance = new ModelInstanceImpl<>(DefaultModelTypes.CUBOID, (CuboidModel)model);
-                //noinspection DataFlowIssue
                 ((CuboidModelExtension)model).setFusionModel(modelInstance);
             }
             return modelInstance;

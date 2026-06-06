@@ -99,7 +99,7 @@ public class ItemModelGeneratorModelType implements ModelType<Void> {
     }
 
     @Override
-    public BakedModel bakeModel(ModelBakingContext context, Void data){
+    public BakedModel bakeModel(ModelBakingContext context, ModelStack modelStack, Void data){
         throw new UnsupportedOperationException("Cannot bake item model generator!");
     }
 

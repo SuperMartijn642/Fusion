@@ -63,7 +63,7 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     }
 
     @Override
-    public BakedModel getMissingModel(){
+    public BakedModel getMissingBakedModel(){
         return this.missingModel;
     }
 }

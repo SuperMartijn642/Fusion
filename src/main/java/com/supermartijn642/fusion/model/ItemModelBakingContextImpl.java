@@ -4,6 +4,8 @@ import com.supermartijn642.fusion.api.model.custom.ItemModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.item.MissingItemModel;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.resources.ResourceLocation;
 
@@ -17,6 +19,7 @@ public class ItemModelBakingContextImpl extends BlockStateModelBakingContextImpl
 
     private final List<ItemTintSource> tintSources;
     private final EntityModelSet entityModelSet;
+    private ItemModel missingItemModel;
 
     public ItemModelBakingContextImpl(Consumer<String> warnings, ResourceLocation identifier, ModelTransform transform, ModelBaker modelBaker, List<ItemTintSource> tintSources, EntityModelSet entityModelSet){
         super(warnings, identifier, transform, modelBaker);
@@ -32,5 +35,12 @@ public class ItemModelBakingContextImpl extends BlockStateModelBakingContextImpl
     @Override
     public EntityModelSet getEntityModels(){
         return this.entityModelSet;
+    }
+
+    @Override
+    public ItemModel getMissingItemModel(){
+        if(this.missingItemModel == null)
+            this.missingItemModel = new MissingItemModel(this.getMissingBakedModel());
+        return this.missingItemModel;
     }
 }

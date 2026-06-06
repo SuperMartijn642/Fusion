@@ -43,17 +43,25 @@ public class BaseBlockStateModel implements BakedModel {
     private static final ModelProperty<RenderData> RENDER_DATA = new ModelProperty<>();
     private static final ModelProperty<LazyQuadProcessor> QUAD_PROCESSORS = new ModelProperty<>();
 
-    private final List<Part> parts;
+    private final Quads quads;
+    private final ModelPredicate conditions;
     private final TextureAtlasSprite particleSprite;
     private final PropertyStore propertyStore;
 
-    public BaseBlockStateModel(List<Part> parts, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
-        this.parts = parts;
+    public BaseBlockStateModel(Quads quads, ModelPredicate conditions, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
+        this.quads = quads;
+        this.conditions = conditions;
         this.particleSprite = particleSprite;
         this.propertyStore = propertyStore;
     }
 
     private RenderData getRenderData(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
+        // Check conditions
+        if(this.conditions != null && !this.conditions.testForBlockState(level, pos, state))
+            return RenderData.FAILED_CONDITIONS;
+
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
+
         // Create random supplier
         Supplier<RandomSource> randomSupplier = Suppliers.memoize(() -> {
             long seed = state == null ?
@@ -64,35 +72,21 @@ public class BaseBlockStateModel implements BakedModel {
             return random;
         });
 
-        // For each part, collect whether the part's conditions are met and collect texture states for the part
-        boolean[] partConditions = new boolean[this.parts.size()];
+        // Extract state for all the textures that need processing
         //noinspection unchecked
-        List<Object>[][] combinedStates = new List[this.parts.size()][];
-        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
-        for(int i = 0; i < this.parts.size(); i++){
-            Part part = this.parts.get(i);
-            // Check part condition
-            if(part.conditions != null && !part.conditions.testForBlockState(level, pos, state))
-                continue;
-            partConditions[i] = true;
-
-            // Extract state for all the textures that need processing
-            //noinspection unchecked
-            List<Object>[] extractStates = new List[7];
-            for(Direction cullDirection : CullingHelper.cullDirections()){
-                int cullIndex = CullingHelper.cullIndex(cullDirection);
-                for(Quad quad : part.quads().get(cullDirection)){
-                    // Ignore quads that don't need processing
-                    if(quad.processor() == null)
-                        continue;
-                    if(extractStates[cullIndex] == null)
-                        extractStates[cullIndex] = new ArrayList<>();
-                    extractStates[cullIndex].add(quad.processor().extractState(level, pos, state, randomSupplier, propertyStore));
-                }
+        List<Object>[] extractStates = new List[7];
+        for(Direction cullDirection : CullingHelper.cullDirections()){
+            int cullIndex = CullingHelper.cullIndex(cullDirection);
+            for(Quad quad : this.quads.get(cullDirection)){
+                // Ignore quads that don't need processing
+                if(quad.processor() == null)
+                    continue;
+                if(extractStates[cullIndex] == null)
+                    extractStates[cullIndex] = new ArrayList<>();
+                extractStates[cullIndex].add(quad.processor().extractState(level, pos, state, randomSupplier, propertyStore));
             }
-            combinedStates[i] = extractStates;
         }
-        return new RenderData(partConditions, combinedStates, propertyStore);
+        return new RenderData(true, extractStates, propertyStore);
     }
 
     @Override
@@ -106,22 +100,33 @@ public class BaseBlockStateModel implements BakedModel {
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, RandomSource random, ModelData modelData, @Nullable RenderType renderType){
         // Read render data
-        RenderData renderData = modelData.has(RENDER_DATA) ?
-            modelData.get(RENDER_DATA) :
-            this.getRenderData(null, null, null);
+        RenderData renderData = modelData.get(RENDER_DATA);
+        if(renderData == null)
+            renderData = this.getRenderData(null, null, null);
+
+        // Check conditions
+        if(!renderData.conditions)
+            return List.of();
+
+        PropertyStore propertyStore = renderData.propertyStore;
 
         // Get whether the giving render type is the default render type
         RenderType defaultRenderType = state == null ?
             RenderType.solid() :
             ItemBlockRenderTypes.getChunkRenderType(state);
 
+        // Get texture states
+        List<Object>[] extractStates = renderData.combinedTextureStates;
+
         // Get quad processor cache
-        LazyQuadProcessor lazyQuadProcessor = modelData.get(QUAD_PROCESSORS);
-        if(lazyQuadProcessor == null)
-            lazyQuadProcessor = new LazyQuadProcessor();
-        lazyQuadProcessor.setCalculator(side -> this.processQuads(
-            cullDirection,
-            renderData,
+        LazyQuadProcessor lazyQuadProcessor = modelData.get(QUAD_PROCESSORS) == null ?
+            new LazyQuadProcessor() :
+            modelData.get(QUAD_PROCESSORS);
+        assert lazyQuadProcessor != null;
+        lazyQuadProcessor.setCalculator(c -> processQuads(
+            this.quads.get(c),
+            extractStates[CullingHelper.cullIndex(c)],
+            propertyStore,
             defaultRenderType
         ));
 
@@ -129,7 +134,7 @@ public class BaseBlockStateModel implements BakedModel {
         return lazyQuadProcessor.get(cullDirection, renderType);
     }
 
-    private Map<RenderType,List<BakedQuad>> processQuads(Direction cullDirection, RenderData renderData, RenderType defaultRenderType){
+    private static Map<RenderType,List<BakedQuad>> processQuads(List<Quad> quads, List<Object> states, PropertyStore propertyStore, RenderType defaultRenderType){
         // Group quads by render type
         Map<RenderType,List<BakedQuad>> quadsByRenderType = new ChunkRenderTypeMap<>();
         Consumer<QuadAccess> submitter = quad -> {
@@ -143,31 +148,21 @@ public class BaseBlockStateModel implements BakedModel {
         // Convert all quads to baked quads
         int stateIndex = 0;
         EmittableQuad mutableQuad = null;
-        for(int i = 0; i < this.parts.size(); i++){
-            Part part = this.parts.get(i);
-            // Check part condition
-            if(!renderData.partConditions[i])
+        for(Quad quad : quads){
+            // Simply add quads that don't need further processing
+            if(quad.processor() == null){
+                submitter.accept(quad.quad());
                 continue;
-
-            // Get texture states for part
-            List<Object> states = renderData.statesForPart(i)[CullingHelper.cullIndex(cullDirection)];
-            // Process quads
-            for(Quad quad : part.quads().get(cullDirection)){
-                // Simply add quads that don't need further processing
-                if(quad.processor() == null){
-                    submitter.accept(quad.quad());
-                    continue;
-                }
-
-                // Create mutable quad
-                if(mutableQuad == null)
-                    mutableQuad = EmittableQuad.create(submitter::accept);
-                mutableQuad.copyFrom(quad.quad());
-
-                // Process special texture type quads
-                Object state = states.get(stateIndex++);
-                quad.processor().processQuad(mutableQuad, quad.sprite(), state, renderData.propertyStore);
             }
+
+            // Create mutable quad
+            if(mutableQuad == null)
+                mutableQuad = EmittableQuad.create(submitter::accept);
+            mutableQuad.copyFrom(quad.quad());
+
+            // Process special texture type quads
+            Object state = states.get(stateIndex++);
+            quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
         }
         return quadsByRenderType;
     }
@@ -219,10 +214,8 @@ public class BaseBlockStateModel implements BakedModel {
     public record Quad(QuadAccess quad, SpriteInstance sprite, BlockStateQuadProcessor<Object> processor) {
     }
 
-    private record RenderData(boolean[] partConditions, List<Object>[][] combinedTextureStates, PropertyStore propertyStore) {
-        List<Object>[] statesForPart(int index){
-            return this.combinedTextureStates[index];
-        }
+    private record RenderData(boolean conditions, List<Object>[] combinedTextureStates, PropertyStore propertyStore) {
+        static final RenderData FAILED_CONDITIONS = new RenderData(false, null, null);
     }
 
     private static class LazyQuadProcessor {

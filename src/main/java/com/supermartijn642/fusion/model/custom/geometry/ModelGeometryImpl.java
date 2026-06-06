@@ -3,13 +3,13 @@ package com.supermartijn642.fusion.model.custom.geometry;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexMultiConsumer;
-import com.supermartijn642.fusion.api.model.custom.CullableQuads;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.minecraft.client.Minecraft;
@@ -135,7 +135,7 @@ public class ModelGeometryImpl implements ModelGeometry {
     }
 
     @Override
-    public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
+    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver){
         // Create dummy sprite getter
         Function<Material,TextureAtlasSprite> spriteGetter = material -> materialResolver.get(material.texture().toString());
         ModelBaker modelBaker = (model, modelState) -> DUMMY_BAKED_MODEL;
@@ -149,14 +149,14 @@ public class ModelGeometryImpl implements ModelGeometry {
         }
 
         // Collect all quads from the model
-        CullableQuads.Builder quads = CullableQuads.builder();
         Minecraft.getInstance().getBlockRenderer().getModelRenderer().tesselateBlock(
             EmptyBlockAndTintGetter.INSTANCE,
             new SimpleBakedModel(List.of(), UnknownModelType.EMPTY_CULLED_QUADS, false, false, false, null, ItemTransforms.NO_TRANSFORMS) {
                 @Override
                 public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, RenderContext context){
                     context.pushTransform(quad -> {
-                        quads.add(quad.cullFace(), MutableQuad.create().copyFrapiQuad(quad));
+                        MutableQuad mutableQuad = MutableQuad.create().copyFrapiQuad(quad);
+                        consumer.consume(mutableQuad, quad.cullFace(), PropertyGetter.empty());
                         return false;
                     });
                     baked.emitBlockQuads(blockView, state, pos, randomSupplier, context);
@@ -177,6 +177,5 @@ public class ModelGeometryImpl implements ModelGeometry {
             42,
             OverlayTexture.NO_OVERLAY
         );
-        return quads.build();
     }
 }

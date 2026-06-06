@@ -1,6 +1,8 @@
 package com.supermartijn642.fusion.api.model.custom;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.context.ContextMap;
@@ -13,10 +15,10 @@ import java.util.Optional;
  * Context for baking block state models.
  * <p>
  * Created 27/04/2023 by SuperMartijn642
- * @see com.supermartijn642.fusion.api.model.ModelType#bakeBlockStateModel(BlockStateModelBakingContext, Object)
+ * @see com.supermartijn642.fusion.api.model.ModelType#bakeBlockStateModel(BlockStateModelBakingContext, ModelStack, Object)
  */
 @ApiStatus.NonExtendable
-public interface BlockStateModelBakingContext {
+public interface BlockStateModelBakingContext extends ModelResolver {
 
     /**
      * Pushes a user-facing warning message that should be logged.
@@ -40,12 +42,17 @@ public interface BlockStateModelBakingContext {
      */
     ModelMaterial.Resolved getMaterial(ModelMaterial material);
 
+    @Nullable ModelInstance<?> getModel(Identifier identifier);
+
     /**
-     * Gets the model corresponding to the given identifier.
-     * @param identifier identifier for the model
+     * Gets the missing block state model.
      */
-    @Nullable
-    ModelInstance<?> getModel(Identifier identifier);
+    BlockStateModel getMissingBlockStateModel();
+
+    /**
+     * Gets the missing block state model part.
+     */
+    BlockStateModelPart getMissingBlockStateModelPart();
 
     /**
      * Gets the model baker instance.
@@ -65,7 +72,7 @@ public interface BlockStateModelBakingContext {
      * @return an optional value that was returned by given the walker
      */
     default <T> Optional<T> walkModelTree(UntypedModelInstance modelInstance, ModelWalker<T> walker){
-        return ModelWalker.walkModelTree(this::getModel, modelInstance, walker);
+        return ModelWalker.walkModelTree(this, modelInstance, walker);
     }
 
     /**
@@ -76,6 +83,6 @@ public interface BlockStateModelBakingContext {
      * @return an optional value that was returned by given the walker
      */
     default <T> Optional<T> walkModelTree(Identifier model, ModelWalker<T> walker){
-        return ModelWalker.walkModelTree(this::getModel, model, walker);
+        return ModelWalker.walkModelTree(this, model, walker);
     }
 }

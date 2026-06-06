@@ -37,6 +37,18 @@ public class ModelGeometryImpl implements ModelGeometry {
         return new ModelGeometryImpl(geometry);
     }
 
+    public static TextureSlots createTextureSlots(MaterialResolver materialResolver) {
+        return new TextureSlots(Map.of()) {
+            @Override
+            public @Nullable Material getMaterial(String reference){
+                ModelMaterial.Resolved material = materialResolver.get(reference, false);
+                if(material.isMissing())
+                    return null;
+                return new Material(material.sprite().contents().name(), material.forceTranslucent());
+            }
+        };
+    }
+
     public static MaterialResolver fromKeyLookup(Function<String,Either<String,ModelMaterial>> lookup,
                                                  Function<ModelMaterial,ModelMaterial.Resolved> materialResolver,
                                                  Consumer<String> reportMissing,
@@ -104,15 +116,7 @@ public class ModelGeometryImpl implements ModelGeometry {
     @Override
     public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
         // Create dummy texture slots instance
-        TextureSlots textureSlots = new TextureSlots(Map.of()) {
-            @Override
-            public @Nullable Material getMaterial(String reference){
-                ModelMaterial.Resolved material = materialResolver.get(reference, false);
-                if(material.isMissing())
-                    return null;
-                return new Material(material.sprite().contents().name(), material.forceTranslucent());
-            }
-        };
+        TextureSlots textureSlots = createTextureSlots(materialResolver);
         // Create dummy model baker
         MaterialBaker materialBaker = new MaterialBaker() {
             @Override

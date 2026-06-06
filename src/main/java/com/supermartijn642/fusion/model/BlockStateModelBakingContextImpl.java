@@ -1,11 +1,11 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.resources.model.ModelBaker;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.context.ContextMap;
@@ -25,6 +25,7 @@ public class BlockStateModelBakingContextImpl implements BlockStateModelBakingCo
     private final ModelBaker modelBaker;
     private final Function<Material,Material.Baked> materialBaker;
     private final ContextMap neoforgeAdditionalProperties;
+    private ModelBakery.MissingModels missingModels;
 
     public BlockStateModelBakingContextImpl(Consumer<String> warnings, Identifier identifier, ModelTransform transform, ModelBaker modelBaker, Function<Material,Material.Baked> materialBaker, ContextMap neoforgeAdditionalProperties){
         this.warnings = warnings;
@@ -59,6 +60,22 @@ public class BlockStateModelBakingContextImpl implements BlockStateModelBakingCo
     public @Nullable ModelInstance<?> getModel(Identifier identifier){
         UntypedModelInstance modelInstance = FusionBlockModelData.getModelInstance(this.modelBaker.getModel(identifier).wrapped());
         return modelInstance instanceof ModelInstance<?> ? (ModelInstance<?>)modelInstance : null;
+    }
+
+    protected ModelBakery.MissingModels getMissingModels(){
+        if(this.missingModels == null)
+            this.missingModels = ModelBakery.MissingModels.bake(this.modelBaker.getModel(ModelResolver.MISSING_MODEL), this.modelBaker.materials(), this.modelBaker.interner());
+        return this.missingModels;
+    }
+
+    @Override
+    public BlockStateModel getMissingBlockStateModel(){
+        return this.getMissingModels().block();
+    }
+
+    @Override
+    public BlockStateModelPart getMissingBlockStateModelPart(){
+        return this.modelBaker.missingBlockModelPart();
     }
 
     @Override

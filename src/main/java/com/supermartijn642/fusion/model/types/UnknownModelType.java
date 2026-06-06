@@ -6,7 +6,7 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelWalker;
+import com.supermartijn642.fusion.api.model.custom.ModelStack;
 import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
@@ -95,28 +95,10 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     }
 
     @Override
-    public BakedModel bakeModel(ModelBakingContext context, T data){
+    public BakedModel bakeModel(ModelBakingContext context, ModelStack modelStack, T data){
         // Bake the model
         Function<Material,TextureAtlasSprite> spriteGetter = material -> context.getMaterial(ModelMaterial.of(material));
         return data.bake(((ModelBakingContextImpl)context).getModelBakery(), spriteGetter, context.getTransformation().toModelState(), context.getModelIdentifier());
-    }
-
-    public static <T> T findPropertyInStackAndParents(ModelBakingContext context, ModelWalker.ModelStack currentStack, Function<UntypedModelInstance,T> property, T defaultValue){
-        // First check the current stack
-        for(UntypedModelInstance modelInstance : currentStack){
-            T value = property.apply(modelInstance);
-            if(value != null)
-                return value;
-        }
-        // Check parents of the last model in the stack
-        Optional<T> result = context.walkModelTree(
-            currentStack.get(currentStack.size() - 1),
-            (modelInstance, stack) -> {
-                T value = property.apply(modelInstance);
-                return value == null ? ModelWalker.Result.proceed() : ModelWalker.Result.stop(value);
-            }
-        );
-        return result.orElse(defaultValue);
     }
 
     @Override

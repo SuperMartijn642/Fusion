@@ -2,10 +2,7 @@ package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
-import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
@@ -106,7 +103,7 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public BakedModel bakeModel(ModelBakingContext context){
-        return this.modelType.bakeModel(context, this.modelData);
+    public @Nullable BakedModel bakeModel(ModelBakingContext context, ModelStack modelStack){
+        return this.modelType.bakeModel(context, modelStack, this.modelData);
     }
 }

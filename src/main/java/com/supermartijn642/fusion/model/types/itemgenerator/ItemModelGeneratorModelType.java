@@ -2,18 +2,19 @@ package com.supermartijn642.fusion.model.types.itemgenerator;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.model.ModelType;
-import com.supermartijn642.fusion.api.model.custom.*;
+import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
+import com.supermartijn642.fusion.model.SimpleModelType;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemModelGenerator;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ import java.util.*;
 /**
  * Created 02/05/2026 by SuperMartijn642
  */
-public class ItemModelGeneratorModelType implements ModelType<Void> {
+public class ItemModelGeneratorModelType extends SimpleModelType<Void> {
 
     private static final ItemModelGenerator ITEM_MODEL_GENERATOR = new ItemModelGenerator();
 
@@ -70,7 +71,7 @@ public class ItemModelGeneratorModelType implements ModelType<Void> {
             }
 
             @Override
-            public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
+            public void bake(QuadConsumer quadConsumer, ModelTransform transformation, MaterialResolver materialResolver){
                 // Create elements
                 List<CuboidModelGeometry.Element> elements = new ArrayList<>();
                 for(int layerIndex = 0; layerIndex < ItemModelGenerator.LAYERS.size(); layerIndex++){
@@ -82,7 +83,7 @@ public class ItemModelGeneratorModelType implements ModelType<Void> {
                         .forEach(e -> elements.add(CuboidModelGeometry.Element.of(e)));
                 }
                 // Bake as cuboid geometry
-                return CuboidModelGeometry.of(elements).bake(transformation, materialResolver);
+                CuboidModelGeometry.of(elements).bake(quadConsumer, transformation, materialResolver);
             }
         };
     }
@@ -103,8 +104,8 @@ public class ItemModelGeneratorModelType implements ModelType<Void> {
     }
 
     @Override
-    public BakedModel bakeModel(ModelBakingContext context, ModelStack modelStack, Void data){
-        throw new UnsupportedOperationException("Cannot bake item model generator!");
+    protected @Nullable ResourceLocation getParent(Void data){
+        return null;
     }
 
     @Override

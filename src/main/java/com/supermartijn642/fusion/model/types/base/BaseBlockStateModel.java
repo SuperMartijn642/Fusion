@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -32,14 +33,18 @@ public class BaseBlockStateModel implements BakedModel {
 
     private final Quads quads;
     private final ModelPredicate conditions;
-    private final TextureAtlasSprite particleSprite;
     private final PropertyStore propertyStore;
+    private final UnbakedModel.GuiLight guiLight;
+    private final TextureAtlasSprite particleSprite;
+    private final ItemTransforms itemTransforms;
 
-    public BaseBlockStateModel(Quads quads, ModelPredicate conditions, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
+    public BaseBlockStateModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms itemTransforms){
         this.quads = quads;
         this.conditions = conditions;
-        this.particleSprite = particleSprite;
         this.propertyStore = propertyStore;
+        this.guiLight = guiLight;
+        this.particleSprite = particleSprite;
+        this.itemTransforms = itemTransforms;
     }
 
     @Override
@@ -73,6 +78,38 @@ public class BaseBlockStateModel implements BakedModel {
 
                 // Process special texture type quads
                 Object s = quad.processor().extractState(level, pos, state, randomSupplier, propertyStore);
+                quad.processor().processQuad(mutableQuad, quad.sprite(), s, propertyStore);
+            }
+        }
+    }
+
+    @Override
+    public void emitItemQuads(QuadEmitter emitter, Supplier<RandomSource> randomSupplier){
+        // Check conditions
+        if(this.conditions != null && !this.conditions.testForItem(null))
+            return;
+
+        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
+
+        // Emit quads for all cull directions
+        for(Direction cullDirection : CullingHelper.cullDirections()){
+            EmittableQuad mutableQuad = EmittableQuad.create(q -> {
+                emitter.cullFace(cullDirection);
+                q.toFrapiQuad(emitter);
+                emitter.emit();
+            });
+            for(Quad quad : this.quads.get(cullDirection)){
+                // Copy quad properties
+                mutableQuad.copyFrom(quad.quad());
+
+                // Simply add quads that don't need further processing
+                if(quad.processor() == null){
+                    mutableQuad.emit();
+                    continue;
+                }
+
+                // Process special texture type quads
+                Object s = quad.processor().extractState(null, null, null, randomSupplier, propertyStore);
                 quad.processor().processQuad(mutableQuad, quad.sprite(), s, propertyStore);
             }
         }
@@ -125,17 +162,17 @@ public class BaseBlockStateModel implements BakedModel {
 
     @Override
     public boolean isGui3d(){
-        return true; // Only relevant to items
+        return true;
     }
 
     @Override
     public boolean usesBlockLight(){
-        return true; // Only relevant to items
+        return this.guiLight.lightLikeBlock();
     }
 
     @Override
     public ItemTransforms getTransforms(){
-        return ItemTransforms.NO_TRANSFORMS; // Only relevant to items
+        return this.itemTransforms;
     }
 
     public record Quads(List<Quad>[] quads) {

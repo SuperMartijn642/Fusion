@@ -1,12 +1,12 @@
 package com.supermartijn642.fusion.model.custom.geometry;
 
-import com.supermartijn642.fusion.api.model.custom.CullableQuads;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
 import net.fabricmc.fabric.api.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableMesh;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -41,7 +41,7 @@ public class ModelGeometryImpl implements ModelGeometry {
         return new ModelGeometryImpl(model);
     }
 
-    public static TextureSlots createTextureSlots(MaterialResolver materialResolver) {
+    public static TextureSlots createTextureSlots(MaterialResolver materialResolver){
         return new TextureSlots(Map.of()) {
             @Override
             public @Nullable Material getMaterial(String reference){
@@ -139,7 +139,7 @@ public class ModelGeometryImpl implements ModelGeometry {
     }
 
     @Override
-    public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
+    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver){
         // Create dummy texture slots instance
         TextureSlots textureSlots = createTextureSlots(materialResolver);
         // Create dummy sprite getter
@@ -183,15 +183,14 @@ public class ModelGeometryImpl implements ModelGeometry {
         RandomSource random = RandomSource.createNewThreadLocalInstance();
 
         // Collect all quads from the model
-        CullableQuads.Builder quads = CullableQuads.builder();
         MutableMesh mesh = Renderer.get().mutableMesh();
         QuadEmitter emitter = mesh.emitter();
         emitter.pushTransform(quadView -> {
-            quads.add(quadView.cullFace(), MutableQuad.create().copyFrapiQuad(quadView));
+            MutableQuad mutableQuad = MutableQuad.create().copyFrapiQuad(quadView);
+            consumer.consume(mutableQuad, quadView.cullFace(), PropertyGetter.empty());
             return false;
         });
         baked.emitBlockQuads(emitter, EmptyBlockAndTintGetter.INSTANCE, Blocks.AIR.defaultBlockState(), BlockPos.ZERO, () -> random, dir -> false);
         emitter.popTransform();
-        return quads.build();
     }
 }

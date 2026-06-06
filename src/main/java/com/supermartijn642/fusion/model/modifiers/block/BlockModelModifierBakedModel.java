@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
+import com.supermartijn642.fusion.integration.framedblocks.FusionFramedBlocksIntegration;
 import com.supermartijn642.fusion.model.WrappedBakedModel;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -93,8 +94,10 @@ public class BlockModelModifierBakedModel extends WrappedBakedModel {
 
     @Override
     public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
+        RenderData renderData = this.getRenderData(level, pos, state, modelData);
         return ModelData.builder()
-            .with(RENDER_DATA, this.getRenderData(level, pos, state, modelData))
+            .with(RENDER_DATA, renderData)
+            .with(FusionFramedBlocksIntegration.getCacheKeyProperty(), FusionFramedBlocksIntegration.lazyCacheable(() -> createCacheKey(renderData)))
             .build();
     }
 
@@ -222,6 +225,17 @@ public class BlockModelModifierBakedModel extends WrappedBakedModel {
             return override.model.useAmbientOcclusion(state, renderData.defaultModelData, renderType);
         }
         return this.original.useAmbientOcclusion(state, renderData.defaultModelData, renderType);
+    }
+
+    private static Object createCacheKey(RenderData renderData){
+        List<Object> keys = new ArrayList<>(renderData.appendModelsData.length * 2 + 2);
+        keys.add(renderData.defaultModel);
+        keys.add(FusionFramedBlocksIntegration.getCacheProperty(renderData.defaultModelData));
+        for(int i = 0; i < renderData.appendModels.length; i++){
+            keys.add(renderData.appendModels[i]);
+            keys.add(FusionFramedBlocksIntegration.getCacheProperty(renderData.appendModelsData[i]));
+        }
+        return keys;
     }
 
     record ConditionalModel(BakedModel model, @Nullable BlockStateModelPredicate conditions, boolean showBreakingOverlay) {

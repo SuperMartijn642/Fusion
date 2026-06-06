@@ -10,6 +10,7 @@ import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.FusionTextureTypeRegistry;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.entity.model.predicates.*;
+import com.supermartijn642.fusion.integration.framedblocks.FusionFramedBlocksIntegration;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import com.supermartijn642.fusion.model.predicates.*;
 import com.supermartijn642.fusion.model.predicates.blockstate.*;
@@ -19,9 +20,14 @@ import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.connecting.predicates.*;
 import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import net.neoforged.fml.InterModComms;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.event.lifecycle.InterModEnqueueEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.function.Consumer;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -105,10 +111,10 @@ public class FusionClient {
             .add(FusionTextureMetadataSection.INSTANCE)
             .build();
 
-        // Integration with FramedBlocks TODO
-//        ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
-//            InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBlockStateModel.PREDICATES_EVALUATION_PROPERTY);
-//        });
+        // Integration with FramedBlocks
+        ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
+            InterModComms.sendTo("framedblocks", "add_ct_property", FusionFramedBlocksIntegration::getCacheKeyProperty);
+        });
     }
 
     public static void finalizeRegistries(){

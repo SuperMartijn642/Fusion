@@ -105,11 +105,6 @@ public class FusionClient {
         EntityModelPredicateRegistryImpl.registerPredicate(Fusion.identifier("is_baby"), BabyEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistryImpl.registerPredicate(Fusion.identifier("biome"), BiomeEntityModelPredicate.SERIALIZER);
         EntityModelPredicateRegistryImpl.registerPredicate(Fusion.identifier("dimension"), DimensionEntityModelPredicate.SERIALIZER);
-
-        // Integration with FramedBlocks TODO
-//        ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
-//            InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBlockStateModel.PREDICATES_EVALUATION_PROPERTY);
-//        });
     }
 
     public static void finalizeRegistries(){

@@ -104,12 +104,12 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     }
 
     @Override
-    public BlockStateModel bakeBlockStateModel(BlockStateModelBakingContext context){
-        return this.modelType.bakeBlockStateModel(context, this.modelData);
+    public @Nullable BlockStateModel bakeBlockStateModel(BlockStateModelBakingContext context, ModelStack modelStack){
+        return this.modelType.bakeBlockStateModel(context, modelStack, this.modelData);
     }
 
     @Override
-    public ItemModel bakeItemModel(ItemModelBakingContext context){
-        return this.modelType.bakeItemModel(context, this.modelData);
+    public @Nullable ItemModel bakeItemModel(ItemModelBakingContext context, ModelStack modelStack){
+        return this.modelType.bakeItemModel(context, modelStack, this.modelData);
     }
 }

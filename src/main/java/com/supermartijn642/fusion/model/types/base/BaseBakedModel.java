@@ -62,12 +62,12 @@ public class BaseBakedModel implements BakedModel, CustomRenderTypeBakedModel {
     public BaseBakedModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, TextureAtlasSprite particleSprite, boolean ambientOcclusion, BlockModel.GuiLight guiLight, boolean isGui3d, ItemTransforms transforms){
         this.quads = quads;
         this.conditions = conditions;
+        this.propertyStore = propertyStore;
         this.particleSprite = particleSprite;
         this.ambientOcclusion = ambientOcclusion;
         this.guiLight = guiLight;
         this.isGui3d = isGui3d;
         this.transforms = transforms;
-        this.propertyStore = propertyStore;
     }
 
     private RenderData getRenderData(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){

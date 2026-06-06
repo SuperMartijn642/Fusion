@@ -9,6 +9,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
@@ -16,6 +17,7 @@ import net.minecraft.core.Direction;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created 03/05/2026 by SuperMartijn642
@@ -37,6 +39,12 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
     }
 
     public static CullableQuads bakeElement(Element element, ModelTransform transformation, MaterialResolver materialResolver){
+        CullableQuads.Builder quads = CullableQuads.builder();
+        bakeElement((q, d, p) -> quads.add(d, q), element, transformation, materialResolver);
+        return quads.build();
+    }
+
+    public static void bakeElement(QuadConsumer consumer, Element element, ModelTransform transformation, MaterialResolver materialResolver){
         // Create quads the same way as vanilla
         // Check whether the size is 0 for any axis
         Vector3f from = element.from();
@@ -45,7 +53,7 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
         boolean drawYFaces = from.x() != to.x() && from.z() != to.z();
         boolean drawZFaces = from.x() != to.x() && from.y() != to.y();
         if(!drawXFaces && !drawYFaces && !drawZFaces)
-            return CullableQuads.empty();
+            return;
 
         // Create the quads for each side
         CullableQuads.Builder quads = CullableQuads.builder();
@@ -63,18 +71,19 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
                 continue;
 
             // Bake the face
-            QuadAccess quad = CuboidModelGeometry.bakeFace(face, element, side, transformation, materialResolver);
-            // Add the quad
-            Direction cullDirection = face.cullDirection() == null ? null :
-                Direction.rotate(new Matrix4f(transformation.matrix()), face.cullDirection());
-            quads.add(cullDirection, quad);
+            CuboidModelGeometry.bakeFace(consumer, face, element, side, transformation, materialResolver);
         }
-        return quads.build();
     }
 
     private static final FaceBakery FACE_BAKERY = new FaceBakery();
 
     public static QuadAccess bakeFace(Face face, Element element, Direction side, ModelTransform transformation, MaterialResolver materialResolver){
+        AtomicReference<QuadAccess> quad = new AtomicReference<>();
+        bakeFace((q, d, p) -> quad.set(q), face, element, side, transformation, materialResolver);
+        return quad.get();
+    }
+
+    public static void bakeFace(QuadConsumer consumer, Face face, Element element, Direction side, ModelTransform transformation, MaterialResolver materialResolver){
         // Create a dummy baked quad
         String materialKey = face.material();
         if(!materialKey.isEmpty() && materialKey.charAt(0) == '#')
@@ -107,7 +116,11 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
             quad.lightEmission(face.lightEmission() == null ? element.lightEmission() : face.lightEmission());
         if(face.emissive() != null || element.emissive() != null)
             quad.emissive(face.emissive() == null ? element.emissive() : face.emissive());
-        return quad;
+        // Rotate cull direction
+        Direction cullDirection = face.cullDirection() == null ? null :
+            Direction.rotate(new Matrix4f(transformation.matrix()), face.cullDirection());
+        // Emit quad
+        consumer.consume(quad, cullDirection, PropertyGetter.compose(face, element));
     }
 
     private static float[] calculateFaceUV(Element element, Direction side){
@@ -125,6 +138,11 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
 
     private CuboidModelGeometryImpl(List<Element> elements){
         this.elements = List.copyOf(elements);
+    }
+
+    @Override
+    public boolean isCuboidGeometry(){
+        return true;
     }
 
     @Override
@@ -146,10 +164,8 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
     }
 
     @Override
-    public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
-        CullableQuads.Builder quads = CullableQuads.builder();
+    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver){
         for(Element element : this.elements)
-            quads.add(CuboidModelGeometry.bakeElement(element, transformation, materialResolver));
-        return quads.build();
+            bakeElement(consumer, element, transformation, materialResolver);
     }
 }

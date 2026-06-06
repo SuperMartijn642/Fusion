@@ -3,11 +3,14 @@ package com.supermartijn642.fusion.api.model.custom.geometry;
 import com.supermartijn642.fusion.api.model.custom.CullableQuads;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
 import com.supermartijn642.fusion.model.custom.geometry.ModelGeometryImpl;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.core.Direction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +68,35 @@ public interface ModelGeometry {
      * @param transformation   transformations that should be applied to the geometry
      * @param materialResolver resolver for material keys
      */
-    CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver);
+    @ApiStatus.NonExtendable
+    default CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
+        CullableQuads.Builder quads = CullableQuads.builder();
+        this.bake(
+            (quad, cullDirection, properties) -> quads.add(cullDirection, quad),
+            transformation,
+            materialResolver
+        );
+        return quads.build();
+    }
+
+    /**
+     * Bakes the geometry into quads.
+     * @param transformation   transformations that should be applied to the geometry
+     * @param materialResolver resolver for material keys
+     * @param consumer         consumer for the quads along with properties from the geometry
+     */
+    void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver);
+
+    @FunctionalInterface
+    interface QuadConsumer {
+        /**
+         * Consumes a quad.
+         * @param quad               the created quad
+         * @param cullDirection      cull direction of the quad
+         * @param geometryProperties properties from the quad's geometry
+         */
+        void consume(MutableQuad quad, Direction cullDirection, PropertyGetter geometryProperties);
+    }
 
     /**
      * Resolver for material keys into resolved materials.

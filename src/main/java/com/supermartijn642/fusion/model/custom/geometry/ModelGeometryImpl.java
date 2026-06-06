@@ -1,13 +1,13 @@
 package com.supermartijn642.fusion.model.custom.geometry;
 
 import com.supermartijn642.fusion.Fusion;
-import com.supermartijn642.fusion.api.model.custom.CullableQuads;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.util.Either;
+import com.supermartijn642.fusion.api.util.PropertyGetter;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
 import com.supermartijn642.fusion.util.CullingHelper;
@@ -98,7 +98,7 @@ public class ModelGeometryImpl implements ModelGeometry {
     }
 
     @Override
-    public CullableQuads bake(ModelTransform transformation, MaterialResolver materialResolver){
+    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver){
         // Bake the model
         Function<Material,TextureAtlasSprite> spriteGetter = material -> materialResolver.get(material.texture().toString());
         ModelBakery modelBakery = FusionBlockModelData.modelBakery.get();
@@ -112,13 +112,12 @@ public class ModelGeometryImpl implements ModelGeometry {
             throw new RuntimeException("Encountered an exception baking model of class '" + this.model.getClass().getName() + "'!", e);
         }
         if(baked == null)
-            return CullableQuads.empty();
+            return;
 
         // Create dummy random
         Random random = new Random();
 
         // Collect all quads from the model
-        CullableQuads.Builder quads = CullableQuads.builder();
         for(RenderType renderType : RenderType.chunkBufferLayers()){
             if(!ModelRenderTypeHelper.canRenderInLayer(baked, Blocks.AIR.defaultBlockState(), renderType, renderType == RenderType.solid()))
                 continue;
@@ -127,11 +126,10 @@ public class ModelGeometryImpl implements ModelGeometry {
                 baked.getQuads(Blocks.AIR.defaultBlockState(), cullDirection, random, EmptyModelData.INSTANCE).forEach(q -> {
                     MutableQuad mutableQuad = MutableQuad.create(q);
                     mutableQuad.chunkRenderType(renderType);
-                    quads.add(cullDirection, mutableQuad);
+                    consumer.consume(mutableQuad, cullDirection, PropertyGetter.empty());
                 });
             }
         }
         ForgeHooksClient.setRenderLayer(null);
-        return quads.build();
     }
 }

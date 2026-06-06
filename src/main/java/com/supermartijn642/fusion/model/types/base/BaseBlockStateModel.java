@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
@@ -45,14 +46,18 @@ public class BaseBlockStateModel implements BakedModel {
 
     private final Quads quads;
     private final ModelPredicate conditions;
-    private final TextureAtlasSprite particleSprite;
     private final PropertyStore propertyStore;
+    private final UnbakedModel.GuiLight guiLight;
+    private final TextureAtlasSprite particleSprite;
+    private final ItemTransforms itemTransforms;
 
-    public BaseBlockStateModel(Quads quads, ModelPredicate conditions, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
+    public BaseBlockStateModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms itemTransforms){
         this.quads = quads;
         this.conditions = conditions;
-        this.particleSprite = particleSprite;
         this.propertyStore = propertyStore;
+        this.guiLight = guiLight;
+        this.particleSprite = particleSprite;
+        this.itemTransforms = itemTransforms;
     }
 
     private RenderData getRenderData(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
@@ -189,20 +194,17 @@ public class BaseBlockStateModel implements BakedModel {
 
     @Override
     public boolean isGui3d(){
-        return true; // Only relevant to items
+        return true;
     }
 
     @Override
     public boolean usesBlockLight(){
-        return true; // Only relevant to items
+        return this.guiLight.lightLikeBlock();
     }
 
     @Override
     public ItemTransforms getTransforms(){
-        return ItemTransforms.NO_TRANSFORMS; // Only relevant to items
-    }
-
-    public record Part(Quads quads, ModelPredicate conditions) {
+        return this.itemTransforms;
     }
 
     public record Quads(List<Quad>[] quads) {

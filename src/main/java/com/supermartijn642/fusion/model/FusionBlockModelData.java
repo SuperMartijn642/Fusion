@@ -66,7 +66,7 @@ public class FusionBlockModelData {
 
     public BlockStateModel bakeBlockModel(ResolvedModel wrapper, ModelBaker modelBakery, ModelState modelState){
         // Store missing models
-        MISSING_MODEL.set(modelBakery.getModel(MissingBlockModel.LOCATION));
+        MISSING_MODEL.set(modelBakery.getModel(ModelResolver.MISSING_MODEL));
 
         // Collect warnings
         List<String> warnings = new ArrayList<>();
@@ -80,13 +80,15 @@ public class FusionBlockModelData {
         // Let the custom model handle the actual baking
         BlockStateModel model;
         try{
-            model = this.model.bakeBlockStateModel(context);
+            model = this.model.bakeBlockStateModel(context, ModelStack.empty().push(this.model, this.identifier));
         }catch(Exception e){
             if(this.model instanceof ModelInstance<?>)
                 throw new RuntimeException("Encountered an exception while baking block model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
             else
                 throw new RuntimeException("Encountered an exception while baking untyped block model for '" + this.identifier + "'!", e);
         }
+        if(model == null)
+            model = context.getMissingBlockStateModel();
         // Log warnings
         if(!warnings.isEmpty())
             LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.identifier);
@@ -98,7 +100,7 @@ public class FusionBlockModelData {
 
     public ItemModel bakeItemModel(ResolvedModel wrapper, List<ItemTintSource> tintSources, ModelBaker modelBakery, EntityModelSet entityModelSet){
         // Store missing models
-        MISSING_MODEL.set(modelBakery.getModel(MissingBlockModel.LOCATION));
+        MISSING_MODEL.set(modelBakery.getModel(ModelResolver.MISSING_MODEL));
 
         // Collect warnings
         List<String> warnings = new ArrayList<>();
@@ -114,13 +116,15 @@ public class FusionBlockModelData {
         // Let the custom model handle the actual baking
         ItemModel model;
         try{
-            model = this.model.bakeItemModel(context);
+            model = this.model.bakeItemModel(context, ModelStack.empty().push(this.model, this.identifier));
         }catch(Exception e){
             if(this.model instanceof ModelInstance<?>)
                 throw new RuntimeException("Encountered an exception while baking item model of type '" + ModelTypeRegistryImpl.getIdentifier(((ModelInstance<?>)this.model).getModelType()) + "' for  '" + this.identifier + "'!", e);
             else
                 throw new RuntimeException("Encountered an exception while baking untyped item model for '" + this.identifier + "'!", e);
         }
+        if(model == null)
+            model = context.getMissingItemModel();
         // Log warnings
         if(!warnings.isEmpty())
             LoggingHelper.logUserWarnings(warnings, "Warnings for item model '{}':", this.identifier);

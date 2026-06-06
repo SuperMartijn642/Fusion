@@ -1,11 +1,9 @@
 package com.supermartijn642.fusion.model;
 
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
@@ -26,6 +24,7 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     private final Function<Material,TextureAtlasSprite> textureGetter;
     private final Map<ResourceLocation,UntypedModelInstance> dependencies;
     private final ModelBakery modelBaker;
+    private BakedModel missingModel;
 
     public ModelBakingContextImpl(Consumer<String> warnings, ResourceLocation identifier, ModelTransform transform, Function<Material,TextureAtlasSprite> textureGetter, Map<ResourceLocation,UntypedModelInstance> dependencies, ModelBakery modelBaker){
         this.warnings = warnings;
@@ -60,6 +59,13 @@ public class ModelBakingContextImpl implements ModelBakingContext {
     public @Nullable ModelInstance<?> getModel(ResourceLocation identifier){
         UntypedModelInstance model = this.dependencies.get(identifier);
         return model instanceof ModelInstance<?> ? (ModelInstance<?>)model : null;
+    }
+
+    @Override
+    public BakedModel getMissingBakedModel(){
+        if(this.missingModel == null)
+            this.missingModel = this.modelBaker.bake(ModelResolver.MISSING_MODEL, ModelTransform.identity().toModelState());
+        return this.missingModel;
     }
 
     public ModelBakery getModelBakery(){

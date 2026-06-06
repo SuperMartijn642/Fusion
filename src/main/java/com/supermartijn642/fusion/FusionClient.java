@@ -115,11 +115,6 @@ public class FusionClient {
         ModLoadingContext.get().getActiveContainer().getEventBus().addListener(
             (Consumer<ModelEvent.RegisterLoaders>)e -> e.register(IdentifierUtil.withFusionNamespace("model"), new FusionModelLoader())
         );
-
-        // Integration with FramedBlocks TODO
-//        ModLoadingContext.get().getActiveContainer().getEventBus().addListener((Consumer<InterModEnqueueEvent>)event -> {
-//            InterModComms.sendTo("framedblocks", "add_ct_property", () -> ConnectingBlockStateModel.PREDICATES_EVALUATION_PROPERTY);
-//        });
     }
 
     public static void finalizeRegistries(){

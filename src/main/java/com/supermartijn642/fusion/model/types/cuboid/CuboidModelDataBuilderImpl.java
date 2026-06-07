@@ -95,6 +95,6 @@ public class CuboidModelDataBuilderImpl extends AbstractCuboidModelDataBuilder<C
             );
         }
         // Create the vanilla model
-        return new BlockModel(geometry, this.guiLight, this.ambientOcclusion == null || this.ambientOcclusion, itemTransforms, textures.build(), this.parent);
+        return new BlockModel(geometry, this.guiLight, this.ambientOcclusion == null || this.ambientOcclusion, itemTransforms, textures.build(), this.parent, null, this.neoRenderTypeGroup, Map.of());
     }
 }

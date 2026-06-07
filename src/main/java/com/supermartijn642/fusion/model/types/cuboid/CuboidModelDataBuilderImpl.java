@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
+import com.supermartijn642.fusion.util.ForgeNamedRenderTypeGroupHelper;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -88,6 +89,9 @@ public class CuboidModelDataBuilderImpl extends AbstractCuboidModelDataBuilder<C
             );
         }
         // Create the vanilla model
-        return new BlockModel(this.parent, elements, textures.build(), this.ambientOcclusion == null || this.ambientOcclusion, this.guiLight, itemTransforms);
+        BlockModel blockModel = new BlockModel(this.parent, elements, textures.build(), this.ambientOcclusion == null || this.ambientOcclusion, this.guiLight, itemTransforms);
+        // Forge render type
+        blockModel.customData.setRenderTypeHint(ForgeNamedRenderTypeGroupHelper.getIdentifier(this.forgeRenderTypeGroup));
+        return blockModel;
     }
 }

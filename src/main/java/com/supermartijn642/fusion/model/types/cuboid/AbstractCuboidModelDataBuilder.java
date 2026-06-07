@@ -8,6 +8,8 @@ import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.client.RenderTypeGroup;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -22,6 +24,7 @@ public abstract class AbstractCuboidModelDataBuilder<T extends AbstractCuboidMod
     protected BlockModel.GuiLight guiLight;
     protected Boolean ambientOcclusion;
     protected final Map<ItemTransforms.TransformType,ItemTransform> itemTransforms = new EnumMap<>(ItemTransforms.TransformType.class);
+    protected RenderTypeGroup forgeRenderTypeGroup;
 
     @Override
     public T parent(ResourceLocation parent){
@@ -85,6 +88,12 @@ public abstract class AbstractCuboidModelDataBuilder<T extends AbstractCuboidMod
             if(transform != null)
                 this.itemTransforms.put(type, transform);
         }
+        return this.self();
+    }
+
+    @Override
+    public T forgeRenderTypeGroup(@Nullable RenderTypeGroup renderTypeGroup){
+        this.forgeRenderTypeGroup = renderTypeGroup;
         return this.self();
     }
 

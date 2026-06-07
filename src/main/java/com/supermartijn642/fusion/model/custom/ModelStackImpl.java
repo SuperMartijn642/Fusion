@@ -321,8 +321,7 @@ public class ModelStackImpl implements ModelStack {
                 return value;
         }
         if(property == DefaultModelProperties.MATERIAL)
-            //noinspection unchecked
-            return Optional.ofNullable((X)this.findMaterial((String)context));
+            return DefaultModelProperties.MATERIAL.cast(this.findMaterial((String)context));
         return Optional.empty();
     }
 
@@ -336,8 +335,7 @@ public class ModelStackImpl implements ModelStack {
             }
         );
         if(!value.isPresent() && property == DefaultModelProperties.MATERIAL)
-            //noinspection unchecked
-            return Optional.ofNullable((X)this.findMaterialIncludingParents((String)context, modelResolver));
+            return DefaultModelProperties.MATERIAL.cast(this.findMaterialIncludingParents((String)context, modelResolver));
         return value;
     }
 

@@ -10,6 +10,8 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.RenderTypeGroup;
+import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +78,11 @@ public interface CuboidModelDataBuilder<T extends CuboidModelDataBuilder<T,S>, S
      * Sets the transformations used to render the model as an item.
      */
     T itemTransforms(ItemTransforms itemTransforms);
+
+    /**
+     * @see NeoForgeModelProperties#RENDER_TYPE
+     */
+    T neoRenderTypeGroup(@Nullable RenderTypeGroup renderTypeGroup);
 
     /**
      * Builds the model data.

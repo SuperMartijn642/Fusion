@@ -20,7 +20,10 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.context.ContextKeySet;
+import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -102,6 +105,14 @@ public class UnknownModelType<T extends UnbakedModel> extends SimpleModelType<T>
 
     @Override
     public <X, C> Optional<X> getProperty(Property<X,C> property, C context, T data){
+        // NeoForge render type
+        if(property == DefaultModelProperties.NEO_MODEL_RENDER_TYPE){
+            ContextMap.Builder builder = new ContextMap.Builder();
+            //noinspection OverrideOnly
+            data.fillAdditionalProperties(builder);
+            ContextMap contextMap = builder.create(ContextKeySet.EMPTY);
+            return DefaultModelProperties.NEO_MODEL_RENDER_TYPE.cast(contextMap.getOptional(NeoForgeModelProperties.RENDER_TYPE));
+        }
         return Optional.empty();
     }
 

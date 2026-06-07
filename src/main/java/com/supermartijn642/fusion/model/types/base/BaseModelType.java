@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.math.Quadrant;
 import com.supermartijn642.fusion.api.model.ModelType;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
@@ -16,6 +17,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.SimpleModelType;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import com.supermartijn642.fusion.util.NeoForgeNamedRenderTypeGroupHelper;
 import net.minecraft.client.renderer.block.model.BlockElementFace;
 import net.minecraft.client.renderer.block.model.BlockElementRotation;
 import net.minecraft.client.renderer.block.model.ItemTransform;
@@ -24,6 +26,8 @@ import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.NamedRenderTypeManager;
+import net.neoforged.neoforge.client.RenderTypeGroup;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -94,6 +98,9 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
 
     @Override
     public <X, C> Optional<X> getProperty(Property<X,C> property, C context, T data){
+        // NeoForge render type
+        if(property == DefaultModelProperties.NEO_MODEL_RENDER_TYPE)
+            return DefaultModelProperties.NEO_MODEL_RENDER_TYPE.cast(data.getNeoRenderTypeGroup());
         return Optional.empty();
     }
 
@@ -205,6 +212,18 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                 moddedTransforms.build()
             ));
         }
+        // NeoForge render type
+        if(json.has("render_type")){
+            if(!json.get("render_type").isJsonPrimitive() || !json.getAsJsonPrimitive("render_type").isString())
+                throw new JsonParseException("Property 'render_type' must be a string!");
+            String identifier = json.get("render_type").getAsString();
+            if(!IdentifierUtil.isValidIdentifier(identifier))
+                throw new JsonParseException("Property 'render_type' must be a valid identifier!");
+            RenderTypeGroup renderTypeGroup = NamedRenderTypeManager.get(ResourceLocation.parse(identifier));
+            if(renderTypeGroup == RenderTypeGroup.EMPTY)
+                throw new JsonParseException("Unknown NeoForge render type group '" + identifier + "'!");
+            builder.neoRenderTypeGroup(renderTypeGroup);
+        }
     }
 
     @Override
@@ -236,6 +255,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         }
         if(!itemTransformsJson.isEmpty())
             json.add("display", itemTransformsJson);
+        if(data.getNeoRenderTypeGroup() != null && data.getNeoRenderTypeGroup() != RenderTypeGroup.EMPTY)
+            json.addProperty("render_type", NeoForgeNamedRenderTypeGroupHelper.getIdentifier(data.getNeoRenderTypeGroup()).toString());
         return json;
     }
 

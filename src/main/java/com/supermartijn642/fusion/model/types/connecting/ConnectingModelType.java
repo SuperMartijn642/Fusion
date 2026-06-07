@@ -27,11 +27,9 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
     @Override
     public <X, C> Optional<X> getProperty(Property<X,C> property, C context, ConnectingModelData data){
         if(property == DefaultModelProperties.CONNECTION_PREDICATES)
-            //noinspection unchecked
-            return Optional.of((X)data.getAllConnectionPredicates());
+            return DefaultModelProperties.CONNECTION_PREDICATES.cast(data.getAllConnectionPredicates());
         if(property == DefaultModelProperties.CONNECTION_PREDICATE)
-            //noinspection unchecked,SuspiciousMethodCalls
-            return Optional.ofNullable((X)data.getAllConnectionPredicates().get(context));
+            return DefaultModelProperties.CONNECTION_PREDICATE.cast(data.getAllConnectionPredicates().get((String)context));
         return super.getProperty(property, context, data);
     }
 

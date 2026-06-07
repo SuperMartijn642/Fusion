@@ -16,7 +16,9 @@ import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -79,7 +81,7 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
 
     @Override
     public <X, C> Optional<X> getProperty(Property<X,C> property, C context, BlockModel data){
-        return Optional.empty();
+        return DefaultModelTypes.UNKNOWN.getProperty(property, context, data);
     }
 
     @Override
@@ -120,6 +122,10 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
             for(BlockElement element : elements)
                 builder.elements(CuboidModelGeometry.Element.of(element));
         }
+        // NeoForge render type
+        ContextMap.Builder contextMap = new ContextMap.Builder();
+        model.fillAdditionalProperties(contextMap);
+        builder.neoRenderTypeGroup(contextMap.getOptionalParameter(NeoForgeModelProperties.RENDER_TYPE));
         // Serialize data
         return DefaultModelTypes.BASE.serialize(builder.build());
     }

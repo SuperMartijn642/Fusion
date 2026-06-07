@@ -1,5 +1,7 @@
 package com.supermartijn642.fusion.api.util;
 
+import java.util.Optional;
+
 /**
  * A key for some typed property.
  * <p>
@@ -38,5 +40,10 @@ public final class Property<X, C> {
 
     private Property(Class<C> contextType){
         this.contextType = contextType;
+    }
+
+    public <T> Optional<T> cast(X value){
+        //noinspection unchecked
+        return Optional.ofNullable((T)value);
     }
 }

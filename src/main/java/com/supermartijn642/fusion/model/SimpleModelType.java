@@ -24,6 +24,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraftforge.client.RenderTypeGroup;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -57,6 +58,8 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             ModelPredicate conditions = modelStack.combineConditions();
             if(conditions != null)
                 conditions = conditions.simplify();
+            // Forge render type
+            RenderTypeGroup forgeRenderType = modelStack.findPropertyIncludingParents(DefaultModelProperties.FORGE_MODEL_RENDER_TYPE, context).orElse(RenderTypeGroup.EMPTY);
             // Get model properties for the quads
             Boolean ambientOcclusion = modelStack.findAmbientOcclusionIncludingParents(context);
             Boolean shade = modelStack.findShadeIncludingParents(context);
@@ -75,6 +78,9 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             ModelGeometry.QuadConsumer quadConsumer = (quad, cullDirection, geometryProperties) -> {
                 // Get the sprite instance
                 SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                // Forge render type
+                if(!forgeRenderType.isEmpty())
+                    quad.renderTypes(forgeRenderType.block(), forgeRenderType.entityFabulous());
                 // Initialize the quad
                 BlockStateQuadProcessor<?> processor = null;
                 if(sprite != null){
@@ -152,6 +158,8 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             ModelPredicate conditions = modelStack.combineConditions();
             if(conditions != null)
                 conditions = conditions.simplify();
+            // Forge render type
+            RenderTypeGroup forgeRenderType = modelStack.findPropertyIncludingParents(DefaultModelProperties.FORGE_MODEL_RENDER_TYPE, context).orElse(RenderTypeGroup.EMPTY);
             // Get model properties for the quads
             Boolean ambientOcclusion = modelStack.findAmbientOcclusionIncludingParents(context);
             Boolean shade = modelStack.findShadeIncludingParents(context);
@@ -167,6 +175,9 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             ModelGeometry.QuadConsumer quadConsumer = (quad, cullDirection, geometryProperties) -> {
                 // Get the sprite instance
                 SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                // Forge render type
+                if(!forgeRenderType.isEmpty())
+                    quad.renderTypes(forgeRenderType.block(), forgeRenderType.entityFabulous());
                 // Initialize the quad
                 ItemQuadProcessor<?> processor = null;
                 if(sprite != null){

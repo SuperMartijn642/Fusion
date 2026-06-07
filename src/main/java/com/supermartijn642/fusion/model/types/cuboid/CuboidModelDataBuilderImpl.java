@@ -4,15 +4,14 @@ import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
+import com.supermartijn642.fusion.util.ForgeNamedRenderTypeGroupHelper;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraftforge.client.model.ForgeBlockModelData;
 import net.minecraftforge.client.model.ForgeFaceData;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created 01/05/2023 by SuperMartijn642
@@ -85,7 +84,14 @@ public class CuboidModelDataBuilderImpl extends AbstractCuboidModelDataBuilder<C
                 ImmutableMap.copyOf(this.itemTransforms)
             );
         }
+        // Forge render type
+        ForgeBlockModelData forgeData = this.forgeRenderTypeGroup == null ? null : new ForgeBlockModelData(
+            Optional.empty(),
+            Optional.ofNullable(ForgeNamedRenderTypeGroupHelper.getIdentifier(this.forgeRenderTypeGroup)),
+            Optional.empty(),
+            Optional.empty()
+        );
         // Create the vanilla model
-        return new BlockModel(geometry, this.guiLight, this.ambientOcclusion == null || this.ambientOcclusion, itemTransforms, textures.build(), this.parent);
+        return new BlockModel(geometry, this.guiLight, this.ambientOcclusion == null || this.ambientOcclusion, itemTransforms, textures.build(), this.parent, forgeData);
     }
 }

@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraftforge.client.NamedRenderTypeManager;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -127,6 +128,9 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
         // Copy elements
         for(BlockElement element : model.elements)
             builder.elements(CuboidModelGeometry.Element.of(element));
+        // Forge render type
+        if(model.customData.getRenderTypeHint() != null)
+            builder.forgeRenderTypeGroup(NamedRenderTypeManager.get(model.customData.getRenderTypeHint()));
         // Serialize data
         return DefaultModelTypes.BASE.serialize(builder.build());
     }

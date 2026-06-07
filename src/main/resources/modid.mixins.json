@@ -9,6 +9,7 @@
   ],
   "client": [
     "forge.ForgePathPackResourcesMixin",
+    "forge.NamedRenderTypeManagerMixin",
     "forge.ResourcePackLoaderMixin",
     "forge.QuadLighterMixin",
     "AgeableMobMixin",

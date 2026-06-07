@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraftforge.client.RenderTypeGroup;
 
 import java.util.Map;
 
@@ -20,8 +21,8 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
 
     private final Map<String,Either<String,ConnectionPredicate>> connections;
 
-    public ConnectingModelDataImpl(Identifier parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, UnbakedModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemDisplayContext,ItemTransform> itemTransforms, Map<String,Either<String,ConnectionPredicate>> connections){
-        super(parent, materials, ambientOcclusion, shade, emissive, guiLight, geometry, itemTransforms);
+    public ConnectingModelDataImpl(Identifier parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, UnbakedModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemDisplayContext,ItemTransform> itemTransforms, Map<String,Either<String,ConnectionPredicate>> connections, RenderTypeGroup forgeRenderTypeGroup){
+        super(parent, materials, ambientOcclusion, shade, emissive, guiLight, geometry, itemTransforms, forgeRenderTypeGroup);
         this.connections = Map.copyOf(connections);
     }
 

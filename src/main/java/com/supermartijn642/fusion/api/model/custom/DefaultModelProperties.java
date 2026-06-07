@@ -4,6 +4,8 @@ import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
+import net.minecraftforge.client.RenderTypeGroup;
+import net.minecraftforge.client.model.ForgeBlockModelData;
 
 import java.util.Map;
 
@@ -36,4 +38,10 @@ public class DefaultModelProperties {
      * Connections key for a model element face.
      */
     public static final Property<String,Void> FACE_CONNECTIONS_KEY = Property.create();
+
+    // Forge properties
+    /**
+     * @see ForgeBlockModelData#renderType()
+     */
+    public static final Property<RenderTypeGroup,Void> FORGE_MODEL_RENDER_TYPE = Property.create();
 }

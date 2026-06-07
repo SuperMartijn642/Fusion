@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.api.model.types.base;
 
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
@@ -9,6 +10,7 @@ import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraftforge.client.RenderTypeGroup;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +77,12 @@ public interface BaseModelData {
      */
     @Nullable
     Boolean getEmissive();
+
+    /**
+     * @see DefaultModelProperties#FORGE_MODEL_RENDER_TYPE
+     */
+    @Nullable
+    RenderTypeGroup getForgeRenderTypeGroup();
 
     @ApiStatus.NonExtendable
     interface Builder<T extends Builder<T,S>, S> extends CuboidModelDataBuilder<T,S> {

@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.ModelType;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
@@ -14,6 +15,7 @@ import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.SimpleModelType;
+import com.supermartijn642.fusion.util.ForgeNamedRenderTypeGroupHelper;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.block.model.BlockElementRotation;
 import net.minecraft.client.renderer.block.model.BlockModel;
@@ -22,6 +24,8 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraftforge.client.NamedRenderTypeManager;
+import net.minecraftforge.client.RenderTypeGroup;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -92,6 +96,9 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
 
     @Override
     public <X, C> Optional<X> getProperty(Property<X,C> property, C context, T data){
+        // Forge render type
+        if(property == DefaultModelProperties.FORGE_MODEL_RENDER_TYPE)
+            return DefaultModelProperties.FORGE_MODEL_RENDER_TYPE.cast(data.getForgeRenderTypeGroup());
         return Optional.empty();
     }
 
@@ -203,6 +210,18 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                 moddedTransforms.build()
             ));
         }
+        // Forge render type
+        if(json.has("render_type")){
+            if(!json.get("render_type").isJsonPrimitive() || !json.getAsJsonPrimitive("render_type").isString())
+                throw new JsonParseException("Property 'render_type' must be a string!");
+            String identifier = json.get("render_type").getAsString();
+            if(!IdentifierUtil.isValidIdentifier(identifier))
+                throw new JsonParseException("Property 'render_type' must be a valid identifier!");
+            RenderTypeGroup renderTypeGroup = NamedRenderTypeManager.get(new ResourceLocation(identifier));
+            if(renderTypeGroup == RenderTypeGroup.EMPTY)
+                throw new JsonParseException("Unknown Forge render type group '" + identifier + "'!");
+            builder.forgeRenderTypeGroup(renderTypeGroup);
+        }
     }
 
     @Override
@@ -234,6 +253,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         }
         if(itemTransformsJson.size() != 0)
             json.add("display", itemTransformsJson);
+        if(data.getForgeRenderTypeGroup() != null && data.getForgeRenderTypeGroup() != RenderTypeGroup.EMPTY)
+            json.addProperty("render_type", ForgeNamedRenderTypeGroupHelper.getIdentifier(data.getForgeRenderTypeGroup()).toString());
         return json;
     }
 

@@ -7,6 +7,7 @@
   "mixins": [],
   "client": [
     "neoforge.DatagenModLoaderMixin",
+    "neoforge.NamedRenderTypeManagerMixin",
     "neoforge.QuadLighterMixin",
     "AgeableMobMixin",
     "BlockModelDeserializerMixin",

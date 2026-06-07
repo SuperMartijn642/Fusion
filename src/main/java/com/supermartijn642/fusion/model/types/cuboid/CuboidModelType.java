@@ -23,7 +23,7 @@ import java.util.Map;
 public class CuboidModelType extends UnknownModelType<BlockModel> {
 
     @Override
-    protected void bakeGeometry(BlockStateModelBakingContext context, ModelStack modelStack, BlockModel data, ModelTransform transform, ModelGeometry.MaterialResolver materialResolver, ModelGeometry.QuadConsumer quadConsumer){
+    protected void bakeGeometry(BlockStateModelBakingContext context, ModelStack modelStack, BlockModel data, ModelTransform transform, ModelGeometry.MaterialKeyResolver materialResolver, ModelGeometry.QuadConsumer quadConsumer){
         this.getGeometry(data).bake(quadConsumer, transform, materialResolver);
     }
 

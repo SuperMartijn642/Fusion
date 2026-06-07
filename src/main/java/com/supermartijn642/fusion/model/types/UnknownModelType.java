@@ -111,7 +111,7 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     public BakedModel bakeBlockStateModel(BlockStateModelBakingContext context, ModelStack modelStack, T data){
         // Resolve materials
         Set<String> missingKeys = new HashSet<>();
-        ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
+        ModelGeometry.MaterialKeyResolver materialResolver = ModelGeometry.MaterialKeyResolver.fromKeyLookup(
             key -> modelStack.findMaterialIncludingParents(key, context),
             context::getMaterial,
             missingKeys::add,

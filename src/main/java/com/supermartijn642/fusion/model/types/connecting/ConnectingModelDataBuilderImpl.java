@@ -49,7 +49,8 @@ public class ConnectingModelDataBuilderImpl extends AbstractBaseModelDataBuilder
             this.guiLight,
             this.elements == null ? null : CuboidModelGeometry.of(this.elements),
             this.itemTransforms,
-            this.connections
+            this.connections,
+            this.forgeRenderTypeGroup
         );
     }
 }

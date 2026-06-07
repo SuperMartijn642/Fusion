@@ -41,10 +41,10 @@ public class ModelGeometryImpl implements ModelGeometry {
         return new ModelGeometryImpl(model);
     }
 
-    public static MaterialResolver fromKeyLookup(Function<String,Either<String,ModelMaterial>> lookup,
-                                                 Function<ModelMaterial,TextureAtlasSprite> materialResolver,
-                                                 Consumer<String> reportMissing,
-                                                 Consumer<List<String>> reportCircular){
+    public static MaterialKeyResolver fromKeyLookup(Function<String,Either<String,ModelMaterial>> lookup,
+                                                    Function<ModelMaterial,TextureAtlasSprite> materialResolver,
+                                                    Consumer<String> reportMissing,
+                                                    Consumer<List<String>> reportCircular){
         Map<String,TextureAtlasSprite> resolvedMaterials = new HashMap<>();
         return (key, required) -> {
             // Check if the key has already been resolved
@@ -137,7 +137,7 @@ public class ModelGeometryImpl implements ModelGeometry {
     }
 
     @Override
-    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver){
+    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialKeyResolver materialResolver){
         // Create dummy sprite getter
         Function<Material,TextureAtlasSprite> spriteGetter = material -> materialResolver.get(material.texture().toString());
         ModelBaker modelBaker = new ModelBaker() {

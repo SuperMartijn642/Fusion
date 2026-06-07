@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.block.model.BlockElement;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.SimpleUnbakedGeometry;
 import net.minecraft.client.renderer.block.model.TextureSlots;
+import net.minecraftforge.client.NamedRenderTypeManager;
 
 import java.util.Map;
 
@@ -54,6 +55,9 @@ public class CuboidModelType extends UnknownModelType<BlockModel> {
             for(BlockElement element : geometry.elements())
                 builder.elements(CuboidModelGeometry.Element.of(element));
         }
+        // Forge render type
+        if(model.forgeData() != null)
+            builder.forgeRenderTypeGroup(model.forgeData().renderType().map(NamedRenderTypeManager::get).orElse(null));
         // Serialize data
         return DefaultModelTypes.BASE.serialize(builder.build());
     }

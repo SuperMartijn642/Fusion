@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.RenderTypeGroup;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -23,8 +24,9 @@ public class BaseModelDataImpl implements BaseModelData {
     protected final UnbakedModel.GuiLight guiLight;
     protected final CuboidModelGeometry geometry;
     protected final Map<ItemDisplayContext,ItemTransform> itemTransforms;
+    protected final RenderTypeGroup neoRenderTypeGroup;
 
-    public BaseModelDataImpl(Identifier parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, UnbakedModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemDisplayContext,ItemTransform> itemTransforms){
+    public BaseModelDataImpl(Identifier parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, UnbakedModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemDisplayContext,ItemTransform> itemTransforms, RenderTypeGroup neoRenderTypeGroup){
         this.parent = parent;
         this.materials = Map.copyOf(materials);
         this.ambientOcclusion = ambientOcclusion;
@@ -33,6 +35,7 @@ public class BaseModelDataImpl implements BaseModelData {
         this.guiLight = guiLight;
         this.geometry = geometry;
         this.itemTransforms = Map.copyOf(itemTransforms);
+        this.neoRenderTypeGroup = neoRenderTypeGroup;
     }
 
     @Override
@@ -73,5 +76,10 @@ public class BaseModelDataImpl implements BaseModelData {
     @Override
     public @Nullable Boolean getEmissive(){
         return this.emissive;
+    }
+
+    @Override
+    public @Nullable RenderTypeGroup getNeoRenderTypeGroup(){
+        return this.neoRenderTypeGroup;
     }
 }

@@ -9,6 +9,8 @@ import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.neoforged.neoforge.client.RenderTypeGroup;
+import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +77,12 @@ public interface BaseModelData {
      */
     @Nullable
     Boolean getEmissive();
+
+    /**
+     * @see NeoForgeModelProperties#RENDER_TYPE
+     */
+    @Nullable
+    RenderTypeGroup getNeoRenderTypeGroup();
 
     @ApiStatus.NonExtendable
     interface Builder<T extends Builder<T,S>, S> extends CuboidModelDataBuilder<T,S> {

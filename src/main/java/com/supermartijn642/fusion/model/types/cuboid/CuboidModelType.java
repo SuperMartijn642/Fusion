@@ -54,6 +54,8 @@ public class CuboidModelType extends UnknownModelType<BlockModel> {
             for(BlockElement element : geometry.elements())
                 builder.elements(CuboidModelGeometry.Element.of(element));
         }
+        // NeoForge render type
+        builder.neoRenderTypeGroup(model.renderTypeGroup());
         // Serialize data
         return DefaultModelTypes.BASE.serialize(builder.build());
     }

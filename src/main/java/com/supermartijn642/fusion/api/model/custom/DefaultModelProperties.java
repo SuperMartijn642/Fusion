@@ -4,7 +4,9 @@ import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
+import net.neoforged.neoforge.client.RenderTypeGroup;
 import net.neoforged.neoforge.client.model.ExtraFaceData;
+import net.neoforged.neoforge.client.model.NeoForgeModelProperties;
 
 import java.util.Map;
 
@@ -39,6 +41,10 @@ public class DefaultModelProperties {
     public static final Property<String,Void> FACE_CONNECTIONS_KEY = Property.create();
 
     // NeoForge properties
+    /**
+     * @see NeoForgeModelProperties#RENDER_TYPE
+     */
+    public static final Property<RenderTypeGroup,Void> NEO_MODEL_RENDER_TYPE = Property.create();
     /**
      * @see ExtraFaceData#color()
      */

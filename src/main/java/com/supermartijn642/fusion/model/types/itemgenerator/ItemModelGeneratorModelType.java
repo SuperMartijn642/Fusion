@@ -66,7 +66,7 @@ public class ItemModelGeneratorModelType extends SimpleModelType<Void> {
             }
 
             @Override
-            public void bake(QuadConsumer quadConsumer, ModelTransform transformation, MaterialResolver materialResolver){
+            public void bake(QuadConsumer quadConsumer, ModelTransform transformation, MaterialKeyResolver materialResolver){
                 // Create elements
                 List<CuboidModelGeometry.Element> elements = new ArrayList<>();
                 for(int layerIndex = 0; layerIndex < ItemModelGenerator.LAYERS.size(); layerIndex++){

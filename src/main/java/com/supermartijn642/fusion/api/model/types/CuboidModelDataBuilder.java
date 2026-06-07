@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.api.model.types;
 
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
@@ -10,6 +11,7 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraftforge.client.RenderTypeGroup;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +78,11 @@ public interface CuboidModelDataBuilder<T extends CuboidModelDataBuilder<T,S>, S
      * Sets the transformations used to render the model as an item.
      */
     T itemTransforms(ItemTransforms itemTransforms);
+
+    /**
+     * @see DefaultModelProperties#FORGE_MODEL_RENDER_TYPE
+     */
+    T forgeRenderTypeGroup(@Nullable RenderTypeGroup renderTypeGroup);
 
     /**
      * Builds the model data.

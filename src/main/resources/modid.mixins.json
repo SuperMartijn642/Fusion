@@ -8,6 +8,7 @@
     "forge.DatagenModLoaderMixin"
   ],
   "client": [
+    "forge.NamedRenderTypeManagerMixin",
     "AgeableMobMixin",
     "AtlasConfigMixin",
     "BlockModelDeserializerMixin",

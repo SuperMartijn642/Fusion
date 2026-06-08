@@ -38,13 +38,13 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
         return of(converted);
     }
 
-    public static CullableQuads bakeElement(Element element, ModelTransform transformation, MaterialResolver materialResolver){
+    public static CullableQuads bakeElement(Element element, ModelTransform transformation, MaterialKeyResolver materialResolver){
         CullableQuads.Builder quads = CullableQuads.builder();
         bakeElement((q, d, p) -> quads.add(d, q), element, transformation, materialResolver);
         return quads.build();
     }
 
-    public static void bakeElement(QuadConsumer consumer, Element element, ModelTransform transformation, MaterialResolver materialResolver){
+    public static void bakeElement(QuadConsumer consumer, Element element, ModelTransform transformation, MaterialKeyResolver materialResolver){
         // Create quads the same way as vanilla
         // Check whether the size is 0 for any axis
         Vector3f from = element.from();
@@ -77,13 +77,13 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
 
     private static final FaceBakery FACE_BAKERY = new FaceBakery();
 
-    public static QuadAccess bakeFace(Face face, Element element, Direction side, ModelTransform transformation, MaterialResolver materialResolver){
+    public static QuadAccess bakeFace(Face face, Element element, Direction side, ModelTransform transformation, MaterialKeyResolver materialResolver){
         AtomicReference<QuadAccess> quad = new AtomicReference<>();
         bakeFace((q, d, p) -> quad.set(q), face, element, side, transformation, materialResolver);
         return quad.get();
     }
 
-    public static void bakeFace(QuadConsumer consumer, Face face, Element element, Direction side, ModelTransform transformation, MaterialResolver materialResolver){
+    public static void bakeFace(QuadConsumer consumer, Face face, Element element, Direction side, ModelTransform transformation, MaterialKeyResolver materialResolver){
         // Create a dummy baked quad
         String materialKey = face.material();
         if(!materialKey.isEmpty() && materialKey.charAt(0) == '#')
@@ -164,7 +164,7 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
     }
 
     @Override
-    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialResolver materialResolver){
+    public void bake(QuadConsumer consumer, ModelTransform transformation, MaterialKeyResolver materialResolver){
         for(Element element : this.elements)
             bakeElement(consumer, element, transformation, materialResolver);
     }

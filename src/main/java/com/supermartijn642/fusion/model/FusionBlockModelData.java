@@ -80,7 +80,7 @@ public class FusionBlockModelData extends BlockModel {
         resolveAndGatherMaterials(topModel, modelGetter, missingMaterials, materials, new LinkedHashSet<>());
 
         // Resolve particle material
-        ModelGeometry.MaterialResolver.fromKeyLookup(
+        ModelGeometry.MaterialKeyResolver.fromKeyLookup(
             key -> getFromModelTree(
                 topModel,
                 m -> m.model.getMaterial(key),
@@ -240,7 +240,7 @@ public class FusionBlockModelData extends BlockModel {
                     null
                 );
             };
-            ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
+            ModelGeometry.MaterialKeyResolver materialResolver = ModelGeometry.MaterialKeyResolver.fromKeyLookup(
                 keyLookup,
                 material -> {
                     materials.add(material.toMaterial());

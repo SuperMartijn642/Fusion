@@ -39,7 +39,7 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             PropertyStore propertyStore = PropertyStore.create();
             // Resolve materials
             Set<String> missingKeys = new HashSet<>();
-            ModelGeometry.MaterialResolver materialResolver = ModelGeometry.MaterialResolver.fromKeyLookup(
+            ModelGeometry.MaterialKeyResolver materialResolver = ModelGeometry.MaterialKeyResolver.fromKeyLookup(
                 key -> modelStack.findMaterialIncludingParents(key, context),
                 context::getMaterial,
                 missingKeys::add,
@@ -152,7 +152,7 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
     protected abstract ResourceLocation getParent(T data);
 
     protected void bakeGeometry(ModelBakingContext context, ModelStack modelStack, T data,
-                                ModelTransform transform, ModelGeometry.MaterialResolver materialResolver,
+                                ModelTransform transform, ModelGeometry.MaterialKeyResolver materialResolver,
                                 ModelGeometry.QuadConsumer quadConsumer){
         this.getGeometry(data).bake(quadConsumer, transform, materialResolver);
     }

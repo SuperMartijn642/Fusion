@@ -103,7 +103,7 @@ public class CuboidModelType extends SimpleModelType<ModelBlock> {
     }
 
     @Override
-    protected void bakeGeometry(ModelBakingContext context, ModelStack modelStack, ModelBlock data, ModelTransform transform, ModelGeometry.MaterialResolver materialResolver, ModelGeometry.QuadConsumer quadConsumer){
+    protected void bakeGeometry(ModelBakingContext context, ModelStack modelStack, ModelBlock data, ModelTransform transform, ModelGeometry.MaterialKeyResolver materialResolver, ModelGeometry.QuadConsumer quadConsumer){
         this.getGeometry(data).bake(quadConsumer, transform, materialResolver);
     }
 

@@ -13,6 +13,7 @@ import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.SimpleModelType;
 import net.minecraft.client.renderer.block.model.BlockElement;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
@@ -67,6 +68,11 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
     public @Nullable ItemTransform getItemTransform(ItemDisplayContext type, BlockModel data){
         ItemTransform transform = data.transforms.getTransform(type);
         return transform == ItemTransform.NO_TRANSFORM ? null : transform;
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(BlockModel data){
+        return data.getOverrides();
     }
 
     @Override

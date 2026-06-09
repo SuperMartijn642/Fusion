@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
 import com.supermartijn642.fusion.api.util.Either;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.resources.ResourceLocation;
@@ -23,6 +24,7 @@ public abstract class AbstractCuboidModelDataBuilder<T extends AbstractCuboidMod
     protected BlockModel.GuiLight guiLight;
     protected Boolean ambientOcclusion;
     protected final Map<ItemDisplayContext,ItemTransform> itemTransforms = new EnumMap<>(ItemDisplayContext.class);
+    protected final List<ItemOverride> itemOverrides = new ArrayList<>();
 
     @Override
     public T parent(ResourceLocation parent){
@@ -81,6 +83,12 @@ public abstract class AbstractCuboidModelDataBuilder<T extends AbstractCuboidMod
         this.itemTransforms.clear();
         for(ItemDisplayContext type : ItemDisplayContext.values())
             this.itemTransforms.put(type, itemTransforms.getTransform(type));
+        return this.self();
+    }
+
+    @Override
+    public T itemOverrides(ItemOverride... overrides){
+        this.itemOverrides.addAll(Arrays.asList(overrides));
         return this.self();
     }
 

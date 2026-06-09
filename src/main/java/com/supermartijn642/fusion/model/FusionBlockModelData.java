@@ -62,8 +62,7 @@ public class FusionBlockModelData extends BlockModel {
     @Override
     public void resolveParents(Function<ResourceLocation,UnbakedModel> resolver){
         // Dependencies
-        Collection<ResourceLocation> dependencies = this.model.getDependencies();
-        this.dependencies = new HashMap<>(dependencies.size());
+        this.dependencies = new HashMap<>();
         this.dependencies.put(this.identifier, this.model);
         // Track resolved models
         AtomicReference<Function<ResourceLocation,UnbakedModel>> trackingResolverHolder = new AtomicReference<>();
@@ -116,7 +115,10 @@ public class FusionBlockModelData extends BlockModel {
     }
 
     private static void collectDependencies(UntypedModelInstance model, Function<ResourceLocation,UnbakedModel> resolver){
-        for(ResourceLocation dependency : model.getDependencies()){
+        Set<ResourceLocation> dependencies = new HashSet<>(model.getDependencies());
+        for(ItemOverride override : model.getItemOverrides())
+            dependencies.add(override.getModel());
+        for(ResourceLocation dependency : dependencies){
             UntypedModelInstance dependencyModel = FusionBlockModelData.getModelInstance(resolver.apply(dependency));
             collectDependencies(dependencyModel, resolver);
         }

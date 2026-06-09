@@ -14,7 +14,9 @@ import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
 import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.FallbackPropertyStore;
+import com.supermartijn642.fusion.util.NotStupidItemOverrides;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -140,7 +142,16 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 itemTransformResolver.apply(ItemDisplayContext.GROUND, ItemTransform.NO_TRANSFORM),
                 itemTransformResolver.apply(ItemDisplayContext.FIXED, ItemTransform.NO_TRANSFORM),
                 moddedTransforms.build()
-            );// Create the model
+            );
+            // Bake item overrides
+            ItemOverrides itemOverrides = new NotStupidItemOverrides(
+                this.getItemOverrides(data),
+                location -> {
+                    UntypedModelInstance model = context.getModelOrMissing(location);
+                    return model.bakeModel(context, ModelStack.empty().push(model, location));
+                }
+            );
+            // Create the model
             return new BaseBakedModel(
                 BaseBakedModel.Quads.create(quads),
                 conditions,
@@ -148,7 +159,8 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 particleSprite,
                 guiLight,
                 geometry.isGui3d(),
-                itemTransforms
+                itemTransforms,
+                itemOverrides
             );
         }
 

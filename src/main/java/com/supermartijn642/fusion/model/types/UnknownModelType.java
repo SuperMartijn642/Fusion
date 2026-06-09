@@ -14,6 +14,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -68,6 +69,11 @@ public class UnknownModelType<T extends UnbakedModel> implements ModelType<T> {
     @Override
     public ItemTransform getItemTransform(ItemDisplayContext type, T data){
         return null;
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(T data){
+        return List.of();
     }
 
     @Override

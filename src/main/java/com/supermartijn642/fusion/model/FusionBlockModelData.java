@@ -59,8 +59,7 @@ public class FusionBlockModelData extends BlockModel {
     @Override
     public void resolveDependencies(Resolver resolver){
         // Dependencies
-        Collection<ResourceLocation> dependencies = this.model.getDependencies();
-        this.dependencies = new HashMap<>(dependencies.size());
+        this.dependencies = new HashMap<>();
         this.dependencies.put(this.identifier, this.model);
         // Track resolved models
         Resolver trackingResolver = new Resolver() {
@@ -110,7 +109,10 @@ public class FusionBlockModelData extends BlockModel {
     }
 
     private static void collectDependencies(UntypedModelInstance model, Resolver resolver){
-        for(ResourceLocation dependency : model.getDependencies()){
+        Set<ResourceLocation> dependencies = new HashSet<>(model.getDependencies());
+        for(ItemOverride override : model.getItemOverrides())
+            dependencies.add(override.model());
+        for(ResourceLocation dependency : dependencies){
             UntypedModelInstance dependencyModel = FusionBlockModelData.getModelInstance(resolver.resolve(dependency));
             collectDependencies(dependencyModel, resolver);
         }

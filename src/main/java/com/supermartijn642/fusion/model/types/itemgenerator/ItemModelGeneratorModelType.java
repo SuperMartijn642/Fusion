@@ -12,6 +12,7 @@ import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.SimpleModelType;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemModelGenerator;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.ResourceLocation;
@@ -51,6 +52,11 @@ public class ItemModelGeneratorModelType extends SimpleModelType<Void> {
     @Override
     public @Nullable ItemTransform getItemTransform(ItemDisplayContext type, Void data){
         return null;
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(Void data){
+        return List.of();
     }
 
     @Override

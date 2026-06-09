@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.PropertyGetter;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
@@ -47,6 +48,11 @@ public interface UntypedModelInstance extends PropertyGetter {
      */
     @Nullable
     ItemTransform getItemTransform(ItemDisplayContext type);
+
+    /**
+     * Gets model overwrites dependent on item stack properties.
+     */
+    List<ItemOverride> getItemOverrides();
 
     /**
      * Gets the material references of the model.

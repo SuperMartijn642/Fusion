@@ -6,6 +6,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.cuboid.CuboidModelDataBuilderImpl;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.resources.ResourceLocation;
@@ -77,6 +78,11 @@ public interface CuboidModelDataBuilder<T extends CuboidModelDataBuilder<T,S>, S
      * Sets the transformations used to render the model as an item.
      */
     T itemTransforms(ItemTransforms itemTransforms);
+
+    /**
+     * Adds the given item overwrites.
+     */
+    T itemOverrides(ItemOverride... overrides);
 
     /**
      * @see DefaultModelProperties#FORGE_MODEL_RENDER_TYPE

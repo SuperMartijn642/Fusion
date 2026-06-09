@@ -11,10 +11,7 @@ import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.SimpleModelType;
-import net.minecraft.client.renderer.block.model.BlockElement;
-import net.minecraft.client.renderer.block.model.BlockModel;
-import net.minecraft.client.renderer.block.model.ItemTransform;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
+import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.resources.model.Material;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.NamedRenderTypeManager;
@@ -67,6 +64,11 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
     public @Nullable ItemTransform getItemTransform(ItemTransforms.TransformType type, BlockModel data){
         ItemTransform transform = data.transforms.getTransform(type);
         return transform == ItemTransform.NO_TRANSFORM ? null : transform;
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(BlockModel data){
+        return data.getOverrides();
     }
 
     @Override

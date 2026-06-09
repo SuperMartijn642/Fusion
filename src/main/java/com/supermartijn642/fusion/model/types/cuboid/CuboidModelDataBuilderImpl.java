@@ -82,7 +82,15 @@ public class CuboidModelDataBuilderImpl extends AbstractCuboidModelDataBuilder<C
             );
         }
         // Create the vanilla model
-        BlockModel blockModel = new BlockModel(this.parent, elements, textures.build(), this.ambientOcclusion, this.guiLight, itemTransforms, List.of());
+        BlockModel blockModel = new BlockModel(
+            this.parent,
+            elements,
+            textures.build(),
+            this.ambientOcclusion,
+            this.guiLight,
+            itemTransforms,
+            this.itemOverrides
+        );
         // Forge render type
         blockModel.customData.setRenderTypeHint(ForgeNamedRenderTypeGroupHelper.getIdentifier(this.forgeRenderTypeGroup));
         return blockModel;

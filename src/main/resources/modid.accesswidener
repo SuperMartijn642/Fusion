@@ -4,6 +4,18 @@ accessWidener v1 named
 accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frameHeight I
 accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frameWidth I
 accessible field net/minecraft/client/resources/metadata/animation/AnimationMetadataSection frames Ljava/util/List;
+# ItemOverrides
+accessible field net/minecraft/client/renderer/block/model/ItemOverrides overrides [Lnet/minecraft/client/renderer/block/model/ItemOverrides$BakedOverride;
+mutable field net/minecraft/client/renderer/block/model/ItemOverrides overrides [Lnet/minecraft/client/renderer/block/model/ItemOverrides$BakedOverride;
+accessible field net/minecraft/client/renderer/block/model/ItemOverrides properties [Lnet/minecraft/resources/ResourceLocation;
+mutable field net/minecraft/client/renderer/block/model/ItemOverrides properties [Lnet/minecraft/resources/ResourceLocation;
+accessible method net/minecraft/client/renderer/block/model/ItemOverrides <init> ()V
+# ItemOverrides$BakedOverride
+accessible method net/minecraft/client/renderer/block/model/ItemOverrides$BakedOverride <init> ([Lnet/minecraft/client/renderer/block/model/ItemOverrides$PropertyMatcher;Lnet/minecraft/client/resources/model/BakedModel;)V
+accessible class net/minecraft/client/renderer/block/model/ItemOverrides$BakedOverride
+# ItemOverrides$PropertyMatcher
+accessible method net/minecraft/client/renderer/block/model/ItemOverrides$PropertyMatcher <init> (IF)V
+accessible class net/minecraft/client/renderer/block/model/ItemOverrides$PropertyMatcher
 # BakedQuad
 accessible field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I
 mutable field net/minecraft/client/renderer/block/model/BakedQuad tintIndex I

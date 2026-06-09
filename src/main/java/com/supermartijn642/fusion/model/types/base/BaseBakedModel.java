@@ -55,8 +55,9 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
     private final BlockModel.GuiLight guiLight;
     private final boolean isGui3d;
     private final ItemCameraTransforms transforms;
+    private final ItemOverrideList itemOverrides;
 
-    public BaseBakedModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, TextureAtlasSprite particleSprite, boolean ambientOcclusion, BlockModel.GuiLight guiLight, boolean isGui3d, ItemCameraTransforms transforms){
+    public BaseBakedModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, TextureAtlasSprite particleSprite, boolean ambientOcclusion, BlockModel.GuiLight guiLight, boolean isGui3d, ItemCameraTransforms transforms, ItemOverrideList itemOverrides){
         this.quads = quads;
         this.conditions = conditions;
         this.propertyStore = propertyStore;
@@ -65,6 +66,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         this.guiLight = guiLight;
         this.isGui3d = isGui3d;
         this.transforms = transforms;
+        this.itemOverrides = itemOverrides;
     }
 
     private RenderData getRenderData(@Nullable IBlockDisplayReader level, @Nullable BlockPos pos, @Nullable BlockState state){
@@ -312,7 +314,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     @Override
     public ItemOverrideList getOverrides(){
-        return ItemOverrideList.EMPTY;
+        return this.itemOverrides;
     }
 
     public static final class Quads {

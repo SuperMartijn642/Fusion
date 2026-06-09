@@ -13,6 +13,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransformVec3f;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -51,6 +52,11 @@ public class UnknownModelType<T extends IModel> implements ModelType<T> {
     @Override
     public ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type, T data){
         return data.asVanillaModel().map(m -> DefaultModelTypes.CUBOID.getItemTransform(type, m)).orElse(null);
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(T data){
+        return Collections.emptyList();
     }
 
     @Override

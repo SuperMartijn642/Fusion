@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransformVec3f;
 import net.minecraft.util.ResourceLocation;
 
@@ -52,6 +53,11 @@ public interface ModelType<T> extends Serializer<T> {
      */
     @Nullable
     ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type, T data);
+
+    /**
+     * Gets model overwrites dependent on item stack properties.
+     */
+    List<ItemOverride> getItemOverrides(T data);
 
     /**
      * Gets the material references of the model.

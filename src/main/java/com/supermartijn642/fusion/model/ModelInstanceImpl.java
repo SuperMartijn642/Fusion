@@ -9,6 +9,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransformVec3f;
 import net.minecraft.util.ResourceLocation;
 
@@ -64,6 +65,11 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     @Override
     public @Nullable ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type){
         return this.modelType.getItemTransform(type, this.modelData);
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(){
+        return this.modelType.getItemOverrides(this.modelData);
     }
 
     @Override

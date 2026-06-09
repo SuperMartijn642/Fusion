@@ -6,7 +6,10 @@ import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.util.EnumFacing;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created 01/05/2023 by SuperMartijn642
@@ -73,6 +76,14 @@ public class CuboidModelDataBuilderImpl extends AbstractCuboidModelDataBuilder<C
             );
         }
         // Create the vanilla model
-        return new ModelBlock(this.parent, elements, textures.build(), this.ambientOcclusion, this.isGui3d, itemTransforms, Collections.emptyList());
+        return new ModelBlock(
+            this.parent,
+            elements,
+            textures.build(),
+            this.ambientOcclusion,
+            this.isGui3d,
+            itemTransforms,
+            this.itemOverrides
+        );
     }
 }

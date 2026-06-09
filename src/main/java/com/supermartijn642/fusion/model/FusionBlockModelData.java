@@ -93,7 +93,13 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
     @Override
     public Collection<ResourceLocation> getDependencies(){
         this.resolve();
-        return this.model.getDependencies();
+        List<ItemOverride> itemOverrides = this.model.getItemOverrides();
+        if(itemOverrides.isEmpty())
+            return this.model.getDependencies();
+        Set<ResourceLocation> dependencies = new HashSet<>(this.model.getDependencies());
+        for(ItemOverride override : itemOverrides)
+            dependencies.add(override.getLocation());
+        return dependencies;
     }
 
     public void resolve(){

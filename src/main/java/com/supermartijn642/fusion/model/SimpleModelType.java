@@ -15,6 +15,7 @@ import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.FallbackPropertyStore;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.block.model.ItemTransformVec3f;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
@@ -123,7 +124,10 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 itemTransformResolver.apply(ItemCameraTransforms.TransformType.GUI, ItemTransformVec3f.DEFAULT),
                 itemTransformResolver.apply(ItemCameraTransforms.TransformType.GROUND, ItemTransformVec3f.DEFAULT),
                 itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIXED, ItemTransformVec3f.DEFAULT)
-            );// Create the model
+            );
+            // Create item overrides list
+            ItemOverrideList itemOverrides = new ItemOverrideList(this.getItemOverrides(data));
+            // Create the model
             return new BaseBakedModel(
                 BaseBakedModel.Quads.create(quads),
                 conditions,
@@ -131,7 +135,8 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 particleSprite,
                 ambientOcclusion,
                 isGui3d,
-                itemTransforms
+                itemTransforms,
+                itemOverrides
             );
         }
 

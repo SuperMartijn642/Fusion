@@ -63,6 +63,11 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
     }
 
     @Override
+    public List<ItemOverride> getItemOverrides(BlockModel data){
+        return data.getOverrides();
+    }
+
+    @Override
     public Map<String,Either<String,ModelMaterial>> getMaterials(BlockModel data){
         return convertMaterials(data.textureMap);
     }

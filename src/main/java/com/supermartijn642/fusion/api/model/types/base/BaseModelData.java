@@ -7,11 +7,13 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataBuilderImpl;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemOverride;
 import net.minecraft.client.renderer.model.ItemTransformVec3f;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,6 +65,11 @@ public interface BaseModelData {
      */
     @Nullable
     ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type);
+
+    /**
+     * Model overwrites dependent on item stack properties.
+     */
+    List<ItemOverride> getItemOverrides();
 
     /**
      * Whether the model should be shaded.

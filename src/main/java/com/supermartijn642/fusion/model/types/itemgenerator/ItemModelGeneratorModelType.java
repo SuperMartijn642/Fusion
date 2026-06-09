@@ -10,10 +10,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.SimpleModelType;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ItemModelGenerator;
-import net.minecraft.client.renderer.model.ItemTransformVec3f;
+import net.minecraft.client.renderer.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +47,11 @@ public class ItemModelGeneratorModelType extends SimpleModelType<Void> {
     @Override
     public @Nullable ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type, Void data){
         return null;
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(Void data){
+        return Collections.emptyList();
     }
 
     @Override

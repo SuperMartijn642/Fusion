@@ -7,10 +7,12 @@ import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.util.Either;
 import net.minecraft.client.renderer.model.BlockModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemOverride;
 import net.minecraft.client.renderer.model.ItemTransformVec3f;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -24,8 +26,9 @@ public class BaseModelDataImpl implements BaseModelData {
     protected final BlockModel.GuiLight guiLight;
     protected final CuboidModelGeometry geometry;
     protected final Map<ItemCameraTransforms.TransformType,ItemTransformVec3f> itemTransforms;
+    protected final List<ItemOverride> itemOverrides;
 
-    public BaseModelDataImpl(ResourceLocation parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, BlockModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemCameraTransforms.TransformType,ItemTransformVec3f> itemTransforms){
+    public BaseModelDataImpl(ResourceLocation parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, BlockModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemCameraTransforms.TransformType,ItemTransformVec3f> itemTransforms, List<ItemOverride> itemOverrides){
         this.parent = parent;
         this.materials = ImmutableMap.copyOf(materials);
         this.ambientOcclusion = ambientOcclusion;
@@ -34,6 +37,7 @@ public class BaseModelDataImpl implements BaseModelData {
         this.guiLight = guiLight;
         this.geometry = geometry;
         this.itemTransforms = ImmutableMap.copyOf(itemTransforms);
+        this.itemOverrides = itemOverrides;
     }
 
     @Override
@@ -74,5 +78,10 @@ public class BaseModelDataImpl implements BaseModelData {
     @Override
     public @Nullable Boolean getEmissive(){
         return this.emissive;
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(){
+        return this.itemOverrides;
     }
 }

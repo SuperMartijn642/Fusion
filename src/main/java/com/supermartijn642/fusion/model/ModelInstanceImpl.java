@@ -7,10 +7,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.IBakedModel;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ItemTransformVec3f;
+import net.minecraft.client.renderer.model.*;
 import net.minecraft.util.ResourceLocation;
 
 import javax.annotation.Nullable;
@@ -65,6 +62,11 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     @Override
     public @Nullable ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type){
         return this.modelType.getItemTransform(type, this.modelData);
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(){
+        return this.modelType.getItemOverrides(this.modelData);
     }
 
     @Override

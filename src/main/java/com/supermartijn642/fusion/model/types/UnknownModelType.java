@@ -61,6 +61,11 @@ public class UnknownModelType<T extends IUnbakedModel> implements ModelType<T> {
     }
 
     @Override
+    public List<ItemOverride> getItemOverrides(T data){
+        return Collections.emptyList();
+    }
+
+    @Override
     public Map<String,Either<String,ModelMaterial>> getMaterials(T data){
         return Collections.emptyMap();
     }

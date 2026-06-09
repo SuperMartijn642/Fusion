@@ -57,8 +57,9 @@ public class BaseBakedModel implements BakedModel {
     private final BlockModel.GuiLight guiLight;
     private final boolean isGui3d;
     private final ItemTransforms transforms;
+    private final ItemOverrides itemOverrides;
 
-    public BaseBakedModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, TextureAtlasSprite particleSprite, BlockModel.GuiLight guiLight, boolean isGui3d, ItemTransforms transforms){
+    public BaseBakedModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, TextureAtlasSprite particleSprite, BlockModel.GuiLight guiLight, boolean isGui3d, ItemTransforms transforms, ItemOverrides itemOverrides){
         this.quads = quads;
         this.conditions = conditions;
         this.propertyStore = propertyStore;
@@ -66,6 +67,7 @@ public class BaseBakedModel implements BakedModel {
         this.guiLight = guiLight;
         this.isGui3d = isGui3d;
         this.transforms = transforms;
+        this.itemOverrides = itemOverrides;
     }
 
     private RenderData getRenderData(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
@@ -320,7 +322,7 @@ public class BaseBakedModel implements BakedModel {
 
     @Override
     public ItemOverrides getOverrides(){
-        return ItemOverrides.EMPTY;
+        return this.itemOverrides;
     }
 
     private Object createCacheKey(RenderData renderData){

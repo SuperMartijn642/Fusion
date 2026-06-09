@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataBuilderImpl;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -14,6 +15,7 @@ import net.neoforged.neoforge.client.RenderTypeGroup;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,6 +67,11 @@ public interface BaseModelData {
      */
     @Nullable
     ItemTransform getItemTransform(ItemDisplayContext type);
+
+    /**
+     * Model overwrites dependent on item stack properties.
+     */
+    List<ItemOverride> getItemOverrides();
 
     /**
      * Whether the model should be shaded.

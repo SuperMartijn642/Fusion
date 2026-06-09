@@ -14,6 +14,7 @@ import com.supermartijn642.fusion.util.FallbackPropertyStore;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.block.model.BakedOverrides;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
@@ -55,8 +56,9 @@ public class BaseBakedModel implements BakedModel {
     private final BlockModel.GuiLight guiLight;
     private final boolean isGui3d;
     private final ItemTransforms transforms;
+    private final BakedOverrides itemOverrides;
 
-    public BaseBakedModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, TextureAtlasSprite particleSprite, BlockModel.GuiLight guiLight, boolean isGui3d, ItemTransforms transforms){
+    public BaseBakedModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, TextureAtlasSprite particleSprite, BlockModel.GuiLight guiLight, boolean isGui3d, ItemTransforms transforms, BakedOverrides itemOverrides){
         this.quads = quads;
         this.conditions = conditions;
         this.propertyStore = propertyStore;
@@ -64,6 +66,7 @@ public class BaseBakedModel implements BakedModel {
         this.guiLight = guiLight;
         this.isGui3d = isGui3d;
         this.transforms = transforms;
+        this.itemOverrides = itemOverrides;
     }
 
     private RenderData getRenderData(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
@@ -307,6 +310,11 @@ public class BaseBakedModel implements BakedModel {
     @Override
     public ItemTransforms getTransforms(){
         return this.transforms;
+    }
+
+    @Override
+    public BakedOverrides overrides(){
+        return this.itemOverrides;
     }
 
     @Override

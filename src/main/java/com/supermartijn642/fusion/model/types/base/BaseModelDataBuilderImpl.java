@@ -26,6 +26,7 @@ public class BaseModelDataBuilderImpl extends AbstractBaseModelDataBuilder<BaseM
             this.guiLight,
             this.elements == null ? null : CuboidModelGeometry.of(this.elements),
             this.itemTransforms,
+            this.itemOverrides,
             this.neoRenderTypeGroup
         );
     }

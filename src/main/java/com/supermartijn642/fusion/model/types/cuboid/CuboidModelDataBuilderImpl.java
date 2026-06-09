@@ -99,7 +99,15 @@ public class CuboidModelDataBuilderImpl extends AbstractCuboidModelDataBuilder<C
             );
         }
         // Create the vanilla model
-        BlockModel blockModel = new BlockModel(this.parent, elements, textures.build(), this.ambientOcclusion, this.guiLight, itemTransforms, List.of());
+        BlockModel blockModel = new BlockModel(
+            this.parent,
+            elements,
+            textures.build(),
+            this.ambientOcclusion,
+            this.guiLight,
+            itemTransforms,
+            this.itemOverrides
+        );
         // NeoForge render type
         blockModel.customData.setRenderTypeHint(NeoForgeNamedRenderTypeGroupHelper.getIdentifier(this.neoRenderTypeGroup));
         return blockModel;

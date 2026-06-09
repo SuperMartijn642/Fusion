@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.resources.model.BakedModel;
@@ -65,6 +66,11 @@ public class ModelInstanceImpl<T> implements ModelInstance<T> {
     @Override
     public @Nullable ItemTransform getItemTransform(ItemTransforms.TransformType type){
         return this.modelType.getItemTransform(type, this.modelData);
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(){
+        return this.modelType.getItemOverrides(this.modelData);
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.client.renderer.block.model.BlockModel;
+import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.resources.model.BakedModel;
@@ -53,6 +54,11 @@ public interface ModelType<T> extends Serializer<T> {
      */
     @Nullable
     ItemTransform getItemTransform(ItemTransforms.TransformType type, T data);
+
+    /**
+     * Gets model overwrites dependent on item stack properties.
+     */
+    List<ItemOverride> getItemOverrides(T data);
 
     /**
      * Gets the material references of the model.

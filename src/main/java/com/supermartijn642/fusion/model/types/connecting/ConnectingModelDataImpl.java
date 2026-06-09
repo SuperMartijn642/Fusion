@@ -8,9 +8,11 @@ import com.supermartijn642.fusion.api.texture.types.connecting.predicates.Connec
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemOverride;
 import net.minecraft.client.renderer.model.ItemTransformVec3f;
 import net.minecraft.util.ResourceLocation;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,8 +22,8 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
 
     private final Map<String,Either<String,ConnectionPredicate>> connections;
 
-    public ConnectingModelDataImpl(ResourceLocation parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, Boolean isGui3d, CuboidModelGeometry geometry, Map<ItemCameraTransforms.TransformType,ItemTransformVec3f> ItemCameraTransforms, Map<String,Either<String,ConnectionPredicate>> connections){
-        super(parent, materials, ambientOcclusion, shade, emissive, isGui3d, geometry, ItemCameraTransforms);
+    public ConnectingModelDataImpl(ResourceLocation parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, Boolean isGui3d, CuboidModelGeometry geometry, Map<ItemCameraTransforms.TransformType,ItemTransformVec3f> itemTransforms, List<ItemOverride> itemOverrides, Map<String,Either<String,ConnectionPredicate>> connections){
+        super(parent, materials, ambientOcclusion, shade, emissive, isGui3d, geometry, itemTransforms, itemOverrides);
         this.connections = ImmutableMap.copyOf(connections);
     }
 

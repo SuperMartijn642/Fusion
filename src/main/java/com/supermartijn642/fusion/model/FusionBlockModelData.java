@@ -61,7 +61,13 @@ public class FusionBlockModelData extends BlockModel {
 
     @Override
     public Collection<ResourceLocation> getDependencies(){
-        return this.model.getDependencies();
+        List<ItemOverride> itemOverrides = this.model.getItemOverrides();
+        if(itemOverrides.isEmpty())
+            return this.model.getDependencies();
+        Set<ResourceLocation> dependencies = new HashSet<>(this.model.getDependencies());
+        for(ItemOverride override : this.model.getItemOverrides())
+            dependencies.add(override.getModel());
+        return dependencies;
     }
 
     public static Collection<ResourceLocation> gatherBlockModelMaterials(BlockModel model,

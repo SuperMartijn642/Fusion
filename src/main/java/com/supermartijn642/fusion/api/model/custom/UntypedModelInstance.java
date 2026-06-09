@@ -6,6 +6,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.PropertyGetter;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemOverride;
 import net.minecraft.client.renderer.model.ItemTransformVec3f;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,11 @@ public interface UntypedModelInstance extends PropertyGetter {
      */
     @Nullable
     ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type);
+
+    /**
+     * Gets model overwrites dependent on item stack properties.
+     */
+    List<ItemOverride> getItemOverrides();
 
     /**
      * Gets the material references of the model.

@@ -13,10 +13,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.SimpleModelType;
 import com.supermartijn642.fusion.util.IdentifierUtil;
-import net.minecraft.client.renderer.model.BlockModel;
-import net.minecraft.client.renderer.model.BlockPart;
-import net.minecraft.client.renderer.model.ItemCameraTransforms;
-import net.minecraft.client.renderer.model.ItemTransformVec3f;
+import net.minecraft.client.renderer.model.*;
 import net.minecraft.util.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +66,11 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
     public @Nullable ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type, BlockModel data){
         ItemTransformVec3f transform = data.transforms.getTransform(type);
         return transform == ItemTransformVec3f.NO_TRANSFORM ? null : transform;
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(BlockModel data){
+        return data.getOverrides();
     }
 
     @Override

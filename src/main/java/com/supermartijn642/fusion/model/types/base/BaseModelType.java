@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.model.types.base;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -18,6 +19,7 @@ import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.client.renderer.model.BlockPartRotation;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemOverride;
 import net.minecraft.client.renderer.model.ItemTransformVec3f;
 import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
@@ -65,6 +67,11 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
     @Override
     public @Nullable ItemTransformVec3f getItemTransform(ItemCameraTransforms.TransformType type, T data){
         return data.getItemTransform(type);
+    }
+
+    @Override
+    public List<ItemOverride> getItemOverrides(T data){
+        return data.getItemOverrides();
     }
 
     @Override
@@ -160,7 +167,13 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         if(json.has("display")){
             if(!json.get("display").isJsonObject())
                 throw new JsonParseException("Property 'display' must be an object!");
-            builder.itemTransforms(this.deserializeItemCameraTransforms(json.getAsJsonObject("display")));
+            builder.itemTransforms(this.deserializeItemTransforms(json.getAsJsonObject("display")));
+        }
+        // Item overrides
+        if(json.has("overrides")){
+            if(!json.get("overrides").isJsonArray())
+                throw new JsonParseException("Property 'overrides' must be an array!");
+            builder.itemOverrides(this.deserializeItemOverrides(json.getAsJsonArray("overrides")).toArray(new ItemOverride[0]));
         }
     }
 
@@ -185,9 +198,11 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                 elementsJson.add(this.serializeElement(element));
             json.add("elements", elementsJson);
         }
-        JsonObject ItemCameraTransformsJson = this.serializeItemCameraTransforms(data);
-        if(ItemCameraTransformsJson.size() != 0)
-            json.add("display", ItemCameraTransformsJson);
+        JsonObject itemTransformsJson = this.serializeItemTransforms(data);
+        if(itemTransformsJson.size() != 0)
+            json.add("display", itemTransformsJson);
+        if(!data.getItemOverrides().isEmpty())
+            json.add("overrides", this.serializeItemOverrides(data.getItemOverrides()));
         return json;
     }
 
@@ -428,7 +443,7 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         return faceJson;
     }
 
-    protected ItemCameraTransforms deserializeItemCameraTransforms(JsonObject json){
+    protected ItemCameraTransforms deserializeItemTransforms(JsonObject json){
         ItemTransformVec3f thirdPersonRightHand = this.deserializeItemTransform(json, "thirdperson_righthand", ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND);
         ItemTransformVec3f thirdPersonLeftHand = this.deserializeItemTransform(json, "thirdperson_lefthand", ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND);
         if(thirdPersonLeftHand == ItemTransformVec3f.NO_TRANSFORM)
@@ -453,7 +468,7 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         );
     }
 
-    protected JsonObject serializeItemCameraTransforms(BaseModelData data){
+    protected JsonObject serializeItemTransforms(BaseModelData data){
         JsonObject json = new JsonObject();
         this.serializeItemTransform(json, "thirdperson_lefthand", data.getItemTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND));
         this.serializeItemTransform(json, "thirdperson_righthand", data.getItemTransform(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND));
@@ -491,6 +506,62 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         transformJson.add("scale", this.serializeVector3f(transform.scale));
         transformJson.add("rotation", this.serializeVector3f(transform.rotation));
         return transformJson;
+    }
+
+    protected List<ItemOverride> deserializeItemOverrides(JsonArray json){
+        List<ItemOverride> overrides = new ArrayList<>(json.size());
+        try{
+            for(JsonElement element : json){
+                if(!element.isJsonObject())
+                    throw new JsonParseException("Entry must be an object!");
+                overrides.add(this.deserializeItemOverride(element.getAsJsonObject()));
+            }
+        }catch(JsonParseException e){
+            throw new JsonParseException("Failed to parse 'overrides' entry", e);
+        }
+        return overrides;
+    }
+
+    protected JsonArray serializeItemOverrides(List<ItemOverride> overrides){
+        JsonArray json = new JsonArray();
+        for(ItemOverride override : overrides)
+            json.add(this.serializeItemOverride(override));
+        return json;
+    }
+
+    protected ItemOverride deserializeItemOverride(JsonObject json){
+        if(!json.has("model"))
+            throw new JsonParseException("Entry must have string property 'model'!");
+        if(!json.get("model").isJsonPrimitive() || !json.getAsJsonPrimitive("model").isString())
+            throw new JsonParseException("Property 'model' must be a string!");
+        if(!IdentifierUtil.isValidIdentifier(json.get("model").getAsString()))
+            throw new JsonParseException("Property 'model' must be a valid identifier!");
+        ResourceLocation model = new ResourceLocation(json.get("model").getAsString());
+
+        if(!json.has("predicate"))
+            throw new JsonParseException("Entry must have object property 'predicate'!");
+        if(!json.get("predicate").isJsonObject())
+            throw new JsonParseException("Property 'predicate' must be an object!");
+        Map<ResourceLocation,Float> predicatesMap = new LinkedHashMap<>();
+        for(Map.Entry<String,JsonElement> predicate : json.getAsJsonObject("predicate").entrySet()){
+            String key = predicate.getKey();
+            if(!IdentifierUtil.isValidIdentifier(key))
+                throw new JsonParseException("'predicate' keys must be a valid identifier, not '" + key + "'!");
+            if(!predicate.getValue().isJsonPrimitive() || !predicate.getValue().getAsJsonPrimitive().isNumber())
+                throw new JsonParseException("Value for 'predicate' key '" + key + "' must be a float!");
+            float value = predicate.getValue().getAsFloat();
+            predicatesMap.put(new ResourceLocation(key), value);
+        }
+        return new ItemOverride(model, ImmutableMap.copyOf(predicatesMap));
+    }
+
+    protected JsonObject serializeItemOverride(ItemOverride override){
+        JsonObject json = new JsonObject();
+        json.addProperty("model", override.getModel().toString());
+        JsonObject predicatesJson = new JsonObject();
+        override.predicates.forEach((k, v) -> predicatesJson.addProperty(k.toString(), v));
+        json.add("predicate", predicatesJson);
+        return json;
     }
 
     protected Vector3f deserializeVector3f(JsonElement element, Supplier<String> errorMessageHead){

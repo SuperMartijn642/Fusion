@@ -13,8 +13,10 @@ import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.model.types.base.BaseBakedModel;
 import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.FallbackPropertyStore;
+import com.supermartijn642.fusion.util.NotStupidItemOverrides;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.model.ItemCameraTransforms;
+import net.minecraft.client.renderer.model.ItemOverrideList;
 import net.minecraft.client.renderer.model.ItemTransformVec3f;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
@@ -123,7 +125,16 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 itemTransformResolver.apply(ItemCameraTransforms.TransformType.GUI, ItemTransformVec3f.NO_TRANSFORM),
                 itemTransformResolver.apply(ItemCameraTransforms.TransformType.GROUND, ItemTransformVec3f.NO_TRANSFORM),
                 itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIXED, ItemTransformVec3f.NO_TRANSFORM)
-            );// Create the model
+            );
+            // Bake item overrides
+            ItemOverrideList itemOverrides = new NotStupidItemOverrides(
+                this.getItemOverrides(data),
+                location -> {
+                    UntypedModelInstance model = context.getModelOrMissing(location);
+                    return model.bakeModel(context, ModelStack.empty().push(model, location));
+                }
+            );
+            // Create the model
             return new BaseBakedModel(
                 BaseBakedModel.Quads.create(quads),
                 conditions,
@@ -131,7 +142,8 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 particleSprite,
                 ambientOcclusion,
                 isGui3d,
-                itemTransforms
+                itemTransforms,
+                itemOverrides
             );
         }
 

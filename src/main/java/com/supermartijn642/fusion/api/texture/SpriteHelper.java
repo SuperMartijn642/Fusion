@@ -41,6 +41,7 @@ public final class SpriteHelper {
      * Returns the Fusion {@link SpriteInstance} associated with the given sprite.
      * For non-fusion sprites, this will return {@code null}.
      */
+    @Nullable
     public static SpriteInstance getSpriteInstance(TextureAtlasSprite sprite){
         return SpriteHelperImpl.getSpriteInstance(sprite);
     }

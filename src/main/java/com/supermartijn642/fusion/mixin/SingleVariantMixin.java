@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.renderer.block.model.BlockStateModel;
 import net.minecraft.client.renderer.block.model.SingleVariant;
@@ -29,13 +30,18 @@ public class SingleVariantMixin {
         Variant variant = unbaked.variant();
         ResourceLocation location = variant.modelLocation();
         ResolvedModel wrapper = modelBaker.getModel(location);
-        if(wrapper != null){
+        if(wrapper == null)
+            return;
+        // Handle Fusion models and models with Fusion textures
+        if(FusionBlockModelData.containsFusionModelsOrTextures(wrapper)){
             FusionBlockModelData fusionData = FusionBlockModelData.get(wrapper.wrapped());
-            if(fusionData != null){
-                Variant.SimpleModelState modelState = variant.modelState();
-                BlockStateModel model = fusionData.bakeBlockModel(wrapper, modelBaker, modelState.asModelState());
-                ci.setReturnValue(model);
+            if(fusionData == null){
+                UntypedModelInstance model = FusionBlockModelData.getModelInstance(wrapper.wrapped());
+                fusionData = new FusionBlockModelData(location, model);
             }
+            Variant.SimpleModelState modelState = variant.modelState();
+            BlockStateModel model = fusionData.bakeBlockModel(wrapper, modelBaker, modelState.asModelState());
+            ci.setReturnValue(model);
         }
     }
 }

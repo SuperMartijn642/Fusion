@@ -7,10 +7,16 @@ import com.supermartijn642.fusion.model.FusionModelLoader;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import com.supermartijn642.fusion.util.LoggingHelper;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.SpecialBlockModelRenderer;
+import net.minecraft.client.renderer.texture.SpriteLoader;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelDiscovery;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,12 +24,46 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 /**
  * Created 19/09/2024 by SuperMartijn642
  */
 @Mixin(ModelManager.class)
 public class ModelManagerMixin {
+
+    @Inject(
+        method = "loadModels",
+        at = @At("HEAD")
+    )
+    private static void captureBlockItemSprites(
+        SpriteLoader.Preparations blockAtlas,
+        ModelBakery bakery,
+        Object2IntMap<BlockState> modelGroups,
+        EntityModelSet entityModelSet,
+        SpecialBlockModelRenderer specialBlockModelRenderer,
+        Executor taskExecutor,
+        CallbackInfoReturnable<CompletableFuture<?>> ci
+    ){
+        FusionBlockModelData.BLOCK_ATLAS_SPRITES = blockAtlas;
+    }
+
+    @Inject(
+        method = "loadModels",
+        at = @At("RETURN")
+    )
+    private static void releaseBlockItemSprites(
+        SpriteLoader.Preparations blockAtlas,
+        ModelBakery bakery,
+        Object2IntMap<BlockState> modelGroups,
+        EntityModelSet entityModelSet,
+        SpecialBlockModelRenderer specialBlockModelRenderer,
+        Executor taskExecutor,
+        CallbackInfoReturnable<CompletableFuture<?>> ci
+    ){
+        ci.getReturnValue().thenRun(() -> FusionBlockModelData.BLOCK_ATLAS_SPRITES = null);
+    }
 
     @Inject(
         method = "lambda$loadBlockModels$5(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",

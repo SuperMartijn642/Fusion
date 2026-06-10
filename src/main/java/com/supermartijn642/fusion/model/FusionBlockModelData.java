@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
@@ -13,6 +14,8 @@ import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -30,10 +33,11 @@ public class FusionBlockModelData {
 
     public static final ThreadLocal<ResourceLocation> CURRENT_MODEL = new ThreadLocal<>();
     public static final ThreadLocal<ResolvedModel> MISSING_MODEL = new ThreadLocal<>();
+    public static Map<ResourceLocation,AtlasSet.StitchResult> ATLAS_STITCH_RESULTS;
 
     @Nullable
     public static FusionBlockModelData get(UnbakedModel model){
-        return ((BlockModelExtension)model).getFusionData();
+        return model instanceof BlockModel ? ((BlockModelExtension)model).getFusionData() : null;
     }
 
     private final BlockModel cuboidModel;
@@ -209,6 +213,31 @@ public class FusionBlockModelData {
             this.resolvedParent = true;
         }
         return this.parent;
+    }
+
+    public static boolean containsFusionModelsOrTextures(ResolvedModel wrapper){
+        // Check if the wrapper contains a Fusion model
+        if(get(wrapper.wrapped()) != null)
+            return true;
+        // Check if the model has Fusion textures
+        TextureSlots.Data textureSlots = wrapper.wrapped().textureSlots();
+        for(Map.Entry<String,TextureSlots.SlotContents> entry : textureSlots.values().entrySet()){
+            if(entry.getValue() instanceof TextureSlots.Value(Material material)){
+                if(!material.atlasLocation().equals(TextureAtlas.LOCATION_BLOCKS))
+                    continue;
+                AtlasSet.StitchResult stitchResult = ATLAS_STITCH_RESULTS.get(material.atlasLocation());
+                if(stitchResult == null)
+                    continue;
+                TextureAtlasSprite sprite = stitchResult.getSprite(material.texture());
+                if(sprite != null && SpriteHelper.getSpriteInstance(sprite) != null)
+                    return true;
+            }
+        }
+        // Check parent
+        ResolvedModel parent = wrapper.parent();
+        if(parent != null)
+            return containsFusionModelsOrTextures(parent);
+        return false;
     }
 
     public static UntypedModelInstance getModelInstance(UnbakedModel model){

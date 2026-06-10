@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.mojang.math.Transformation;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.renderer.item.CuboidItemModelWrapper;
@@ -31,14 +32,19 @@ public class CuboidItemModelWrapperMixin {
         CuboidItemModelWrapper.Unbaked unbaked = (CuboidItemModelWrapper.Unbaked)(Object)this;
         Identifier location = unbaked.model();
         ResolvedModel wrapper = context.blockModelBaker().getModel(location);
-        if(wrapper != null){
+        if(wrapper == null)
+            return;
+        // Handle Fusion models and models with Fusion textures
+        if(FusionBlockModelData.containsFusionModelsOrTextures(wrapper)){
             FusionBlockModelData fusionData = FusionBlockModelData.get(wrapper.wrapped());
-            if(fusionData != null){
-                List<ItemTintSource> tintSources = unbaked.tints();
-                transformation = Transformation.compose(transformation, unbaked.transformation());
-                ItemModel model = fusionData.bakeItemModel(wrapper, transformation, tintSources, context.blockModelBaker(), context.entityModelSet());
-                ci.setReturnValue(model);
+            if(fusionData == null){
+                UntypedModelInstance model = FusionBlockModelData.getModelInstance(wrapper.wrapped());
+                fusionData = new FusionBlockModelData(location, model);
             }
+            List<ItemTintSource> tintSources = unbaked.tints();
+            transformation = Transformation.compose(transformation, unbaked.transformation());
+            ItemModel model = fusionData.bakeItemModel(wrapper, transformation, tintSources, context.blockModelBaker(), context.entityModelSet());
+            ci.setReturnValue(model);
         }
     }
 }

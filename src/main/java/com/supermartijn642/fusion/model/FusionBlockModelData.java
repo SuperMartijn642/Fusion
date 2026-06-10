@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.CuboidModelExtension;
@@ -16,6 +17,8 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.texture.SpriteLoader;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.UnbakedModel;
@@ -35,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -43,10 +47,11 @@ public class FusionBlockModelData {
 
     public static final ThreadLocal<Identifier> CURRENT_MODEL = new ThreadLocal<>();
     public static final ThreadLocal<Pair<BlockStateModelPart,ResolvedModel>> MISSING_MODEL = new ThreadLocal<>();
+    public static Pair<SpriteLoader.Preparations,SpriteLoader.Preparations> BLOCK_ITEM_ATLAS_SPRITES;
 
     @Nullable
     public static FusionBlockModelData get(UnbakedModel model){
-        return ((CuboidModelExtension)model).getFusionData();
+        return model instanceof CuboidModel ? ((CuboidModelExtension)model).getFusionData() : null;
     }
 
     private final CuboidModel cuboidModel;
@@ -231,6 +236,36 @@ public class FusionBlockModelData {
             this.resolvedParent = true;
         }
         return this.parent;
+    }
+
+    public static boolean containsFusionModelsOrTextures(ResolvedModel wrapper){
+        // Check if the wrapper contains a Fusion model
+        if(get(wrapper.wrapped()) != null)
+            return true;
+        // Check if the model has Fusion textures
+        Predicate<Identifier> isFusionTexture = isFusionTexture();
+        TextureSlots.Data textureSlots = wrapper.wrapped().textureSlots();
+        for(Map.Entry<String,TextureSlots.SlotContents> entry : textureSlots.values().entrySet()){
+            if(entry.getValue() instanceof TextureSlots.Value(Material material) && isFusionTexture.test(material.sprite()))
+                return true;
+        }
+        // Check parent
+        ResolvedModel parent = wrapper.parent();
+        if(parent != null)
+            return containsFusionModelsOrTextures(parent);
+        return false;
+    }
+
+    private static Predicate<Identifier> isFusionTexture(){
+        Pair<SpriteLoader.Preparations,SpriteLoader.Preparations> sprites = BLOCK_ITEM_ATLAS_SPRITES;
+        SpriteLoader.Preparations blockSprites = sprites.left();
+        SpriteLoader.Preparations itemSprites = sprites.right();
+        return identifier -> {
+            TextureAtlasSprite sprite = itemSprites.getSprite(identifier);
+            if(sprite == null)
+                sprite = blockSprites.getSprite(identifier);
+            return sprite != null && SpriteHelper.getSpriteInstance(sprite) != null;
+        };
     }
 
     public static UntypedModelInstance getModelInstance(UnbakedModel model){

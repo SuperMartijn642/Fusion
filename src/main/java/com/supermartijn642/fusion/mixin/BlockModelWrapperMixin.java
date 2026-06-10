@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.renderer.item.BlockModelWrapper;
@@ -29,13 +30,18 @@ public class BlockModelWrapperMixin {
         BlockModelWrapper.Unbaked unbaked = (BlockModelWrapper.Unbaked)(Object)this;
         ResourceLocation location = unbaked.model();
         ResolvedModel wrapper = context.blockModelBaker().getModel(location);
-        if(wrapper != null){
+        if(wrapper == null)
+            return;
+        // Handle Fusion models and models with Fusion textures
+        if(FusionBlockModelData.containsFusionModelsOrTextures(wrapper)){
             FusionBlockModelData fusionData = FusionBlockModelData.get(wrapper.wrapped());
-            if(fusionData != null){
-                List<ItemTintSource> tintSources = unbaked.tints();
-                ItemModel model = fusionData.bakeItemModel(wrapper, tintSources, context.blockModelBaker(), context.entityModelSet());
-                ci.setReturnValue(model);
+            if(fusionData == null){
+                UntypedModelInstance model = FusionBlockModelData.getModelInstance(wrapper.wrapped());
+                fusionData = new FusionBlockModelData(location, model);
             }
+            List<ItemTintSource> tintSources = unbaked.tints();
+            ItemModel model = fusionData.bakeItemModel(wrapper, tintSources, context.blockModelBaker(), context.entityModelSet());
+            ci.setReturnValue(model);
         }
     }
 }

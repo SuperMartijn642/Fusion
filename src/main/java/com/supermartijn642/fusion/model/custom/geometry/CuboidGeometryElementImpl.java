@@ -24,17 +24,24 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
     }
 
     public static CuboidModelGeometry.Element of(BlockPart element){
-        return builder()
+        CuboidModelGeometry.Element.Builder builder = builder()
             .fromTo(element.positionFrom, element.positionTo)
             .rotation(element.partRotation)
-            .face(EnumFacing.UP, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.UP)))
-            .face(EnumFacing.DOWN, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.DOWN)))
-            .face(EnumFacing.NORTH, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.NORTH)))
-            .face(EnumFacing.EAST, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.EAST)))
-            .face(EnumFacing.SOUTH, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.SOUTH)))
-            .face(EnumFacing.WEST, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.WEST)))
-            .shade(element.shade ? null : false)
-            .build();
+            .shade(element.shade ? null : false);
+        // Faces
+        if(element.mapFaces.get(EnumFacing.UP) != null)
+            builder.face(EnumFacing.UP, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.UP)));
+        if(element.mapFaces.get(EnumFacing.DOWN) != null)
+            builder.face(EnumFacing.DOWN, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.DOWN)));
+        if(element.mapFaces.get(EnumFacing.NORTH) != null)
+            builder.face(EnumFacing.NORTH, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.NORTH)));
+        if(element.mapFaces.get(EnumFacing.EAST) != null)
+            builder.face(EnumFacing.EAST, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.EAST)));
+        if(element.mapFaces.get(EnumFacing.SOUTH) != null)
+            builder.face(EnumFacing.SOUTH, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.SOUTH)));
+        if(element.mapFaces.get(EnumFacing.WEST) != null)
+            builder.face(EnumFacing.WEST, CuboidModelGeometry.Face.of(element.mapFaces.get(EnumFacing.WEST)));
+        return builder.build();
     }
 
     private final Vector3f from, to;

@@ -24,17 +24,24 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
     }
 
     public static CuboidModelGeometry.Element of(BlockElement element){
-        return builder()
+        CuboidModelGeometry.Element.Builder builder = builder()
             .fromTo(element.from, element.to)
             .rotation(element.rotation)
-            .face(Direction.UP, CuboidModelGeometry.Face.of(element.faces.get(Direction.UP)))
-            .face(Direction.DOWN, CuboidModelGeometry.Face.of(element.faces.get(Direction.DOWN)))
-            .face(Direction.NORTH, CuboidModelGeometry.Face.of(element.faces.get(Direction.NORTH)))
-            .face(Direction.EAST, CuboidModelGeometry.Face.of(element.faces.get(Direction.EAST)))
-            .face(Direction.SOUTH, CuboidModelGeometry.Face.of(element.faces.get(Direction.SOUTH)))
-            .face(Direction.WEST, CuboidModelGeometry.Face.of(element.faces.get(Direction.WEST)))
-            .shade(element.shade ? null : false)
-            .build();
+            .shade(element.shade ? null : false);
+        // Faces
+        if(element.faces.get(Direction.UP) != null)
+            builder.face(Direction.UP, CuboidModelGeometry.Face.of(element.faces.get(Direction.UP)));
+        if(element.faces.get(Direction.DOWN) != null)
+            builder.face(Direction.DOWN, CuboidModelGeometry.Face.of(element.faces.get(Direction.DOWN)));
+        if(element.faces.get(Direction.NORTH) != null)
+            builder.face(Direction.NORTH, CuboidModelGeometry.Face.of(element.faces.get(Direction.NORTH)));
+        if(element.faces.get(Direction.EAST) != null)
+            builder.face(Direction.EAST, CuboidModelGeometry.Face.of(element.faces.get(Direction.EAST)));
+        if(element.faces.get(Direction.SOUTH) != null)
+            builder.face(Direction.SOUTH, CuboidModelGeometry.Face.of(element.faces.get(Direction.SOUTH)));
+        if(element.faces.get(Direction.WEST) != null)
+            builder.face(Direction.WEST, CuboidModelGeometry.Face.of(element.faces.get(Direction.WEST)));
+        return builder.build();
     }
 
     private final Vector3fc from, to;

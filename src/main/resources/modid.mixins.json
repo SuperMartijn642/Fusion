@@ -25,6 +25,7 @@
     "FilePackResourcesMixin",
     "ItemRendererMixin",
     "ModelBakeryMixin",
+    "ModelBakeryModelBakerImplMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
     "MultiPartBakedModelMixin",

@@ -4,8 +4,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
 import com.supermartijn642.fusion.api.texture.TextureType;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.resources.ResourceLocation;
 
@@ -33,17 +33,18 @@ public class TextureTypeRegistryImpl {
         TEXTURE_TYPE_TO_IDENTIFIER.put(textureType, identifier);
     }
 
-    public static <T> JsonObject serializeTextureData(TextureType<T,?> textureType, T textureData){
+    public static JsonObject serializeTextureData(RawTextureInstance<?,?> texture){
         if(!finalized)
             throw new RuntimeException("Can only serialize texture data after registration has completed!");
-        ResourceLocation identifier = TEXTURE_TYPE_TO_IDENTIFIER.get(textureType);
+        ResourceLocation identifier = TEXTURE_TYPE_TO_IDENTIFIER.get(texture.getTextureType());
         if(identifier == null)
-            throw new RuntimeException("Cannot use unregistered texture type '" + textureType + "'!");
+            throw new RuntimeException("Cannot use unregistered texture type '" + texture.getTextureType() + "'!");
 
         // Serialize the texture data
         JsonObject json;
         try{
-            json = textureType.serialize(textureData);
+            //noinspection unchecked
+            json = ((TextureType<Object,?>)texture.getTextureType()).serialize(texture.getTextureData());
             if(json == null)
                 json = new JsonObject();
         }catch(Exception e){
@@ -55,11 +56,11 @@ public class TextureTypeRegistryImpl {
         return json;
     }
 
-    public static <T> Pair<TextureType<T,?>,T> deserializeTextureData(JsonObject json){
+    public static RawTextureInstance<?,?> deserializeTextureData(JsonObject json){
         if(!finalized)
             throw new RuntimeException("Can only deserialize texture data after registration has completed!");
-        //noinspection unchecked
-        TextureType<T,?> textureType = (TextureType<T,?>)DefaultTextureTypes.BASE;
+        //noinspection rawtypes,unchecked
+        TextureType<Object,?> textureType = (TextureType)DefaultTextureTypes.BASE;
         ResourceLocation identifier = getIdentifier(textureType);
         if(json.has("type")){
             JsonElement typeJson = json.getAsJsonObject().get("type");
@@ -69,19 +70,19 @@ public class TextureTypeRegistryImpl {
                 throw new JsonParseException("Property 'type' must be a valid identifier!");
             identifier = IdentifierUtil.withFusionNamespace(typeJson.getAsString());
             //noinspection unchecked
-            textureType = (TextureType<T,?>)IDENTIFIER_TO_TEXTURE_TYPE.get(identifier);
+            textureType = (TextureType<Object,?>)IDENTIFIER_TO_TEXTURE_TYPE.get(identifier);
             if(textureType == null)
                 throw new JsonParseException("Unknown texture type '" + identifier + "'!");
         }
 
         // Deserialize the texture data
-        T textureData;
+        Object textureData;
         try{
             textureData = textureType.deserialize(json);
         }catch(Exception e){
             throw new RuntimeException("Encountered an exception whilst deserializing data for texture type '" + identifier + "'!", e);
         }
-        return Pair.of(textureType, textureData);
+        return RawTextureInstance.of(textureType, textureData);
     }
 
     public static ResourceLocation getIdentifier(TextureType<?,?> textureType){

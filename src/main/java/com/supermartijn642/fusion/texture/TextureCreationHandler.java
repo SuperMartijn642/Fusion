@@ -2,9 +2,8 @@ package com.supermartijn642.fusion.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
 import com.supermartijn642.fusion.api.texture.custom.*;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import com.supermartijn642.fusion.texture.custom.*;
@@ -35,31 +34,28 @@ public class TextureCreationHandler {
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     public static Result<SpriteContents> onLoadTexture(Identifier identifier, NativeImage image, Optional<AnimationMetadataSection> animationMetadata, Optional<TextureMetadataSection> textureMetadata, List<MetadataSectionType.WithValue<?>> resourceMetadata){
         // Get the fusion metadata
-        Pair<TextureType<Object,Object>,Object> metadata = null;
+        RawTextureInstance<Object,Object> rawTexture = null;
         for(MetadataSectionType.WithValue<?> entry : resourceMetadata){
             if(entry.type() == FusionTextureMetadataSection.TYPE){
                 //noinspection unchecked
-                metadata = (Pair<TextureType<Object,Object>,Object>)entry.value();
+                rawTexture = (RawTextureInstance<Object,Object>)entry.value();
                 break;
             }
         }
-        if(metadata == null)
+        if(rawTexture == null)
             return null;
-
-        TextureType<Object,Object> textureType = metadata.left();
-        Object textureData = metadata.right();
 
         // Create texture
         TextureOutputImpl output = new TextureOutputImpl();
         try(TextureCreationContextImpl context = new TextureCreationContextImpl(identifier, image, animationMetadata.orElse(null))){
-            textureType.createTexture(output, context, textureData);
+            rawTexture.createTexture(output, context);
             output.checkFinished();
         }catch(UserErrorException e){
             FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
             image.close();
             return Result.empty();
         }catch(Exception e){
-            FusionClient.LOGGER.error("Encountered an exception whilst creating texture for type '{}' for texture '{}'!", TextureTypeRegistryImpl.getIdentifier(textureType), identifier, e);
+            FusionClient.LOGGER.error("Encountered an exception whilst creating texture for type '{}' for texture '{}'!", TextureTypeRegistryImpl.getIdentifier(rawTexture.getTextureType()), identifier, e);
             image.close();
             return Result.empty();
         }
@@ -83,7 +79,7 @@ public class TextureCreationHandler {
                     continue;
                 }
                 if(sprite.getName() != null && !names.add(sprite.getName())){
-                    FusionClient.LOGGER.error("Received duplicate sprite name '{}' from texture type '{}' for texture '{}'!", sprite.getName(), TextureTypeRegistryImpl.getIdentifier(textureType), identifier);
+                    FusionClient.LOGGER.error("Received duplicate sprite name '{}' from texture type '{}' for texture '{}'!", sprite.getName(), TextureTypeRegistryImpl.getIdentifier(rawTexture.getTextureType()), identifier);
                     image.close();
                     return Result.empty();
                 }
@@ -106,7 +102,7 @@ public class TextureCreationHandler {
         // Create the sprite contents
         return new Result<>(new DummyTextureSpriteContents(
             identifier,
-            textureType,
+            rawTexture.getTextureType(),
             customData,
             sprites,
             textureCreationCallback,

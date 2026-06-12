@@ -3,8 +3,7 @@ package com.supermartijn642.fusion.texture;
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
-import com.supermartijn642.fusion.api.texture.TextureType;
-import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.SimpleReloadableResourceManager;
 import net.minecraft.client.resources.data.IMetadataSection;
@@ -40,10 +39,10 @@ public class FusionTextureMetadataSection implements IMetadataSectionSerializer<
 
     public static class Data implements IMetadataSection {
 
-        public final Pair<TextureType<Object,?>,Object> pair;
+        public final RawTextureInstance<?,?> texture;
 
-        public Data(Pair<TextureType<Object,?>,Object> pair){
-            this.pair = pair;
+        public Data(RawTextureInstance<?,?> texture){
+            this.texture = texture;
         }
     }
 }

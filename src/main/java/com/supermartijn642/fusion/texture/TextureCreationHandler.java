@@ -2,9 +2,8 @@ package com.supermartijn642.fusion.texture;
 
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
 import com.supermartijn642.fusion.api.texture.custom.*;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import com.supermartijn642.fusion.texture.custom.*;
@@ -51,12 +50,12 @@ public class TextureCreationHandler {
 
     private static boolean onLoadTexture(ResourceLocation identifier, IResource resource, Consumer<TextureAtlasSprite> queue){
         // Get the fusion metadata
-        Pair<TextureType<Object,Object>,Object> metadata = null;
+        RawTextureInstance<Object,Object> rawTexture = null;
         try{
             FusionTextureMetadataSection.Data data = resource.getMetadata(FusionTextureMetadataSection.INSTANCE.getSectionName());
             if(data != null)
                 //noinspection unchecked,rawtypes
-                metadata = (Pair)data.pair;
+                rawTexture = (RawTextureInstance)data.texture;
         }catch(JsonParseException e){
             FusionClient.LOGGER.error("Error parsing Fusion metadata for texture '{}': {}", identifier, e.getMessage());
             return true;
@@ -70,11 +69,8 @@ public class TextureCreationHandler {
             FusionClient.LOGGER.error("Encountered an exception parsing Fusion metadata for texture '{}'!", identifier, e);
             return true;
         }
-        if(metadata == null)
+        if(rawTexture == null)
             return false;
-
-        TextureType<Object,Object> textureType = metadata.left();
-        Object textureData = metadata.right();
 
         // Get vanilla animation metadata
         AnimationMetadataSection animationMetadata;
@@ -98,13 +94,13 @@ public class TextureCreationHandler {
         TextureOutputImpl output = new TextureOutputImpl();
         TextureCreationContextImpl context = new TextureCreationContextImpl(identifier, image, animationMetadata);
         try{
-            textureType.createTexture(output, context, textureData);
+            rawTexture.createTexture(output, context);
             output.checkFinished();
         }catch(UserErrorException e){
             FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
             return true;
         }catch(Exception e){
-            FusionClient.LOGGER.error("Encountered an exception whilst creating texture for type '{}' for texture '{}'!", TextureTypeRegistryImpl.getIdentifier(textureType), identifier, e);
+            FusionClient.LOGGER.error("Encountered an exception whilst creating texture for type '{}' for texture '{}'!", TextureTypeRegistryImpl.getIdentifier(rawTexture.getTextureType()), identifier, e);
             return true;
         }
         if(output.getSprites().isEmpty())
@@ -125,7 +121,7 @@ public class TextureCreationHandler {
                     continue;
                 }
                 if(sprite.getName() != null && !names.add(sprite.getName())){
-                    FusionClient.LOGGER.error("Received duplicate sprite name '{}' from texture type '{}' for texture '{}'!", sprite.getName(), TextureTypeRegistryImpl.getIdentifier(textureType), identifier);
+                    FusionClient.LOGGER.error("Received duplicate sprite name '{}' from texture type '{}' for texture '{}'!", sprite.getName(), TextureTypeRegistryImpl.getIdentifier(rawTexture.getTextureType()), identifier);
                     return true;
                 }
             }
@@ -147,7 +143,7 @@ public class TextureCreationHandler {
         // Create dummy sprite contents for each sub-sprite
         DummyTextureSpriteContents parent = new DummyTextureSpriteContents(
             identifier,
-            textureType,
+            rawTexture.getTextureType(),
             customData,
             sprites,
             textureCreationCallback

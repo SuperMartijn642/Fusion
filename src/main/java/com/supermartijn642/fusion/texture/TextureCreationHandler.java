@@ -2,9 +2,8 @@ package com.supermartijn642.fusion.texture;
 
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.texture.TextureType;
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
 import com.supermartijn642.fusion.api.texture.custom.*;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.extensions.TextureAtlasSpriteExtension;
 import com.supermartijn642.fusion.texture.custom.*;
@@ -35,10 +34,10 @@ public class TextureCreationHandler {
 
     public static boolean onLoadTexture(ResourceLocation identifier, IResource resource, Queue<TextureAtlasSprite.Info> queue){
         // Get the fusion metadata
-        Pair<TextureType<Object,Object>,Object> metadata;
+        RawTextureInstance<Object,Object> rawTexture;
         try{
             //noinspection unchecked,rawtypes
-            metadata = (Pair)resource.getMetadata(FusionTextureMetadataSection.INSTANCE);
+            rawTexture = (RawTextureInstance)resource.getMetadata(FusionTextureMetadataSection.INSTANCE);
         }catch(JsonParseException e){
             FusionClient.LOGGER.error("Error parsing Fusion metadata for texture '{}': {}", identifier, e.getMessage());
             return true;
@@ -52,11 +51,8 @@ public class TextureCreationHandler {
             FusionClient.LOGGER.error("Encountered an exception parsing Fusion metadata for texture '{}'!", identifier, e);
             return true;
         }
-        if(metadata == null)
+        if(rawTexture == null)
             return false;
-
-        TextureType<Object,Object> textureType = metadata.left();
-        Object textureData = metadata.right();
 
         // Get vanilla animation metadata
         AnimationMetadataSection animationMetadata;
@@ -79,14 +75,14 @@ public class TextureCreationHandler {
         // Create texture
         TextureOutputImpl output = new TextureOutputImpl();
         try(TextureCreationContextImpl context = new TextureCreationContextImpl(identifier, image, animationMetadata)){
-            textureType.createTexture(output, context, textureData);
+            rawTexture.createTexture(output, context);
             output.checkFinished();
         }catch(UserErrorException e){
             FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
             image.close();
             return true;
         }catch(Exception e){
-            FusionClient.LOGGER.error("Encountered an exception whilst creating texture for type '{}' for texture '{}'!", TextureTypeRegistryImpl.getIdentifier(textureType), identifier, e);
+            FusionClient.LOGGER.error("Encountered an exception whilst creating texture for type '{}' for texture '{}'!", TextureTypeRegistryImpl.getIdentifier(rawTexture.getTextureType()), identifier, e);
             image.close();
             return true;
         }
@@ -110,7 +106,7 @@ public class TextureCreationHandler {
                     continue;
                 }
                 if(sprite.getName() != null && !names.add(sprite.getName())){
-                    FusionClient.LOGGER.error("Received duplicate sprite name '{}' from texture type '{}' for texture '{}'!", sprite.getName(), TextureTypeRegistryImpl.getIdentifier(textureType), identifier);
+                    FusionClient.LOGGER.error("Received duplicate sprite name '{}' from texture type '{}' for texture '{}'!", sprite.getName(), TextureTypeRegistryImpl.getIdentifier(rawTexture.getTextureType()), identifier);
                     image.close();
                     return true;
                 }
@@ -133,7 +129,7 @@ public class TextureCreationHandler {
         // Create dummy sprite contents for each sub-sprite
         DummyTextureSpriteContents parent = new DummyTextureSpriteContents(
             identifier,
-            textureType,
+            rawTexture.getTextureType(),
             customData,
             sprites,
             textureCreationCallback

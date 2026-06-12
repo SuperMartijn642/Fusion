@@ -1,21 +1,28 @@
 package com.supermartijn642.fusion.mixin;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import com.supermartijn642.fusion.util.LoggingHelper;
-import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.client.renderer.texture.AtlasSet;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.LinkedHashSet;
+import java.util.function.Function;
 
 /**
  * Created 22/09/2024 by SuperMartijn642
@@ -23,7 +30,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = ModelBakery.class, priority = 1001)
 public class ModelBakeryMixin {
 
-    private static final Logger log = LoggerFactory.getLogger(ModelBakeryMixin.class);
+    @Shadow
+    private AtlasSet atlasSet;
 
     @Inject(
         method = "loadTopLevel",
@@ -36,6 +44,30 @@ public class ModelBakeryMixin {
             BlockModelModifierReloadListener.INSTANCE.registerModelDependencies(modelBakery);
             ItemModelModifierReloadListener.INSTANCE.registerModelDependencies(modelBakery);
         }
+    }
+
+    @WrapOperation(
+        method = "bake(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/model/ModelState;)Lnet/minecraft/client/resources/model/BakedModel;",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/resources/model/UnbakedModel;bake(Lnet/minecraft/client/resources/model/ModelBakery;Ljava/util/function/Function;Lnet/minecraft/client/resources/model/ModelState;Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/resources/model/BakedModel;"
+        )
+    )
+    private BakedModel bake(UnbakedModel unbakedModel, ModelBakery self, Function<Material,TextureAtlasSprite> spriteGetter, ModelState modelState, ResourceLocation location, Operation<BakedModel> original){
+        // Handle Fusion models and models with Fusion textures
+        if(FusionBlockModelData.containsFusionModelsOrTextures(unbakedModel, this.atlasSet)){
+            FusionBlockModelData fusionData = FusionBlockModelData.get(unbakedModel);
+            if(fusionData == null){
+                UntypedModelInstance model = FusionBlockModelData.getModelInstance(unbakedModel);
+                fusionData = new FusionBlockModelData(location, model);
+                FusionBlockModelData.gatherBlockModelMaterials(fusionData, l -> {
+                    UnbakedModel m = self.unbakedCache.get(l);
+                    return m == null ? self.unbakedCache.get(l) : m;
+                }, new LinkedHashSet<>());
+            }
+            return fusionData.bake(self, spriteGetter, modelState, location);
+        }
+        return original.call(unbakedModel, self, spriteGetter, modelState, location);
     }
 
     @Inject(

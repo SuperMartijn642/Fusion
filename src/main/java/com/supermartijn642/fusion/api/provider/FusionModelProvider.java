@@ -90,9 +90,7 @@ public abstract class FusionModelProvider implements IDataProvider {
      * Adds a model to be generated.
      * @param location location of the model
      * @param model    model instance to be serialized
-     * @deprecated use {@link #addModel(ResourceLocation, ModelType, Object)}
      */
-    @Deprecated
     public final void addModel(ResourceLocation location, ModelInstance<?> model){
         ModelInstance<?> previousValue = this.models.put(location, model);
         if(previousValue != null)

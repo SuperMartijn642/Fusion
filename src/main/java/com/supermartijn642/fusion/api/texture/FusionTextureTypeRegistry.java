@@ -20,10 +20,9 @@ public final class FusionTextureTypeRegistry {
 
     /**
      * Serializes the given texture data.
-     * @param textureType type of the texture
-     * @param textureData texture data to serialize
+     * @param texture texture to be serialized
      */
-    public static <T> JsonObject serializeTextureData(TextureType<T,?> textureType, T textureData){
-        return TextureTypeRegistryImpl.serializeTextureData(textureType, textureData);
+    public static JsonObject serializeTextureData(RawTextureInstance<?,?> texture){
+        return TextureTypeRegistryImpl.serializeTextureData(texture);
     }
 }

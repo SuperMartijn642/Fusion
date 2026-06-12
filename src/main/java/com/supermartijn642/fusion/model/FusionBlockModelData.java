@@ -5,12 +5,10 @@ import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.ModelInstance;
-import com.supermartijn642.fusion.api.model.custom.ModelBakingContext;
-import com.supermartijn642.fusion.api.model.custom.ModelStack;
-import com.supermartijn642.fusion.api.model.custom.ModelTransform;
-import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
+import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.LoggingHelper;
@@ -51,7 +49,7 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
     private List<ModelBlock> parents = Collections.emptyList();
     private Map<ResourceLocation,UntypedModelInstance> dependencies;
 
-    private FusionBlockModelData(ResourceLocation identifier, UntypedModelInstance model){
+    public FusionBlockModelData(ResourceLocation identifier, UntypedModelInstance model){
         super(null, Collections.emptyList(), Collections.emptyMap(), true, true, ItemCameraTransforms.DEFAULT, Collections.emptyList());
         this.identifier = identifier;
         this.model = model;
@@ -352,6 +350,28 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
             transforms.getOrDefault(ItemCameraTransforms.TransformType.GROUND, ItemTransformVec3f.DEFAULT),
             transforms.getOrDefault(ItemCameraTransforms.TransformType.FIXED, ItemTransformVec3f.DEFAULT)
         );
+    }
+
+    public static boolean containsFusionModelsOrTextures(ModelBlock model, Function<ResourceLocation,TextureAtlasSprite> spriteGetter){
+        // Check if the wrapper contains a Fusion model
+        if(get(model) != null)
+            return true;
+        // Check if the model has Fusion textures
+        if(spriteGetter != null){
+            for(Map.Entry<String,String> entry : model.textures.entrySet()){
+                String value = entry.getValue();
+                if(!value.isEmpty() && value.charAt(0) != '#' && IdentifierUtil.isValidIdentifier(value)){
+                    TextureAtlasSprite sprite = spriteGetter.apply(new ResourceLocation(value));
+                    if(!ModelMaterial.isMissingSprite(sprite) && SpriteHelper.getSpriteInstance(sprite) != null)
+                        return true;
+                }
+            }
+        }
+        // Check parent
+        ModelBlock parent = model.parent;
+        if(parent != null)
+            return containsFusionModelsOrTextures(parent, spriteGetter);
+        return false;
     }
 
     private static final Class<?> VANILLA_MODEL_WRAPPER_CLASS = ModelLoader.class.getDeclaredClasses()[8];

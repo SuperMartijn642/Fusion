@@ -11,6 +11,7 @@ import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,6 +24,34 @@ import java.util.Map;
  */
 @Mixin(ModelManager.class)
 public class ModelManagerMixin {
+
+    @Inject(
+        method = "loadModels",
+        at = @At("HEAD")
+    )
+    private static void captureBlockItemSprites(
+        ProfilerFiller profiler,
+        Map<ResourceLocation, AtlasSet.StitchResult> atlasStitchResults,
+        ModelBakery bakery,
+        Object2IntMap<BlockState> modelGroups,
+        CallbackInfoReturnable<?> ci
+    ){
+        FusionBlockModelData.atlasStitchResults = atlasStitchResults;
+    }
+
+    @Inject(
+        method = "loadModels",
+        at = @At("RETURN")
+    )
+    private static void releaseBlockItemSprites(
+        ProfilerFiller profiler,
+        Map<ResourceLocation, AtlasSet.StitchResult> atlasStitchResults,
+        ModelBakery bakery,
+        Object2IntMap<BlockState> modelGroups,
+        CallbackInfoReturnable<?> ci
+    ){
+        FusionBlockModelData.atlasStitchResults = null;
+    }
 
     @Inject(
         method = "method_62663(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",

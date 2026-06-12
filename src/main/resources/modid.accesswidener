@@ -58,6 +58,8 @@ accessible class net/minecraft/client/renderer/block/model/ItemTransform$Deseria
 accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init> (Lnet/minecraft/client/model/geom/builders/MeshDefinition;Lnet/minecraft/client/model/geom/builders/MaterialDefinition;)V
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
+# ModelBakery
+accessible field net/minecraft/client/resources/model/ModelBakery unbakedModels Ljava/util/Map;
 # ModelBakery$ModelBakerImpl
 accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/ModelBakery$TextureGetter;Lnet/minecraft/client/resources/model/ModelResourceLocation;)V
 accessible class net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl

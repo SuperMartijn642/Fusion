@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.LoggingHelper;
@@ -32,6 +33,7 @@ public class FusionBlockModelData extends BlockModel {
 
     public static final ThreadLocal<ResourceLocation> CURRENT_MODEL = new ThreadLocal<>();
     public static BakedModel missingModel;
+    public static Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults;
 
     @Nullable
     public static FusionBlockModelData get(UnbakedModel model){
@@ -43,7 +45,7 @@ public class FusionBlockModelData extends BlockModel {
     private List<UnbakedModel> parents = List.of();
     private Map<ResourceLocation,UntypedModelInstance> dependencies;
 
-    private FusionBlockModelData(ResourceLocation identifier, UntypedModelInstance model){
+    public FusionBlockModelData(ResourceLocation identifier, UntypedModelInstance model){
         super(null, List.of(), Map.of(), null, null, ItemTransforms.NO_TRANSFORMS, List.of());
         this.identifier = identifier;
         this.model = model;
@@ -324,6 +326,29 @@ public class FusionBlockModelData extends BlockModel {
             transforms.getOrDefault(ItemDisplayContext.GROUND, ItemTransform.NO_TRANSFORM),
             transforms.getOrDefault(ItemDisplayContext.FIXED, ItemTransform.NO_TRANSFORM)
         );
+    }
+
+    public static boolean containsFusionModelsOrTextures(BlockModel model){
+        // Check if the wrapper contains a Fusion model
+        if(get(model) != null)
+            return true;
+        // Check if the model has Fusion textures
+        for(Map.Entry<String,Either<Material,String>> entry : model.textureMap.entrySet()){
+            if(entry.getValue().left().isPresent()){
+                Material material = entry.getValue().left().orElseThrow();
+                AtlasSet.StitchResult stitchResult = atlasStitchResults.get(material.atlasLocation());
+                if(stitchResult == null)
+                    continue;
+                TextureAtlasSprite sprite = stitchResult.getSprite(material.texture());
+                if(sprite != null && SpriteHelper.getSpriteInstance(sprite) != null)
+                    return true;
+            }
+        }
+        // Check parent
+        BlockModel parent = model.parent;
+        if(parent != null)
+            return containsFusionModelsOrTextures(parent);
+        return false;
     }
 
     public static UntypedModelInstance getModelInstance(UnbakedModel model){

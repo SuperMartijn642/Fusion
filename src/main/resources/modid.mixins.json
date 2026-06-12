@@ -26,6 +26,7 @@
     "ItemRendererMixin",
     "MinecraftMixin",
     "ModelBakeryMixin",
+    "ModelBakeryModelBakerImplMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
     "OutlineBufferSourceMixin",

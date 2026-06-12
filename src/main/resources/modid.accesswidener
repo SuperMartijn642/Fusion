@@ -61,6 +61,7 @@ accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
 # ModelBakery
+accessible field net/minecraft/client/resources/model/ModelBakery unbakedCache Ljava/util/Map;
 accessible method net/minecraft/client/resources/model/ModelBakery getModel (Lnet/minecraft/resources/ResourceLocation;)Lnet/minecraft/client/resources/model/UnbakedModel;
 accessible method net/minecraft/client/resources/model/ModelBakery registerModelAndLoadDependencies (Lnet/minecraft/client/resources/model/ModelResourceLocation;Lnet/minecraft/client/resources/model/UnbakedModel;)V
 # ModelBakery$ModelBakerImpl

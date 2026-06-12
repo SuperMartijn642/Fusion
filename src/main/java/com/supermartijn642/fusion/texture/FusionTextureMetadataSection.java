@@ -4,8 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
-import com.supermartijn642.fusion.api.texture.TextureType;
-import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
 import com.supermartijn642.fusion.util.CodecHelper;
 import net.minecraft.server.packs.metadata.MetadataSectionType;
 
@@ -14,17 +13,17 @@ import net.minecraft.server.packs.metadata.MetadataSectionType;
  */
 public class FusionTextureMetadataSection {
 
-    private static final Codec<Pair<TextureType<Object,?>,Object>> CODEC = CodecHelper.jsonSerializerToCodec(
+    private static final Codec<RawTextureInstance<?,?>> CODEC = CodecHelper.jsonSerializerToCodec(
         FusionTextureMetadataSection::toJson,
         FusionTextureMetadataSection::fromJson
     );
-    public static final MetadataSectionType<Pair<TextureType<Object,?>,Object>> TYPE = new MetadataSectionType<>("fusion", CODEC);
+    public static final MetadataSectionType<RawTextureInstance<?,?>> TYPE = new MetadataSectionType<>("fusion", CODEC);
 
-    private static JsonObject toJson(Pair<TextureType<Object,?>,Object> data){
-        return TextureTypeRegistryImpl.serializeTextureData(data.left(), data.right());
+    private static JsonObject toJson(RawTextureInstance<?,?> data){
+        return TextureTypeRegistryImpl.serializeTextureData(data);
     }
 
-    private static Pair<TextureType<Object,?>,Object> fromJson(JsonElement element){
+    private static RawTextureInstance<?,?> fromJson(JsonElement element){
         if(!element.isJsonObject())
             throw new JsonParseException("Fusion metadata section must be an object!");
         // Get the texture type

@@ -26,6 +26,32 @@ import java.util.Map;
 public class ModelManagerMixin {
 
     @Inject(
+        method = "loadModels",
+        at = @At("HEAD")
+    )
+    private static void captureBlockItemSprites(
+        ProfilerFiller profiler,
+        Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults,
+        ModelBakery bakery,
+        CallbackInfoReturnable<?> ci
+    ){
+        FusionBlockModelData.atlasStitchResults = atlasStitchResults;
+    }
+
+    @Inject(
+        method = "loadModels",
+        at = @At("RETURN")
+    )
+    private static void releaseBlockItemSprites(
+        ProfilerFiller profiler,
+        Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults,
+        ModelBakery bakery,
+        CallbackInfoReturnable<?> ci
+    ){
+        FusionBlockModelData.atlasStitchResults = null;
+    }
+
+    @Inject(
         method = "lambda$loadBlockModels$7(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",
         at = @At("HEAD")
     )

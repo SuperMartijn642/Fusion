@@ -26,6 +26,7 @@
     "ItemModelGeneratorMixin",
     "ItemRendererMixin",
     "ModelBakeryMixin",
+    "ModelBakeryModelBakerImplMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",
     "MultiPartBakedModelMixin",

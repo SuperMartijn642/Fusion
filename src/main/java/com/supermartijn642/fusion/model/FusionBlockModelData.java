@@ -8,10 +8,12 @@ import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.extensions.BlockModelExtension;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import com.supermartijn642.fusion.util.LoggingHelper;
 import net.minecraft.client.renderer.model.*;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.ISprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -46,7 +48,7 @@ public class FusionBlockModelData extends BlockModel {
     private List<IUnbakedModel> parents = Collections.emptyList();
     private Map<ResourceLocation,UntypedModelInstance> dependencies;
 
-    private FusionBlockModelData(ResourceLocation identifier, UntypedModelInstance model){
+    public FusionBlockModelData(ResourceLocation identifier, UntypedModelInstance model){
         super(null, Collections.emptyList(), Collections.emptyMap(), true, true, ItemCameraTransforms.NO_TRANSFORMS, Collections.emptyList());
         this.identifier = identifier;
         this.model = model;
@@ -492,6 +494,31 @@ public class FusionBlockModelData extends BlockModel {
             transforms.getOrDefault(ItemCameraTransforms.TransformType.GROUND, ItemTransformVec3f.NO_TRANSFORM),
             transforms.getOrDefault(ItemCameraTransforms.TransformType.FIXED, ItemTransformVec3f.NO_TRANSFORM)
         );
+    }
+
+    public static boolean containsFusionModelsOrTextures(IUnbakedModel model, AtlasTexture blockAtlas){
+        // Check if the wrapper contains a Fusion model
+        if(get(model) != null)
+            return true;
+        // Nothing we can check for unknown models
+        if(!(model instanceof BlockModel))
+            return false;
+        // Check if the model has Fusion textures
+        if(blockAtlas != null){
+            for(Map.Entry<String,String> entry : ((BlockModel)model).textureMap.entrySet()){
+                String value = entry.getValue();
+                if(!value.isEmpty() && value.charAt(0) != '#' && IdentifierUtil.isValidIdentifier(value)){
+                    TextureAtlasSprite sprite = blockAtlas.getSprite(new ResourceLocation(value));
+                    if(!ModelMaterial.isMissingSprite(sprite) && SpriteHelper.getSpriteInstance(sprite) != null)
+                        return true;
+                }
+            }
+        }
+        // Check parent
+        BlockModel parent = ((BlockModel)model).parent;
+        if(parent != null)
+            return containsFusionModelsOrTextures(parent, blockAtlas);
+        return false;
     }
 
     public static UntypedModelInstance getModelInstance(IUnbakedModel model){

@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.api.texture.types.continuous;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureDataBuilderImpl;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Data for continuous texture type.
@@ -10,6 +11,7 @@ import com.supermartijn642.fusion.texture.types.continuous.ContinuousTextureData
  * Created 22/10/2024 by SuperMartijn642
  * @see DefaultTextureTypes#CONTINUOUS
  */
+@ApiStatus.NonExtendable
 public interface ContinuousTextureData extends BaseTextureData {
 
     /**
@@ -29,6 +31,7 @@ public interface ContinuousTextureData extends BaseTextureData {
      */
     int getColumns();
 
+    @ApiStatus.NonExtendable
     interface Builder extends BaseTextureData.Builder<Builder,ContinuousTextureData> {
 
         /**

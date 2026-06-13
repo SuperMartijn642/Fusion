@@ -21,6 +21,7 @@ import java.util.Map;
  * Created 06/09/2024 by SuperMartijn642
  * @see com.supermartijn642.fusion.api.model.DefaultModelTypes#BASE
  */
+@ApiStatus.NonExtendable
 public interface BaseModelData {
 
     /**

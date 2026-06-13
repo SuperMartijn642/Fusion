@@ -1,11 +1,12 @@
 package com.supermartijn642.fusion.api.texture.custom;
 
-
 import net.minecraft.client.renderer.texture.TextureAtlas;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
  */
+@ApiStatus.NonExtendable
 public interface SpriteConstructionContext {
 
     /**

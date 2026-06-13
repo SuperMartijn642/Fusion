@@ -31,15 +31,15 @@ public interface SpriteBuilder {
 
     /**
      * Marks the sprite as the default one.
-     * The default sprite will use the original texture identifier and show up when no further processing is done.
-     * Only one sprite can be marked as default. If no sprite is marked, then the first submitted sprite will be the default.
+     * The default sprite or sub-texture will use the original texture identifier and show up when no further processing is done.
+     * Only one sprite or sub-texture can be marked as default. If no sprite is marked, then the first submitted sprite will be the default.
      */
     SpriteBuilder markDefaultSprite();
 
     /**
      * Sets whether the sprite is marked as the default one.
-     * The default sprite will use the original texture identifier and show up when no further processing is done.
-     * Only one sprite can be marked as default. If no sprite is marked, then the first submitted sprite will be the default.
+     * The default sprite or sub-texture will use the original texture identifier and show up when no further processing is done.
+     * Only one sprite or sub-texture can be marked as default. If no sprite is marked, then the first submitted sprite will be the default.
      */
     SpriteBuilder markDefaultSprite(boolean markDefault);
 

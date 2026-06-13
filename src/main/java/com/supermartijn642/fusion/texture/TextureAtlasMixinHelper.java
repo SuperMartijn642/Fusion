@@ -25,7 +25,7 @@ public class TextureAtlasMixinHelper {
     }
 
     public static Object getDummyParent(TextureAtlasSprite sprite){
-        return ((DummyTextureSpriteContents.Child)sprite).parent();
+        return ((DummyTextureSpriteContents.Child)sprite).parent().getTopTexture();
     }
 
     public static TextureCreationHandler.Result<CompletableFuture<Void>> onLoadSprite(Object dummySprites, AtlasTexture textureAtlas, int atlasWidth, int atlasHeight, int mipmapLevels, Queue<TextureAtlasSprite> queue){

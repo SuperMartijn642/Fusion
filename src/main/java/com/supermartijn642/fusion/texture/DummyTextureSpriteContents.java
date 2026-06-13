@@ -1,21 +1,16 @@
 package com.supermartijn642.fusion.texture;
 
-import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.AllocatedSprite;
-import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.texture.custom.AllocatedSpriteImpl;
 import com.supermartijn642.fusion.texture.custom.SpriteBuilderImpl;
-import com.supermartijn642.fusion.texture.custom.SpriteImageSourceImpl;
-import com.supermartijn642.fusion.util.IdentifierUtil;
+import com.supermartijn642.fusion.texture.custom.TextureOutputImpl;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.IResource;
-import net.minecraft.util.ResourceLocation;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Created 20/03/2026 by SuperMartijn642
@@ -36,58 +31,46 @@ public class DummyTextureSpriteContents {
         return true;
     }
 
-    private final ResourceLocation identifier;
-    private final TextureType<?,Object> textureType;
-    private final Object textureData;
-    private final List<SpriteBuilderImpl> spriteBuilders;
-    private final Consumer<TextureInstance<Object>> textureCreationCallback;
+    private final DummyTextureSpriteContents parent;
+    private final TextureOutputImpl<?> textureOutput;
+    private final List<DummyTextureSpriteContents> subTextures;
     private List<Child> children;
 
-    public DummyTextureSpriteContents(ResourceLocation identifier, TextureType<?,Object> textureType, Object textureData, List<SpriteBuilderImpl> spriteBuilders, Consumer<TextureInstance<Object>> textureCreationCallback){
-        this.identifier = identifier;
-        this.textureType = textureType;
-        this.textureData = textureData;
-        this.spriteBuilders = spriteBuilders;
-        this.textureCreationCallback = textureCreationCallback;
+    private DummyTextureSpriteContents(DummyTextureSpriteContents parent, TextureOutputImpl<?> textureOutput){
+        this.parent = parent;
+        this.textureOutput = textureOutput;
+
+        List<DummyTextureSpriteContents> subTextures = new ArrayList<>(textureOutput.getSubTextures().size());
+        for(TextureOutputImpl<?> subTexture : textureOutput.getSubTextures())
+            subTextures.add(new DummyTextureSpriteContents(this, subTexture));
+        this.subTextures = subTextures;
     }
 
-    public ResourceLocation identifier(){
-        return this.identifier;
+    public DummyTextureSpriteContents(TextureOutputImpl<?> textureOutput){
+        this(null, textureOutput);
     }
 
-    public TextureType<?,Object> textureType(){
-        return this.textureType;
+    public DummyTextureSpriteContents getTopTexture(){
+        return this.parent == null ? this : this.parent.getTopTexture();
     }
 
-    public Object textureData(){
-        return this.textureData;
+    public TextureOutputImpl<?> getTextureOutput(){
+        return this.textureOutput;
     }
 
-    public List<SpriteBuilderImpl> spriteBuilders(){
-        return this.spriteBuilders;
-    }
-
-    public Consumer<TextureInstance<Object>> textureCreationCallback(){
-        return this.textureCreationCallback;
+    public List<DummyTextureSpriteContents> getSubTextures(){
+        return this.subTextures;
     }
 
     public List<Child> createChildren(){
-        this.children = new ArrayList<>(this.spriteBuilders.size());
-        for(SpriteBuilderImpl spriteBuilder : this.spriteBuilders){
-            ResourceLocation identifier = spriteBuilder.getName() == null ?
-                this.identifier : IdentifierUtil.withSuffix(this.identifier, "_" + spriteBuilder.getName());
-            int width = spriteBuilder.getConstructor() == null ?
-                ((SpriteImageSourceImpl)spriteBuilder.getImageSource()).getFrameWidth() : spriteBuilder.getConstructorWidth();
-            int height = spriteBuilder.getConstructor() == null ?
-                ((SpriteImageSourceImpl)spriteBuilder.getImageSource()).getFrameHeight() : spriteBuilder.getConstructorHeight();
-            this.children.add(new Child(
-                identifier,
-                width, height,
-                spriteBuilder
-            ));
-        }
+        this.children = new ArrayList<>();
+        for(SpriteBuilderImpl spriteBuilder : this.textureOutput.getSprites())
+            this.children.add(new Child(spriteBuilder));
         this.children = Collections.unmodifiableList(this.children);
-        return this.children;
+        List<Child> combinedChildren = new ArrayList<>(this.children);
+        for(DummyTextureSpriteContents subTexture : this.subTextures)
+            combinedChildren.addAll(subTexture.createChildren());
+        return combinedChildren;
     }
 
     public List<Child> children(){
@@ -99,6 +82,10 @@ public class DummyTextureSpriteContents {
             if(child.allocation == null)
                 return false;
         }
+        for(DummyTextureSpriteContents subTexture : this.subTextures){
+            if(!subTexture.hasAllAllocations())
+                return false;
+        }
         return true;
     }
 
@@ -107,8 +94,8 @@ public class DummyTextureSpriteContents {
         private final SpriteBuilderImpl spriteBuilder;
         private AllocatedSprite allocation;
 
-        public Child(ResourceLocation identifier, int width, int height, SpriteBuilderImpl spriteBuilder){
-            super(identifier, width, height);
+        public Child(SpriteBuilderImpl spriteBuilder){
+            super(spriteBuilder.getIdentifier(), spriteBuilder.getWidth(), spriteBuilder.getHeight());
             this.spriteBuilder = spriteBuilder;
         }
 

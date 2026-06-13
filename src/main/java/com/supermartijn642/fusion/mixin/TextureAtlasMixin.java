@@ -17,7 +17,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -68,7 +70,8 @@ public class TextureAtlasMixin {
         AtlasTexture textureAtlas = (AtlasTexture)(Object)this;
         ConcurrentLinkedQueue<TextureAtlasSprite> sprites = new ConcurrentLinkedQueue<>();
         List<CompletableFuture<?>> tasks = new ArrayList<>();
-        for(Object dummySprites : this.fusionDummyTextures){
+        Set<Object> dummyTextures = new LinkedHashSet<>(this.fusionDummyTextures);
+        for(Object dummySprites : dummyTextures){
             TextureCreationHandler.Result<CompletableFuture<Void>> result = TextureAtlasMixinHelper.onLoadSprite(dummySprites, textureAtlas, stitcher.getWidth(), stitcher.getHeight(), stitcher.mipLevel, sprites);
             if(result != null){
                 ci.cancel();

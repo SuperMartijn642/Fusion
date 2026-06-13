@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.api.texture.types.random;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.texture.types.random.RandomTextureDataBuilderImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * Created 22/10/2024 by SuperMartijn642
  * @see DefaultTextureTypes#RANDOM
  */
+@ApiStatus.NonExtendable
 public interface RandomTextureData extends BaseTextureData {
 
     /**
@@ -41,6 +43,7 @@ public interface RandomTextureData extends BaseTextureData {
     @Nullable
     Long getSeed();
 
+    @ApiStatus.NonExtendable
     interface Builder extends BaseTextureData.Builder<Builder,RandomTextureData> {
 
         /**

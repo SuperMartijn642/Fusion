@@ -134,7 +134,7 @@ public class TextureAtlasMixin {
         for(int i = sprites.size() - 1; i >= 0; i--){
             TextureAtlasSprite sprite = sprites.get(i);
             if(sprite instanceof DummyTextureSpriteContents.Child){
-                dummySprites.add(((DummyTextureSpriteContents.Child)sprite).parent());
+                dummySprites.add(((DummyTextureSpriteContents.Child)sprite).parent().getTopTexture());
                 sprites.remove(i);
             }
         }

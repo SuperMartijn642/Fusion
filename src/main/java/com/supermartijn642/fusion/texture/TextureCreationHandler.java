@@ -21,9 +21,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -91,11 +89,11 @@ public class TextureCreationHandler {
         }
 
         // Create texture
-        TextureOutputImpl output = new TextureOutputImpl();
+        TextureOutputImpl<Object> output = new TextureOutputImpl<>(identifier, rawTexture.getTextureType());
         TextureCreationContextImpl context = new TextureCreationContextImpl(identifier, image, animationMetadata);
         try{
             rawTexture.createTexture(output, context);
-            output.checkFinished();
+            output.finish();
         }catch(UserErrorException e){
             FusionClient.LOGGER.error("Error for texture '{}': {}", identifier, e.getMessage());
             return true;
@@ -103,51 +101,9 @@ public class TextureCreationHandler {
             FusionClient.LOGGER.error("Encountered an exception whilst creating texture for type '{}' for texture '{}'!", TextureTypeRegistryImpl.getIdentifier(rawTexture.getTextureType()), identifier, e);
             return true;
         }
-        if(output.getSprites().isEmpty())
-            return true;
-        List<SpriteBuilderImpl> sprites = output.getSprites();
-        Object customData = output.getCustomData();
-        Consumer<TextureInstance<Object>> textureCreationCallback = output.getCallback();
-
-        // Give unique sub-sprite names
-        if(sprites.size() > 1){
-            boolean hasDefaultSprite = false;
-            Set<String> names = new HashSet<>();
-            int index = 0;
-            for(SpriteBuilderImpl sprite : sprites){
-                if(sprite.isMarkedDefault()){
-                    hasDefaultSprite = true;
-                    sprite.setNameUnchecked(null);
-                    continue;
-                }
-                if(sprite.getName() != null && !names.add(sprite.getName())){
-                    FusionClient.LOGGER.error("Received duplicate sprite name '{}' from texture type '{}' for texture '{}'!", sprite.getName(), TextureTypeRegistryImpl.getIdentifier(rawTexture.getTextureType()), identifier);
-                    return true;
-                }
-            }
-            if(!hasDefaultSprite){
-                sprites.get(0).markDefaultUnchecked();
-                sprites.get(0).setNameUnchecked(null);
-            }
-            for(SpriteBuilderImpl sprite : sprites){
-                if(sprite.isMarkedDefault() || sprite.getName() != null)
-                    continue;
-                String name = "sub_sprite_" + index++;
-                while(names.contains(name))
-                    name = "sub_sprite_" + index++;
-                sprite.setNameUnchecked(name);
-            }
-        }else
-            sprites.get(0).setNameUnchecked(null);
 
         // Create dummy sprite contents for each sub-sprite
-        DummyTextureSpriteContents parent = new DummyTextureSpriteContents(
-            identifier,
-            rawTexture.getTextureType(),
-            customData,
-            sprites,
-            textureCreationCallback
-        );
+        DummyTextureSpriteContents parent = new DummyTextureSpriteContents(output);
         parent.createChildren().forEach(queue);
         return true;
     }
@@ -156,15 +112,50 @@ public class TextureCreationHandler {
         if(!contents.hasAllAllocations())
             throw new IllegalStateException("Texture sprites have not been allocated!");
 
+        List<TextureAtlasSprite> customSprites = new ArrayList<>();
+        try{
+            createTextureInstance(contents, atlasWidth, atlasHeight, mipmapLevels, customSprites::add);
+        }catch(Exception e){
+            FusionClient.LOGGER.error("Error while creating texture '{}': {}", contents.getTextureOutput().getIdentifier(), e.getMessage());
+            return;
+        }
+        customSprites.forEach(queue);
+    }
+
+    private static TextureInstance<?> createTextureInstance(DummyTextureSpriteContents contents, int atlasWidth, int atlasHeight, int mipmapLevels, Consumer<TextureAtlasSprite> spriteOutput){
+        // Create sub-textures
+        TextureInstance<?> defaultSubTexture = null;
+        for(DummyTextureSpriteContents subTexture : contents.getSubTextures()){
+            try{
+                TextureInstance<?> textureInstance = createTextureInstance(subTexture, atlasWidth, atlasHeight, mipmapLevels, spriteOutput);
+                if(subTexture.getTextureOutput().isMarkedDefault())
+                    defaultSubTexture = textureInstance;
+            }catch(Exception e){
+                throw new RuntimeException("Failed to create sub-texture of type '" + TextureTypeRegistryImpl.getIdentifier(subTexture.getTextureOutput().getTextureType()) + "'!", e);
+            }
+        }
+
+        // Create texture instance
+        TextureOutputImpl<?> textureOutput = contents.getTextureOutput();
+        //noinspection unchecked,rawtypes
+        TextureInstanceImpl<?> textureInstance = new TextureInstanceImpl(
+            textureOutput.getTextureType(),
+            textureOutput.getIdentifier(),
+            textureOutput.getCustomData()
+        );
+
         // Create the custom sprites
-        List<TextureAtlasSprite> sprites = new ArrayList<>(contents.spriteBuilders().size());
+        SpriteInstance defaultSprite = null;
+        List<SpriteInstance> sprites = new ArrayList<>(contents.children().size());
         SpriteConstructionContext context = null;
         for(DummyTextureSpriteContents.Child child : contents.children()){
+            ResourceLocation identifier = child.spriteBuilder().getIdentifier();
             SpriteBuilderImpl spriteBuilder = child.spriteBuilder();
+            // Create custom sprite
             SpriteBuilder.Constructor constructor = spriteBuilder.getConstructor();
-            TextureAtlasSprite sprite;
+            TextureAtlasSprite newSprite;
             if(constructor == null){
-                sprite = new FusionTextureAtlasSprite(
+                newSprite = new FusionTextureAtlasSprite(
                     child.allocation(),
                     (SpriteImageSourceImpl)spriteBuilder.getImageSource(),
                     mipmapLevels
@@ -178,79 +169,83 @@ public class TextureCreationHandler {
                     );
                 }
                 try{
-                    sprite = constructor.create(allocation, context);
+                    newSprite = constructor.create(allocation, context);
                 }catch(Exception e){
-                    FusionClient.LOGGER.error("Encountered an exception whilst creating sprite '{}' for texture type '{}'!", child.getIconName(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), e);
-                    return;
+                    throw new RuntimeException("Encountered an exception whilst creating sprite '" + identifier + "' for texture type '" + TextureTypeRegistryImpl.getIdentifier(textureOutput.getTextureType()) + "'!", e);
                 }
-                if(!child.getIconName().equals(sprite.getIconName())){
-                    FusionClient.LOGGER.error("Sprite constructor for sprite '{}' from texture type '{}' returned sprite with incorrect identifier '{}'!", child.getIconName(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), sprite.getIconName());
-                    return;
-                }
+                if(!identifier.equals(newSprite.getIconName()))
+                    throw new RuntimeException("Sprite constructor for sprite '" + identifier + "' from texture type '" + TextureTypeRegistryImpl.getIdentifier(textureOutput.getTextureType()) + "' returned sprite with incorrect identifier '" + newSprite.getIconName() + "'!");
             }
-            sprites.add(sprite);
+            // Create sprite instance
+            SpriteInstance spriteInstance = new SpriteInstanceImpl(textureInstance, newSprite, identifier);
+            //noinspection DataFlowIssue
+            ((TextureAtlasSpriteExtension)newSprite).setFusionSpriteInstance(spriteInstance);
+            sprites.add(spriteInstance);
             // Copy vanilla mipmap generation behaviour
             try{
-                sprite.generateMipmaps(mipmapLevels);
+                newSprite.generateMipmaps(mipmapLevels);
             }catch(Throwable throwable){
                 CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Applying mipmap");
                 CrashReportCategory crashreportcategory = crashreport.makeCategory("Sprite being mipmapped");
-                crashreportcategory.addDetail("Sprite name", sprite::getIconName);
-                crashreportcategory.addDetail("Sprite size", () -> sprite.getIconWidth() + " x " + sprite.getIconHeight());
-                crashreportcategory.addDetail("Sprite frames", () -> sprite.getFrameCount() + " frames");
+                crashreportcategory.addDetail("Sprite name", newSprite::getIconName);
+                crashreportcategory.addDetail("Sprite size", () -> newSprite.getIconWidth() + " x " + newSprite.getIconHeight());
+                crashreportcategory.addDetail("Sprite frames", () -> newSprite.getFrameCount() + " frames");
                 crashreportcategory.addCrashSection("Mipmap levels", mipmapLevels);
                 throw new ReportedException(crashreport);
             }
+            if(spriteBuilder.isMarkedDefault())
+                defaultSprite = spriteInstance;
         }
 
-        // Create texture instance
-        TextureInstanceImpl<Object> textureInstance = new TextureInstanceImpl<>(
-            contents.textureType(),
-            contents.identifier(),
-            contents.textureData()
-        );
-        // Create sprite instances
-        List<SpriteInstance> spriteInstances = new ArrayList<>(sprites.size());
-        for(TextureAtlasSprite sprite : sprites){
-            SpriteInstanceImpl spriteInstance = new SpriteInstanceImpl(textureInstance, sprite, new ResourceLocation(sprite.getIconName()));
-            ((TextureAtlasSpriteExtension)sprite).setFusionSpriteInstance(spriteInstance);
-            spriteInstances.add(spriteInstance);
+        // Set sprite instance references
+        if(defaultSprite == null){
+            defaultSprite = defaultSubTexture.getDefaultSprite();
+            ((TextureAtlasSpriteExtension)defaultSprite.getSprite()).setFusionSpriteInstance(new SpriteInstanceImpl(textureInstance, defaultSprite.getSprite(), defaultSprite.getIdentifier()));
         }
-        textureInstance.setSprites(spriteInstances);
+        textureInstance.setSprites(sprites, defaultSprite);
 
         // Call callbacks
-        for(int i = 0; i < spriteInstances.size(); i++){
-            SpriteInstance spriteInstance = spriteInstances.get(i);
+        for(int i = 0; i < sprites.size(); i++){
+            SpriteInstance spriteInstance = sprites.get(i);
             Consumer<SpriteInstance> callback = contents.children().get(i).spriteBuilder().getCallback();
             if(callback == null)
                 continue;
             try{
                 callback.accept(spriteInstance);
             }catch(Exception e){
-                FusionClient.LOGGER.error("Encountered an exception whilst calling sprite creation callback for sprite '{}' from texture type '{}'!", spriteInstance.getIdentifier(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), e);
-                return;
+                throw new RuntimeException("Encountered an exception whilst calling sprite creation callback for sprite '" + spriteInstance.getIdentifier() + "' from texture type '" + TextureTypeRegistryImpl.getIdentifier(textureInstance.getTextureType()) + "'!", e);
             }
         }
-        if(contents.textureCreationCallback() != null){
+        if(textureOutput.getCreationCallback() != null){
             try{
-                contents.textureCreationCallback().accept(textureInstance);
+                //noinspection unchecked,rawtypes
+                ((TextureOutputImpl)textureOutput).getCreationCallback().accept(textureInstance);
             }catch(Exception e){
-                FusionClient.LOGGER.error("Encountered an exception whilst calling texture creation callback for texture '{}' from texture type '{}'!", contents.identifier(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), e);
-                return;
+                throw new RuntimeException("Encountered an exception whilst calling texture creation callback for texture '" + textureInstance.getIdentifier() + "' from texture type '" + TextureTypeRegistryImpl.getIdentifier(textureInstance.getTextureType()) + "'!", e);
+            }
+        }
+        if(textureOutput.getSubTextureCallback() != null){
+            try{
+                //noinspection unchecked,rawtypes
+                ((TextureOutputImpl)textureOutput).getSubTextureCallback().accept(textureInstance);
+            }catch(Exception e){
+                throw new RuntimeException("Encountered an exception whilst calling sub-texture creation callback for sub-texture '" + textureInstance.getIdentifier() + "' of texture type '" + TextureTypeRegistryImpl.getIdentifier(textureInstance.getTextureType()) + "'!", e);
             }
         }
 
         // Upload sprites to atlas
-        for(TextureAtlasSprite sprite : sprites){
+        for(SpriteInstance spriteInstance : sprites){
+            TextureAtlasSprite sprite = spriteInstance.getSprite();
             try{
                 TextureUtil.uploadTextureMipmap(sprite.getFrameTextureData(0), sprite.getIconWidth(), sprite.getIconHeight(), sprite.getOriginX(), sprite.getOriginY(), false, false);
             }catch(Exception e){
-                FusionClient.LOGGER.error("Encountered an exception whilst uploading sprite '{}' from texture type '{}'!", sprite.getIconName(), TextureTypeRegistryImpl.getIdentifier(contents.textureType()), e);
-                return;
+                throw new RuntimeException("Encountered an exception whilst uploading sprite '" + sprite.getIconName() + "' from texture type '" + TextureTypeRegistryImpl.getIdentifier(textureOutput.getTextureType()) + "'!", e);
             }
         }
 
-        // Add the sprites
-        sprites.forEach(queue);
+        // Replace the current sprites
+        for(SpriteInstance spriteInstance : sprites)
+            spriteOutput.accept(spriteInstance.getSprite());
+        return textureInstance;
     }
 }

@@ -5,17 +5,21 @@ import com.google.gson.JsonParseException;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
+import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.*;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.types.random.RandomTextureData;
+import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
+import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.util.Triple;
-import net.minecraft.client.resources.metadata.animation.AnimationFrame;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -30,10 +34,10 @@ import java.util.function.Supplier;
 /**
  * Created 22/10/2024 by SuperMartijn642
  */
-public class RandomTextureType implements TextureType<RandomTextureData,RandomTextureData> {
+public class RandomTextureType implements TextureType<RandomTextureData,StitchedRandomTextureData> {
 
     @Override
-    public void createTexture(TextureOutput<RandomTextureData> output, TextureCreationContext context, RandomTextureData data) throws UserErrorException{
+    public void createTexture(TextureOutput<StitchedRandomTextureData> output, TextureCreationContext context, RandomTextureData data) throws UserErrorException{
         // Calculate frame size
         int frameWidth = context.getImageWidth(), frameHeight = context.getImageHeight();
         int defaultTileSize = Math.min(context.getImageWidth() / data.getColumns(), context.getImageHeight() / data.getRows());
@@ -59,109 +63,152 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         if(frameWidth % data.getColumns() != 0 || frameHeight % data.getRows() != 0)
             throw new UserErrorException("Image/frame size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of number of columns " + data.getColumns() + " and rows " + data.getRows() + "!");
 
-        // Create animation data
-        int frameColumns = context.getImageWidth() / frameWidth;
-        int frameRows = context.getImageHeight() / frameHeight;
-        int tileWidth = frameWidth / data.getColumns();
-        int tileHeight = frameHeight / data.getRows();
-        List<SpriteImageSource.AnimationFrame> frames = null;
+        // Convert animation data for tiles
         if(animationMetadata != null){
-            if(!animationMetadata.frames.isEmpty()){
-                frames = new ArrayList<>(animationMetadata.frames.size());
-                for(AnimationFrame frame : animationMetadata.frames){
-                    int index = frame.getIndex();
-                    if(index >= frameRows * frameColumns)
-                        throw new UserErrorException("Frame index " + index + " is greater than the number of frames in the image!");
-                    int x = tileWidth * (index % frameColumns);
-                    int y = tileHeight * (index / frameColumns);
-                    frames.add(SpriteImageSource.AnimationFrame.of(x, y, frame.getTime(animationMetadata.getDefaultFrameTime())));
-                }
-            }else{
-                frames = new ArrayList<>(frameRows * frameColumns);
-                for(int row = 0; row < frameRows; row++){
-                    for(int column = 0; column < frameColumns; column++){
-                        frames.add(SpriteImageSource.AnimationFrame.of(column * tileWidth, row * tileHeight, animationMetadata.getDefaultFrameTime()));
-                    }
-                }
+            if(data.perTileAnimation()){
+                frameWidth = context.getImageWidth();
+                frameHeight = context.getImageHeight();
             }
-            if(frameRows == 1 && frameColumns == 1) // If there is only a single frame, ignore the animation data but still validate it
-                frames = null;
+            animationMetadata = new AnimationMetadataSection(
+                animationMetadata.frames,
+                animationMetadata.frameWidth == -1 ? -1 : animationMetadata.frameWidth / data.getColumns(),
+                animationMetadata.frameHeight == -1 ? -1 : animationMetadata.frameHeight / data.getRows(),
+                animationMetadata.getDefaultFrameTime(),
+                animationMetadata.isInterpolatedFrames()
+            );
         }
 
-        // Create sprites
-        int tiles = 0;
+        // Get sub-texture
+        RawTextureInstance<?,?> rawSubTexture = data.subTexture();
+        if(rawSubTexture == null)
+            rawSubTexture = RawTextureInstance.of(DefaultTextureTypes.VANILLA, null);
+
+        // Create tiles
+        int tileWidth = frameWidth / data.getColumns();
+        int tileHeight = frameHeight / data.getRows();
+        boolean isEmpty = true;
+        List<TextureInstance<?>> tiles = new ArrayList<>(data.getRows() * data.getColumns());
         try(NativeImage image = context.getImage()){
             for(int y = 0; y < data.getRows(); y++){
                 for(int x = 0; x < data.getColumns(); x++){
                     // Skip empty tiles
                     if(DummyTextureSpriteContents.isSubImageEmpty(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight))
                         continue;
-                    NativeImage subImage = ImageHelper.createCropFramed(image, x * tileWidth, y * tileHeight, tileWidth, tileHeight, frameWidth, frameHeight, false);
-                    SpriteImageSource imageSource = frames == null ?
-                        SpriteImageSource.constant(subImage) :
-                        SpriteImageSource.animated(subImage, tileWidth, tileHeight, frames, animationMetadata.isInterpolatedFrames());
-                    output.createSprite()
-                        .image(imageSource)
-                        .submit();
-                    tiles++;
+                    isEmpty = false;
+                    NativeImage subImage = ImageHelper.createCropFramed(context.getImage(), x * tileWidth, y * tileHeight, tileWidth, tileHeight, frameWidth, frameHeight, false);
+                    try(subImage){
+                        output.createSubTexture(
+                                rawSubTexture,
+                                "tile_" + (y * data.getColumns() + x),
+                                subImage,
+                                animationMetadata
+                            )
+                            .setCreationCallback(tiles::add)
+                            .submit();
+                    }
                 }
             }
         }
-        if(tiles == 0)
+        if(isEmpty)
             throw new UserErrorException("Image is completely empty!");
 
         // Set custom texture data
-        output.setCustomData(data);
+        output.setCustomData(new StitchedRandomTextureData(
+            data.getRenderType(),
+            data.isEmissive(),
+            data.getTinting(),
+            data.getRows(),
+            data.getColumns(),
+            data.getRandomSource(),
+            data.getSeed(),
+            tiles
+        ));
     }
 
     @Override
-    public @Nullable QuadProcessor<?> initializeModelQuad(MutableQuad quad, SpriteInstance sprite, RandomTextureData data, PropertyStore properties){
+    public @Nullable QuadProcessor<?> initializeModelQuad(MutableQuad quad, SpriteInstance sprite, StitchedRandomTextureData data, PropertyStore properties){
         // Apply base texture properties
         BaseTextureType.applyProperties(quad, data);
 
+        // Initialize each tile
+        List<TextureInstance<?>> subTextures = data.getSubTextures();
+        QuadAccess[] subQuads = new QuadAccess[subTextures.size()];
+        SpriteInstance[] subSprites = new SpriteInstance[subTextures.size()];
+        //noinspection unchecked
+        QuadProcessor<Object>[] subProcessors = new QuadProcessor[subTextures.size()];
+        for(int i = 0; i < subTextures.size(); i++){
+            TextureInstance<?> subTexture = subTextures.get(i);
+            MutableQuad subQuad = quad.createCopy();
+            // Adjust the quad's uv
+            SpriteInstance defaultSprite = subTexture.getDefaultSprite();
+            for(int j = 0; j < 4; j++){
+                subQuad.uv(
+                    j,
+                    defaultSprite.getU0() + (quad.u(j) - sprite.getU0()) / (sprite.getU1() - sprite.getSprite().getU0()) * (defaultSprite.getU1() - defaultSprite.getU0()),
+                    defaultSprite.getV0() + (quad.v(j) - sprite.getV0()) / (sprite.getV1() - sprite.getSprite().getV0()) * (defaultSprite.getV1() - defaultSprite.getV0())
+                );
+            }
+            subQuad.sprite(defaultSprite.getSprite());
+            // Initialize sub quad
+            QuadProcessor<?> subProcessor = subTexture.initializeModelQuad(subQuad, defaultSprite, properties);
+            SpriteInstance newSprite = SpriteHelper.getSpriteInstance(subQuad.sprite());
+            subSprites[i] = newSprite == null ? defaultSprite : newSprite;
+            subQuads[i] = subQuad;
+            //noinspection unchecked
+            subProcessors[i] = (QuadProcessor<Object>)subProcessor;
+        }
+
         // Calculate default index
         Direction side = quad.facing();
-        int defaultIndex = calculateTileIndex(sprite, side, null, new Random(), data);
+        int defaultIndex = calculateTileIndex(subTextures.size(), side, null, new Random(), data);
 
         // Create processor
-        return new QuadProcessor<Integer>() {
+        return new QuadProcessor<Pair<Integer,Object>>() {
             @Override
-            public Integer extractState(Supplier<Random> randomSupplier, PropertyStore properties){
-                return defaultIndex;
+            public Pair<Integer,Object> extractState(Supplier<Random> randomSupplier, PropertyStore properties){
+                QuadProcessor<Object> subProcessor = subProcessors[defaultIndex];
+                Object subState = subProcessor == null ? null : subProcessor.extractState(randomSupplier, properties);
+                return Pair.of(defaultIndex, subState);
             }
 
             @Override
-            public Integer extractState(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state, Supplier<Random> randomSupplier, PropertyStore properties){
-                return calculateTileIndex(sprite, side, pos, randomSupplier.get(), data);
+            public Pair<Integer,Object> extractState(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state, Supplier<Random> randomSupplier, PropertyStore properties){
+                int tile = calculateTileIndex(data.getSubTextures().size(), side, pos, randomSupplier.get(), data);
+                // Extract sub-texture state
+                QuadProcessor<Object> subProcessor = subProcessors[tile];
+                Object subState = subProcessor == null ? null : subProcessor.extractState(level, pos, state, randomSupplier, properties);
+                return Pair.of(tile, subState);
             }
 
             @Override
-            public Integer extractState(ItemStack stack, Supplier<Random> randomSupplier, PropertyStore properties){
-                return defaultIndex;
+            public Pair<Integer,Object> extractState(ItemStack stack, Supplier<Random> randomSupplier, PropertyStore properties){
+                QuadProcessor<Object> subProcessor = subProcessors[defaultIndex];
+                Object subState = subProcessor == null ? null : subProcessor.extractState(stack, randomSupplier, properties);
+                return Pair.of(defaultIndex, subState);
             }
 
             @Override
-            public Object createGeometryKey(Integer state, PropertyStore properties){
-                return Triple.of(DefaultTextureTypes.RANDOM, sprite, state);
+            public Object createGeometryKey(Pair<Integer,Object> state, PropertyStore properties){
+                QuadProcessor<Object> subProcessor = subProcessors[state.left()];
+                if(subProcessor == null)
+                    return Pair.of(sprite, state.left());
+                Object subKey = subProcessor.createGeometryKey(state.right(), properties);
+                return subKey == null ? null : Triple.of(sprite, state.left(), subKey);
             }
 
             @Override
-            public void processQuad(EmittableQuad quad, SpriteInstance sprite, Integer state, PropertyStore properties){
-                // Adjust the quad's uv
-                SpriteInstance newSprite = sprite.getTexture().getSprites().get(state);
-                for(int i = 0; i < 4; i++){
-                    quad.uv(
-                        i,
-                        newSprite.getU0() + (quad.u(i) - sprite.getU0()) / (sprite.getU1() - sprite.getSprite().getU0()) * (newSprite.getU1() - newSprite.getU0()),
-                        newSprite.getV0() + (quad.v(i) - sprite.getV0()) / (sprite.getV1() - sprite.getSprite().getV0()) * (newSprite.getV1() - newSprite.getV0())
-                    );
-                }
-                quad.emit();
+            public void processQuad(EmittableQuad quad, SpriteInstance sprite, Pair<Integer,Object> state, PropertyStore properties){
+                quad.copyFrom(subQuads[state.left()]);
+                QuadProcessor<Object> subProcessor = subProcessors[state.left()];
+                if(subProcessor == null)
+                    quad.emit();
+                else
+                    subProcessor.processQuad(quad, subSprites[state.left()], state, properties);
             }
         };
     }
 
-    private static int calculateTileIndex(SpriteInstance sprite, Direction side, @Nullable BlockPos pos, Random random, RandomTextureData data){
+    private static int calculateTileIndex(int tileCount, Direction side, @Nullable BlockPos pos, Random random, RandomTextureData data){
         if(pos == null)
             pos = BlockPos.ZERO;
         // Calculate seed
@@ -177,7 +224,7 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         // Pick which tile to use
         random.setSeed(seed);
         random.nextLong(); // Neighboring blocks may lead to similar seeds, hence generate long first to increase randomness
-        return random.nextInt(sprite.getTexture().getSprites().size());
+        return random.nextInt(tileCount);
     }
 
     public static final int MAX_SIZE = 10;
@@ -228,6 +275,22 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
                 throw new JsonParseException("Property 'seed' must be a number!");
             builder.seed(json.get("seed").getAsLong());
         }
+        // Sub-texture
+        if(json.has("sub_texture")){
+            if(!json.get("sub_texture").isJsonObject())
+                throw new JsonParseException("Property 'sub_texture' must be an object!");
+            try{
+                builder.subTexture(TextureTypeRegistryImpl.deserializeTextureData(json.get("sub_texture").getAsJsonObject()));
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to deserialize sub texture!");
+            }
+        }
+        // Per tile animation
+        if(json.has("per_tile_animation")){
+            if(!json.get("per_tile_animation").isJsonPrimitive() || !json.getAsJsonPrimitive("per_tile_animation").isBoolean())
+                throw new JsonParseException("Property 'per_tile_animation' must be a boolean!");
+            builder.perTileAnimation(json.get("per_tile_animation").getAsBoolean());
+        }
         return builder.build();
     }
 
@@ -246,6 +309,12 @@ public class RandomTextureType implements TextureType<RandomTextureData,RandomTe
         // Seed
         if(data.getSeed() != null)
             json.addProperty("seed", data.getSeed());
+        // Sub-texture
+        if(data.subTexture() != null && data.subTexture().getTextureType() != DefaultTextureTypes.VANILLA)
+            json.add("sub_texture", TextureTypeRegistryImpl.serializeTextureData(data.subTexture()));
+        // Per tile animation
+        if(data.perTileAnimation())
+            json.addProperty("per_tile_animation", true);
         return json;
     }
 }

@@ -3,11 +3,13 @@ package com.supermartijn642.fusion.api.texture.custom;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
+@ApiStatus.NonExtendable
 public interface TextureCreationContext {
 
     /**

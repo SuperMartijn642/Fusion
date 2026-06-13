@@ -79,6 +79,8 @@ public class TextureTypeRegistryImpl {
         Object textureData;
         try{
             textureData = textureType.deserialize(json);
+        }catch(JsonParseException e){
+            throw new JsonParseException("Failed to deserialize texture type '" + identifier + "'!", e);
         }catch(Exception e){
             throw new RuntimeException("Encountered an exception whilst deserializing data for texture type '" + identifier + "'!", e);
         }

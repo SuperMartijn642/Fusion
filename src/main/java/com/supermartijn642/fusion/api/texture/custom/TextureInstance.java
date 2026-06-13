@@ -33,6 +33,11 @@ public interface TextureInstance<X> {
     List<SpriteInstance> getSprites();
 
     /**
+     * Gets the default sprite for this texture.
+     */
+    SpriteInstance getDefaultSprite();
+
+    /**
      * Gets the custom data from this texture.
      * @see TextureOutput#setCustomData(Object)
      */

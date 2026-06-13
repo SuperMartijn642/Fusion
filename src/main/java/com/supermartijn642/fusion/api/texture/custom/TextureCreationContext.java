@@ -1,15 +1,15 @@
 package com.supermartijn642.fusion.api.texture.custom;
 
-
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.util.ResourceLocation;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
+@ApiStatus.NonExtendable
 public interface TextureCreationContext {
 
     /**

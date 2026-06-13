@@ -2,10 +2,12 @@ package com.supermartijn642.fusion.api.texture.custom;
 
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Created 22/03/2026 by SuperMartijn642
  */
+@ApiStatus.NonExtendable
 public interface SpriteInstance {
 
     /**

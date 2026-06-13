@@ -15,7 +15,7 @@ import java.util.Map;
  * <p>
  * Created 12/05/2026 by SuperMartijn642
  */
-public class DefaultModelProperties {
+public final class DefaultModelProperties {
     /**
      * Material definition for a given key, pointing to either a material or another material key.
      */

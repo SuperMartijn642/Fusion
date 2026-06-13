@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.api.texture.types.scrolling;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.texture.types.scrolling.ScrollingTextureDataBuilderImpl;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Stores data for the {@link DefaultTextureTypes#SCROLLING} texture type.
@@ -11,6 +12,7 @@ import com.supermartijn642.fusion.texture.types.scrolling.ScrollingTextureDataBu
  * Created 28/04/2023 by SuperMartijn642
  * @see DefaultTextureTypes#SCROLLING
  */
+@ApiStatus.NonExtendable
 public interface ScrollingTextureData extends BaseTextureData {
 
     /**
@@ -55,6 +57,7 @@ public interface ScrollingTextureData extends BaseTextureData {
      */
     int getLoopPause();
 
+    @ApiStatus.NonExtendable
     interface Builder extends BaseTextureData.Builder<Builder,ScrollingTextureData> {
 
         /**

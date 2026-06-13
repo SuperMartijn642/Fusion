@@ -4,6 +4,7 @@ import com.supermartijn642.fusion.api.texture.custom.SpriteBuilder;
 import com.supermartijn642.fusion.api.texture.custom.SpriteImageSource;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.util.IdentifierUtil;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.function.Consumer;
 
@@ -12,7 +13,7 @@ import java.util.function.Consumer;
  */
 public class SpriteBuilderImpl implements SpriteBuilder {
 
-    private final TextureOutputImpl textureOutput;
+    private final TextureOutputImpl<?> textureOutput;
     private String name;
     private SpriteImageSource imageSource;
     private Constructor constructor;
@@ -21,17 +22,22 @@ public class SpriteBuilderImpl implements SpriteBuilder {
     private Consumer<SpriteInstance> callback;
 
     private boolean valid = true;
+    private ResourceLocation identifier;
 
-    public SpriteBuilderImpl(TextureOutputImpl textureOutput){
+    public SpriteBuilderImpl(TextureOutputImpl<?> textureOutput){
         this.textureOutput = textureOutput;
+    }
+
+    public void setIdentifier(ResourceLocation identifier){
+        this.identifier = identifier;
+    }
+
+    public ResourceLocation getIdentifier(){
+        return this.identifier;
     }
 
     public String getName(){
         return this.name;
-    }
-
-    public void setNameUnchecked(String name){
-        this.name = name;
     }
 
     public SpriteImageSource getImageSource(){
@@ -42,12 +48,12 @@ public class SpriteBuilderImpl implements SpriteBuilder {
         return this.constructor;
     }
 
-    public int getConstructorWidth(){
-        return this.constructorWidth;
+    public int getWidth(){
+        return this.constructor == null ? ((SpriteImageSourceImpl)this.imageSource).getFrameWidth() : this.constructorWidth;
     }
 
-    public int getConstructorHeight(){
-        return this.constructorHeight;
+    public int getHeight(){
+        return this.constructor == null ? ((SpriteImageSourceImpl)this.imageSource).getFrameHeight() : this.constructorHeight;
     }
 
     public void markDefaultUnchecked(){
@@ -98,6 +104,8 @@ public class SpriteBuilderImpl implements SpriteBuilder {
         if(width <= 0 || height <= 0)
             throw new IllegalArgumentException("Width and height must be positive!");
         this.constructor = constructor;
+        this.constructorWidth = width;
+        this.constructorHeight = height;
         return this;
     }
 

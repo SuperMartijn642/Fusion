@@ -1,12 +1,14 @@
 package com.supermartijn642.fusion.api.texture.custom;
 
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.function.Consumer;
 
 /**
  * Created 22/03/2026 by SuperMartijn642
  */
+@ApiStatus.NonExtendable
 public interface SpriteBuilder {
 
     /**
@@ -22,7 +24,7 @@ public interface SpriteBuilder {
 
     /**
      * Allows custom creation of the {@link TextureAtlasSprite} instance.
-     * @param width width of the sprite
+     * @param width  width of the sprite
      * @param height height of the sprite
      */
     SpriteBuilder customConstructor(int width, int height, Constructor constructor);

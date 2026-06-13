@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.api.texture.custom;
 import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.texture.custom.SpriteImageSourceImpl;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.image.BufferedImage;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.List;
 /**
  * Created 22/03/2026 by SuperMartijn642
  */
+@ApiStatus.NonExtendable
 public interface SpriteImageSource {
 
     /**
@@ -48,6 +50,7 @@ public interface SpriteImageSource {
         return SpriteImageSourceImpl.vanilla(image, vanillaMetadata, defaultFrameWidth, defaultFrameHeight);
     }
 
+    @ApiStatus.NonExtendable
     interface AnimationFrame {
 
         static AnimationFrame of(int u, int v, int time){

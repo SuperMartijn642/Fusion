@@ -2,8 +2,8 @@ package com.supermartijn642.fusion.api.texture.types.base;
 
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureDataBuilderImpl;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Data for base texture type.
@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
  * Created 06/09/2024 by SuperMartijn642
  * @see DefaultTextureTypes#BASE
  */
+@ApiStatus.NonExtendable
 public interface BaseTextureData {
 
     /**
@@ -69,6 +70,7 @@ public interface BaseTextureData {
         BIOME_WATER
     }
 
+    @ApiStatus.NonExtendable
     interface Builder<T extends Builder<T,S>, S> {
 
         /**

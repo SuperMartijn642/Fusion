@@ -1,11 +1,12 @@
 package com.supermartijn642.fusion.api.texture.custom;
 
-
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Created 20/03/2026 by SuperMartijn642
  */
+@ApiStatus.NonExtendable
 public interface AllocatedSprite {
 
     /**

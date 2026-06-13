@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.texture.types.random;
 
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.types.random.RandomTextureData;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +16,8 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
     private int rows = 1, columns = 1;
     private RandomTextureData.RandomnessSource randomSource = RandomTextureData.RandomnessSource.POSITION_FACING;
     private Long seed;
+    private RawTextureInstance<?,?> subTexture;
+    private boolean perTileAnimation = false;
 
     @Override
     public RandomTextureDataBuilderImpl renderType(@Nullable BaseTextureData.RenderType renderType){
@@ -65,7 +68,19 @@ public class RandomTextureDataBuilderImpl implements RandomTextureData.Builder {
     }
 
     @Override
+    public RandomTextureData.Builder subTexture(RawTextureInstance<?,?> subTextureType){
+        this.subTexture = subTextureType;
+        return this;
+    }
+
+    @Override
+    public RandomTextureData.Builder perTileAnimation(boolean perTileAnimation){
+        this.perTileAnimation = true;
+        return this;
+    }
+
+    @Override
     public RandomTextureData build(){
-        return new RandomTextureDataImpl(this.renderType, this.emissive, this.tinting, this.rows, this.columns, this.randomSource, this.seed);
+        return new RandomTextureDataImpl(this.renderType, this.emissive, this.tinting, this.rows, this.columns, this.randomSource, this.seed, this.subTexture, this.perTileAnimation);
     }
 }

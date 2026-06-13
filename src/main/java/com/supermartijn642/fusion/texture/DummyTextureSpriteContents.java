@@ -1,19 +1,15 @@
 package com.supermartijn642.fusion.texture;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.supermartijn642.fusion.api.texture.TextureType;
-import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.texture.custom.SpriteBuilderImpl;
-import com.supermartijn642.fusion.texture.custom.SpriteImageSourceImpl;
+import com.supermartijn642.fusion.texture.custom.TextureOutputImpl;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import net.minecraft.client.resources.metadata.animation.FrameSize;
 import net.minecraft.client.resources.metadata.texture.TextureMetadataSection;
-import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 /**
  * Created 20/03/2026 by SuperMartijn642
@@ -37,76 +33,38 @@ public class DummyTextureSpriteContents extends SpriteContents {
         return true;
     }
 
-    public static SpriteContents createSubImage(SpriteContents contents, Identifier identifier, int x, int y, int width, int height){
-        if(x < 0 || y < 0 || x + width > contents.width || y + height > contents.height)
-            throw new IllegalArgumentException("Given area extends past given sprite contents!");
-        // Create new image
-        NativeImage originalImage = contents.originalImage;
-        int frameColumns = originalImage.getWidth() / contents.width, frameRows = originalImage.getHeight() / contents.height;
-        int frames = frameRows * frameColumns;
-        NativeImage subImage = new NativeImage(width, height * frames, false);
-        for(int frame = 0; frame < frames; frame++){
-            originalImage.copyRect(
-                subImage,
-                x + (frame % frameColumns) * contents.width,
-                y + frame / frameRows * contents.height,
-                0, frame * height,
-                width, height,
-                false, false
-            );
-        }
-        // Create new sprite contents
-        SpriteContents subContents = new SpriteContents(
-            identifier,
-            new FrameSize(width, height),
-            subImage,
-            Optional.empty(),
-            contents.additionalMetadata,
-            Optional.empty()
-        );
-        if(contents.animatedTexture != null)
-            subContents.animatedTexture = subContents.new AnimatedTexture(contents.animatedTexture.frames, 1, contents.animatedTexture.interpolateFrames);
-        subContents.mipmapStrategy = contents.mipmapStrategy;
-        subContents.alphaCutoffBias = contents.alphaCutoffBias;
-        return subContents;
-    }
-
-    private final Identifier identifier;
-    private final TextureType<?,Object> textureType;
-    private final Object textureData;
-    private final List<SpriteBuilderImpl> spriteBuilders;
-    private final Consumer<TextureInstance<Object>> textureCreationCallback;
+    private final DummyTextureSpriteContents parent;
+    private final TextureOutputImpl<?> textureOutput;
+    private final List<DummyTextureSpriteContents> subTextures;
     private final Optional<TextureMetadataSection> textureMetadata;
     private List<Child> children;
 
-    public DummyTextureSpriteContents(Identifier identifier, TextureType<?,Object> textureType, Object textureData, List<SpriteBuilderImpl> spriteBuilders, Consumer<TextureInstance<Object>> textureCreationCallback, Optional<TextureMetadataSection> textureMetadata){
-        super(identifier, new FrameSize(0, 0), EMPTY_IMAGE);
-        this.identifier = identifier;
-        this.textureType = textureType;
-        this.textureData = textureData;
-        this.spriteBuilders = spriteBuilders;
-        this.textureCreationCallback = textureCreationCallback;
+    private DummyTextureSpriteContents(DummyTextureSpriteContents parent, TextureOutputImpl<?> textureOutput, Optional<TextureMetadataSection> textureMetadata){
+        super(textureOutput.getIdentifier(), new FrameSize(0, 0), EMPTY_IMAGE);
+        this.parent = parent;
+        this.textureOutput = textureOutput;
         this.textureMetadata = textureMetadata;
+
+        List<DummyTextureSpriteContents> subTextures = new ArrayList<>(textureOutput.getSubTextures().size());
+        for(TextureOutputImpl<?> subTexture : textureOutput.getSubTextures())
+            subTextures.add(new DummyTextureSpriteContents(this, subTexture, textureMetadata));
+        this.subTextures = subTextures;
     }
 
-    public Identifier identifier(){
-        return this.identifier;
+    public DummyTextureSpriteContents(TextureOutputImpl<?> textureOutput, Optional<TextureMetadataSection> textureMetadata){
+        this(null, textureOutput, textureMetadata);
     }
 
-    public TextureType<?,Object> textureType(){
-        return this.textureType;
+    public DummyTextureSpriteContents getTopTexture(){
+        return this.parent == null ? this : this.parent.getTopTexture();
     }
 
-    public Object textureData(){
-        return this.textureData;
+    public TextureOutputImpl<?> getTextureOutput(){
+        return this.textureOutput;
     }
 
-    public List<SpriteBuilderImpl> spriteBuilders(){
-        return this.spriteBuilders;
-    }
-
-    public Consumer<TextureInstance<Object>> textureCreationCallback(){
-        return this.textureCreationCallback;
+    public List<DummyTextureSpriteContents> getSubTextures(){
+        return this.subTextures;
     }
 
     public Optional<TextureMetadataSection> textureMetadata(){
@@ -114,22 +72,14 @@ public class DummyTextureSpriteContents extends SpriteContents {
     }
 
     public List<Child> createChildren(){
-        this.children = new ArrayList<>(this.spriteBuilders.size());
-        for(SpriteBuilderImpl spriteBuilder : this.spriteBuilders){
-            Identifier identifier = spriteBuilder.getName() == null ?
-                this.identifier : this.identifier.withSuffix("_" + spriteBuilder.getName());
-            int width = spriteBuilder.getConstructor() == null ?
-                ((SpriteImageSourceImpl)spriteBuilder.getImageSource()).getFrameWidth() : spriteBuilder.getConstructorWidth();
-            int height = spriteBuilder.getConstructor() == null ?
-                ((SpriteImageSourceImpl)spriteBuilder.getImageSource()).getFrameHeight() : spriteBuilder.getConstructorHeight();
-            this.children.add(new Child(
-                identifier,
-                new FrameSize(width, height),
-                spriteBuilder
-            ));
-        }
+        this.children = new ArrayList<>();
+        for(SpriteBuilderImpl spriteBuilder : this.textureOutput.getSprites())
+            this.children.add(new Child(spriteBuilder));
         this.children = List.copyOf(this.children);
-        return this.children;
+        List<Child> combinedChildren = new ArrayList<>(this.children);
+        for(DummyTextureSpriteContents subTexture : this.subTextures)
+            combinedChildren.addAll(subTexture.createChildren());
+        return combinedChildren;
     }
 
     public List<Child> children(){
@@ -140,8 +90,8 @@ public class DummyTextureSpriteContents extends SpriteContents {
 
         private final SpriteBuilderImpl spriteBuilder;
 
-        public Child(Identifier identifier, FrameSize frameSize, SpriteBuilderImpl spriteBuilder){
-            super(identifier, frameSize, EMPTY_IMAGE);
+        public Child(SpriteBuilderImpl spriteBuilder){
+            super(spriteBuilder.getIdentifier(), new FrameSize(spriteBuilder.getWidth(), spriteBuilder.getHeight()), EMPTY_IMAGE);
             this.spriteBuilder = spriteBuilder;
         }
 

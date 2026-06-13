@@ -17,6 +17,7 @@ import java.util.Map;
  * @see com.supermartijn642.fusion.api.model.DefaultModelTypes#CONNECTING
  * @see BaseModelData
  */
+@ApiStatus.NonExtendable
 public interface ConnectingModelData extends BaseModelData {
 
     /**

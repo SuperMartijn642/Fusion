@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.texture.types.connecting.ConnectingTextureDataBuilderImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * Created 23/10/2023 by SuperMartijn642
  * @see DefaultTextureTypes#CONNECTING
  */
+@ApiStatus.NonExtendable
 public interface ConnectingTextureData extends BaseTextureData {
 
     /**
@@ -33,6 +35,7 @@ public interface ConnectingTextureData extends BaseTextureData {
     @Nullable
     ConnectionPredicate getConnectionPredicate();
 
+    @ApiStatus.NonExtendable
     interface Builder extends BaseTextureData.Builder<Builder,ConnectingTextureData> {
         /**
          * Sets the layout of the texture.

@@ -16,6 +16,7 @@ public class TextureInstanceImpl<X> implements TextureInstance<X> {
     private final ResourceLocation identifier;
     private final X customData;
     private List<SpriteInstance> sprites;
+    private SpriteInstance defaultSprite;
 
     public TextureInstanceImpl(TextureType<?,X> textureType, ResourceLocation identifier, X customData){
         this.textureType = textureType;
@@ -23,8 +24,9 @@ public class TextureInstanceImpl<X> implements TextureInstance<X> {
         this.customData = customData;
     }
 
-    public void setSprites(List<SpriteInstance> sprites){
+    public void setSprites(List<SpriteInstance> sprites, SpriteInstance defaultSprite){
         this.sprites = sprites;
+        this.defaultSprite = defaultSprite;
     }
 
     @Override
@@ -40,6 +42,11 @@ public class TextureInstanceImpl<X> implements TextureInstance<X> {
     @Override
     public List<SpriteInstance> getSprites(){
         return this.sprites;
+    }
+
+    @Override
+    public SpriteInstance getDefaultSprite(){
+        return this.defaultSprite;
     }
 
     @Override

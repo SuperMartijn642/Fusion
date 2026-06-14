@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.types.connecting.ConnectingTextureData;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
@@ -15,6 +16,8 @@ public class ConnectingTextureDataBuilderImpl implements ConnectingTextureData.B
     private BaseTextureData.QuadTinting tinting;
     private ConnectingTextureData.Layout layout = ConnectingTextureData.Layout.FULL;
     private ConnectionPredicate connectionPredicate;
+    private RawTextureInstance<?,?> subTexture;
+    private boolean perTileAnimation = false;
 
     @Override
     public ConnectingTextureDataBuilderImpl renderType(@Nullable BaseTextureData.RenderType renderType){
@@ -47,7 +50,19 @@ public class ConnectingTextureDataBuilderImpl implements ConnectingTextureData.B
     }
 
     @Override
+    public ConnectingTextureData.Builder subTexture(@Nullable RawTextureInstance<?,?> subTextureType){
+        this.subTexture = subTextureType;
+        return this;
+    }
+
+    @Override
+    public ConnectingTextureData.Builder perTileAnimation(boolean perTileAnimation){
+        this.perTileAnimation = perTileAnimation;
+        return this;
+    }
+
+    @Override
     public ConnectingTextureData build(){
-        return new ConnectingTextureDataImpl(this.renderType, this.emissive, this.tinting, this.layout, this.connectionPredicate);
+        return new ConnectingTextureDataImpl(this.renderType, this.emissive, this.tinting, this.layout, this.connectionPredicate, this.subTexture, this.perTileAnimation);
     }
 }

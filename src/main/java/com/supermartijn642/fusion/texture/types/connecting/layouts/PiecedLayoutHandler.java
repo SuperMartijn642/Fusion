@@ -1,8 +1,9 @@
 package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
+import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
-import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 
 /**
@@ -13,12 +14,12 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
     private static final int[] CORNER_SPRITE_INDICES = {0, 3, 2, 4, 0, 3, 2, 1};
 
     public PiecedLayoutHandler(){
-        super(5, 1, 0, 0, 3);
+        super(5, 1, 0, 0);
     }
 
     @Override
-    public boolean processBlockQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data, TextureConnections connections){
-        // If the connections just happen to match an entire sprite, just use that and discard the auxiliary quads
+    public void processQuad(EmittableQuad quad, TileEmitter tileEmitter, TextureConnections connections){
+        // If the connections just happen to match an entire sprite, just use that
         int fullSpriteIndex = -1;
         if(!connections.top && !connections.right && !connections.bottom && !connections.left)
             fullSpriteIndex = 0;
@@ -31,103 +32,110 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
         else if(connections.top && !connections.topRight && connections.right && !connections.bottomRight && connections.bottom && !connections.bottomLeft && connections.left && !connections.topLeft)
             fullSpriteIndex = 4;
         if(fullSpriteIndex != -1){
-            if(quadIndex != 0)
-                return false;
-            SpriteInstance newSprite = data.getTiles().get(fullSpriteIndex);
-            if(newSprite == null)
-                return false;
-            swapQuadSpriteUV(quad, currentSprite, newSprite);
-            return true;
+            tileEmitter.emit(fullSpriteIndex, quad);
+            return;
         }
 
+        // Handle each corner
+        for(int corner = 0; corner < 4; corner++)
+            transformCorner(corner, quad, tileEmitter, connections);
+    }
+
+    private static void transformCorner(int corner, EmittableQuad quad, TileEmitter tileEmitter, TextureConnections connections){
+        SpriteInstance originalSprite = SpriteHelper.getSpriteInstance(quad.sprite());
+        if(originalSprite == null)
+            return;
+
         // Figure out how much to move each vertex towards corner quadIndex based on uv
-        float halfU = (currentSprite.getU1() + currentSprite.getU0()) / 2, halfV = (currentSprite.getV1() + currentSprite.getV0()) / 2;
-        int nextCorner = (quadIndex + 1) % 4, oppositeCorner = (quadIndex + 2) % 4, lastCorner = (quadIndex + 3) % 4;
-        boolean nextCornerIsSameU = Math.abs(quad.u(nextCorner) - quad.u(quadIndex)) / vertexDistance(quad, quadIndex, nextCorner) < Math.abs(quad.u(lastCorner) - quad.u(quadIndex)) / vertexDistance(quad, quadIndex, lastCorner);
-        boolean nextCornerUVSmaller = nextCornerIsSameU ? quad.v(nextCorner) < quad.v(quadIndex) : quad.u(nextCorner) < quad.u(quadIndex);
-        float toNextCornerPercentage = nextCornerIsSameU ? nextCornerUVSmaller ? (quad.v(quadIndex) - halfV) / (quad.v(quadIndex) - quad.v(nextCorner)) : (halfV - quad.v(quadIndex)) / (quad.v(nextCorner) - quad.v(quadIndex)) : nextCornerUVSmaller ? (quad.u(quadIndex) - halfU) / (quad.u(quadIndex) - quad.u(nextCorner)) : (halfU - quad.u(quadIndex)) / (quad.u(nextCorner) - quad.u(quadIndex));
+        float halfU = (originalSprite.getU1() + originalSprite.getU0()) / 2, halfV = (originalSprite.getV1() + originalSprite.getV0()) / 2;
+        int nextCorner = (corner + 1) % 4, oppositeCorner = (corner + 2) % 4, lastCorner = (corner + 3) % 4;
+        boolean nextCornerIsSameU = Math.abs(quad.u(nextCorner) - quad.u(corner)) / vertexDistance(quad, corner, nextCorner) < Math.abs(quad.u(lastCorner) - quad.u(corner)) / vertexDistance(quad, corner, lastCorner);
+        boolean nextCornerUVSmaller = nextCornerIsSameU ? quad.v(nextCorner) < quad.v(corner) : quad.u(nextCorner) < quad.u(corner);
+        float toNextCornerPercentage = nextCornerIsSameU ? nextCornerUVSmaller ? (quad.v(corner) - halfV) / (quad.v(corner) - quad.v(nextCorner)) : (halfV - quad.v(corner)) / (quad.v(nextCorner) - quad.v(corner)) : nextCornerUVSmaller ? (quad.u(corner) - halfU) / (quad.u(corner) - quad.u(nextCorner)) : (halfU - quad.u(corner)) / (quad.u(nextCorner) - quad.u(corner));
         if(toNextCornerPercentage <= 0)
-            return false;
-        boolean lastCornerUVSmaller = nextCornerIsSameU ? quad.u(lastCorner) < quad.u(quadIndex) : quad.v(lastCorner) < quad.v(quadIndex);
-        float toLastCornerPercentage = nextCornerIsSameU ? lastCornerUVSmaller ? (quad.u(quadIndex) - halfU) / (quad.u(quadIndex) - quad.u(lastCorner)) : (halfU - quad.u(quadIndex)) / (quad.u(lastCorner) - quad.u(quadIndex)) : nextCornerUVSmaller ? (quad.v(quadIndex) - halfV) / (quad.v(quadIndex) - quad.v(lastCorner)) : (halfV - quad.v(quadIndex)) / (quad.v(lastCorner) - quad.v(quadIndex));
+            return;
+        boolean lastCornerUVSmaller = nextCornerIsSameU ? quad.u(lastCorner) < quad.u(corner) : quad.v(lastCorner) < quad.v(corner);
+        float toLastCornerPercentage = nextCornerIsSameU ? lastCornerUVSmaller ? (quad.u(corner) - halfU) / (quad.u(corner) - quad.u(lastCorner)) : (halfU - quad.u(corner)) / (quad.u(lastCorner) - quad.u(corner)) : nextCornerUVSmaller ? (quad.v(corner) - halfV) / (quad.v(corner) - quad.v(lastCorner)) : (halfV - quad.v(corner)) / (quad.v(lastCorner) - quad.v(corner));
         if(toLastCornerPercentage <= 0)
-            return false;
+            return;
         float oppositeToNextPercentage = nextCornerIsSameU ? lastCornerUVSmaller ? (halfU - quad.u(oppositeCorner)) / (quad.u(nextCorner) - quad.u(oppositeCorner)) : (quad.u(oppositeCorner) - halfU) / (quad.u(oppositeCorner) - quad.u(nextCorner)) : lastCornerUVSmaller ? (halfV - quad.v(oppositeCorner)) / (quad.v(nextCorner) - quad.v(oppositeCorner)) : (quad.v(oppositeCorner) - halfV) / (quad.v(oppositeCorner) - quad.v(nextCorner));
         float oppositeToLastPercentage = nextCornerIsSameU ? nextCornerUVSmaller ? (halfV - quad.v(oppositeCorner)) / (quad.v(lastCorner) - quad.v(oppositeCorner)) : (quad.v(oppositeCorner) - halfV) / (quad.v(oppositeCorner) - quad.v(lastCorner)) : nextCornerUVSmaller ? (halfU - quad.u(oppositeCorner)) / (quad.u(lastCorner) - quad.u(oppositeCorner)) : (quad.u(oppositeCorner) - halfU) / (quad.u(oppositeCorner) - quad.u(lastCorner));
 
-        // Move vertices towards the corner of vertex quadIndex
-        if(oppositeToNextPercentage > 0 || oppositeToLastPercentage > 0){
-            float oppositeX = quad.x(oppositeCorner);
-            float oppositeY = quad.y(oppositeCorner);
-            float oppositeZ = quad.z(oppositeCorner);
-            if(oppositeToNextPercentage > 0){
-                oppositeX += (quad.x(nextCorner) - quad.x(oppositeCorner)) * oppositeToNextPercentage;
-                oppositeY += (quad.y(nextCorner) - quad.y(oppositeCorner)) * oppositeToNextPercentage;
-                oppositeZ += (quad.z(nextCorner) - quad.z(oppositeCorner)) * oppositeToNextPercentage;
+        // Create transform
+        EmittableQuad.Transform transform = q -> {
+            // Move vertices towards the corner of vertex quadIndex
+            if(oppositeToNextPercentage > 0 || oppositeToLastPercentage > 0){
+                float oppositeX = q.x(oppositeCorner);
+                float oppositeY = q.y(oppositeCorner);
+                float oppositeZ = q.z(oppositeCorner);
+                if(oppositeToNextPercentage > 0){
+                    oppositeX += (q.x(nextCorner) - q.x(oppositeCorner)) * oppositeToNextPercentage;
+                    oppositeY += (q.y(nextCorner) - q.y(oppositeCorner)) * oppositeToNextPercentage;
+                    oppositeZ += (q.z(nextCorner) - q.z(oppositeCorner)) * oppositeToNextPercentage;
+                }
+                if(oppositeToLastPercentage > 0){
+                    oppositeX += (q.x(lastCorner) - q.x(oppositeCorner)) * oppositeToLastPercentage;
+                    oppositeY += (q.y(lastCorner) - q.y(oppositeCorner)) * oppositeToLastPercentage;
+                    oppositeZ += (q.z(lastCorner) - q.z(oppositeCorner)) * oppositeToLastPercentage;
+                }
+                q.position(oppositeCorner, oppositeX, oppositeY, oppositeZ);
             }
-            if(oppositeToLastPercentage > 0){
-                oppositeX += (quad.x(lastCorner) - quad.x(oppositeCorner)) * oppositeToLastPercentage;
-                oppositeY += (quad.y(lastCorner) - quad.y(oppositeCorner)) * oppositeToLastPercentage;
-                oppositeZ += (quad.z(lastCorner) - quad.z(oppositeCorner)) * oppositeToLastPercentage;
+            if(toNextCornerPercentage < 1){
+                q.position(
+                    nextCorner,
+                    q.x(corner) + (q.x(nextCorner) - q.x(corner)) * toNextCornerPercentage,
+                    q.y(corner) + (q.y(nextCorner) - q.y(corner)) * toNextCornerPercentage,
+                    q.z(corner) + (q.z(nextCorner) - q.z(corner)) * toNextCornerPercentage
+                );
             }
-            quad.position(oppositeCorner, oppositeX, oppositeY, oppositeZ);
-        }
-        if(toNextCornerPercentage < 1){
-            quad.position(
-                nextCorner,
-                quad.x(quadIndex) + (quad.x(nextCorner) - quad.x(quadIndex)) * toNextCornerPercentage,
-                quad.y(quadIndex) + (quad.y(nextCorner) - quad.y(quadIndex)) * toNextCornerPercentage,
-                quad.z(quadIndex) + (quad.z(nextCorner) - quad.z(quadIndex)) * toNextCornerPercentage
-            );
-        }
-        if(toLastCornerPercentage < 1){
-            quad.position(
-                lastCorner,
-                quad.x(quadIndex) + (quad.x(lastCorner) - quad.x(quadIndex)) * toLastCornerPercentage,
-                quad.y(quadIndex) + (quad.y(lastCorner) - quad.y(quadIndex)) * toLastCornerPercentage,
-                quad.z(quadIndex) + (quad.z(lastCorner) - quad.z(quadIndex)) * toLastCornerPercentage
-            );
-        }
+            if(toLastCornerPercentage < 1){
+                q.position(
+                    lastCorner,
+                    q.x(corner) + (q.x(lastCorner) - q.x(corner)) * toLastCornerPercentage,
+                    q.y(corner) + (q.y(lastCorner) - q.y(corner)) * toLastCornerPercentage,
+                    q.z(corner) + (q.z(lastCorner) - q.z(corner)) * toLastCornerPercentage
+                );
+            }
 
-        // Swap tiles
+            // Adjust the uv coordinates
+            if(oppositeToNextPercentage > 0 || oppositeToLastPercentage > 0){
+                float oppositeU = q.u(oppositeCorner);
+                float oppositeV = q.v(oppositeCorner);
+                if(oppositeToNextPercentage > 0){
+                    oppositeU += (q.u(nextCorner) - q.u(oppositeCorner)) * oppositeToNextPercentage;
+                    oppositeV += (q.v(nextCorner) - q.v(oppositeCorner)) * oppositeToNextPercentage;
+                }
+                if(oppositeToLastPercentage > 0){
+                    oppositeU += (q.u(lastCorner) - q.u(oppositeCorner)) * oppositeToLastPercentage;
+                    oppositeV += (q.v(lastCorner) - q.v(oppositeCorner)) * oppositeToLastPercentage;
+                }
+                q.uv(oppositeCorner, oppositeU, oppositeV);
+            }else
+                q.uv(oppositeCorner, q.u(oppositeCorner), q.v(oppositeCorner));
+            if(toNextCornerPercentage < 1){
+                q.uv(
+                    nextCorner,
+                    q.u(corner) + (q.u(nextCorner) - q.u(corner)) * toNextCornerPercentage,
+                    q.v(corner) + (q.v(nextCorner) - q.v(corner)) * toNextCornerPercentage
+                );
+            }else
+                q.uv(nextCorner, q.u(nextCorner), q.v(nextCorner));
+            if(toLastCornerPercentage < 1){
+                q.uv(
+                    lastCorner,
+                    q.u(corner) + (q.u(lastCorner) - q.u(corner)) * toLastCornerPercentage,
+                    q.v(corner) + (q.v(lastCorner) - q.v(corner)) * toLastCornerPercentage
+                );
+            }else
+                q.uv(lastCorner, q.u(lastCorner), q.v(lastCorner));
+            q.emit();
+        };
+
+        // Emit tile
         int tileIndex = getTileIndex(nextCornerIsSameU ? !nextCornerUVSmaller : !lastCornerUVSmaller, nextCornerIsSameU ? !lastCornerUVSmaller : !nextCornerUVSmaller, connections);
-        SpriteInstance newSprite = data.getTiles().get(tileIndex);
-        if(newSprite == null)
-            return false;
-        swapQuadSpriteUV(quad, currentSprite, newSprite);
-
-        // Adjust the uv coordinates
-        if(oppositeToNextPercentage > 0 || oppositeToLastPercentage > 0){
-            float oppositeU = quad.u(oppositeCorner);
-            float oppositeV = quad.v(oppositeCorner);
-            if(oppositeToNextPercentage > 0){
-                oppositeU += (quad.u(nextCorner) - quad.u(oppositeCorner)) * oppositeToNextPercentage;
-                oppositeV += (quad.v(nextCorner) - quad.v(oppositeCorner)) * oppositeToNextPercentage;
-            }
-            if(oppositeToLastPercentage > 0){
-                oppositeU += (quad.u(lastCorner) - quad.u(oppositeCorner)) * oppositeToLastPercentage;
-                oppositeV += (quad.v(lastCorner) - quad.v(oppositeCorner)) * oppositeToLastPercentage;
-            }
-            quad.uv(oppositeCorner, oppositeU, oppositeV);
-        }else
-            quad.uv(oppositeCorner, quad.u(oppositeCorner), quad.v(oppositeCorner));
-        if(toNextCornerPercentage < 1){
-            quad.uv(
-                nextCorner,
-                quad.u(quadIndex) + (quad.u(nextCorner) - quad.u(quadIndex)) * toNextCornerPercentage,
-                quad.v(quadIndex) + (quad.v(nextCorner) - quad.v(quadIndex)) * toNextCornerPercentage
-            );
-        }else
-            quad.uv(nextCorner, quad.u(nextCorner), quad.v(nextCorner));
-        if(toLastCornerPercentage < 1){
-            quad.uv(
-                lastCorner,
-                quad.u(quadIndex) + (quad.u(lastCorner) - quad.u(quadIndex)) * toLastCornerPercentage,
-                quad.v(quadIndex) + (quad.v(lastCorner) - quad.v(quadIndex)) * toLastCornerPercentage
-            );
-        }else
-            quad.uv(lastCorner, quad.u(lastCorner), quad.v(lastCorner));
-        return true;
+        try(EmittableQuad.Popper _ = quad.pushTransform(transform)){
+            tileEmitter.emit(tileIndex, quad);
+        }
     }
 
     private static int getTileIndex(boolean top, boolean left, TextureConnections connections){
@@ -146,10 +154,5 @@ public class PiecedLayoutHandler extends ConnectingTextureLayoutHandler {
         double yDiff = quad.y(v2) - quad.y(v1);
         double zDiff = quad.z(v2) - quad.z(v1);
         return Math.sqrt(xDiff * xDiff + yDiff * yDiff + zDiff * zDiff);
-    }
-
-    @Override
-    public boolean processItemQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data){
-        return quadIndex == 0;
     }
 }

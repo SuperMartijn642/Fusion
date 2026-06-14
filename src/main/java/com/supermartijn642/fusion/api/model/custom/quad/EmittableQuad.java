@@ -22,7 +22,34 @@ public interface EmittableQuad extends MutableQuad {
     }
 
     /**
+     * Pushes a transform that is applied as an in-between step when quads are emitted.
+     */
+    Popper pushTransform(Transform transform);
+
+    /**
      * Emit the current state of the quad.
      */
     void emit();
+
+    @FunctionalInterface
+    interface Transform {
+        /**
+         * Transforms the given quad.
+         * Can emit none or multiple quads.
+         */
+        void transform(EmittableQuad quad);
+    }
+
+    @ApiStatus.NonExtendable
+    interface Popper extends AutoCloseable {
+        /**
+         * Pops the pushed transform.
+         */
+        void popTransform();
+
+        @Override
+        default void close(){ // No exceptions
+            this.popTransform();
+        }
+    }
 }

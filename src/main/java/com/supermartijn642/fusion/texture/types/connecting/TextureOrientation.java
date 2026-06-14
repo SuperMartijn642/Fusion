@@ -1,5 +1,7 @@
 package com.supermartijn642.fusion.texture.types.connecting;
 
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
+import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionDirection;
 import net.minecraft.core.Direction;
@@ -107,10 +109,19 @@ public enum TextureOrientation {
      */
     public final ConnectionDirection[] worldToTexture;
     public final int[] vertexIndexPermutation;
+    public final EmittableQuad.Transform transform, reverseTransform;
 
     TextureOrientation(boolean flipped, int rotations){
         this.flipped = flipped;
         this.rotations = rotations;
+        this.transform = q -> {
+            this.applyVertexPermutation(q);
+            q.emit();
+        };
+        this.reverseTransform = q -> {
+            this.applyInverseVertexPermutation(q);
+            q.emit();
+        };
 
         this.worldToTexture = ConnectionDirection.values();
         this.vertexIndexPermutation = new int[]{0, 3, 2, 1};
@@ -184,5 +195,63 @@ public enum TextureOrientation {
             }
         }
         return newVector;
+    }
+
+    public void applyVertexPermutation(MutableQuad quad){
+        float[] x = new float[4];
+        float[] y = new float[4];
+        float[] z = new float[4];
+        float[] u = new float[4];
+        float[] v = new float[4];
+        for(int i = 0; i < 4; i++){
+            x[i] = quad.x(i);
+            y[i] = quad.y(i);
+            z[i] = quad.z(i);
+            u[i] = quad.u(i);
+            v[i] = quad.v(i);
+        }
+        for(int from = 0; from < 4; from++){
+            int to = this.vertexIndexPermutation[from];
+            quad.position(
+                to,
+                x[from],
+                y[from],
+                z[from]
+            );
+            quad.uv(
+                to,
+                u[from],
+                v[from]
+            );
+        }
+    }
+
+    public void applyInverseVertexPermutation(MutableQuad quad){
+        float[] x = new float[4];
+        float[] y = new float[4];
+        float[] z = new float[4];
+        float[] u = new float[4];
+        float[] v = new float[4];
+        for(int i = 0; i < 4; i++){
+            x[i] = quad.x(i);
+            y[i] = quad.y(i);
+            z[i] = quad.z(i);
+            u[i] = quad.u(i);
+            v[i] = quad.v(i);
+        }
+        for(int to = 0; to < 4; to++){
+            int from = this.vertexIndexPermutation[to];
+            quad.position(
+                to,
+                x[from],
+                y[from],
+                z[from]
+            );
+            quad.uv(
+                to,
+                u[from],
+                v[from]
+            );
+        }
     }
 }

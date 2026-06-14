@@ -1,9 +1,7 @@
 package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
-import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
-import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.api.texture.types.connecting.ConnectingTextureData;
-import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
 
 import java.util.Arrays;
@@ -37,16 +35,12 @@ public abstract class ConnectingTextureLayoutHandler {
 
     protected final int width, height;
     protected final int defaultTileX, defaultTileY;
-    protected final int auxiliaryQuadCount;
 
-    public ConnectingTextureLayoutHandler(int width, int height, int defaultTileX, int defaultTileY, int auxiliaryQuadCount){
-        if(auxiliaryQuadCount > 15) // Currently, 4 bits are allocated for quad index in the connecting model, hence at most 15 auxiliary quads
-            throw new IllegalArgumentException("Invalid auxiliary quad count: " + auxiliaryQuadCount);
+    public ConnectingTextureLayoutHandler(int width, int height, int defaultTileX, int defaultTileY){
         this.width = width;
         this.height = height;
         this.defaultTileX = defaultTileX;
         this.defaultTileY = defaultTileY;
-        this.auxiliaryQuadCount = auxiliaryQuadCount;
     }
 
     public int getWidth(){
@@ -57,10 +51,6 @@ public abstract class ConnectingTextureLayoutHandler {
         return this.height;
     }
 
-    public int getAuxiliaryQuadCount(){
-        return this.auxiliaryQuadCount;
-    }
-
     public int defaultTileX(){
         return this.defaultTileX;
     }
@@ -69,17 +59,11 @@ public abstract class ConnectingTextureLayoutHandler {
         return this.defaultTileY;
     }
 
-    /**
-     * @param quadIndex indicates the quad index when {@link #auxiliaryQuadCount} is greater than 0
-     * @return if {@code false} is returned, the quad will be discarded
-     */
-    public abstract boolean processBlockQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data, TextureConnections connections);
+    public abstract void processQuad(EmittableQuad quad, TileEmitter tileEmitter, TextureConnections connections);
 
-    /**
-     * @param quadIndex indicates the quad index when {@link #auxiliaryQuadCount} is greater than 0
-     * @return if {@code false} is returned, the quad will be discarded
-     */
-    public abstract boolean processItemQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data);
+    public interface TileEmitter {
+        void emit(int tile, EmittableQuad emitter);
+    }
 
     public abstract static class SimpleHandler extends ConnectingTextureLayoutHandler {
 
@@ -89,7 +73,7 @@ public abstract class ConnectingTextureLayoutHandler {
         private final int[] tileMapping;
 
         public SimpleHandler(int width, int height, int maxIndexSize){
-            super(width, height, 0, 0, 0);
+            super(width, height, 0, 0);
 
             // Pre-compute all the tile locations
             this.tileMapping = new int[(int)Math.pow(2, maxIndexSize)];
@@ -108,31 +92,10 @@ public abstract class ConnectingTextureLayoutHandler {
         protected abstract int[] getTilePos(TextureConnections connections);
 
         @Override
-        public boolean processBlockQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data, TextureConnections connections){
+        public void processQuad(EmittableQuad quad, TileEmitter tileEmitter, TextureConnections connections){
             // Get the correct tile index
             int tile = this.tileMapping[this.connectionsIndex(connections)];
-            // Discard quad if tile is empty
-            SpriteInstance newSprite = data.getTiles().get(tile);
-            if(newSprite == null)
-                return false;
-            // Adjust the quad's uv
-            swapQuadSpriteUV(quad, currentSprite, newSprite);
-            return true;
-        }
-
-        @Override
-        public boolean processItemQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data){
-            return true;
-        }
-    }
-
-    public static void swapQuadSpriteUV(MutableQuad quad, SpriteInstance currentSprite, SpriteInstance newSprite){
-        for(int i = 0; i < 4; i++){
-            quad.uv(
-                i,
-                newSprite.getU0() + (quad.u(i) - currentSprite.getU0()) / (currentSprite.getU1() - currentSprite.getU0()) * (newSprite.getU1() - newSprite.getU0()),
-                newSprite.getV0() + (quad.v(i) - currentSprite.getV0()) / (currentSprite.getV1() - currentSprite.getV0()) * (newSprite.getV1() - newSprite.getV0())
-            );
+            tileEmitter.emit(tile, quad);
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.api.texture.types.connecting;
 
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
+import com.supermartijn642.fusion.api.texture.RawTextureInstance;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
@@ -35,6 +36,17 @@ public interface ConnectingTextureData extends BaseTextureData {
     @Nullable
     ConnectionPredicate getConnectionPredicate();
 
+    /**
+     * Texture type and data used for each of the tiles.
+     */
+    @Nullable
+    RawTextureInstance<?,?> subTexture();
+
+    /**
+     * Whether the animation covers the entire texture or each tile should be handled as its own animation.
+     */
+    boolean perTileAnimation();
+
     @ApiStatus.NonExtendable
     interface Builder extends BaseTextureData.Builder<Builder,ConnectingTextureData> {
         /**
@@ -48,6 +60,16 @@ public interface ConnectingTextureData extends BaseTextureData {
          * @see DefaultConnectionPredicates
          */
         Builder connectionPredicate(@Nullable ConnectionPredicate predicate);
+
+        /**
+         * Sets texture type and data to be used for each of the tiles.
+         */
+        Builder subTexture(@Nullable RawTextureInstance<?,?> subTextureType);
+
+        /**
+         * Sets whether the animation covers the entire texture or each tile should be handled as its own animation.
+         */
+        Builder perTileAnimation(boolean perTileAnimation);
     }
 
     enum Layout {

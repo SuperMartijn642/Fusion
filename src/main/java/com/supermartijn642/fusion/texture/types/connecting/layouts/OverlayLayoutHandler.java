@@ -1,9 +1,9 @@
 package com.supermartijn642.fusion.texture.types.connecting.layouts;
 
-import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
-import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
-import com.supermartijn642.fusion.texture.types.connecting.StitchedConnectingTextureData;
+import com.supermartijn642.fusion.api.model.custom.quad.EmittableQuad;
 import com.supermartijn642.fusion.texture.types.connecting.TextureConnections;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 /**
  * Created 12/10/2024 by SuperMartijn642
@@ -16,16 +16,19 @@ public class OverlayLayoutHandler extends ConnectingTextureLayoutHandler {
     private final int[][] tileMapping;
 
     public OverlayLayoutHandler(){
-        super(6, 3, 1, 1, 3);
+        super(6, 3, 1, 1);
 
         // Pre-compute all the tile locations
-        this.tileMapping = new int[4][(int)Math.pow(2, 8)];
+        this.tileMapping = new int[(int)Math.pow(2, 8)][];
+        IntList temp = new IntArrayList(4);
         for(TextureConnections connections : TextureConnections.iterateAll()){
             int index = this.connectionsIndex(connections);
             for(int quad = 0; quad < 4; quad++){
                 int[] pos = this.getTilePos(quad, connections);
-                this.tileMapping[quad][index] = pos == null ? -1 : pos[0] + pos[1] * this.getWidth();
+                if(pos != null)
+                    temp.add(pos[0] + pos[1] * this.getWidth());
             }
+            this.tileMapping[index] = temp.toIntArray();
         }
     }
 
@@ -90,23 +93,10 @@ public class OverlayLayoutHandler extends ConnectingTextureLayoutHandler {
     }
 
     @Override
-    public boolean processBlockQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data, TextureConnections connections){
-        // Get the correct tile position
-        int tile = this.tileMapping[quadIndex][this.connectionsIndex(connections)];
-        // If the quad is not needed, discard it
-        if(tile == -1)
-            return false;
-        // Discard quad if tile is empty
-        SpriteInstance newSprite = data.getTiles().get(tile);
-        if(newSprite == null)
-            return false;
-        // Adjust the quad's uv
-        swapQuadSpriteUV(quad, currentSprite, newSprite);
-        return true;
-    }
-
-    @Override
-    public boolean processItemQuad(int quadIndex, MutableQuad quad, SpriteInstance currentSprite, StitchedConnectingTextureData data){
-        return false;
+    public void processQuad(EmittableQuad quad, TileEmitter tileEmitter, TextureConnections connections){
+        // Get the correct tile positions
+        int[] tiles = this.tileMapping[this.connectionsIndex(connections)];
+        for(int tile : tiles)
+            tileEmitter.emit(tile, quad);
     }
 }

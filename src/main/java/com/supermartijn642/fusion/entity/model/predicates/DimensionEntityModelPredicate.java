@@ -28,6 +28,12 @@ public class DimensionEntityModelPredicate implements EntityModelPredicate {
     public static final Serializer<DimensionEntityModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
         public DimensionEntityModelPredicate deserialize(JsonObject json) throws JsonParseException{
+            if(json.has("ignore_missing")){
+                if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
+                    throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
+                // Ignore on this version
+            }
+
             if(!json.has("dimension") || !json.get("dimension").isJsonPrimitive() || !json.getAsJsonPrimitive("dimension").isString())
                 throw new JsonParseException("Dimension-predicate must have string property 'dimension'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("dimension").getAsString()))

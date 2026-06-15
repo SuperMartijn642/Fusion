@@ -1,5 +1,7 @@
 package com.supermartijn642.fusion.api.model.predicates.blockstate;
 
+import com.supermartijn642.fusion.api.model.predicates.DefaultModelPredicates;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -43,6 +45,14 @@ public interface BlockStateModelPredicate {
     @ApiStatus.NonExtendable
     default boolean alwaysFalse(){
         return this == DefaultBlockStateModelPredicates.never();
+    }
+
+    /**
+     * Wraps this predicate as a model predicate using {@link DefaultModelPredicates#blockStateWrapper}.
+     */
+    @ApiStatus.NonExtendable
+    default ModelPredicate asModelPredicate(){
+        return DefaultModelPredicates.blockStateWrapper(this);
     }
 
     /**

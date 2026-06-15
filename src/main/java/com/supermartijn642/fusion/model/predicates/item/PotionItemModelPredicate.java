@@ -61,4 +61,17 @@ public class PotionItemModelPredicate implements ItemModelPredicate {
     public Serializer<? extends ItemModelPredicate> getSerializer(){
         return SERIALIZER;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof PotionItemModelPredicate)) return false;
+
+        PotionItemModelPredicate that = (PotionItemModelPredicate)o;
+        return Objects.equals(this.potion, that.potion);
+    }
+
+    @Override
+    public int hashCode(){
+        return Objects.hashCode(this.potion);
+    }
 }

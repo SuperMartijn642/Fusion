@@ -118,4 +118,20 @@ public class EnchantmentItemModelPredicate implements ItemModelPredicate {
     public Serializer<? extends ItemModelPredicate> getSerializer(){
         return SERIALIZER;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof EnchantmentItemModelPredicate)) return false;
+
+        EnchantmentItemModelPredicate that = (EnchantmentItemModelPredicate)o;
+        return this.minLevel == that.minLevel && this.maxLevel == that.maxLevel && this.enchantment.equals(that.enchantment);
+    }
+
+    @Override
+    public int hashCode(){
+        int result = this.enchantment.hashCode();
+        result = 31 * result + this.minLevel;
+        result = 31 * result + this.maxLevel;
+        return result;
+    }
 }

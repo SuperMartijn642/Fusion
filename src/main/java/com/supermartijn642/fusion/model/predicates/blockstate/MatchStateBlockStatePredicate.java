@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.texture.types.connecting.predicates.MatchStateConnectionPredicate;
@@ -64,14 +65,25 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
     public static final Serializer<MatchStateBlockStatePredicate> SERIALIZER = new Serializer<>() {
         @Override
         public MatchStateBlockStatePredicate deserialize(JsonObject json) throws JsonParseException{
+            boolean ignoreMissing = false;
+            if(json.has("ignore_missing")){
+                if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
+                    throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
+                ignoreMissing = json.get("ignore_missing").getAsBoolean();
+            }
+
             if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
                 throw new JsonParseException("Match block predicate must have string property 'block'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
             Optional<Block> optional = Registry.BLOCK.getOptional(identifier);
-            if(optional.isEmpty())
+            if(optional.isEmpty()){
+                if(ignoreMissing)
+                    //noinspection unchecked
+                    return new MatchStateBlockStatePredicate(null, new Pair[0], 0, 0, 0);
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
+            }
             Block block = optional.get();
 
             List<Pair<Property<?>,Set<?>>> properties = new ArrayList<>();
@@ -164,7 +176,7 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
     private MatchStateBlockStatePredicate(Block block, Pair<Property<?>,Set<?>>[] properties, int x, int y, int z){
         this.block = block;
         this.properties = properties;
-        this.states = MatchStateConnectionPredicate.computeStates(block, properties);
+        this.states = block == null ? null : MatchStateConnectionPredicate.computeStates(block, properties);
         this.compareStates = this.states != null;
         this.x = x;
         this.y = y;
@@ -174,6 +186,8 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
 
     @Override
     public boolean test(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
+        if(this.block == null)
+            return false;
         if(this.hasOffset || state == null){
             if(level == null || pos == null)
                 return false;
@@ -193,6 +207,11 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
     }
 
     @Override
+    public BlockStateModelPredicate simplify(){
+        return this.block == null ? DefaultBlockStateModelPredicates.never() : this;
+    }
+
+    @Override
     public Serializer<? extends BlockStateModelPredicate> getSerializer(){
         return SERIALIZER;
     }
@@ -201,12 +220,12 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
     public final boolean equals(Object o){
         if(!(o instanceof MatchStateBlockStatePredicate that)) return false;
 
-        return this.x == that.x && this.y == that.y && this.z == that.z && this.block.equals(that.block) && Arrays.equals(this.properties, that.properties);
+        return this.x == that.x && this.y == that.y && this.z == that.z && Objects.equals(this.block, that.block) && Arrays.equals(this.properties, that.properties);
     }
 
     @Override
     public int hashCode(){
-        int result = this.block.hashCode();
+        int result = Objects.hashCode(this.block);
         result = 31 * result + Arrays.hashCode(this.properties);
         result = 31 * result + this.x;
         result = 31 * result + this.y;

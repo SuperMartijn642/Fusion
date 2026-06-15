@@ -55,13 +55,24 @@ public class MatchStateInFrontConnectionPredicate implements ConnectionPredicate
     public static final Serializer<MatchStateInFrontConnectionPredicate> SERIALIZER = new Serializer<>() {
         @Override
         public MatchStateInFrontConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
+            boolean ignoreMissing = false;
+            if(json.has("ignore_missing")){
+                if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
+                    throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
+                ignoreMissing = json.get("ignore_missing").getAsBoolean();
+            }
+
             if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
                 throw new JsonParseException("Match state predicate must have string property 'block'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
-            if(!Registry.BLOCK.containsKey(identifier))
+            if(!Registry.BLOCK.containsKey(identifier)){
+                if(ignoreMissing)
+                    //noinspection unchecked
+                    return new MatchStateInFrontConnectionPredicate(null, new Pair[0]);
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
+            }
             Block block = Registry.BLOCK.get(identifier);
 
             List<Pair<Property<?>,Set<?>>> properties = new ArrayList<>();
@@ -128,7 +139,8 @@ public class MatchStateInFrontConnectionPredicate implements ConnectionPredicate
     private MatchStateInFrontConnectionPredicate(Block block, Pair<Property<?>,Set<?>>[] properties){
         this.block = block;
         this.properties = properties;
-        this.computeStates();
+        if(this.block != null)
+            this.computeStates();
     }
 
     private <T extends Comparable<T>> void computeStates(){
@@ -164,6 +176,8 @@ public class MatchStateInFrontConnectionPredicate implements ConnectionPredicate
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
+        if(this.block == null)
+            return false;
         if(this.compareStates)
             return this.states.contains(blockInFront);
         if(blockInFront.getBlock() != this.block)
@@ -177,6 +191,8 @@ public class MatchStateInFrontConnectionPredicate implements ConnectionPredicate
 
     @Override
     public ConnectionPredicate simplify(){
+        if(this.block == null)
+            return DefaultConnectionPredicates.never();
         List<Pair<Property<?>,Set<?>>> simplifiedProperties = new ArrayList<>(this.properties.length);
         for(Pair<Property<?>,Set<?>> pair : this.properties){
             Set<?> allowedValues = pair.right();
@@ -199,15 +215,14 @@ public class MatchStateInFrontConnectionPredicate implements ConnectionPredicate
 
     @Override
     public final boolean equals(Object o){
-        if(this == o) return true;
         if(!(o instanceof MatchStateInFrontConnectionPredicate that)) return false;
 
-        return this.block.equals(that.block) && Arrays.equals(this.properties, that.properties);
+        return Objects.equals(this.block, that.block) && Arrays.equals(this.properties, that.properties);
     }
 
     @Override
     public int hashCode(){
-        int result = this.block.hashCode();
+        int result = Objects.hashCode(this.block);
         result = 31 * result + Arrays.hashCode(this.properties);
         return result;
     }

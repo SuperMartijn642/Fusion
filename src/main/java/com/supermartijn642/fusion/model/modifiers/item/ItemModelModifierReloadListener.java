@@ -37,7 +37,7 @@ public class ItemModelModifierReloadListener {
 
     private static final String LOCATION = "fusion/model_modifiers/items";
     private static final FileToIdConverter ID_CONVERTER = FileToIdConverter.json(LOCATION);
-    private static final int DEFAULT_PRIORITY = 100;
+    public static final int DEFAULT_PRIORITY = 100;
 
     public static final ItemModelModifierReloadListener INSTANCE = new ItemModelModifierReloadListener();
 

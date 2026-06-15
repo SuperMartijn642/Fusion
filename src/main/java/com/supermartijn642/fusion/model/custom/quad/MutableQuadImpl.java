@@ -42,7 +42,6 @@ public class MutableQuadImpl implements MutableQuad {
     private TextureAtlasSprite sprite;
     private ChunkSectionLayer chunkLayer;
     private RenderType itemRenderType;
-    private Transparency transparency;
     private int tintIndex = -1;
     private boolean shade = true;
     private int lightEmission = 0;
@@ -214,7 +213,7 @@ public class MutableQuadImpl implements MutableQuad {
     @Override
     public MutableQuad material(ModelMaterial.Resolved material){
         this.sprite = material.sprite();
-        this.transparency(material.forceTranslucent() ? Transparency.TRANSLUCENT : material.sprite().transparency());
+        this.renderLayers(material.forceTranslucent() ? Transparency.TRANSLUCENT : material.sprite().transparency());
         this.invalidateMaterialInfoCache();
         return this;
     }
@@ -222,23 +221,16 @@ public class MutableQuadImpl implements MutableQuad {
     @Override
     public MutableQuad material(Material.Baked material){
         this.sprite = material.sprite();
-        this.transparency(material.forceTranslucent() ? Transparency.TRANSLUCENT : material.sprite().transparency());
-        this.invalidateMaterialInfoCache();
-        return this;
-    }
-
-    @Override
-    public MutableQuad sprite(TextureAtlasSprite sprite, boolean copyTransparency){
-        this.sprite = sprite;
-        if(copyTransparency)
-            this.transparency(sprite.transparency());
+        this.renderLayers(material.forceTranslucent() ? Transparency.TRANSLUCENT : material.sprite().transparency());
         this.invalidateMaterialInfoCache();
         return this;
     }
 
     @Override
     public MutableQuad sprite(TextureAtlasSprite sprite){
-        return this.sprite(sprite, true);
+        this.sprite = sprite;
+        this.invalidateMaterialInfoCache();
+        return this;
     }
 
     @Override
@@ -247,10 +239,9 @@ public class MutableQuadImpl implements MutableQuad {
     }
 
     @Override
-    public MutableQuad transparency(Transparency transparency){
-        this.chunkLayer = null;
+    public MutableQuad renderLayers(Transparency transparency){
+        this.chunkLayer = ChunkSectionLayer.byTransparency(transparency);
         this.itemRenderType = null;
-        this.transparency = transparency;
         this.invalidateMaterialInfoCache();
         return this;
     }
@@ -272,12 +263,8 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public ChunkSectionLayer chunkLayer(){
-        if(this.chunkLayer == null){
-            if(this.transparency != null)
-                return ChunkSectionLayer.byTransparency(this.transparency);
-            else if(this.sprite != null)
-                return ChunkSectionLayer.byTransparency(this.sprite.transparency());
-        }
+        if(this.chunkLayer == null && this.sprite != null)
+            return ChunkSectionLayer.byTransparency(this.sprite.transparency());
         this.invalidateMaterialInfoCache();
         return this.chunkLayer;
     }
@@ -292,7 +279,9 @@ public class MutableQuadImpl implements MutableQuad {
     @Override
     public RenderType itemRenderType(){
         if(this.itemRenderType == null && this.sprite != null){
-            Transparency transparency = this.transparency == null ? this.sprite.transparency() : this.transparency;
+            Transparency transparency = this.chunkLayer == null ?
+                this.sprite.transparency() :
+                this.chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Transparency.TRANSPARENT_AND_TRANSLUCENT : this.chunkLayer == ChunkSectionLayer.CUTOUT ? Transparency.TRANSPARENT : Transparency.NONE;
             return TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
                 transparency.hasTranslucent() ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockItemSheet() :
                 transparency.hasTranslucent() ? Sheets.translucentItemSheet() : Sheets.cutoutItemSheet();
@@ -379,16 +368,21 @@ public class MutableQuadImpl implements MutableQuad {
             if(this.materialInfoCache == null){
                 if(this.sprite == null)
                     throw new IllegalStateException("No sprite was specified!");
-                Transparency transparency = this.transparency == null ? this.sprite.transparency() : this.transparency;
-                if(this.chunkLayer == null)
-                    this.chunkLayer = ChunkSectionLayer.byTransparency(transparency);
-                if(this.itemRenderType == null)
-                    this.itemRenderType = TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
+                ChunkSectionLayer chunkLayer = this.chunkLayer;
+                RenderType itemRenderType = this.itemRenderType;
+                if(chunkLayer == null)
+                    chunkLayer = ChunkSectionLayer.byTransparency(this.sprite.transparency());
+                if(itemRenderType == null){
+                    Transparency transparency = this.chunkLayer == null ?
+                        this.sprite.transparency() :
+                        this.chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Transparency.TRANSPARENT_AND_TRANSLUCENT : this.chunkLayer == ChunkSectionLayer.CUTOUT ? Transparency.TRANSPARENT : Transparency.NONE;
+                    itemRenderType = TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
                         transparency.hasTranslucent() ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockItemSheet() :
                         transparency.hasTranslucent() ? Sheets.translucentItemSheet() : Sheets.cutoutItemSheet();
+                }
                 this.materialInfoCache = new BakedQuad.MaterialInfo(
                     this.sprite,
-                    this.chunkLayer, this.itemRenderType,
+                    chunkLayer, itemRenderType,
                     this.tintIndex,
                     !this.emissive && this.shade,
                     this.emissive ? 15 : this.lightEmission
@@ -433,15 +427,20 @@ public class MutableQuadImpl implements MutableQuad {
             atlas = QuadAtlas.BLOCK;
         quad.atlas(atlas);
 
-        Transparency transparency = this.transparency == null ? this.sprite.transparency() : this.transparency;
-        if(this.chunkLayer == null)
-            this.chunkLayer = ChunkSectionLayer.byTransparency(transparency);
-        quad.chunkLayer(this.chunkLayer);
-        if(this.itemRenderType == null)
-            this.itemRenderType = TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
+        ChunkSectionLayer chunkLayer = this.chunkLayer;
+        if(chunkLayer == null)
+            chunkLayer = ChunkSectionLayer.byTransparency(this.sprite.transparency());
+        quad.chunkLayer(chunkLayer);
+        RenderType itemRenderType = this.itemRenderType;
+        if(itemRenderType == null){
+            Transparency transparency = this.chunkLayer == null ?
+                this.sprite.transparency() :
+                this.chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Transparency.TRANSPARENT_AND_TRANSLUCENT : this.chunkLayer == ChunkSectionLayer.CUTOUT ? Transparency.TRANSPARENT : Transparency.NONE;
+            itemRenderType = TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
                 transparency.hasTranslucent() ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockItemSheet() :
                 transparency.hasTranslucent() ? Sheets.translucentItemSheet() : Sheets.cutoutItemSheet();
-        quad.itemRenderType(this.itemRenderType);
+        }
+        quad.itemRenderType(itemRenderType);
         quad.animated(this.sprite.contents().isAnimated());
         quad.tintIndex(this.tintIndex);
         quad.diffuseShade(!this.emissive && this.shade);

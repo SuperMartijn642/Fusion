@@ -165,6 +165,14 @@ public class ItemModelModifierReloadListener {
     }
 
     private void parseResource(JsonObject json, ResourceLocation location){
+        // Get whether to ignore missing target entries
+        boolean ignoreMissingTargets = false;
+        if(json.has("ignore_missing_targets")){
+            if(!json.get("ignore_missing_targets").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing_targets").isBoolean())
+                throw new JsonParseException("Property 'ignore_missing_targets' must be a boolean!");
+            ignoreMissingTargets = json.get("ignore_missing_targets").getAsBoolean();
+        }
+
         // Get the targets
         if(!json.has("targets") || !json.get("targets").isJsonArray())
             throw new JsonParseException("Model modifier must have array property 'targets'!");
@@ -177,8 +185,11 @@ public class ItemModelModifierReloadListener {
                 if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
                     throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!");
                 ResourceLocation identifier = new ResourceLocation(element.getAsString());
-                if(!ForgeRegistries.ITEMS.containsKey(identifier))
+                if(!ForgeRegistries.ITEMS.containsKey(identifier)){
+                    if(ignoreMissingTargets)
+                        continue;
                     throw new JsonParseException("Could not find an item for target '" + identifier + "'!");
+                }
                 targets.add(identifier);
             }
         }catch(JsonParseException e){

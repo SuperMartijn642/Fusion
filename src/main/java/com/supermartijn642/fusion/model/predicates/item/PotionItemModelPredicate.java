@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.predicates.item;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.predicates.item.DefaultItemModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
@@ -27,14 +28,24 @@ public class PotionItemModelPredicate implements ItemModelPredicate {
     public static final Serializer<PotionItemModelPredicate> SERIALIZER = new Serializer<PotionItemModelPredicate>() {
         @Override
         public PotionItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
+            boolean ignoreMissing = false;
+            if(json.has("ignore_missing")){
+                if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
+                    throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
+                ignoreMissing = json.get("ignore_missing").getAsBoolean();
+            }
+
             if(!json.has("potion") || !json.get("potion").isJsonPrimitive() || !json.getAsJsonPrimitive("potion").isString())
                 throw new JsonParseException("Potion-predicate must have string property 'enchantment'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("potion").getAsString()))
-                throw new JsonParseException("Property 'enchantment' must be a valid identifier, not '" + json.get("potion").getAsString() + "'!");
+                throw new JsonParseException("Property 'potion' must be a valid identifier, not '" + json.get("potion").getAsString() + "'!");
             ResourceLocation potionIdentifier = new ResourceLocation(json.get("potion").getAsString());
             PotionType potion = ForgeRegistries.POTION_TYPES.getValue(potionIdentifier);
-            if(potion == null || potion == PotionTypes.EMPTY)
+            if(potion == null || potion == PotionTypes.EMPTY){
+                if(ignoreMissing)
+                    return new PotionItemModelPredicate(null);
                 throw new JsonParseException("Unknown potion '" + potionIdentifier + "'!");
+            }
             return new PotionItemModelPredicate(potion);
         }
 
@@ -54,7 +65,14 @@ public class PotionItemModelPredicate implements ItemModelPredicate {
 
     @Override
     public boolean test(ItemStack stack){
+        if(this.potion == null)
+            return false;
         return PotionUtils.getPotionFromItem(stack) == this.potion;
+    }
+
+    @Override
+    public ItemModelPredicate simplify(){
+        return this.potion == null ? DefaultItemModelPredicates.never() : this;
     }
 
     @Override

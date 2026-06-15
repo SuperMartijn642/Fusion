@@ -175,6 +175,14 @@ public class BlockModelModifierReloadListener {
     }
 
     private void parseResource(JsonObject json, ResourceLocation location){
+        // Get whether to ignore missing target entries
+        boolean ignoreMissingTargets = false;
+        if(json.has("ignore_missing_targets")){
+            if(!json.get("ignore_missing_targets").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing_targets").isBoolean())
+                throw new JsonParseException("Property 'ignore_missing_targets' must be a boolean!");
+            ignoreMissingTargets = json.get("ignore_missing_targets").getAsBoolean();
+        }
+
         // Get the targets
         if(!json.has("targets") || !json.get("targets").isJsonArray())
             throw new JsonParseException("Model modifier must have array property 'targets'!");
@@ -187,13 +195,16 @@ public class BlockModelModifierReloadListener {
                         throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!!");
                     ResourceLocation identifier = new ResourceLocation(element.getAsString());
                     Optional<Block> block = Registry.BLOCK.getOptional(identifier);
-                    if(!block.isPresent())
+                    if(!block.isPresent()){
+                        if(ignoreMissingTargets)
+                            continue;
                         throw new JsonParseException("Could not find a block for identifier '" + identifier + "'!");
+                    }
                     block.get().getStateDefinition().getPossibleStates().stream()
                         .map(BlockModelShapes::stateToModelLocation)
                         .forEach(targets::add);
                 }else if(element.isJsonObject()){ // Handle blocks with specific state properties
-                    parseTarget(element.getAsJsonObject())
+                    parseTarget(element.getAsJsonObject(), ignoreMissingTargets)
                         .map(BlockModelShapes::stateToModelLocation)
                         .forEach(targets::add);
                 }else
@@ -275,7 +286,7 @@ public class BlockModelModifierReloadListener {
             this.modifiers.computeIfAbsent(target, t -> new ArrayList<>(8)).add(properties);
     }
 
-    private static Stream<BlockState> parseTarget(JsonObject json){
+    private static Stream<BlockState> parseTarget(JsonObject json, boolean ignoreMissingTargets){
         // Block
         if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
             throw new JsonParseException("Entry must have string property 'block'!");
@@ -283,8 +294,11 @@ public class BlockModelModifierReloadListener {
             throw new JsonParseException("Property 'block' must be a valid identifier, not '" + json.get("block").getAsString() + "'!!");
         ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
         Optional<Block> optional = Registry.BLOCK.getOptional(identifier);
-        if(!optional.isPresent())
+        if(!optional.isPresent()){
+            if(ignoreMissingTargets)
+                return Stream.empty();
             throw new JsonParseException("Could not find a block for identifier '" + identifier + "'!");
+        }
         Block block = optional.get();
 
         // Properties

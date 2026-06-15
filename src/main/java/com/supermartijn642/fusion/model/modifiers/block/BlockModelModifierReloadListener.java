@@ -42,7 +42,7 @@ public class BlockModelModifierReloadListener {
 
     private static final String LOCATION = "fusion/model_modifiers/blocks";
     private static final FileToIdConverter ID_CONVERTER = FileToIdConverter.json(LOCATION);
-    private static final int DEFAULT_PRIORITY = 100;
+    public static final int DEFAULT_PRIORITY = 100;
 
     public static final BlockModelModifierReloadListener INSTANCE = new BlockModelModifierReloadListener();
 
@@ -369,7 +369,7 @@ public class BlockModelModifierReloadListener {
     }
 
     private static List<ModelEntry> parseModelEntry(JsonElement element){
-        if(!element.isJsonArray() || !element.isJsonObject() && (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()))
+        if(!element.isJsonArray() && !element.isJsonObject() && (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()))
             throw new JsonParseException("Must be an array, object, or string!");
 
         // Handle arrays

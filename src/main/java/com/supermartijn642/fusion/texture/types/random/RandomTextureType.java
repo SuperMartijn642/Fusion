@@ -275,7 +275,7 @@ public class RandomTextureType implements TextureType<RandomTextureData,Stitched
         };
     }
 
-    public static final int MAX_SIZE = 10;
+    public static final int MAX_SIZE = 100;
 
     @Override
     public RandomTextureData deserialize(JsonObject json) throws JsonParseException{

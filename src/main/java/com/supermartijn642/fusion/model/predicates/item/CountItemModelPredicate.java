@@ -139,4 +139,22 @@ public class CountItemModelPredicate implements ItemModelPredicate {
     public Serializer<? extends ItemModelPredicate> getSerializer(){
         return SERIALIZER;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof CountItemModelPredicate that)) return false;
+
+        return this.min == that.min && this.max == that.max && Float.compare(this.minPercentage, that.minPercentage) == 0 && Float.compare(this.maxPercentage, that.maxPercentage) == 0 && this.isMinPercentage == that.isMinPercentage && this.isMaxPercentage == that.isMaxPercentage;
+    }
+
+    @Override
+    public int hashCode(){
+        int result = this.min;
+        result = 31 * result + this.max;
+        result = 31 * result + Float.hashCode(this.minPercentage);
+        result = 31 * result + Float.hashCode(this.maxPercentage);
+        result = 31 * result + Boolean.hashCode(this.isMinPercentage);
+        result = 31 * result + Boolean.hashCode(this.isMaxPercentage);
+        return result;
+    }
 }

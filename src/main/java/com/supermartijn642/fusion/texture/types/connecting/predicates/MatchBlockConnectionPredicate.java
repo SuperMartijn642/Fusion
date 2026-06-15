@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionDirection;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionPredicate;
+import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.Direction;
@@ -28,13 +29,23 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
     public static final Serializer<MatchBlockConnectionPredicate> SERIALIZER = new Serializer<>() {
         @Override
         public MatchBlockConnectionPredicate deserialize(JsonObject json) throws JsonParseException{
+            boolean ignoreMissing = false;
+            if(json.has("ignore_missing")){
+                if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
+                    throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
+                ignoreMissing = json.get("ignore_missing").getAsBoolean();
+            }
+
             if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
                 throw new JsonParseException("Match block predicate must have string property 'block'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
-            if(!BuiltInRegistries.BLOCK.containsKey(identifier))
+            if(!BuiltInRegistries.BLOCK.containsKey(identifier)){
+                if(ignoreMissing)
+                    return new MatchBlockConnectionPredicate(null);
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
+            }
             Block block = BuiltInRegistries.BLOCK.get(identifier);
             return new MatchBlockConnectionPredicate(block);
         }
@@ -55,7 +66,12 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        return otherState.getBlock() == this.block;
+        return this.block != null && otherState.getBlock() == this.block;
+    }
+
+    @Override
+    public ConnectionPredicate simplify(){
+        return this.block == null ? DefaultConnectionPredicates.never() : this;
     }
 
     @Override
@@ -65,14 +81,13 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
 
     @Override
     public final boolean equals(Object o){
-        if(this == o) return true;
         if(!(o instanceof MatchBlockConnectionPredicate that)) return false;
 
-        return this.block.equals(that.block);
+        return Objects.equals(this.block, that.block);
     }
 
     @Override
     public int hashCode(){
-        return this.block.hashCode();
+        return Objects.hashCode(this.block);
     }
 }

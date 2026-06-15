@@ -33,6 +33,12 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
     public static final Serializer<BiomeEntityModelPredicate> SERIALIZER = new Serializer<>() {
         @Override
         public BiomeEntityModelPredicate deserialize(JsonObject json) throws JsonParseException{
+            if(json.has("ignore_missing")){
+                if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
+                    throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
+                // Ignore on this version
+            }
+
             if(!json.has("biomes") || !json.get("biomes").isJsonArray())
                 throw new JsonParseException("Biome-predicate must have array property 'biomes'!");
             Set<Identifier> biomes = new HashSet<>();

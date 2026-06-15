@@ -179,6 +179,14 @@ public class ItemModelModifierReloadListener {
     }
 
     private void parseResource(JsonObject json, Identifier location){
+        // Get whether to ignore missing target entries
+        boolean ignoreMissingTargets = false;
+        if(json.has("ignore_missing_targets")){
+            if(!json.get("ignore_missing_targets").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing_targets").isBoolean())
+                throw new JsonParseException("Property 'ignore_missing_targets' must be a boolean!");
+            ignoreMissingTargets = json.get("ignore_missing_targets").getAsBoolean();
+        }
+
         // Get the targets
         if(!json.has("targets") || !json.get("targets").isJsonArray())
             throw new JsonParseException("Model modifier must have array property 'targets'!");
@@ -192,8 +200,11 @@ public class ItemModelModifierReloadListener {
                     throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!");
                 Identifier identifier = Identifier.parse(element.getAsString());
                 Optional<Item> item = BuiltInRegistries.ITEM.getOptional(identifier);
-                if(item.isEmpty())
+                if(item.isEmpty()){
+                    if(ignoreMissingTargets)
+                        continue;
                     throw new JsonParseException("Could not find an item for target '" + identifier + "'!");
+                }
                 targets.add(identifier);
             }
         }catch(JsonParseException e){

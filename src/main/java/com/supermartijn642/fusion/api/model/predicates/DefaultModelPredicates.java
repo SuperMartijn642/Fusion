@@ -15,7 +15,7 @@ public final class DefaultModelPredicates {
      * Creates a generic predicate from a block state model predicate.
      * When possible, the block state is obtained from the item stack.
      */
-    static ModelPredicate blockStateWrapper(BlockStateModelPredicate predicate){
+    public static ModelPredicate blockStateWrapper(BlockStateModelPredicate predicate){
         return BlockStateWrapperModelPredicate.create(predicate);
     }
 
@@ -23,14 +23,14 @@ public final class DefaultModelPredicates {
      * Creates a generic predicate from an item model predicate.
      * When possible, the item is obtained from the block state.
      */
-    static ModelPredicate itemWrapper(ItemModelPredicate predicate){
+    public static ModelPredicate itemWrapper(ItemModelPredicate predicate){
         return ItemWrapperModelPredicate.create(predicate);
     }
 
     /**
      * Predicate that returns the result of the given predicates for block states and items separately.
      */
-    static ModelPredicate blockStateAndItem(BlockStateModelPredicate blockStatePredicate, ItemModelPredicate itemPredicate){
+    public static ModelPredicate blockStateAndItem(BlockStateModelPredicate blockStatePredicate, ItemModelPredicate itemPredicate){
         return BlockAndItemModelPredicate.create(blockStatePredicate, itemPredicate);
     }
 

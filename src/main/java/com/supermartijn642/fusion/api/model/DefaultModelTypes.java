@@ -2,10 +2,12 @@ package com.supermartijn642.fusion.api.model;
 
 import com.supermartijn642.fusion.api.model.types.CuboidModelDataBuilder;
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
+import com.supermartijn642.fusion.api.model.types.composite.CompositeModelData;
 import com.supermartijn642.fusion.api.model.types.connecting.ConnectingModelData;
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.model.types.base.BaseModelType;
+import com.supermartijn642.fusion.model.types.composite.CompositeModelType;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelType;
 import com.supermartijn642.fusion.model.types.cuboid.CuboidModelType;
 import com.supermartijn642.fusion.model.types.itemgenerator.ItemModelGeneratorModelType;
@@ -34,10 +36,10 @@ public final class DefaultModelTypes {
      * These models generate 3d geometry from 2d item textures.
      */
     public static final ModelType<ItemModelGenerator> ITEM_MODEL_GENERATOR = new ItemModelGeneratorModelType();
+
     /**
      * Model type which extends the vanilla model with some common properties and also allows for processing base texture properties.
      * @see BaseModelData
-     * @see DefaultTextureTypes#BASE
      */
     public static final ModelType<BaseModelData> BASE = BaseModelType.create();
     /**
@@ -46,4 +48,9 @@ public final class DefaultModelTypes {
      * @see DefaultTextureTypes#CONNECTING
      */
     public static final ModelType<ConnectingModelData> CONNECTING = new ConnectingModelType();
+    /**
+     * Model type that composes multiple models.
+     * @see CompositeModelData
+     */
+    public static final ModelType<CompositeModelData> COMPOSITE = new CompositeModelType();
 }

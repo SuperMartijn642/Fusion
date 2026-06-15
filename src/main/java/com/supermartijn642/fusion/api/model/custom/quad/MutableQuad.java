@@ -80,20 +80,13 @@ public interface MutableQuad extends QuadAccess {
 
     /**
      * Sets the material for the quad.
-     * @param sprite           texture atlas sprite for the quad
-     * @param copyTransparency whether to overwrite the current transparency properties with the transparency associated with the sprite.
-     */
-    MutableQuad sprite(TextureAtlasSprite sprite, boolean copyTransparency);
-
-    /**
-     * Sets the material for the quad.
      */
     MutableQuad sprite(TextureAtlasSprite sprite);
 
     /**
-     * Sets the transparency properties for the quad to those associated with the given transparency.
+     * Sets chunk layer and item render type to those associated with the given transparency.
      */
-    MutableQuad transparency(Transparency transparency);
+    MutableQuad renderLayers(Transparency transparency);
 
     /**
      * Sets chunk layer and item render type to use when rendering the quad.

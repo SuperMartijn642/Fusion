@@ -45,6 +45,12 @@ public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
     public static final Serializer<BiomeBlockStatePredicate> SERIALIZER = new Serializer<BiomeBlockStatePredicate>() {
         @Override
         public BiomeBlockStatePredicate deserialize(JsonObject json) throws JsonParseException{
+            if(json.has("ignore_missing")){
+                if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
+                    throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
+                // Ignore on this version
+            }
+
             if(!json.has("biomes") || !json.get("biomes").isJsonArray())
                 throw new JsonParseException("Biome-predicate must have array property 'biomes'!");
             Set<Biome> biomes = new HashSet<>();

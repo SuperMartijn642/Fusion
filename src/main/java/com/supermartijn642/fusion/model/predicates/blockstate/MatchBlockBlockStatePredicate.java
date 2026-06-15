@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.block.Block;
@@ -34,14 +35,24 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
     public static final Serializer<MatchBlockBlockStatePredicate> SERIALIZER = new Serializer<MatchBlockBlockStatePredicate>() {
         @Override
         public MatchBlockBlockStatePredicate deserialize(JsonObject json) throws JsonParseException{
+            boolean ignoreMissing = false;
+            if(json.has("ignore_missing")){
+                if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
+                    throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
+                ignoreMissing = json.get("ignore_missing").getAsBoolean();
+            }
+
             if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
                 throw new JsonParseException("Match block predicate must have string property 'block'!");
             if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
                 throw new JsonParseException("Property 'block' must be a valid identifier!");
             ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
             Optional<Block> block = Registry.BLOCK.getOptional(identifier);
-            if(!block.isPresent())
+            if(!block.isPresent()){
+                if(ignoreMissing)
+                    return new MatchBlockBlockStatePredicate(null, 0, 0, 0);
                 throw new JsonParseException("Unknown block '" + identifier + "'!");
+            }
             int x = 0, y = 0, z = 0;
             if(json.has("offset")){
                 if(!json.get("offset").isJsonArray())
@@ -83,7 +94,7 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
 
     private MatchBlockBlockStatePredicate(Block block, int x, int y, int z){
         this.block = block;
-        this.isAir = block.defaultBlockState().isAir();
+        this.isAir = block != null && block.defaultBlockState().isAir();
         this.x = x;
         this.y = y;
         this.z = z;
@@ -92,6 +103,8 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
 
     @Override
     public boolean test(@Nullable IEnviromentBlockReader level, @Nullable BlockPos pos, @Nullable BlockState state){
+        if(this.block == null)
+            return false;
         if(this.hasOffset || state == null){
             if(level == null || pos == null)
                 return this.isAir;
@@ -100,6 +113,11 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
             state = level.getBlockState(pos);
         }
         return state.getBlock() == this.block;
+    }
+
+    @Override
+    public BlockStateModelPredicate simplify(){
+        return this.block == null ? DefaultBlockStateModelPredicates.never() : this;
     }
 
     @Override
@@ -112,12 +130,12 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
         if(!(o instanceof MatchBlockBlockStatePredicate)) return false;
 
         MatchBlockBlockStatePredicate that = (MatchBlockBlockStatePredicate)o;
-        return this.x == that.x && this.y == that.y && this.z == that.z && this.block.equals(that.block);
+        return this.x == that.x && this.y == that.y && this.z == that.z && Objects.equals(this.block, that.block);
     }
 
     @Override
     public int hashCode(){
-        int result = this.block.hashCode();
+        int result = Objects.hashCode(this.block);
         result = 31 * result + this.x;
         result = 31 * result + this.y;
         result = 31 * result + this.z;

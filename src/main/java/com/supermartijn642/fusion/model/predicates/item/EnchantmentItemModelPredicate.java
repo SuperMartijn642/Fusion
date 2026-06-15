@@ -42,6 +42,12 @@ public class EnchantmentItemModelPredicate implements ItemModelPredicate {
     public static final Serializer<EnchantmentItemModelPredicate> SERIALIZER = new Serializer<EnchantmentItemModelPredicate>() {
         @Override
         public EnchantmentItemModelPredicate deserialize(JsonObject json) throws JsonParseException{
+            if(json.has("ignore_missing")){
+                if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
+                    throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
+                // Ignore on this version
+            }
+
             // Enchantment
             if(!json.has("enchantment") || !json.get("enchantment").isJsonPrimitive() || !json.getAsJsonPrimitive("enchantment").isString())
                 throw new JsonParseException("Item-predicate must have string property 'enchantment'!");

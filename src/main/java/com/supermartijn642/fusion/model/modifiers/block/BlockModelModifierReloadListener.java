@@ -191,6 +191,14 @@ public class BlockModelModifierReloadListener {
     }
 
     private void parseResource(JsonObject json, Identifier location){
+        // Get whether to ignore missing target entries
+        boolean ignoreMissingTargets = false;
+        if(json.has("ignore_missing_targets")){
+            if(!json.get("ignore_missing_targets").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing_targets").isBoolean())
+                throw new JsonParseException("Property 'ignore_missing_targets' must be a boolean!");
+            ignoreMissingTargets = json.get("ignore_missing_targets").getAsBoolean();
+        }
+
         // Get the targets
         if(!json.has("targets") || !json.get("targets").isJsonArray())
             throw new JsonParseException("Model modifier must have array property 'targets'!");
@@ -203,11 +211,14 @@ public class BlockModelModifierReloadListener {
                         throw new JsonParseException("Target must be a valid identifier, not '" + element.getAsString() + "'!");
                     Identifier identifier = Identifier.parse(element.getAsString());
                     Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
-                    if(block.isEmpty())
+                    if(block.isEmpty()){
+                        if(ignoreMissingTargets)
+                            continue;
                         throw new JsonParseException("Could not find a block for identifier '" + identifier + "'!");
+                    }
                     targets.addAll(block.get().getStateDefinition().getPossibleStates());
                 }else if(element.isJsonObject()) // Handle blocks with specific state properties
-                    parseTarget(element.getAsJsonObject()).forEach(targets::add);
+                    parseTarget(element.getAsJsonObject(), ignoreMissingTargets).forEach(targets::add);
                 else
                     throw new JsonParseException("Array property 'targets' must only contain objects and strings!");
             }
@@ -287,7 +298,7 @@ public class BlockModelModifierReloadListener {
             this.modifiers.computeIfAbsent(target, t -> new ArrayList<>(8)).add(properties);
     }
 
-    private static Stream<BlockState> parseTarget(JsonObject json){
+    private static Stream<BlockState> parseTarget(JsonObject json, boolean ignoreMissingTargets){
         // Block
         if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
             throw new JsonParseException("Entry must have string property 'block'!");
@@ -295,8 +306,11 @@ public class BlockModelModifierReloadListener {
             throw new JsonParseException("Property 'block' must be a valid identifier, not '" + json.get("block").getAsString() + "'!!");
         Identifier identifier = Identifier.parse(json.get("block").getAsString());
         Optional<Block> optional = BuiltInRegistries.BLOCK.getOptional(identifier);
-        if(optional.isEmpty())
+        if(optional.isEmpty()){
+            if(ignoreMissingTargets)
+                return Stream.empty();
             throw new JsonParseException("Could not find a block for identifier '" + identifier + "'!");
+        }
         Block block = optional.get();
 
         // Properties

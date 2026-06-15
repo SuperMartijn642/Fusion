@@ -43,6 +43,7 @@ public class FusionClient implements ClientModInitializer {
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("cuboid"), DefaultModelTypes.CUBOID);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("base"), DefaultModelTypes.BASE);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("connecting"), DefaultModelTypes.CONNECTING);
+        FusionModelTypeRegistry.registerModelType(Fusion.identifier("composite"), DefaultModelTypes.COMPOSITE);
         // Register default connection predicates
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("true"), TrueConnectionPredicate.SERIALIZER);
         FusionConnectionPredicateRegistry.registerConnectionPredicate(Fusion.identifier("false"), FalseConnectionPredicate.SERIALIZER);

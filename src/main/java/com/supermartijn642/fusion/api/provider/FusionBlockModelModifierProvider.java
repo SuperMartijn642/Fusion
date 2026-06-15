@@ -1,18 +1,21 @@
 package com.supermartijn642.fusion.api.provider;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import com.google.common.collect.ImmutableList;
+import com.google.gson.*;
 import com.supermartijn642.core.generator.ResourceCache;
 import com.supermartijn642.core.generator.ResourceGenerator;
 import com.supermartijn642.core.generator.ResourceType;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.FusionBlockStateModelPredicateRegistry;
 import com.supermartijn642.fusion.api.util.Pair;
+import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierReloadListener;
 import net.minecraft.block.Block;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -50,6 +53,9 @@ public abstract class FusionBlockModelModifierProvider extends ResourceGenerator
 
     private JsonObject toJson(ModifierBuilder modifier){
         JsonObject json = new JsonObject();
+        // Ignore missing targets
+        if(modifier.ignoreMissingTargets)
+            json.addProperty("ignore_missing_targets", true);
         // Targets
         if(modifier.targets.isEmpty())
             throw new IllegalArgumentException("Modifier '" + modifier.location + "' must have at least one target!");
@@ -83,18 +89,49 @@ public abstract class FusionBlockModelModifierProvider extends ResourceGenerator
                 targets.add(object);
             });
         json.add("targets", targets);
+        // Priority
+        if(modifier.priority != BlockModelModifierReloadListener.DEFAULT_PRIORITY)
+            json.addProperty("priority", modifier.priority);
+        // Default model overrides
+        if(!modifier.defaultModelOverrides.isEmpty())
+            json.add("default_model_overrides", serializeModelEntries(modifier.defaultModelOverrides));
         // Append models
-        if(!modifier.appendModels.isEmpty() || !modifier.paneCullingFix){
-            JsonArray appendModels = new JsonArray();
-            modifier.appendModels.stream()
-                .map(ResourceLocation::toString)
-                .sorted()
-                .forEach(appendModels::add);
-            json.add("append", appendModels);
+        if(!modifier.appendModels.isEmpty()){
+            JsonArray allSeries = new JsonArray();
+            for(List<ModelEntry> series : modifier.appendModels)
+                allSeries.add(serializeModelEntries(series));
+            json.add("append_models", allSeries);
         }
         // Pane culling fix
         if(modifier.paneCullingFix)
             json.addProperty("pane_culling_fix", true);
+        return json;
+    }
+
+    private static JsonElement serializeModelEntries(List<ModelEntry> entries){
+        if(entries.size() == 1)
+            return serializeModelEntry(entries.get(0));
+        JsonArray array = new JsonArray();
+        for(ModelEntry entry : entries)
+            array.add(serializeModelEntry(entry));
+        return array;
+    }
+
+    private static JsonElement serializeModelEntry(ModelEntry entry){
+        if(entry.conditions.isEmpty() && entry.showBreakingOverlay == null)
+            return new JsonPrimitive(entry.model.toString());
+        JsonObject json = new JsonObject();
+        json.addProperty("model", entry.model.toString());
+        if(entry.showBreakingOverlay != null)
+            json.addProperty("show_breaking_overlay", entry.showBreakingOverlay);
+        if(entry.conditions.size() == 1)
+            json.add("conditions", FusionBlockStateModelPredicateRegistry.serializeBlockStateModelPredicate(entry.conditions.get(0)));
+        else if(!entry.conditions.isEmpty()){
+            JsonArray conditions = new JsonArray();
+            for(BlockStateModelPredicate condition : entry.conditions)
+                conditions.add(FusionBlockStateModelPredicateRegistry.serializeBlockStateModelPredicate(condition));
+            json.add("conditions", conditions);
+        }
         return json;
     }
 
@@ -118,7 +155,10 @@ public abstract class FusionBlockModelModifierProvider extends ResourceGenerator
     public static final class ModifierBuilder {
         private final ResourceLocation location;
         private final Map<ResourceLocation,Map<IProperty<?>,Set<Object>>> targets = new HashMap<>();
-        private final Set<ResourceLocation> appendModels = new HashSet<>();
+        private boolean ignoreMissingTargets = false;
+        private int priority = BlockModelModifierReloadListener.DEFAULT_PRIORITY;
+        private final List<ModelEntry> defaultModelOverrides = new ArrayList<>();
+        private final List<List<ModelEntry>> appendModels = new ArrayList<>();
         private boolean paneCullingFix = false;
 
         private ModifierBuilder(ResourceLocation location){
@@ -184,10 +224,58 @@ public abstract class FusionBlockModelModifierProvider extends ResourceGenerator
         }
 
         /**
-         * Adds the given model to be appended to any targeted block's model.
+         * Whether missing target entries should be ignored.
+         * Useful for modded blocks which may not always be present.
          */
-        public ModifierBuilder appendModel(ResourceLocation location){
-            this.appendModels.add(location);
+        public ModifierBuilder ignoreMissingTargets(boolean ignore){
+            this.ignoreMissingTargets = ignore;
+            return this;
+        }
+
+        /**
+         * Sets the priority for this modifier.
+         * Modifiers with a lower priority value are applied first.
+         * The default priority is 100.
+         */
+        public ModifierBuilder priority(int priority){
+            this.priority = priority;
+            return this;
+        }
+
+        /**
+         * Adds a default model override entry.
+         * The first override whose condition is met gets used instead of the default model for the block.
+         * @see ModelEntry#of(ResourceLocation)
+         */
+        public ModifierBuilder defaultModelOverride(ModelEntry entry){
+            this.defaultModelOverrides.add(entry);
+            return this;
+        }
+
+        /**
+         * Adds an append model entry. The entry gets applied when its condition is met.
+         * @see ModelEntry#of(ResourceLocation)
+         */
+        public ModifierBuilder appendModel(ModelEntry entry){
+            this.appendModels.add(ImmutableList.of(entry));
+            return this;
+        }
+
+        /**
+         * Adds an append model series. The first model in the series whose condition is met is applied.
+         * @see ModelEntry#of(ResourceLocation)
+         */
+        public ModifierBuilder appendModelSeries(ModelEntry... entries){
+            this.appendModels.add(ImmutableList.copyOf(entries));
+            return this;
+        }
+
+        /**
+         * Adds an append model series. The first model in the series whose condition is met is applied.
+         * @see ModelEntry#of(ResourceLocation)
+         */
+        public ModifierBuilder appendModelSeries(List<ModelEntry> entries){
+            this.appendModels.add(ImmutableList.copyOf(entries));
             return this;
         }
 
@@ -196,6 +284,38 @@ public abstract class FusionBlockModelModifierProvider extends ResourceGenerator
          */
         public ModifierBuilder paneCullingFix(boolean enabled){
             this.paneCullingFix = enabled;
+            return this;
+        }
+    }
+
+    public static final class ModelEntry {
+
+        public static ModelEntry of(ResourceLocation location){
+            return new ModelEntry(location);
+        }
+
+        private final ResourceLocation model;
+        private final List<BlockStateModelPredicate> conditions = new ArrayList<>();
+        private Boolean showBreakingOverlay;
+
+        private ModelEntry(ResourceLocation model){
+            this.model = model;
+        }
+
+        /**
+         * Adds the given conditions to this model entry.
+         * @see DefaultBlockStateModelPredicates
+         */
+        public ModelEntry conditions(BlockStateModelPredicate... predicates){
+            this.conditions.addAll(Arrays.asList(predicates));
+            return this;
+        }
+
+        /**
+         * Whether to show the breaking overlay on this model entry.
+         */
+        public ModelEntry showBreakingOverlay(@Nullable Boolean show){
+            this.showBreakingOverlay = show;
             return this;
         }
     }

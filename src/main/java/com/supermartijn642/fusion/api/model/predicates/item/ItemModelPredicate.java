@@ -1,5 +1,7 @@
 package com.supermartijn642.fusion.api.model.predicates.item;
 
+import com.supermartijn642.fusion.api.model.predicates.DefaultModelPredicates;
+import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
@@ -40,6 +42,14 @@ public interface ItemModelPredicate {
     @ApiStatus.NonExtendable
     default boolean alwaysFalse(){
         return this == DefaultItemModelPredicates.never();
+    }
+
+    /**
+     * Wraps this predicate as a model predicate using {@link DefaultModelPredicates#itemWrapper}.
+     */
+    @ApiStatus.NonExtendable
+    default ModelPredicate asModelPredicate(){
+        return DefaultModelPredicates.itemWrapper(this);
     }
 
     /**

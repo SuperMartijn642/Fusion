@@ -137,4 +137,19 @@ public class ModelTransformImpl implements ModelTransform {
         }
         return this.modelState;
     }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof ModelTransformImpl)) return false;
+
+        ModelTransformImpl that = (ModelTransformImpl)o;
+        return this.uvLock == that.uvLock && this.matrix.equals(that.matrix);
+    }
+
+    @Override
+    public int hashCode(){
+        int result = this.matrix.hashCode();
+        result = 31 * result + Boolean.hashCode(this.uvLock);
+        return result;
+    }
 }

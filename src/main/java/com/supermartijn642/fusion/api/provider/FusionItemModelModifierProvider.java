@@ -1,12 +1,12 @@
 package com.supermartijn642.fusion.api.provider;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.supermartijn642.fusion.api.model.predicates.item.DefaultItemModelPredicates;
+import com.google.gson.JsonPrimitive;
+import com.supermartijn642.fusion.api.model.predicates.item.FusionItemModelPredicateRegistry;
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
-import com.supermartijn642.fusion.api.util.Pair;
-import com.supermartijn642.fusion.model.predicates.item.AndItemModelPredicate;
-import com.supermartijn642.fusion.model.predicates.item.ItemModelPredicateRegistryImpl;
+import com.supermartijn642.fusion.model.modifiers.item.ItemModelModifierReloadListener;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
@@ -63,6 +63,9 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
 
     private JsonObject toJson(ModifierBuilder modifier){
         JsonObject json = new JsonObject();
+        // Ignore missing targets
+        if(modifier.ignoreMissingTargets)
+            json.addProperty("ignore_missing_targets", true);
         // Targets
         if(modifier.targets.isEmpty())
             throw new IllegalArgumentException("Modifier '" + modifier.location + "' must have at least one target!");
@@ -72,23 +75,44 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
             .map(Identifier::toString)
             .forEach(targets::add);
         json.add("targets", targets);
-        // Default model
-        if(modifier.defaultModel != null)
-            json.addProperty("default_model", modifier.defaultModel.toString());
-        // Conditional models
-        JsonArray models = new JsonArray();
-        for(Pair<Identifier,ItemModelPredicate> pair : modifier.conditionalModels){
-            JsonObject model = new JsonObject();
-            model.addProperty("model", pair.left().toString());
-            JsonArray conditions = new JsonArray();
-            List<ItemModelPredicate> predicates = pair.right() instanceof AndItemModelPredicate ? ((AndItemModelPredicate)pair.right()).getPredicates() : List.of(pair.right());
-            predicates.stream()
-                .map(ItemModelPredicateRegistryImpl::serializePredicate)
-                .forEach(conditions::add);
-            model.add("conditions", conditions);
-            models.add(model);
+        // Priority
+        if(modifier.priority != ItemModelModifierReloadListener.DEFAULT_PRIORITY)
+            json.addProperty("priority", modifier.priority);
+        // Default model overrides
+        if(!modifier.defaultModelOverrides.isEmpty())
+            json.add("default_model_overrides", serializeModelEntries(modifier.defaultModelOverrides));
+        // Append models
+        if(!modifier.appendModels.isEmpty()){
+            JsonArray allSeries = new JsonArray(modifier.appendModels.size());
+            for(List<ModelEntry> series : modifier.appendModels)
+                allSeries.add(serializeModelEntries(series));
+            json.add("append_models", allSeries);
         }
-        json.add("models", models);
+        return json;
+    }
+
+    private static JsonElement serializeModelEntries(List<ModelEntry> entries){
+        if(entries.size() == 1)
+            return serializeModelEntry(entries.get(0));
+        JsonArray array = new JsonArray(entries.size());
+        for(ModelEntry entry : entries)
+            array.add(serializeModelEntry(entry));
+        return array;
+    }
+
+    private static JsonElement serializeModelEntry(ModelEntry entry){
+        if(entry.conditions.isEmpty())
+            return new JsonPrimitive(entry.model.toString());
+        JsonObject json = new JsonObject();
+        json.addProperty("model", entry.model.toString());
+        if(entry.conditions.size() == 1)
+            json.add("conditions", FusionItemModelPredicateRegistry.serializeItemModelPredicate(entry.conditions.get(0)));
+        else if(!entry.conditions.isEmpty()){
+            JsonArray conditions = new JsonArray(entry.conditions.size());
+            for(ItemModelPredicate condition : entry.conditions)
+                conditions.add(FusionItemModelPredicateRegistry.serializeItemModelPredicate(condition));
+            json.add("conditions", conditions);
+        }
         return json;
     }
 
@@ -112,8 +136,10 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
     public static final class ModifierBuilder {
         private final Identifier location;
         private final Set<Identifier> targets = new HashSet<>();
-        private final List<Pair<Identifier,ItemModelPredicate>> conditionalModels = new ArrayList<>();
-        private Identifier defaultModel = null;
+        private boolean ignoreMissingTargets = false;
+        private int priority = ItemModelModifierReloadListener.DEFAULT_PRIORITY;
+        private final List<ModelEntry> defaultModelOverrides = new ArrayList<>();
+        private final List<List<ModelEntry>> appendModels = new ArrayList<>();
 
         private ModifierBuilder(Identifier location){
             this.location = location;
@@ -145,21 +171,81 @@ public abstract class FusionItemModelModifierProvider implements DataProvider {
         }
 
         /**
-         * Sets the default model to use when none of the conditional models are applicable.
+         * Whether missing target entries should be ignored.
+         * Useful for modded items which may not always be present.
          */
-        public ModifierBuilder defaultModel(Identifier location){
-            this.defaultModel = location;
+        public ModifierBuilder ignoreMissingTargets(boolean ignore){
+            this.ignoreMissingTargets = ignore;
             return this;
         }
 
         /**
-         * Appends a conditional to this modifier.
-         * Note that the order in which conditional models are added may be relevant.
-         * The first conditional models for which its conditions are met will be used.
-         * @see DefaultItemModelPredicates
+         * Sets the priority for this modifier.
+         * Modifiers with a lower priority value are applied first.
+         * The default priority is 100.
          */
-        public ModifierBuilder conditionalModel(Identifier model, ItemModelPredicate condition){
-            this.conditionalModels.add(Pair.of(model, condition));
+        public ModifierBuilder priority(int priority){
+            this.priority = priority;
+            return this;
+        }
+
+        /**
+         * Adds a default model override entry.
+         * The first override whose condition is met gets used instead of the default model for the item.
+         * @see ModelEntry#of(Identifier)
+         */
+        public ModifierBuilder defaultModelOverride(ModelEntry entry){
+            this.defaultModelOverrides.add(entry);
+            return this;
+        }
+
+        /**
+         * Adds an append model entry. The entry gets applied when its condition is met.
+         * @see ModelEntry#of(Identifier)
+         */
+        public ModifierBuilder appendModel(ModelEntry entry){
+            this.appendModels.add(List.of(entry));
+            return this;
+        }
+
+        /**
+         * Adds an append model series. The first model in the series whose condition is met is applied.
+         * @see ModelEntry#of(Identifier)
+         */
+        public ModifierBuilder appendModelSeries(ModelEntry... entries){
+            this.appendModels.add(List.of(entries));
+            return this;
+        }
+
+        /**
+         * Adds an append model series. The first model in the series whose condition is met is applied.
+         * @see ModelEntry#of(Identifier)
+         */
+        public ModifierBuilder appendModelSeries(List<ModelEntry> entries){
+            this.appendModels.add(List.copyOf(entries));
+            return this;
+        }
+    }
+
+    public static final class ModelEntry {
+
+        public static ModelEntry of(Identifier location){
+            return new ModelEntry(location);
+        }
+
+        private final Identifier model;
+        private final List<ItemModelPredicate> conditions = new ArrayList<>();
+
+        private ModelEntry(Identifier model){
+            this.model = model;
+        }
+
+        /**
+         * Adds the given conditions to this model entry.
+         * @see ItemModelPredicate
+         */
+        public ModelEntry conditions(ItemModelPredicate... predicates){
+            this.conditions.addAll(Arrays.asList(predicates));
             return this;
         }
     }

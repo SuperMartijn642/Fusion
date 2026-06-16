@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import com.supermartijn642.fusion.util.TextureAtlases;
 import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MutableQuadViewImpl;
-import net.fabricmc.fabric.impl.client.indigo.renderer.render.AltItemRenderer;
+import net.fabricmc.fabric.impl.client.indigo.renderer.render.ExtendedItemFeatureRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.level.block.Blocks;
@@ -19,15 +19,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Created 07/09/2024 by SuperMartijn642
  */
 @SuppressWarnings("UnstableApiUsage")
-@Mixin(AltItemRenderer.class)
-public class AltItemRendererMixin {
+@Mixin(ExtendedItemFeatureRenderer.class)
+public class ExtendedItemFeatureRendererMixin {
 
     @Inject(
-        method = "tintQuad",
+        method = "bufferMain",
         at = @At("HEAD"),
         cancellable = true
     )
-    private void tintQuad(MutableQuadViewImpl quad, CallbackInfo ci){
+    private void bufferMain(MutableQuadViewImpl quad, CallbackInfo ci) {
         // In case texture has a custom tinting set, replace the original tinting
         if(quad.tintIndex() == 39216){
             TextureAtlasSprite sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlases.getBlocks()).spriteFinder().find(quad);
@@ -37,7 +37,6 @@ public class AltItemRendererMixin {
                 if(tinting != null){
                     int tint = QuadTintingHelper.getDefaultColor(tinting, Blocks.AIR.defaultBlockState());
                     quad.multiplyColor(tint);
-                    ci.cancel();
                 }
             }
         }

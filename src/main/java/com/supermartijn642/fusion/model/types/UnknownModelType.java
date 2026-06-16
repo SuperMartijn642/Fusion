@@ -120,9 +120,9 @@ public class UnknownModelType<T extends UnbakedModel> extends SimpleModelType<T>
         // Create dummy texture slots instance
         TextureSlots textureSlots = ModelGeometryImpl.createTextureSlots(materialResolver);
         // Create dummy model baker
-        MaterialBaker materialBaker = new MaterialBaker() {
+        MaterialBaker materialBaker = new MaterialBaker(context.getMaterial(ModelMaterial.missing()).sprite()) {
             @Override
-            public Material.Baked get(Material material, ModelDebugName name){
+            public @Nullable Material.Baked bake(Material material){
                 return context.getMaterial(ModelMaterial.of(material)).toBakedMaterial();
             }
 

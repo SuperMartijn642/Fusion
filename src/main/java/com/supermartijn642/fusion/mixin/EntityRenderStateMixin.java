@@ -31,4 +31,9 @@ public class EntityRenderStateMixin implements EntityRenderStateExtension {
         }
         this.models[layerIndex] = model;
     }
+
+    @Override
+    public boolean hasFusionContext(){
+        return this.models != null;
+    }
 }

@@ -37,7 +37,7 @@ public class ResourcePackListTipRenderer {
     public static boolean showWarningScreen(FusionPackMetadata metadata, boolean isVanillaCompatible, PackSelectionModel.EntryBase entry, Consumer<Boolean> confirmation){
         if(!isVanillaCompatible || metadata.isMinVersionSatisfied())
             return false;
-        Minecraft.getInstance().setScreen(new MinimumVersionWarningScreen(entry, confirmation));
+        Minecraft.getInstance().gui.setScreen(new MinimumVersionWarningScreen(entry, confirmation));
         return true;
     }
 }

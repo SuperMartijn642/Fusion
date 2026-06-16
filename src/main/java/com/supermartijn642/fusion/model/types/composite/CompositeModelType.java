@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
+import com.supermartijn642.fusion.api.model.predicates.DefaultModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.FusionModelPredicateRegistry;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
@@ -49,7 +50,27 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
 
     @Override
     public List<Either<Identifier,UntypedModelInstance>> getParents(CompositeModelData data){
-        return List.of();
+        List<Either<Identifier,UntypedModelInstance>> parents = new ArrayList<>();
+        for(List<CompositeModelData.ModelEntry> series : data.getModels()){
+            ModelPredicate composedConditions = DefaultModelPredicates.always();
+            for(CompositeModelData.ModelEntry modelEntry : series){
+                ModelPredicate condition = modelEntry.getCondition();
+                parents.add(Either.right(new ModelEntryModelInstance(
+                    modelEntry.getModel(),
+                    modelEntry.getTransform(),
+                    DefaultModelPredicates.and(composedConditions, condition)
+                )));
+                if(condition == null)
+                    composedConditions = DefaultModelPredicates.never();
+                else{
+                    composedConditions = DefaultModelPredicates.and(
+                        composedConditions,
+                        DefaultModelPredicates.not(condition)
+                    );
+                }
+            }
+        }
+        return parents;
     }
 
     @Override
@@ -103,12 +124,8 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
             List<CompositeBlockStateModel.ModelEntry> list = new ArrayList<>(series.size());
             for(CompositeModelData.ModelEntry entry : series){
                 // Bake model
-                Identifier identifier = entry.getModel().leftOrNull();
-                UntypedModelInstance model = entry.getModel().flatMap(
-                    context::getModelOrMissing,
-                    m -> m
-                );
-                BlockStateModel baked = model.bakeBlockStateModel(context, modelStack.push(model, identifier));
+                ModelEntryModelInstance model = new ModelEntryModelInstance(entry.getModel(), entry.getTransform(), null);
+                BlockStateModel baked = model.bakeBlockStateModel(context, modelStack.push(model));
                 // Simply conditions
                 ModelPredicate conditions = entry.getCondition();
                 if(conditions != null)
@@ -141,12 +158,8 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
             List<CompositeItemModel.ModelEntry> list = new ArrayList<>(series.size());
             for(CompositeModelData.ModelEntry entry : series){
                 // Bake model
-                Identifier identifier = entry.getModel().leftOrNull();
-                UntypedModelInstance model = entry.getModel().flatMap(
-                    context::getModelOrMissing,
-                    m -> m
-                );
-                ItemModel baked = model.bakeItemModel(context, modelStack.push(model, identifier));
+                ModelEntryModelInstance model = new ModelEntryModelInstance(entry.getModel(), entry.getTransform(), null);
+                ItemModel baked = model.bakeItemModel(context, modelStack.push(model));
                 // Simply conditions
                 ModelPredicate conditions = entry.getCondition();
                 if(conditions != null)

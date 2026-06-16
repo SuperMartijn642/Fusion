@@ -25,6 +25,7 @@ import com.supermartijn642.fusion.api.texture.types.connecting.predicates.Defaul
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.FusionConnectionPredicateRegistry;
 import com.supermartijn642.fusion.api.util.*;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
+import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import com.supermartijn642.fusion.util.Triple;
@@ -593,6 +594,22 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             else
                 throw new JsonParseException("Property 'connections' must be an object or array of objects!");
         }
+        // Sub-texture
+        if(json.has("sub_texture")){
+            if(!json.get("sub_texture").isJsonObject())
+                throw new JsonParseException("Property 'sub_texture' must be an object!");
+            try{
+                builder.subTexture(TextureTypeRegistryImpl.deserializeTextureData(json.get("sub_texture").getAsJsonObject()));
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to deserialize sub texture!");
+            }
+        }
+        // Per tile animation
+        if(json.has("per_tile_animation")){
+            if(!json.get("per_tile_animation").isJsonPrimitive() || !json.getAsJsonPrimitive("per_tile_animation").isBoolean())
+                throw new JsonParseException("Property 'per_tile_animation' must be a boolean!");
+            builder.perTileAnimation(json.get("per_tile_animation").getAsBoolean());
+        }
         return builder.build();
     }
 
@@ -606,6 +623,12 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         // Serialize connection predicate
         if(data.getConnectionPredicate() != null)
             json.add("connections", FusionConnectionPredicateRegistry.serializeConnectionPredicate(data.getConnectionPredicate()));
+        // Sub-texture
+        if(data.subTexture() != null && data.subTexture().getTextureType() != DefaultTextureTypes.VANILLA)
+            json.add("sub_texture", TextureTypeRegistryImpl.serializeTextureData(data.subTexture()));
+        // Per tile animation
+        if(data.perTileAnimation())
+            json.addProperty("per_tile_animation", true);
         return json.isEmpty() ? null : json;
     }
 

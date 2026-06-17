@@ -14,7 +14,7 @@ public class ScrollingTextureDataBuilderImpl implements ScrollingTextureData.Bui
     private BaseTextureData.QuadTinting tinting;
     private ScrollingTextureData.Position startPosition = ScrollingTextureData.Position.TOP_LEFT, endPosition = ScrollingTextureData.Position.BOTTOM_LEFT;
     private int frameTime = 10, frameWidth = 16, frameHeight = 16;
-    private ScrollingTextureData.LoopType loopType = ScrollingTextureData.LoopType.RESET;
+    private ScrollingTextureData.LoopType loopType = ScrollingTextureData.LoopType.WRAP;
     private int loopPause = 0;
 
     @Override

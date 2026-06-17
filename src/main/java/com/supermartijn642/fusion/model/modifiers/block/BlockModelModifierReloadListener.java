@@ -455,7 +455,7 @@ public class BlockModelModifierReloadListener {
         return ImmutableList.of(new ModelEntry(model, conditions, showBreakingOverlay));
     }
 
-    private static final class Properties{
+    private static final class Properties {
         private final int priority;
         private final ResourceLocation location;
         private final List<ModelEntry> defaultModelOverrides;
@@ -473,8 +473,8 @@ public class BlockModelModifierReloadListener {
         }
     }
 
-    private static final class ModelEntry{
-        static ModelEntry simple (ResourceLocation model){
+    private static final class ModelEntry {
+        static ModelEntry simple(ResourceLocation model){
             return new ModelEntry(model, null, null);
         }
 

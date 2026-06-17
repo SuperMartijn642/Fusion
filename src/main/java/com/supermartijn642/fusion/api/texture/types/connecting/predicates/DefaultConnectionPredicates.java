@@ -6,6 +6,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
+import java.util.List;
+
 /**
  * Used to create instances of the default {@link ConnectionPredicate}s provided by Fusion.
  * <p>
@@ -80,20 +82,20 @@ public final class DefaultConnectionPredicates {
     }
 
     /**
-     * Creates a predicate that is satisfied if the block in the connection direction is the same as the provided block.
-     * @param block block that should be matched
+     * Creates a predicate that is satisfied if the block in the connection direction matches one of the provided block.
+     * @param blocks blocks that should be matched
      */
-    public static ConnectionPredicate matchBlock(Block block){
-        return MatchBlockConnectionPredicate.create(block);
+    public static ConnectionPredicate matchBlock(Block... blocks){
+        return MatchBlockConnectionPredicate.create(blocks);
     }
 
     /**
-     * Creates a predicate that is satisfied if the state in the connection direction is the same as the provided block and matches the provided properties.
-     * @param block      block that should be matched
+     * Creates a predicate that is satisfied if the state in the connection direction matches one of the provided block and matches the provided properties.
+     * @param blocks     blocks that should be matched
      * @param properties property value pairs that should be matched
      */
-    public static ConnectionPredicate matchState(Block block, Pair<Property<?>,?>... properties){
-        return MatchStateConnectionPredicate.create(block, properties);
+    public static ConnectionPredicate matchState(List<Block> blocks, Pair<Property<?>,?>... properties){
+        return MatchStateConnectionPredicate.create(blocks, properties);
     }
 
     /**
@@ -105,20 +107,20 @@ public final class DefaultConnectionPredicates {
     }
 
     /**
-     * Creates a predicate that is satisfied if the block in front of the block in the connection direction is the same as the provided block.
-     * @param block block that should be matched
+     * Creates a predicate that is satisfied if the block in front of the block in the connection direction matches one of the provided block.
+     * @param blocks blocks that should be matched
      */
-    public static ConnectionPredicate matchBlockInFront(Block block){
-        return MatchBlockInFrontConnectionPredicate.create(block);
+    public static ConnectionPredicate matchBlockInFront(Block... blocks){
+        return MatchBlockInFrontConnectionPredicate.create(blocks);
     }
 
     /**
-     * Creates a predicate that is satisfied if the state in front of the state in the connection direction is the same as the provided block and matches the provided properties.
-     * @param block      block that should be matched
+     * Creates a predicate that is satisfied if the state in front of the state in the connection direction matches one of the provided block and matches the provided properties.
+     * @param blocks     blocks that should be matched
      * @param properties property value pairs that should be matched
      */
-    public static ConnectionPredicate matchStateInFront(Block block, Pair<Property<?>,?>... properties){
-        return MatchStateInFrontConnectionPredicate.create(block, properties);
+    public static ConnectionPredicate matchStateInFront(List<Block> blocks, Pair<Property<?>,?>... properties){
+        return MatchStateInFrontConnectionPredicate.create(blocks, properties);
     }
 
     /**

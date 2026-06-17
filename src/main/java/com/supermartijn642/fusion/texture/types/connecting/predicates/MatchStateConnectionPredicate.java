@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.texture.types.connecting.predicates;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -10,6 +9,7 @@ import com.supermartijn642.fusion.api.texture.types.connecting.predicates.Connec
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.DefaultConnectionPredicates;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.api.util.Serializer;
+import com.supermartijn642.fusion.util.BlockStateMatcher;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,36 +20,24 @@ import net.minecraft.world.level.block.state.properties.Property;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Created 22/02/2024 by SuperMartijn642
  */
 public class MatchStateConnectionPredicate implements ConnectionPredicate {
 
-    public static ConnectionPredicate create(Block block, Pair<Property<?>,?>... properties){
-        Map<Property<?>,List<Object>> propertyMap = new HashMap<>();
-        for(Pair<Property<?>,?> pair : properties){
-            Property<?> property = pair.left();
-            if(!block.getStateDefinition().getProperties().contains(property))
-                throw new IllegalArgumentException("Property '" + property.getName() + "' is not a property of block '" + BuiltInRegistries.BLOCK.getKey(block) + "'!");
-            Object value = pair.right();
-            if(!property.getPossibleValues().contains(value))
-                throw new IllegalArgumentException("Invalid value '" + value + "' for property '" + property.getName() + "'!");
-            propertyMap.computeIfAbsent(property, p -> new ArrayList<>()).add(value);
-        }
-        //noinspection unchecked
-        Pair<Property<?>,Set<?>>[] flattenedProperties = new Pair[propertyMap.size()];
-        int index = 0;
-        for(Map.Entry<Property<?>,List<Object>> entry : propertyMap.entrySet())
-            properties[index++] = Pair.of(entry.getKey(), Set.copyOf(entry.getValue()));
-        return new MatchStateConnectionPredicate(block, flattenedProperties);
+    public static ConnectionPredicate create(Collection<Block> blocks, Pair<Property<?>,?>... properties){
+        blocks = new HashSet<>(blocks);
+        Map<Block,BlockStateMatcher> matchers = new HashMap<>(blocks.size());
+        for(Block block : blocks)
+            matchers.put(block, BlockStateMatcher.create(block, properties));
+        return new MatchStateConnectionPredicate(matchers);
     }
 
     public static ConnectionPredicate create(BlockState state){
         //noinspection unchecked
-        return new MatchStateConnectionPredicate(state.getBlock(), state.getProperties().stream().map(p -> Pair.of(p, Set.of(state.getValue(p)))).toArray(Pair[]::new));
+        Pair<Property<?>,?>[] properties = state.getProperties().stream().map(p -> Pair.of(p, state.getValue(p))).toArray(Pair[]::new);
+        return create(List.of(state.getBlock()), properties);
     }
 
     public static final Serializer<MatchStateConnectionPredicate> SERIALIZER = new Serializer<>() {
@@ -62,151 +50,102 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
                 ignoreMissing = json.get("ignore_missing").getAsBoolean();
             }
 
-            if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
-                throw new JsonParseException("Match state predicate must have string property 'block'!");
-            if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
-                throw new JsonParseException("Property 'block' must be a valid identifier!");
-            Identifier identifier = Identifier.parse(json.get("block").getAsString());
-            Optional<Block> optional = BuiltInRegistries.BLOCK.getOptional(identifier);
-            if(optional.isEmpty()){
-                if(ignoreMissing)
-                    //noinspection unchecked
-                    return new MatchStateConnectionPredicate(null, new Pair[0]);
-                throw new JsonParseException("Unknown block '" + identifier + "'!");
+            // Parse blocks
+            if(!json.has("block") && !json.has("blocks"))
+                throw new JsonParseException("Match state predicate must have either property 'block' or 'blocks'!");
+            if(json.has("block") && json.has("blocks"))
+                throw new JsonParseException("Match state predicate must have either property 'block' or 'blocks', not both!");
+            List<Block> blocks;
+            if(json.has("block")){
+                if(!json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
+                    throw new JsonParseException("Property 'block' must be a string!");
+                if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
+                    throw new JsonParseException("Property 'block' must be a valid identifier, '" + json.get("block").getAsString() + "'!");
+                Identifier identifier = Identifier.parse(json.get("block").getAsString());
+                Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
+                if(block.isEmpty()){
+                    if(!ignoreMissing)
+                        throw new JsonParseException("Unknown block '" + identifier + "'!");
+                    blocks = List.of();
+                }else
+                    blocks = List.of(block.get());
+            }else{
+                if(!json.get("blocks").isJsonArray())
+                    throw new JsonParseException("Property 'blocks' must be an array!");
+                JsonArray array = json.getAsJsonArray("blocks");
+                blocks = new ArrayList<>(array.size());
+                for(JsonElement element : array){
+                    try{
+                        if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                            throw new JsonParseException("Entry must be a strings!");
+                        if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                            throw new JsonParseException("Entry must be a valid identifier, '" + element.getAsString() + "'!");
+                        Identifier identifier = Identifier.parse(element.getAsString());
+                        Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
+                        if(block.isEmpty()){
+                            if(!ignoreMissing)
+                                throw new JsonParseException("Unknown block '" + identifier + "'!");
+                            blocks = List.of();
+                        }else
+                            blocks = List.of(block.get());
+                    }catch(JsonParseException e){
+                        throw new JsonParseException("Failed to parse 'blocks' entry", e);
+                    }
+                }
             }
-            Block block = optional.get();
 
-            List<Pair<Property<?>,Set<?>>> properties = new ArrayList<>();
+            // Parse properties
             if(!json.has("properties") || !json.get("properties").isJsonObject())
-                throw new JsonParseException("Match block predicate must have object property 'properties'!");
+                throw new JsonParseException("Match state predicate must have object property 'properties'!");
             if(json.getAsJsonObject("properties").isEmpty())
                 throw new JsonParseException("At least one property must be specified for match state predicate!");
-            for(Map.Entry<String,JsonElement> entry : json.getAsJsonObject("properties").entrySet()){
-                // Parse the property
-                Property<?> property = block.getStateDefinition().getProperty(entry.getKey());
-                if(property == null)
-                    throw new JsonParseException("Block '" + identifier + "' does not have a property named '" + entry.getKey() + "'!");
-                // Parse the values
-                ImmutableSet.Builder<Object> builder = ImmutableSet.builder();
-                if(entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isString()){
-                    Optional<?> value = property.getValue(entry.getValue().getAsString());
-                    if(value.isEmpty())
-                        throw new JsonParseException("Unknown value '" + entry.getValue().getAsString() + "' for property '" + property.getName() + "' in block '" + identifier + "'!");
-                    builder.add(value.get());
-                }else if(entry.getValue().isJsonArray()){
-                    if(entry.getValue().getAsJsonArray().isEmpty())
-                        throw new JsonParseException("Valid values for property '" + property.getName() + "' cannot be empty!");
-                    for(JsonElement element : entry.getValue().getAsJsonArray()){
-                        if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
-                            throw new JsonParseException("Property '" + entry.getKey() + "' must be a string or an array of strings!");
-                        Optional<?> value = property.getValue(element.getAsString());
-                        if(value.isEmpty())
-                            throw new JsonParseException("Unknown value '" + element.getAsString() + "' for property '" + property.getName() + "' in block '" + identifier + "'!");
-                        builder.add(value.get());
-                    }
-                }else
-                    throw new JsonParseException("Property '" + entry.getKey() + "' must be a string or an array of strings!");
-                properties.add(Pair.of(property, builder.build()));
-            }
-            //noinspection unchecked
-            return new MatchStateConnectionPredicate(block, properties.toArray(Pair[]::new));
+            JsonObject properties = json.getAsJsonObject("properties");
+            Map<Block,BlockStateMatcher> matchers = new HashMap<>(blocks.size());
+            for(Block block : blocks)
+                matchers.put(block, BlockStateMatcher.parseProperties(block, properties));
+            return new MatchStateConnectionPredicate(matchers);
         }
 
         @Override
         public JsonObject serialize(MatchStateConnectionPredicate value){
             JsonObject json = new JsonObject();
-            json.addProperty("block", BuiltInRegistries.BLOCK.getKey(value.block).toString());
-            JsonObject properties = new JsonObject();
-            Arrays.stream(value.properties)
-                .map(p -> p.mapRight(values -> {
-                    JsonArray array = new JsonArray(values.size());
-                    //noinspection rawtypes,unchecked
-                    values.stream().map(v -> ((Property)p.left()).getName((Comparable)v)).sorted().forEach(array::add);
-                    return array;
-                }))
-                .map(p -> p.mapLeft(Property::getName))
-                .sorted(Comparator.comparing(Pair::left))
-                .forEach(pair -> properties.add(pair.left(), pair.right()));
-            json.add("properties", properties);
+            if(value.blocks.size() == 1)
+                json.addProperty("block", BuiltInRegistries.BLOCK.getKey(value.blocks.keySet().iterator().next()).toString());
+            else{
+                JsonArray blocks = new JsonArray(value.blocks.size());
+                value.blocks.keySet().stream()
+                    .map(b -> BuiltInRegistries.BLOCK.getKey(b).toString())
+                    .sorted()
+                    .forEach(blocks::add);
+                json.add("blocks", blocks);
+            }
+            if(value.blocks.isEmpty())
+                json.add("properties", new JsonArray());
+            else
+                json.add("properties", BlockStateMatcher.serializeProperties(value.blocks.values().iterator().next()));
             return json;
         }
     };
 
-    private final Block block;
-    private final Pair<Property<?>,Set<?>>[] properties;
-    private final boolean compareStates;
-    private final Set<BlockState> states;
+    private final Map<Block,BlockStateMatcher> blocks;
+    private final boolean containsAir;
 
-    private MatchStateConnectionPredicate(Block block, Pair<Property<?>,Set<?>>[] properties){
-        this.block = block;
-        this.properties = properties;
-        this.states = block == null ? null : computeStates(block, properties);
-        this.compareStates = this.states != null;
-    }
-
-    public static <T extends Comparable<T>> Set<BlockState> computeStates(Block block, Pair<Property<?>,Set<?>>[] properties){
-        // Compute the number of states matching this predicate
-        Set<Property<?>> unrestrictedProperties = new HashSet<>(block.getStateDefinition().getProperties());
-        int validStates = 1;
-        for(Pair<Property<?>,Set<?>> pair : properties){
-            validStates *= pair.right().size();
-            unrestrictedProperties.remove(pair.left());
-        }
-        for(Property<?> property : unrestrictedProperties)
-            validStates *= property.getPossibleValues().size();
-
-        // If less than 64 states match, store and compare states directly
-        if(validStates > 64)
-            return null;
-        Stream<BlockState> states = Stream.of(block.getStateDefinition().any());
-        for(Pair<Property<?>,Set<?>> pair : properties){
-            Property<?> property = pair.left();
-            Set<?> values = pair.right();
-            //noinspection rawtypes,unchecked
-            states = states.flatMap(state -> values.stream().map(value -> state.setValue((Property)property, (T)value)));
-        }
-        for(Property<?> property : unrestrictedProperties)
-            //noinspection rawtypes,unchecked
-            states = states.flatMap(state -> property.getAllValues().map(value -> state.setValue((Property)property, (T)value.value())));
-        Set<BlockState> resolvedStates = states.collect(Collectors.toUnmodifiableSet());
-        // Sanity check
-        if(resolvedStates.size() != validStates)
-            throw new AssertionError("Got two different numbers of valid states: " + validStates + " and " + resolvedStates.size() + "!");
-        return resolvedStates;
+    private MatchStateConnectionPredicate(Map<Block,BlockStateMatcher> blocks){
+        this.blocks = Map.copyOf(blocks);
+        this.containsAir = blocks.keySet().stream().anyMatch(b -> b.defaultBlockState().isAir());
     }
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        if(this.block == null)
-            return false;
-        if(this.compareStates)
-            return this.states.contains(otherState);
-        if(otherState.getBlock() != this.block)
-            return false;
-        for(Pair<Property<?>,Set<?>> property : this.properties){
-            if(!property.right().contains(otherState.getValue(property.left())))
-                return false;
-        }
-        return true;
+        if(otherState.isAir())
+            return this.containsAir;
+        BlockStateMatcher matcher = this.blocks.get(otherState.getBlock());
+        return matcher != null && matcher.matches(otherState);
     }
 
     @Override
     public ConnectionPredicate simplify(){
-        if(this.block == null)
-            return DefaultConnectionPredicates.never();
-        List<Pair<Property<?>,Set<?>>> simplifiedProperties = new ArrayList<>(this.properties.length);
-        for(Pair<Property<?>,Set<?>> pair : this.properties){
-            Set<?> allowedValues = pair.right();
-            if(allowedValues.isEmpty())
-                return DefaultConnectionPredicates.never();
-            Property<?> property = pair.left();
-            if(property.getPossibleValues().size() != allowedValues.size())
-                simplifiedProperties.add(pair);
-        }
-        if(simplifiedProperties.isEmpty())
-            return DefaultConnectionPredicates.always();
-        //noinspection unchecked
-        return new MatchStateConnectionPredicate(this.block, simplifiedProperties.toArray(new Pair[0]));
+        return this.blocks.isEmpty() ? DefaultConnectionPredicates.never() : this;
     }
 
     @Override
@@ -218,13 +157,15 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
     public final boolean equals(Object o){
         if(!(o instanceof MatchStateConnectionPredicate that)) return false;
 
-        return Objects.equals(this.block, that.block) && Arrays.equals(this.properties, that.properties);
+        if(this.blocks.isEmpty())
+            return that.blocks.isEmpty();
+        if(!this.blocks.keySet().equals(that.blocks.keySet())) return false;
+        Block block = this.blocks.keySet().iterator().next();
+        return this.blocks.get(block).equals(that.blocks.get(block));
     }
 
     @Override
     public int hashCode(){
-        int result = Objects.hashCode(this.block);
-        result = 31 * result + Arrays.hashCode(this.properties);
-        return result;
+        return this.blocks.hashCode();
     }
 }

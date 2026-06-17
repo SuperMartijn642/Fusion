@@ -81,16 +81,16 @@ public final class DefaultEntityModelPredicates {
     }
 
     /**
-     * Creates a predicate that evaluates whether an entity is in the given dimension.
+     * Creates a predicate that evaluates whether an entity is in one of the given dimensions.
      */
-    public static EntityModelPredicate dimension(ResourceKey<Level> dimension){
-        return DimensionEntityModelPredicate.create(dimension);
+    public static EntityModelPredicate dimension(ResourceKey<Level>... dimensions){
+        return DimensionEntityModelPredicate.create(dimensions);
     }
 
     /**
-     * Creates a predicate that evaluates whether an entity is in the given dimension.
+     * Creates a predicate that evaluates whether an entity is in one of the given dimensions.
      */
-    public static EntityModelPredicate dimension(ResourceLocation dimension){
-        return DimensionEntityModelPredicate.create(dimension);
+    public static EntityModelPredicate dimension(ResourceLocation... dimensions){
+        return DimensionEntityModelPredicate.create(dimensions);
     }
 }

@@ -44,15 +44,29 @@ public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
                 // Ignore on this version
             }
 
-            if(!json.has("biomes") || !json.get("biomes").isJsonArray())
-                throw new JsonParseException("Biome-predicate must have array property 'biomes'!");
-            Set<ResourceLocation> biomes = new HashSet<>();
-            for(JsonElement element : json.getAsJsonArray("biomes")){
-                if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
-                    throw new JsonParseException("Array property 'biomes' must only contain strings!");
-                if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
-                    throw new JsonParseException("Biome entries must be a valid identifier, not '" + element.getAsString() + "'!");
-                biomes.add(new ResourceLocation(element.getAsString()));
+            if(!json.has("biome") && !json.has("biomes"))
+                throw new JsonParseException("Biome predicate must have either property 'biome' or 'biomes'!");
+            if(json.has("biome") && json.has("biomes"))
+                throw new JsonParseException("Biome predicate must have either property 'biome' or 'biomes', not both!");
+            Set<ResourceLocation> biomes;
+            if(json.has("biome")){
+                if(!json.get("biome").isJsonPrimitive() || !json.getAsJsonPrimitive("biome").isString())
+                    throw new JsonParseException("Property 'biome' must be a string!");
+                if(!IdentifierUtil.isValidIdentifier(json.get("biome").getAsString()))
+                    throw new JsonParseException("Property 'biome' must be a valid identifier, not '" + json.get("biome").getAsString() + "'!");
+                biomes = Set.of(new ResourceLocation(json.get("biome").getAsString()));
+            }else{
+                if(!json.get("biomes").isJsonArray())
+                    throw new JsonParseException("Property 'biomes' must be an array!");
+                JsonArray array = json.getAsJsonArray("biomes");
+                biomes = new HashSet<>(array.size());
+                for(JsonElement element : array){
+                    if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                        throw new JsonParseException("Array property 'biomes' must only contain strings!");
+                    if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                        throw new JsonParseException("Biome entries must be a valid identifier, not '" + element.getAsString() + "'!");
+                    biomes.add(new ResourceLocation(element.getAsString()));
+                }
             }
             return new BiomeBlockStatePredicate(biomes);
         }
@@ -60,12 +74,16 @@ public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
         @Override
         public JsonObject serialize(BiomeBlockStatePredicate value){
             JsonObject json = new JsonObject();
-            JsonArray biomes = new JsonArray(value.biomes.size());
-            value.biomes.stream()
-                .map(ResourceLocation::toString)
-                .sorted()
-                .forEach(biomes::add);
-            json.add("biomes", biomes);
+            if(value.biomes.size() == 1)
+                json.addProperty("biome", value.biomes.iterator().next().toString());
+            else{
+                JsonArray biomes = new JsonArray(value.biomes.size());
+                value.biomes.stream()
+                    .map(ResourceLocation::toString)
+                    .sorted()
+                    .forEach(biomes::add);
+                json.add("biomes", biomes);
+            }
             return json;
         }
     };
@@ -93,5 +111,17 @@ public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
     @Override
     public Serializer<? extends BlockStateModelPredicate> getSerializer(){
         return SERIALIZER;
+    }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof BiomeBlockStatePredicate that)) return false;
+
+        return this.biomes.equals(that.biomes);
+    }
+
+    @Override
+    public int hashCode(){
+        return this.biomes.hashCode();
     }
 }

@@ -109,6 +109,10 @@ public interface ScrollingTextureData extends BaseTextureData {
 
     enum LoopType {
         /**
+         * The frame simply wraps around the image.
+         */
+        WRAP,
+        /**
          * After an iteration is complete, the frame will reset to the starting position.
          */
         RESET,

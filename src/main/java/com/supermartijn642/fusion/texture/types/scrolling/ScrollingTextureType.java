@@ -33,11 +33,20 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData,Ba
             throw new UserErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is smaller than frame size " + data.getFrameWidth() + "x" + data.getFrameHeight() + "!");
 
         // Calculate frame start and end
+        boolean wrap = data.getLoopType() == ScrollingTextureData.LoopType.WRAP;
         boolean reverse = data.getLoopType() == ScrollingTextureData.LoopType.REVERSE;
-        int startX = data.getStartPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getStartPosition() == ScrollingTextureData.Position.BOTTOM_LEFT ? 0 : context.getImageWidth() - data.getFrameWidth();
-        int startY = data.getStartPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getStartPosition() == ScrollingTextureData.Position.TOP_RIGHT ? 0 : context.getImageHeight() - data.getFrameHeight();
-        int endX = data.getEndPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getEndPosition() == ScrollingTextureData.Position.BOTTOM_LEFT ? 0 : context.getImageWidth() - data.getFrameWidth();
-        int endY = data.getEndPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getEndPosition() == ScrollingTextureData.Position.TOP_RIGHT ? 0 : context.getImageHeight() - data.getFrameHeight();
+        int startX = data.getStartPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getStartPosition() == ScrollingTextureData.Position.BOTTOM_LEFT ?
+            0 :
+            context.getImageWidth() - data.getFrameWidth();
+        int startY = data.getStartPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getStartPosition() == ScrollingTextureData.Position.TOP_RIGHT ?
+            0 :
+            context.getImageHeight() - data.getFrameHeight();
+        int endX = data.getEndPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getEndPosition() == ScrollingTextureData.Position.BOTTOM_LEFT ?
+            wrap ? 1 - data.getFrameWidth() : 0 :
+            wrap ? context.getImageWidth() - 1 : context.getImageWidth() - data.getFrameWidth();
+        int endY = data.getEndPosition() == ScrollingTextureData.Position.TOP_LEFT || data.getEndPosition() == ScrollingTextureData.Position.TOP_RIGHT ?
+            wrap ? 1 - data.getFrameHeight() : 0 :
+            wrap ? context.getImageHeight() - 1 : context.getImageHeight() - data.getFrameHeight();
 
         // Calculate all the frames
         int stepCount = Math.max(Math.abs(endX - startX), Math.abs(endY - startY)) + 1;
@@ -170,7 +179,7 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData,Ba
             json.addProperty("frame_width", data.getFrameWidth());
         if(data.getFrameHeight() != 16)
             json.addProperty("frame_height", data.getFrameHeight());
-        if(data.getLoopType() != ScrollingTextureData.LoopType.RESET)
+        if(data.getLoopType() != ScrollingTextureData.LoopType.WRAP)
             json.addProperty("loop_type", data.getLoopType().name().toLowerCase(Locale.ROOT));
         if(data.getLoopPause() != 0)
             json.addProperty("loop_pause", data.getLoopPause());

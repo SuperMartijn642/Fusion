@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.api.model.predicates.blockstate;
 
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.predicates.blockstate.*;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -9,6 +10,8 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
+
+import java.util.List;
 
 /**
  * Used to create instances of the default {@link BlockStateModelPredicate}s provided by Fusion.
@@ -79,50 +82,55 @@ public final class DefaultBlockStateModelPredicates {
     }
 
     /**
-     * Creates a predicate that evaluates whether the block is in the given dimension.
+     * Creates a predicate that evaluates whether the block is in one of the given dimensions.
      */
-    public static BlockStateModelPredicate dimension(ResourceKey<Level> dimension){
-        return DimensionBlockStateModelPredicate.create(dimension);
+    public static BlockStateModelPredicate dimension(ResourceKey<Level>... dimensions){
+        return DimensionBlockStateModelPredicate.create(dimensions);
     }
 
     /**
-     * Creates a predicate that evaluates whether the block is in the given dimension.
+     * Creates a predicate that evaluates whether the block is in one of the given dimensions.
      */
-    public static BlockStateModelPredicate dimension(Identifier dimension){
-        return DimensionBlockStateModelPredicate.create(dimension);
+    public static BlockStateModelPredicate dimension(Identifier... dimensions){
+        return DimensionBlockStateModelPredicate.create(dimensions);
     }
 
     /**
-     * Creates a predicate that evaluate whether the block at the given offset is the same as the given block.
-     * @param block block that should be matched
-     * @param x     x-offset
-     * @param y     y-offset
-     * @param z     z-offset
+     * Creates a predicate that evaluate whether the block at one of the given offset matches one of the given blocks.
+     * @param blocks  blocks that should be matched
+     * @param offsets offsets to check
      */
-    public static BlockStateModelPredicate matchBlock(Block block, int x, int y, int z){
-        return MatchBlockBlockStatePredicate.create(block, x, y, z);
+    public static BlockStateModelPredicate matchBlock(List<Block> blocks, List<BlockPos> offsets){
+        return MatchBlockBlockStatePredicate.create(blocks, offsets);
     }
 
     /**
-     * Creates a predicate that evaluate whether the block at the given offset is the same as the given block and matches the given properties.
-     * @param block      block that should be matched
+     * Creates a predicate that evaluate whether the block at the given offset matches one of the given blocks.
+     * @param x      x-offset
+     * @param y      y-offset
+     * @param z      z-offset
+     * @param blocks blocks that should be matched
+     */
+    public static BlockStateModelPredicate matchBlock(int x, int y, int z, Block... blocks){
+        return MatchBlockBlockStatePredicate.create(x, y, z, blocks);
+    }
+
+    /**
+     * Creates a predicate that evaluate whether the block at one of the given offsets matches one of the given blocks and matches the given properties.
+     * @param blocks     blocks that should be matched
      * @param properties property value pairs that should be matched
-     * @param x          x-offset
-     * @param y          y-offset
-     * @param z          z-offset
+     * @param offsets    offsets to check
      */
-    public static BlockStateModelPredicate matchState(Block block, int x, int y, int z, Pair<Property<?>,?>... properties){
-        return MatchStateBlockStatePredicate.create(block, x, y, z, properties);
+    public static BlockStateModelPredicate matchState(List<Block> blocks, List<BlockPos> offsets, Pair<Property<?>,?>... properties){
+        return MatchStateBlockStatePredicate.create(blocks, offsets, properties);
     }
 
     /**
-     * Creates a predicate that evaluate whether the block at the given offset is the same as the given state.
-     * @param state state that should be matched
-     * @param x     x-offset
-     * @param y     y-offset
-     * @param z     z-offset
+     * Creates a predicate that evaluate whether the block at one of the given offsets is the same as the given state.
+     * @param state   state that should be matched
+     * @param offsets offsets to check
      */
-    public static BlockStateModelPredicate matchState(BlockState state, int x, int y, int z){
-        return MatchStateBlockStatePredicate.create(state, x, y, z);
+    public static BlockStateModelPredicate matchState(BlockState state, List<BlockPos> offsets){
+        return MatchStateBlockStatePredicate.create(state, offsets);
     }
 }

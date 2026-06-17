@@ -19,7 +19,6 @@ import net.minecraft.client.renderer.model.ModelResourceLocation;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.state.IProperty;
-import net.minecraft.state.Property;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.Registry;
@@ -354,7 +353,7 @@ public class BlockModelModifierReloadListener {
 
     private static <T extends Comparable<T>> BlockState stateWithValue(BlockState state, IProperty<?> property, Object value){
         //noinspection unchecked
-        return state.setValue((Property<T>)property, (T)value);
+        return state.setValue((IProperty<T>)property, (T)value);
     }
 
     private static List<ModelEntry> parseModelEntry(JsonElement element){
@@ -423,7 +422,7 @@ public class BlockModelModifierReloadListener {
         return ImmutableList.of(new ModelEntry(model, conditions, showBreakingOverlay));
     }
 
-    private static final class Properties{
+    private static final class Properties {
         private final int priority;
         private final ResourceLocation location;
         private final List<ModelEntry> defaultModelOverrides;
@@ -441,8 +440,8 @@ public class BlockModelModifierReloadListener {
         }
     }
 
-    private static final class ModelEntry{
-        static ModelEntry simple (ResourceLocation model){
+    private static final class ModelEntry {
+        static ModelEntry simple(ResourceLocation model){
             return new ModelEntry(model, null, null);
         }
 

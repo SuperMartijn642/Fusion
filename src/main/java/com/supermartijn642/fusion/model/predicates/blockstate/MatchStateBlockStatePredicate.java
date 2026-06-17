@@ -252,7 +252,7 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
         if(level == null || pos == null)
             return this.containsAir;
         for(BlockPos offset : this.offsets){
-            this.dummyBlockPos.setPos(pos).add(offset);
+            this.dummyBlockPos.setPos(pos.getX() + offset.getX(), pos.getY() + offset.getY(), pos.getZ() + offset.getZ());
             state = level.getBlockState(this.dummyBlockPos);
             BlockStateMatcher matcher = this.blocks.get(state.getBlock());
             if(matcher != null && matcher.matches(state))

@@ -39,15 +39,29 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
                 // Ignore on this version
             }
 
-            if(!json.has("biomes") || !json.get("biomes").isJsonArray())
-                throw new JsonParseException("Biome-predicate must have array property 'biomes'!");
-            Set<ResourceLocation> biomes = new HashSet<>();
-            for(JsonElement element : json.getAsJsonArray("biomes")){
-                if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
-                    throw new JsonParseException("Array property 'biomes' must only contain strings!");
-                if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
-                    throw new JsonParseException("Biome entries must be a valid identifier, not '" + element.getAsString() + "'!");
-                biomes.add(ResourceLocation.parse(element.getAsString()));
+            if(!json.has("biome") && !json.has("biomes"))
+                throw new JsonParseException("Biome predicate must have either property 'biome' or 'biomes'!");
+            if(json.has("biome") && json.has("biomes"))
+                throw new JsonParseException("Biome predicate must have either property 'biome' or 'biomes', not both!");
+            Set<ResourceLocation> biomes;
+            if(json.has("biome")){
+                if(!json.get("biome").isJsonPrimitive() || !json.getAsJsonPrimitive("biome").isString())
+                    throw new JsonParseException("Property 'biome' must be a string!");
+                if(!IdentifierUtil.isValidIdentifier(json.get("biome").getAsString()))
+                    throw new JsonParseException("Property 'biome' must be a valid identifier, not '" + json.get("biome").getAsString() + "'!");
+                biomes = Set.of(ResourceLocation.parse(json.get("biome").getAsString()));
+            }else{
+                if(!json.get("biomes").isJsonArray())
+                    throw new JsonParseException("Property 'biomes' must be an array!");
+                JsonArray array = json.getAsJsonArray("biomes");
+                biomes = new HashSet<>(array.size());
+                for(JsonElement element : array){
+                    if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                        throw new JsonParseException("Array property 'biomes' must only contain strings!");
+                    if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                        throw new JsonParseException("Biome entries must be a valid identifier, not '" + element.getAsString() + "'!");
+                    biomes.add(ResourceLocation.parse(element.getAsString()));
+                }
             }
             return new BiomeEntityModelPredicate(biomes);
         }
@@ -55,12 +69,16 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
         @Override
         public JsonObject serialize(BiomeEntityModelPredicate value){
             JsonObject json = new JsonObject();
-            JsonArray biomes = new JsonArray(value.biomes.size());
-            value.biomes.stream()
-                .map(ResourceLocation::toString)
-                .sorted()
-                .forEach(biomes::add);
-            json.add("biomes", biomes);
+            if(value.biomes.size() == 1)
+                json.addProperty("biome", value.biomes.iterator().next().toString());
+            else{
+                JsonArray biomes = new JsonArray(value.biomes.size());
+                value.biomes.stream()
+                    .map(ResourceLocation::toString)
+                    .sorted()
+                    .forEach(biomes::add);
+                json.add("biomes", biomes);
+            }
             return json;
         }
     };
@@ -89,5 +107,17 @@ public class BiomeEntityModelPredicate implements EntityModelPredicate {
     @Override
     public Serializer<? extends EntityModelPredicate> getSerializer(){
         return SERIALIZER;
+    }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof BiomeEntityModelPredicate that)) return false;
+
+        return this.biomes.equals(that.biomes);
+    }
+
+    @Override
+    public int hashCode(){
+        return this.biomes.hashCode();
     }
 }

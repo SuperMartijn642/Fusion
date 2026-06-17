@@ -1,5 +1,7 @@
 package com.supermartijn642.fusion.texture.types.connecting.predicates;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.texture.types.connecting.predicates.ConnectionDirection;
@@ -14,16 +16,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
  */
 public class MatchBlockConnectionPredicate implements ConnectionPredicate {
 
-    public static ConnectionPredicate create(Block block){
-        Objects.requireNonNull(block);
-        return new MatchBlockConnectionPredicate(block);
+    public static ConnectionPredicate create(Block... blocks){
+        Objects.requireNonNull(blocks);
+        return new MatchBlockConnectionPredicate(List.of(blocks));
     }
 
     public static final Serializer<MatchBlockConnectionPredicate> SERIALIZER = new Serializer<>() {
@@ -36,42 +38,84 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
                 ignoreMissing = json.get("ignore_missing").getAsBoolean();
             }
 
-            if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
-                throw new JsonParseException("Match block predicate must have string property 'block'!");
-            if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
-                throw new JsonParseException("Property 'block' must be a valid identifier!");
-            ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
-            if(!BuiltInRegistries.BLOCK.containsKey(identifier)){
-                if(ignoreMissing)
-                    return new MatchBlockConnectionPredicate(null);
-                throw new JsonParseException("Unknown block '" + identifier + "'!");
+            if(!json.has("block") && !json.has("blocks"))
+                throw new JsonParseException("Match block predicate must have either property 'block' or 'blocks'!");
+            if(json.has("block") && json.has("blocks"))
+                throw new JsonParseException("Match block predicate must have either property 'block' or 'blocks', not both!");
+            List<Block> blocks;
+            if(json.has("block")){
+                if(!json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
+                    throw new JsonParseException("Property 'block' must be a string!");
+                if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
+                    throw new JsonParseException("Property 'block' must be a valid identifier, '" + json.get("block").getAsString() + "'!");
+                ResourceLocation identifier = ResourceLocation.parse(json.get("block").getAsString());
+                Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
+                if(block.isEmpty()){
+                    if(!ignoreMissing)
+                        throw new JsonParseException("Unknown block '" + identifier + "'!");
+                    blocks = List.of();
+                }else
+                    blocks = List.of(block.get());
+            }else{
+                if(!json.get("blocks").isJsonArray())
+                    throw new JsonParseException("Property 'blocks' must be an array!");
+                JsonArray array = json.getAsJsonArray("blocks");
+                blocks = new ArrayList<>(array.size());
+                for(JsonElement element : array){
+                    try{
+                        if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                            throw new JsonParseException("Entry must be a strings!");
+                        if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                            throw new JsonParseException("Entry must be a valid identifier, '" + element.getAsString() + "'!");
+                        ResourceLocation identifier = ResourceLocation.parse(element.getAsString());
+                        Optional<Block> block = BuiltInRegistries.BLOCK.getOptional(identifier);
+                        if(block.isEmpty()){
+                            if(!ignoreMissing)
+                                throw new JsonParseException("Unknown block '" + identifier + "'!");
+                            blocks = List.of();
+                        }else
+                            blocks = List.of(block.get());
+                    }catch(JsonParseException e){
+                        throw new JsonParseException("Failed to parse 'blocks' entry", e);
+                    }
+                }
             }
-            Block block = BuiltInRegistries.BLOCK.get(identifier);
-            return new MatchBlockConnectionPredicate(block);
+            return new MatchBlockConnectionPredicate(blocks);
         }
 
         @Override
         public JsonObject serialize(MatchBlockConnectionPredicate value){
             JsonObject json = new JsonObject();
-            json.addProperty("block", BuiltInRegistries.BLOCK.getKey(value.block).toString());
+            if(value.blocks.size() == 1)
+                json.addProperty("block", BuiltInRegistries.BLOCK.getKey(value.blocks.iterator().next()).toString());
+            else{
+                JsonArray blocks = new JsonArray(value.blocks.size());
+                value.blocks.stream()
+                    .map(b -> BuiltInRegistries.BLOCK.getKey(b).toString())
+                    .sorted()
+                    .forEach(blocks::add);
+                json.add("blocks", blocks);
+            }
             return json;
         }
     };
 
-    private final Block block;
+    private final Set<Block> blocks;
+    private final boolean containsAir;
 
-    private MatchBlockConnectionPredicate(Block block){
-        this.block = block;
+    private MatchBlockConnectionPredicate(Collection<Block> blocks){
+        this.blocks = Set.copyOf(blocks);
+        this.containsAir = this.blocks.stream().anyMatch(b -> b.defaultBlockState().isAir());
     }
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        return this.block != null && otherState.getBlock() == this.block;
+        return otherState.isAir() ? this.containsAir : this.blocks.contains(otherState.getBlock());
     }
 
     @Override
     public ConnectionPredicate simplify(){
-        return this.block == null ? DefaultConnectionPredicates.never() : this;
+        return this.blocks.isEmpty() ? DefaultConnectionPredicates.never() : this;
     }
 
     @Override
@@ -83,11 +127,11 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
     public final boolean equals(Object o){
         if(!(o instanceof MatchBlockConnectionPredicate that)) return false;
 
-        return Objects.equals(this.block, that.block);
+        return this.blocks.equals(that.blocks);
     }
 
     @Override
     public int hashCode(){
-        return Objects.hashCode(this.block);
+        return this.blocks.hashCode();
     }
 }

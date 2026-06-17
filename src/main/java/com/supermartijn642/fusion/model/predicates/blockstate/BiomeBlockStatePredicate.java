@@ -18,6 +18,7 @@ import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.Biome;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -45,24 +46,42 @@ public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
     public static final Serializer<BiomeBlockStatePredicate> SERIALIZER = new Serializer<BiomeBlockStatePredicate>() {
         @Override
         public BiomeBlockStatePredicate deserialize(JsonObject json) throws JsonParseException{
+            boolean ignoreMissing = false;
             if(json.has("ignore_missing")){
                 if(!json.get("ignore_missing").isJsonPrimitive() || !json.getAsJsonPrimitive("ignore_missing").isBoolean())
                     throw new JsonParseException("Property 'ignore_missing' must be a boolean!");
-                // Ignore on this version
+                ignoreMissing = json.get("ignore_missing").getAsBoolean();
             }
 
-            if(!json.has("biomes") || !json.get("biomes").isJsonArray())
-                throw new JsonParseException("Biome-predicate must have array property 'biomes'!");
-            Set<Biome> biomes = new HashSet<>();
-            for(JsonElement element : json.getAsJsonArray("biomes")){
-                if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
-                    throw new JsonParseException("Array property 'biomes' must only contain strings!");
-                if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
-                    throw new JsonParseException("Biome entries must be a valid identifier, not '" + element.getAsString() + "'!");
-                Optional<Biome> biome = Registry.BIOME.getOptional(new ResourceLocation(element.getAsString()));
-                if(!biome.isPresent())
-                    throw new JsonParseException("Unknown biome '" + element.getAsString() + "'!");
-                biomes.add(biome.get());
+            if(!json.has("biome") && !json.has("biomes"))
+                throw new JsonParseException("Biome predicate must have either property 'biome' or 'biomes'!");
+            if(json.has("biome") && json.has("biomes"))
+                throw new JsonParseException("Biome predicate must have either property 'biome' or 'biomes', not both!");
+            Set<Biome> biomes;
+            if(json.has("biome")){
+                if(!json.get("biome").isJsonPrimitive() || !json.getAsJsonPrimitive("biome").isString())
+                    throw new JsonParseException("Property 'biome' must be a string!");
+                if(!IdentifierUtil.isValidIdentifier(json.get("biome").getAsString()))
+                    throw new JsonParseException("Property 'biome' must be a valid identifier, not '" + json.get("biome").getAsString() + "'!");
+                Optional<Biome> biome = Registry.BIOME.getOptional(new ResourceLocation(json.get("biome").getAsString()));
+                if(!biome.isPresent() && !ignoreMissing)
+                    throw new JsonParseException("Unknown biome '" + json.get("biome").getAsString() + "'!");
+                biomes = biome.isPresent() ? ImmutableSet.of(biome.get()) : Collections.emptySet();
+            }else{
+                if(!json.get("biomes").isJsonArray())
+                    throw new JsonParseException("Property 'biomes' must be an array!");
+                JsonArray array = json.getAsJsonArray("biomes");
+                biomes = new HashSet<>(array.size());
+                for(JsonElement element : array){
+                    if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                        throw new JsonParseException("Array property 'biomes' must only contain strings!");
+                    if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                        throw new JsonParseException("Biome entries must be a valid identifier, not '" + element.getAsString() + "'!");
+                    Optional<Biome> biome = Registry.BIOME.getOptional(new ResourceLocation(element.getAsString()));
+                    if(!biome.isPresent() && !ignoreMissing)
+                        throw new JsonParseException("Unknown biome '" + element.getAsString() + "'!");
+                    biome.ifPresent(biomes::add);
+                }
             }
             return new BiomeBlockStatePredicate(biomes);
         }
@@ -70,13 +89,17 @@ public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
         @Override
         public JsonObject serialize(BiomeBlockStatePredicate value){
             JsonObject json = new JsonObject();
-            JsonArray biomes = new JsonArray();
-            value.biomes.stream()
-                .map(Registry.BIOME::getKey)
-                .map(ResourceLocation::toString)
-                .sorted()
-                .forEach(biomes::add);
-            json.add("biomes", biomes);
+            if(value.biomes.size() == 1)
+                json.addProperty("biome", value.biomes.iterator().next().toString());
+            else{
+                JsonArray biomes = new JsonArray();
+                value.biomes.stream()
+                    .map(Registry.BIOME::getKey)
+                    .map(ResourceLocation::toString)
+                    .sorted()
+                    .forEach(biomes::add);
+                json.add("biomes", biomes);
+            }
             return json;
         }
     };
@@ -103,5 +126,18 @@ public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
     @Override
     public Serializer<? extends BlockStateModelPredicate> getSerializer(){
         return SERIALIZER;
+    }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof BiomeBlockStatePredicate)) return false;
+
+        BiomeBlockStatePredicate that = (BiomeBlockStatePredicate)o;
+        return this.biomes.equals(that.biomes);
+    }
+
+    @Override
+    public int hashCode(){
+        return this.biomes.hashCode();
     }
 }

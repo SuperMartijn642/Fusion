@@ -1,8 +1,12 @@
 package com.supermartijn642.fusion.model.predicates.blockstate;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
+import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.block.BlockState;
@@ -13,20 +17,23 @@ import net.minecraft.world.IBlockDisplayReader;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Created 15/05/2026 by SuperMartijn642
  */
 public class DimensionBlockStateModelPredicate implements BlockStateModelPredicate {
 
-    public static BlockStateModelPredicate create(RegistryKey<World> dimension){
-        return new DimensionBlockStateModelPredicate(dimension.location());
+    public static BlockStateModelPredicate create(RegistryKey<World>... dimensions){
+        return new DimensionBlockStateModelPredicate(Arrays.stream(dimensions).map(RegistryKey::location).collect(Collectors.toSet()));
     }
 
-    public static BlockStateModelPredicate create(ResourceLocation dimension){
-        Objects.requireNonNull(dimension);
-        return new DimensionBlockStateModelPredicate(dimension);
+    public static BlockStateModelPredicate create(ResourceLocation... dimensions){
+        return new DimensionBlockStateModelPredicate(Arrays.asList(dimensions));
     }
 
     public static final Serializer<DimensionBlockStateModelPredicate> SERIALIZER = new Serializer<DimensionBlockStateModelPredicate>() {
@@ -38,34 +45,81 @@ public class DimensionBlockStateModelPredicate implements BlockStateModelPredica
                 // Ignore on this version
             }
 
-            if(!json.has("dimension") || !json.get("dimension").isJsonPrimitive() || !json.getAsJsonPrimitive("dimension").isString())
-                throw new JsonParseException("Dimension-predicate must have string property 'dimension'!");
-            if(!IdentifierUtil.isValidIdentifier(json.get("dimension").getAsString()))
-                throw new JsonParseException("Dimension must be a valid identifier, not '" + json.get("dimension").getAsString() + "'!");
-            return new DimensionBlockStateModelPredicate(new ResourceLocation(json.get("dimension").getAsString()));
+            if(!json.has("dimension") && !json.has("dimensions"))
+                throw new JsonParseException("Dimension predicate must have either property 'dimension' or 'dimensions'!");
+            if(json.has("dimension") && json.has("dimensions"))
+                throw new JsonParseException("Dimension predicate must have either property 'dimension' or 'dimensions', not both!");
+            Set<ResourceLocation> dimensions;
+            if(json.has("dimensions")){
+                if(!json.get("dimension").isJsonPrimitive() || !json.getAsJsonPrimitive("dimension").isString())
+                    throw new JsonParseException("Property 'dimension' must be a string!");
+                if(!IdentifierUtil.isValidIdentifier(json.get("dimension").getAsString()))
+                    throw new JsonParseException("Property 'dimension' must be a valid identifier, not '" + json.get("dimension").getAsString() + "'!");
+                dimensions = ImmutableSet.of(new ResourceLocation(json.get("dimension").getAsString()));
+            }else{
+                if(!json.get("dimensions").isJsonArray())
+                    throw new JsonParseException("Property 'dimensions' must be an array!");
+                JsonArray array = json.getAsJsonArray("dimensions");
+                dimensions = new HashSet<>(array.size());
+                for(JsonElement element : array){
+                    if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                        throw new JsonParseException("Array property 'dimensions' must only contain strings!");
+                    if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                        throw new JsonParseException("Dimension entries must be a valid identifier, not '" + element.getAsString() + "'!");
+                    dimensions.add(new ResourceLocation(element.getAsString()));
+                }
+            }
+            return new DimensionBlockStateModelPredicate(dimensions);
         }
 
         @Override
         public JsonObject serialize(DimensionBlockStateModelPredicate value){
             JsonObject json = new JsonObject();
-            json.addProperty("dimension", value.dimension.toString());
+            if(value.dimensions.size() == 1)
+                json.addProperty("dimension", value.dimensions.iterator().next().toString());
+            else{
+                JsonArray biomes = new JsonArray();
+                value.dimensions.stream()
+                    .map(ResourceLocation::toString)
+                    .sorted()
+                    .forEach(biomes::add);
+                json.add("dimensions", biomes);
+            }
             return json;
         }
     };
 
-    private final ResourceLocation dimension;
+    private final Set<ResourceLocation> dimensions;
 
-    private DimensionBlockStateModelPredicate(ResourceLocation dimension){
-        this.dimension = dimension;
+    private DimensionBlockStateModelPredicate(Collection<ResourceLocation> dimensions){
+        this.dimensions = ImmutableSet.copyOf(dimensions);
     }
 
     @Override
     public boolean test(@Nullable IBlockDisplayReader level, @Nullable BlockPos pos, @Nullable BlockState state){
-        return level instanceof World && ((World)level).dimension().location().equals(this.dimension);
+        return level instanceof World && this.dimensions.contains(((World)level).dimension().location());
+    }
+
+    @Override
+    public BlockStateModelPredicate simplify(){
+        return this.dimensions.isEmpty() ? DefaultBlockStateModelPredicates.never() : this;
     }
 
     @Override
     public Serializer<? extends BlockStateModelPredicate> getSerializer(){
         return SERIALIZER;
+    }
+
+    @Override
+    public final boolean equals(Object o){
+        if(!(o instanceof DimensionBlockStateModelPredicate)) return false;
+
+        DimensionBlockStateModelPredicate that = (DimensionBlockStateModelPredicate)o;
+        return this.dimensions.equals(that.dimensions);
+    }
+
+    @Override
+    public int hashCode(){
+        return this.dimensions.hashCode();
     }
 }

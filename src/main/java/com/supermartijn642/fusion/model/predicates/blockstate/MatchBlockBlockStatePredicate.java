@@ -1,6 +1,9 @@
 package com.supermartijn642.fusion.model.predicates.blockstate;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
@@ -15,8 +18,9 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.IBlockDisplayReader;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created 15/05/2026 by SuperMartijn642
@@ -25,11 +29,18 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
 
     static final int MAX_OFFSET = 1; // More than 1 and the model might not get rebuild if the offset block changes
 
-    public static BlockStateModelPredicate create(Block block, int x, int y, int z){
-        Objects.requireNonNull(block);
-        if(x < -MAX_OFFSET || x > MAX_OFFSET || y < -MAX_OFFSET || y > MAX_OFFSET || z < -MAX_OFFSET || z > MAX_OFFSET)
-            throw new IllegalArgumentException("Offset must be between -1 and 1 for each axis, not (" + x + ", " + y + ", " + z + ")!");
-        return new MatchBlockBlockStatePredicate(block, x, y, z);
+    public static BlockStateModelPredicate create(List<Block> blocks, List<BlockPos> offsets){
+        for(BlockPos offset : offsets){
+            if(offset.getX() < -MAX_OFFSET || offset.getX() > MAX_OFFSET
+                || offset.getY() < -MAX_OFFSET || offset.getY() > MAX_OFFSET
+                || offset.getZ() < -MAX_OFFSET || offset.getZ() > MAX_OFFSET)
+                throw new JsonParseException("Offset must be between " + -MAX_OFFSET + " and " + MAX_OFFSET + " for each axis, not " + offset + "!");
+        }
+        return new MatchBlockBlockStatePredicate(blocks, offsets);
+    }
+
+    public static BlockStateModelPredicate create(int x, int y, int z, Block... blocks){
+        return create(Arrays.asList(blocks), ImmutableList.of(new BlockPos(x, y, z)));
     }
 
     public static final Serializer<MatchBlockBlockStatePredicate> SERIALIZER = new Serializer<MatchBlockBlockStatePredicate>() {
@@ -42,18 +53,54 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
                 ignoreMissing = json.get("ignore_missing").getAsBoolean();
             }
 
-            if(!json.has("block") || !json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
-                throw new JsonParseException("Match block predicate must have string property 'block'!");
-            if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
-                throw new JsonParseException("Property 'block' must be a valid identifier!");
-            ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
-            Optional<Block> block = Registry.BLOCK.getOptional(identifier);
-            if(!block.isPresent()){
-                if(ignoreMissing)
-                    return new MatchBlockBlockStatePredicate(null, 0, 0, 0);
-                throw new JsonParseException("Unknown block '" + identifier + "'!");
+            // Blocks
+            if(!json.has("block") && !json.has("blocks"))
+                throw new JsonParseException("Match block predicate must have either property 'block' or 'blocks'!");
+            if(json.has("block") && json.has("blocks"))
+                throw new JsonParseException("Match block predicate must have either property 'block' or 'blocks', not both!");
+            List<Block> blocks;
+            if(json.has("block")){
+                if(!json.get("block").isJsonPrimitive() || !json.getAsJsonPrimitive("block").isString())
+                    throw new JsonParseException("Property 'block' must be a string!");
+                if(!IdentifierUtil.isValidIdentifier(json.get("block").getAsString()))
+                    throw new JsonParseException("Property 'block' must be a valid identifier, '" + json.get("block").getAsString() + "'!");
+                ResourceLocation identifier = new ResourceLocation(json.get("block").getAsString());
+                Optional<Block> block = Registry.BLOCK.getOptional(identifier);
+                if(!block.isPresent()){
+                    if(!ignoreMissing)
+                        throw new JsonParseException("Unknown block '" + identifier + "'!");
+                    blocks = Collections.emptyList();
+                }else
+                    blocks = ImmutableList.of(block.get());
+            }else{
+                if(!json.get("blocks").isJsonArray())
+                    throw new JsonParseException("Property 'blocks' must be an array!");
+                JsonArray array = json.getAsJsonArray("blocks");
+                blocks = new ArrayList<>(array.size());
+                for(JsonElement element : array){
+                    try{
+                        if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString())
+                            throw new JsonParseException("Entry must be a strings!");
+                        if(!IdentifierUtil.isValidIdentifier(element.getAsString()))
+                            throw new JsonParseException("Entry must be a valid identifier, '" + element.getAsString() + "'!");
+                        ResourceLocation identifier = new ResourceLocation(element.getAsString());
+                        Optional<Block> block = Registry.BLOCK.getOptional(identifier);
+                        if(!block.isPresent()){
+                            if(!ignoreMissing)
+                                throw new JsonParseException("Unknown block '" + identifier + "'!");
+                            blocks = Collections.emptyList();
+                        }else
+                            blocks = ImmutableList.of(block.get());
+                    }catch(JsonParseException e){
+                        throw new JsonParseException("Failed to parse 'blocks' entry", e);
+                    }
+                }
             }
-            int x = 0, y = 0, z = 0;
+
+            // Offsets
+            if(json.has("offset") && json.has("offsets"))
+                throw new JsonParseException("Match block predicate can have either property 'offset' or 'offsets', not both!");
+            Set<BlockPos> offsets;
             if(json.has("offset")){
                 if(!json.get("offset").isJsonArray())
                     throw new JsonParseException("Property 'offset' must be an array of 3 numbers!");
@@ -63,61 +110,138 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
                     || !offset.get(1).isJsonPrimitive() || !offset.get(1).getAsJsonPrimitive().isNumber()
                     || !offset.get(2).isJsonPrimitive() || !offset.get(2).getAsJsonPrimitive().isNumber())
                     throw new JsonParseException("Property 'offset' must be an array of 3 numbers!");
-                x = offset.get(0).getAsInt();
-                y = offset.get(1).getAsInt();
-                z = offset.get(2).getAsInt();
+                int x = offset.get(0).getAsInt();
+                int y = offset.get(1).getAsInt();
+                int z = offset.get(2).getAsInt();
                 if(x < -MAX_OFFSET || x > MAX_OFFSET || y < -MAX_OFFSET || y > MAX_OFFSET || z < -MAX_OFFSET || z > MAX_OFFSET)
                     throw new JsonParseException("Offset must be between " + -MAX_OFFSET + " and " + MAX_OFFSET + " for each axis, not (" + x + ", " + y + ", " + z + ")!");
-            }
-            return new MatchBlockBlockStatePredicate(block.get(), x, y, z);
+                offsets = ImmutableSet.of(new BlockPos(x, y, z));
+            }else if(json.has("offsets")){
+                if(!json.get("offsets").isJsonArray())
+                    throw new JsonParseException("Property 'offsets' must be an array!");
+                JsonArray array = json.getAsJsonArray("offsets");
+                offsets = new HashSet<>(array.size());
+                for(JsonElement element : array){
+                    try{
+                        if(!element.isJsonArray())
+                            throw new JsonParseException("Entry must be an array of 3 numbers!");
+                        JsonArray offset = json.getAsJsonArray("offset");
+                        if(offset.size() != 3
+                            || !offset.get(0).isJsonPrimitive() || !offset.get(0).getAsJsonPrimitive().isNumber()
+                            || !offset.get(1).isJsonPrimitive() || !offset.get(1).getAsJsonPrimitive().isNumber()
+                            || !offset.get(2).isJsonPrimitive() || !offset.get(2).getAsJsonPrimitive().isNumber())
+                            throw new JsonParseException("Entry must be an array of 3 numbers!");
+                        int x = offset.get(0).getAsInt();
+                        int y = offset.get(1).getAsInt();
+                        int z = offset.get(2).getAsInt();
+                        if(x < -MAX_OFFSET || x > MAX_OFFSET || y < -MAX_OFFSET || y > MAX_OFFSET || z < -MAX_OFFSET || z > MAX_OFFSET)
+                            throw new JsonParseException("Offset must be between " + -MAX_OFFSET + " and " + MAX_OFFSET + " for each axis, not (" + x + ", " + y + ", " + z + ")!");
+                        offsets.add(new BlockPos(x, y, z));
+                    }catch(JsonParseException e){
+                        throw new JsonParseException("Failed to parse 'offsets' entry", e);
+                    }
+                }
+            }else
+                offsets = ImmutableSet.of(BlockPos.ZERO);
+            return new MatchBlockBlockStatePredicate(blocks, offsets);
         }
 
         @Override
         public JsonObject serialize(MatchBlockBlockStatePredicate value){
             JsonObject json = new JsonObject();
-            json.addProperty("block", Registry.BLOCK.getKey(value.block).toString());
-            if(value.x != 0 || value.y != 0 || value.z != 0){
-                JsonArray offset = new JsonArray();
-                offset.add(value.x);
-                offset.add(value.y);
-                offset.add(value.z);
-                json.add("offset", offset);
+            if(value.blocks.size() == 1)
+                json.addProperty("block", Registry.BLOCK.getKey(value.blocks.iterator().next()).toString());
+            else{
+                JsonArray blocks = new JsonArray();
+                value.blocks.stream()
+                    .map(b -> Registry.BLOCK.getKey(b).toString())
+                    .sorted()
+                    .forEach(blocks::add);
+                json.add("blocks", blocks);
+            }
+            if(!value.checkCenter || !value.offsets.isEmpty()){
+                if(value.offsets.size() == 1 && !value.checkCenter){
+                    BlockPos pos = value.offsets.iterator().next();
+                    if(!pos.equals(BlockPos.ZERO)){
+                        JsonArray offset = new JsonArray();
+                        offset.add(pos.getX());
+                        offset.add(pos.getY());
+                        offset.add(pos.getZ());
+                        json.add("offset", offset);
+                    }
+                }else{
+                    JsonArray offsets = new JsonArray();
+                    Stream.concat(
+                        value.checkCenter ? Stream.of(BlockPos.ZERO) : Stream.empty(),
+                        value.offsets.stream()
+                    ).sorted(Comparator.<BlockPos>comparingInt(BlockPos::getX).thenComparingInt(BlockPos::getY).thenComparingInt(BlockPos::getZ))
+                        .forEach(pos -> {
+                            JsonArray offset = new JsonArray();
+                            offset.add(pos.getX());
+                            offset.add(pos.getY());
+                            offset.add(pos.getZ());
+                            offsets.add(offset);
+                        });
+                    json.add("offsets", offsets);
+                }
             }
             return json;
         }
     };
 
-    private final Block block;
-    private final boolean isAir;
-    private final int x, y, z;
-    private final boolean hasOffset;
+    private final Set<Block> blocks;
+    private final boolean containsAir;
+    private final Set<BlockPos> offsets;
+    private final boolean checkCenter;
+    private final BlockPos.Mutable dummyBlockPos = new BlockPos.Mutable();
 
-    private MatchBlockBlockStatePredicate(Block block, int x, int y, int z){
-        this.block = block;
-        this.isAir = block != null && block.defaultBlockState().isAir();
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.hasOffset = x == 0 || y == 0 || z == 0;
+    private MatchBlockBlockStatePredicate(Collection<Block> blocks, Collection<BlockPos> offsets){
+        this.blocks = ImmutableSet.copyOf(blocks);
+        this.containsAir = this.blocks.stream().anyMatch(b -> b.defaultBlockState().isAir());
+        this.offsets = offsets.stream().filter(o -> !o.equals(BlockPos.ZERO)).collect(Collectors.toSet());
+        this.checkCenter = offsets.stream().anyMatch(BlockPos.ZERO::equals);
     }
 
     @Override
     public boolean test(@Nullable IBlockDisplayReader level, @Nullable BlockPos pos, @Nullable BlockState state){
-        if(this.block == null)
-            return false;
-        if(this.hasOffset || state == null){
-            if(level == null || pos == null)
-                return this.isAir;
-            if(this.hasOffset)
-                pos = pos.offset(this.x, this.y, this.z);
-            state = level.getBlockState(pos);
+        if(this.checkCenter){
+            checkCenter:
+            {
+                if(state == null){
+                    if(level == null || pos == null){
+                        if(this.containsAir)
+                            return true;
+                        break checkCenter;
+                    }
+                    state = level.getBlockState(pos);
+                }
+                if(state.isAir()){
+                    if(this.containsAir)
+                        return true;
+                }else if(this.blocks.contains(state.getBlock()))
+                    return true;
+            }
         }
-        return state.getBlock() == this.block;
+
+        if(this.offsets.isEmpty())
+            return false;
+        if(level == null || pos == null)
+            return this.containsAir;
+        for(BlockPos offset : this.offsets){
+            this.dummyBlockPos.set(pos).offset(offset);
+            state = level.getBlockState(this.dummyBlockPos);
+            if(state.isAir()){
+                if(this.containsAir)
+                    return true;
+            }else if(this.blocks.contains(state.getBlock()))
+                return true;
+        }
+        return false;
     }
 
     @Override
     public BlockStateModelPredicate simplify(){
-        return this.block == null ? DefaultBlockStateModelPredicates.never() : this;
+        return this.blocks.isEmpty() || (this.offsets.isEmpty() && !this.checkCenter) ? DefaultBlockStateModelPredicates.never() : this;
     }
 
     @Override
@@ -130,15 +254,14 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
         if(!(o instanceof MatchBlockBlockStatePredicate)) return false;
 
         MatchBlockBlockStatePredicate that = (MatchBlockBlockStatePredicate)o;
-        return this.x == that.x && this.y == that.y && this.z == that.z && Objects.equals(this.block, that.block);
+        return this.checkCenter == that.checkCenter && this.blocks.equals(that.blocks) && this.offsets.equals(that.offsets);
     }
 
     @Override
     public int hashCode(){
-        int result = Objects.hashCode(this.block);
-        result = 31 * result + this.x;
-        result = 31 * result + this.y;
-        result = 31 * result + this.z;
+        int result = this.blocks.hashCode();
+        result = 31 * result + this.offsets.hashCode();
+        result = 31 * result + Boolean.hashCode(this.checkCenter);
         return result;
     }
 }

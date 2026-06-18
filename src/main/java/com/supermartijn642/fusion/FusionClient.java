@@ -94,6 +94,7 @@ public class FusionClient {
         FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("count"), CountItemModelPredicate.SERIALIZER);
         FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("durability"), DurabilityItemModelPredicate.SERIALIZER);
         FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("enchantment"), EnchantmentItemModelPredicate.SERIALIZER);
+        FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("match_custom_name"), MatchCustomNameItemModelPredicate.SERIALIZER);
         FusionItemModelPredicateRegistry.registerItemModelPredicate(Fusion.identifier("potion"), PotionItemModelPredicate.SERIALIZER);
         // Register default entity model predicates
         EntityModelPredicateRegistryImpl.registerPredicate(Fusion.identifier("true"), TrueEntityModelPredicate.SERIALIZER);

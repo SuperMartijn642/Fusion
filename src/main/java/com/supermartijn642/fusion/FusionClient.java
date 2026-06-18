@@ -81,7 +81,8 @@ public class FusionClient {
         FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("false"), FalseBlockStateModelPredicate.SERIALIZER);
         FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("and"), AndBlockStateModelPredicate.SERIALIZER);
         FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("or"), OrBlockStateModelPredicate.SERIALIZER);
-        FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("altitude"), NotBlockStateModelPredicate.SERIALIZER);
+        FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("not"), NotBlockStateModelPredicate.SERIALIZER);
+        FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("altitude"), AltitudeBlockStateModelPredicate.SERIALIZER);
         FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("biome"), BiomeBlockStatePredicate.SERIALIZER);
         FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("dimension"), DimensionBlockStateModelPredicate.SERIALIZER);
         FusionBlockStateModelPredicateRegistry.registerBlockStateModelPredicate(Fusion.identifier("match_block"), MatchBlockBlockStatePredicate.SERIALIZER);

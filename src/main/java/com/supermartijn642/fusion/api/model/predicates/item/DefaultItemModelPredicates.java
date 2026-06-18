@@ -134,6 +134,15 @@ public final class DefaultItemModelPredicates {
     }
 
     /**
+     * Creates a predicate that is satisfied when the item has a custom name and the name matches the given values.
+     * @param matchType 'equals', 'contains', 'starts_with', 'ends_with', or 'regex'
+     * @param text      text to match
+     */
+    public static ItemModelPredicate matchCustomName(String matchType, String text){
+        return MatchCustomNameItemModelPredicate.create(matchType, text);
+    }
+
+    /**
      * Creates a predicate which is satisfied if the item is the given kind of potion.
      */
     public static ItemModelPredicate potion(Potion potion){

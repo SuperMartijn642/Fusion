@@ -34,8 +34,8 @@ public abstract class AbstractCuboidModelDataBuilder<T extends AbstractCuboidMod
 
     @Override
     public T material(String key, Either<String,ModelMaterial> material){
-        if(!key.matches("[a-zA-Z_]*"))
-            throw new IllegalArgumentException("Material key must only contain characters [a-zA-Z_]!");
+        if(!key.matches("[a-zA-Z0-9_]*"))
+            throw new IllegalArgumentException("Material key must only contain characters [a-zA-Z0-9_]!");
         if(this.materials.containsKey(key)){
             Either<String,ModelMaterial> existing = this.materials.get(key);
             throw new RuntimeException("Duplicate materials entry for key '" + key + "': '" + existing.flatMap(r -> '#' + r, m -> m.texture().toString()) + "' and '" + material.flatMap(r -> r.isEmpty() || r.charAt(0) != '#' ? '#' + r : r, m -> m.texture().toString()) + "'!");

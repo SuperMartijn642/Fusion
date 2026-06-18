@@ -96,7 +96,7 @@ public class FusionBlockModelData {
             model = context.getMissingBlockStateModel();
         // Log warnings
         if(!warnings.isEmpty())
-            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.identifier);
+            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '%s':", this.identifier);
 
         // Clear missing models
         MISSING_MODEL.remove();
@@ -132,7 +132,7 @@ public class FusionBlockModelData {
             model = context.getMissingItemModel();
         // Log warnings
         if(!warnings.isEmpty())
-            LoggingHelper.logUserWarnings(warnings, "Warnings for item model '{}':", this.identifier);
+            LoggingHelper.logUserWarnings(warnings, "Warnings for item model '%s':", this.identifier);
 
         // Clear missing models
         MISSING_MODEL.remove();

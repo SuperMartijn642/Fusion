@@ -1,11 +1,13 @@
 package com.supermartijn642.fusion.texture;
 
+import com.mojang.blaze3d.GpuFormat;
+import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
-import com.mojang.blaze3d.textures.TextureFormat;
 import com.supermartijn642.fusion.api.texture.custom.SpriteImageSource;
 import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.texture.custom.SpriteImageSourceImpl;
@@ -67,7 +69,8 @@ public class FusionSpriteContents extends SpriteContents {
 
     @Override
     public void uploadFirstFrame(GpuTexture gpuTexture, int mipLevel){
-        this.uploadUniqueFrame(gpuTexture, mipLevel, 0);
+        CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+        this.uploadUniqueFrame(gpuTexture, mipLevel, 0, encoder);
     }
 
     @Override
@@ -91,14 +94,15 @@ public class FusionSpriteContents extends SpriteContents {
             GpuTexture gpuTexture = gpuDevice.createTexture(
                 () -> this.name + " animation frame " + uniqueFrameIndex,
                 5,
-                TextureFormat.RGBA8,
+                GpuFormat.RGBA8_UNORM,
                 this.frameWidth,
                 this.frameHeight,
                 1,
                 this.byMipLevel.length
             );
+            CommandEncoder encoder = gpuDevice.createCommandEncoder();
             for(int mipLevel = 0; mipLevel < this.byMipLevel.length; mipLevel++)
-                this.uploadUniqueFrame(gpuTexture, mipLevel, uniqueFrameIndex);
+                this.uploadUniqueFrame(gpuTexture, mipLevel, uniqueFrameIndex, encoder);
             uniqueFrameGpuTextures.put(uniqueFrameIndex, RenderSystem.getDevice().createTextureView(gpuTexture));
         }
 
@@ -109,24 +113,38 @@ public class FusionSpriteContents extends SpriteContents {
         return new AnimationState(animatedTexture, uniqueFrameGpuTextures, gpuBufferSlices);
     }
 
-    private void uploadUniqueFrame(GpuTexture destination, int mipLevel, int frameIndex){
+    private void uploadUniqueFrame(GpuTexture destination, int mipLevel, int frameIndex, CommandEncoder encoder){
+        GpuBufferSlice stagingBuffer = encoder.transientMemory().uploadStaging(this.byMipLevel[mipLevel].getPixelBytes(), 1, GpuBuffer.USAGE_COPY_SRC);
         SpriteImageSource.AnimationFrame frame = this.uniqueFrames.get(frameIndex);
-        this.uploadToTexture(destination, mipLevel, 0, 0, frame.u(), frame.v(), this.frameWidth, this.frameHeight);
+        this.uploadToTexture(stagingBuffer, destination, mipLevel, 0, 0, frame.u(), frame.v(), this.frameWidth, this.frameHeight, encoder);
     }
 
-    private void uploadToTexture(GpuTexture destination, int mipLevel, int destinationX, int destinationY, int sourceX, int sourceY, int width, int height){
+    private void uploadToTexture(GpuBufferSlice source, GpuTexture destination, int mipLevel, int destinationX, int destinationY, int sourceX, int sourceY, int width, int height, CommandEncoder encoder){
         if(sourceX + width > this.imageWidth){
             int overflow = sourceX + width - this.imageWidth;
-            this.uploadToTexture(destination, mipLevel, destinationX, destinationY, sourceX, sourceY, width - overflow, height);
-            this.uploadToTexture(destination, mipLevel, destinationX + width - overflow, 0, 0, sourceY, overflow, height);
+            this.uploadToTexture(source, destination, mipLevel, destinationX, destinationY, sourceX, sourceY, width - overflow, height, encoder);
+            this.uploadToTexture(source, destination, mipLevel, destinationX + width - overflow, 0, 0, sourceY, overflow, height, encoder);
             return;
         }
         if(sourceY + height > this.imageHeight){
             int overflow = sourceY + height - this.imageHeight;
-            this.uploadToTexture(destination, mipLevel, destinationX, destinationY, sourceX, sourceY, width, height - overflow);
-            this.uploadToTexture(destination, mipLevel, destinationX, destinationY + height - overflow, sourceX, 0, width, overflow);
+            this.uploadToTexture(source, destination, mipLevel, destinationX, destinationY, sourceX, sourceY, width, height - overflow, encoder);
+            this.uploadToTexture(source, destination, mipLevel, destinationX, destinationY + height - overflow, sourceX, 0, width, overflow, encoder);
             return;
         }
-        RenderSystem.getDevice().createCommandEncoder().writeToTexture(destination, this.byMipLevel[mipLevel], mipLevel, 0, destinationX >> mipLevel, destinationY >> mipLevel, width >> mipLevel, height >> mipLevel, sourceX >> mipLevel, sourceY >> mipLevel);
+        encoder.copyBufferToTexture(
+            source,
+            sourceX >> mipLevel,
+            sourceY >> mipLevel,
+            this.byMipLevel[mipLevel].getWidth(),
+            this.byMipLevel[mipLevel].getHeight(),
+            destination,
+            destinationX >> mipLevel,
+            destinationY >> mipLevel,
+            width >> mipLevel,
+            height >> mipLevel,
+            mipLevel,
+            0
+        );
     }
 }

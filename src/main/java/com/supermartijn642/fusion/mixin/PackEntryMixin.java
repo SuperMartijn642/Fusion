@@ -99,7 +99,7 @@ public class PackEntryMixin {
         if(this.metadata == null)
             return;
         Consumer<Boolean> callback = select -> {
-            Minecraft.getInstance().setScreen(this.parent.screen);
+            Minecraft.getInstance().gui.setScreen(this.parent.screen);
             if(select)
                 this.pack.select();
         };

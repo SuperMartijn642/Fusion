@@ -7,7 +7,6 @@ import net.minecraft.client.renderer.block.dispatch.BlockModelRotation;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.core.BlockMath;
 import net.minecraft.core.Direction;
-import org.apache.commons.lang3.tuple.Triple;
 import org.joml.*;
 import org.joml.Math;
 
@@ -119,12 +118,15 @@ public class ModelTransformImpl implements ModelTransform {
     private void decompose(){
         if(this.translation != null)
             return;
-        float scaleFactor = 1 / this.matrix.m33();
-        Triple<Quaternionf,Vector3f,Quaternionf> triple = MatrixUtil.svdDecompose(new Matrix3f(this.matrix).scale(scaleFactor));
-        this.translation = this.matrix.getTranslation(new Vector3f()).mul(scaleFactor);
-        this.leftRotation = new Quaternionf(triple.getLeft());
-        this.scale = new Vector3f(triple.getMiddle());
-        this.rightRotation = new Quaternionf(triple.getRight());
+        Vector3f translation = new Vector3f();
+        Quaternionf leftRotation = new Quaternionf();
+        Vector3f scale = new Vector3f();
+        Quaternionf rightRotation = new Quaternionf();
+        MatrixUtil.svdDecompose(this.matrix, translation, leftRotation, scale, rightRotation);
+        this.translation = translation;
+        this.leftRotation = leftRotation;
+        this.scale = scale;
+        this.rightRotation = rightRotation;
     }
 
     @Override

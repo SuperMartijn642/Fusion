@@ -122,9 +122,9 @@ public class ModelGeometryImpl implements ModelGeometry {
         // Create dummy texture slots instance
         TextureSlots textureSlots = createTextureSlots(materialResolver);
         // Create dummy model baker
-        MaterialBaker materialBaker = new MaterialBaker() {
+        MaterialBaker materialBaker = new MaterialBaker(materialResolver.get("-", false).sprite()) {
             @Override
-            public Material.Baked get(Material material, ModelDebugName name){
+            protected Material.@Nullable Baked bake(Material material){
                 ModelMaterial.Resolved resolved = materialResolver.get(material.sprite().toString());
                 return resolved.isMissing() || resolved.forceTranslucent() == material.forceTranslucent() ?
                     resolved.toBakedMaterial() :

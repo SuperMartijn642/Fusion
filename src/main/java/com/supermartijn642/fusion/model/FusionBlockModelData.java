@@ -154,7 +154,7 @@ public class FusionBlockModelData extends BlockModel {
             bakedModel = context.getMissingBakedModel();
         // Log warnings
         if(!warnings.isEmpty())
-            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", this.identifier);
+            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '%s':", this.identifier);
         return bakedModel;
     }
 

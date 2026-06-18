@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.model.types.composite;
 
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
+import com.supermartijn642.fusion.integration.framedblocks.FusionFramedBlocksIntegration;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
@@ -67,8 +68,10 @@ public class CompositeBakedModel implements BakedModel {
 
     @Override
     public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
+        RenderData renderData = this.getRenderData(level, pos, state, modelData);
         return ModelData.builder()
-            .with(RENDER_DATA, this.getRenderData(level, pos, state, modelData))
+            .with(RENDER_DATA, renderData)
+            .with(FusionFramedBlocksIntegration.getCacheKeyProperty(), FusionFramedBlocksIntegration.lazyCacheable(() -> this.createCacheKey(renderData)))
             .build();
     }
 
@@ -176,6 +179,18 @@ public class CompositeBakedModel implements BakedModel {
     @Override
     public boolean isCustomRenderer(){
         return false;
+    }
+
+    private Object createCacheKey(RenderData renderData){
+        List<Object> keys = new ArrayList<>();
+        keys.add(this);
+        for(int i = 0; i < renderData.models.size(); i++){
+            BakedModel model = renderData.models.get(i);
+            ModelData data = renderData.modelData == null ? renderData.generalModelData : renderData.modelData.get(i);
+            keys.add(model);
+            keys.add(FusionFramedBlocksIntegration.getCacheProperty(data));
+        }
+        return keys;
     }
 
     public record ConditionalList(List<ModelEntry> entries) {

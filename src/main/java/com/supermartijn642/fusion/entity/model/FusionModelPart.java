@@ -4,23 +4,21 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.supermartijn642.fusion.entity.EntityRenderTypeHelper;
 import com.supermartijn642.fusion.entity.VanillaModelLayerProperties;
-import com.supermartijn642.fusion.extensions.BufferSourceExtension;
 import com.supermartijn642.fusion.extensions.EntityExtension;
 import com.supermartijn642.fusion.extensions.EntityRenderStateExtension;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+
+import java.util.function.Function;
 
 /**
  * Created 29/09/2024 by SuperMartijn642
  */
 public class FusionModelPart extends SubModelPart {
 
-    public static final ThreadLocal<MultiBufferSource.BufferSource> BUFFER_SOURCE_CONTEXT = new ThreadLocal<>();
-    public static final ThreadLocal<EntityRenderStateExtension> RENDER_STATE_CONTEXT = new ThreadLocal<>();
+    public static final ThreadLocal<RenderContext> RENDER_CONTEXT = new ThreadLocal<>();
 
     private final int layerIndex;
     private final ModelPart original;
@@ -66,10 +64,10 @@ public class FusionModelPart extends SubModelPart {
             return;
 
         // Get the model from render state context
-        EntityRenderStateExtension state = RENDER_STATE_CONTEXT.get();
-        if(state == null)
+        RenderContext renderContext = RENDER_CONTEXT.get();
+        if(renderContext == null)
             return;
-        EntityLayerProperties.ModelChoice modelChoice = state.getFusionModel(this.layerIndex);
+        EntityLayerProperties.ModelChoice modelChoice = renderContext.entityState.getFusionModel(this.layerIndex);
         if(modelChoice == null)
             return;
         ModelPart currentModel = modelChoice.model();
@@ -111,9 +109,9 @@ public class FusionModelPart extends SubModelPart {
 
         // Get render type for current texture
         if(this.currentTexture != null){
-            MultiBufferSource.BufferSource bufferSource = BUFFER_SOURCE_CONTEXT.get();
-            if(bufferSource != null)
-                vertexConsumer = this.adjustTexture(vertexConsumer, bufferSource);
+            RenderContext renderContext = RENDER_CONTEXT.get();
+            if(renderContext != null)
+                vertexConsumer = this.adjustTexture(renderContext);
         }
 
         poseStack.pushPose();
@@ -130,28 +128,22 @@ public class FusionModelPart extends SubModelPart {
         part.children.values().forEach(FusionModelPart::resetPose);
     }
 
-    private VertexConsumer adjustTexture(VertexConsumer buffer, MultiBufferSource bufferSource){
-        // Obtain the current render type
-        if(!(bufferSource instanceof BufferSourceExtension))
-            return buffer;
-        RenderType renderType = ((BufferSourceExtension)bufferSource).fusionGetLastRenderType();
+    private VertexConsumer adjustTexture(RenderContext renderContext){
+        // Get the current render type
+        RenderType renderType = renderContext.renderType;
         if(this.adjustedRenderType != null && this.adjustedRenderType == renderType)
-            return bufferSource.getBuffer(renderType);
-        // Check what texture the render type uses
-        RenderSetup.TextureBinding sampler0 = renderType.state.textures.get("Sampler0");
-        if(sampler0 == null)
-            return buffer;
-        Identifier texture = sampler0.location();
-        if(this.currentTexture.equals(texture)) // If the texture already matches the model's texture, just use the original buffer
-            return buffer;
+            return renderContext.buffer.apply(renderType);
 
         // Get the same render type, but with the model's texture
         renderType = EntityRenderTypeHelper.getRenderTypeWithTexture(renderType, this.currentTexture);
         if(renderType == null)
-            return buffer;
+            return renderContext.buffer.apply(renderContext.renderType);
 
         // Request a new buffer the new render type
         this.adjustedRenderType = renderType;
-        return bufferSource.getBuffer(renderType);
+        return renderContext.buffer.apply(renderType);
+    }
+
+    public record RenderContext(EntityRenderStateExtension entityState, RenderType renderType, Function<RenderType,VertexConsumer> buffer) {
     }
 }

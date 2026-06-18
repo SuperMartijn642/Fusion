@@ -10,4 +10,6 @@ public interface EntityRenderStateExtension {
     void setFusionModel(int layerIndex, EntityLayerProperties.ModelChoice model);
 
     EntityLayerProperties.ModelChoice getFusionModel(int layerIndex);
+
+    boolean hasFusionContext();
 }

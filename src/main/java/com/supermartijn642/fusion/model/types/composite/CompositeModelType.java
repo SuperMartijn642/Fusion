@@ -367,23 +367,23 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                 }
             }else
                 throw new JsonParseException("Scaling transform entry property 'scaling' must be a number or array of 3 numbers!");
+            float[] origin = {0.5f, 0.5f, 0.5f};
             if(json.has("origin")){
                 if(json.getAsJsonArray("origin").size() != 3)
                     throw new JsonParseException("Scaling transform entry property 'origin' must be an array of 3 numbers!");
-                float[] origin = new float[3];
+                origin = new float[3];
                 JsonArray array = json.getAsJsonArray("origin");
                 for(int i = 0; i < array.size(); i++){
                     JsonElement element = array.get(i);
                     if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber())
                         throw new JsonParseException("Scaling transform entry property 'origin' must be an array of 3 numbers!");
-                    origin[i] = element.getAsFloat();
+                    origin[i] = element.getAsFloat() / 16;
                 }
-                Matrix4f matrix = MatrixUtil.createTranslationMatrix(-origin[0], -origin[1], -origin[2]);
-                matrix.mul(MatrixUtil.createScalingMatrix(scaling[0], scaling[1], scaling[2]));
-                matrix.mul(MatrixUtil.createTranslationMatrix(origin[0] * scaling[0], origin[1] * scaling[1], origin[2] * scaling[2]));
-                return matrix;
             }
-            return MatrixUtil.createScalingMatrix(scaling[0], scaling[1], scaling[2]);
+            Matrix4f matrix = MatrixUtil.createTranslationMatrix(-origin[0], -origin[1], -origin[2]);
+            matrix.mul(MatrixUtil.createScalingMatrix(scaling[0], scaling[1], scaling[2]));
+            matrix.mul(MatrixUtil.createTranslationMatrix(origin[0] * scaling[0], origin[1] * scaling[1], origin[2] * scaling[2]));
+            return matrix;
         }
 
         if(type.equals("rotate")){
@@ -427,23 +427,23 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                         throw new JsonParseException("Rotation transform entry property 'axis' must be one of 'x', 'y', or 'z', not '" + axis + "'!");
                 }
             }
+            float[] origin = {0.5f, 0.5f, 0.5f};
             if(json.has("origin")){
                 if(json.getAsJsonArray("origin").size() != 3)
                     throw new JsonParseException("Rotation transform entry property 'origin' must be an array of 3 numbers!");
-                float[] origin = new float[3];
+                origin = new float[3];
                 JsonArray array = json.getAsJsonArray("origin");
                 for(int i = 0; i < array.size(); i++){
                     JsonElement element = array.get(i);
                     if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber())
                         throw new JsonParseException("Rotation transform entry property 'origin' must be an array of 3 numbers!");
-                    origin[i] = element.getAsFloat();
+                    origin[i] = element.getAsFloat() / 16;
                 }
-                Matrix4f m = MatrixUtil.createTranslationMatrix(-origin[0], -origin[1], -origin[2]);
-                m.mul(matrix);
-                m.mul(MatrixUtil.createTranslationMatrix(origin[0], origin[1], origin[2]));
-                return m;
             }
-            return matrix;
+            Matrix4f m = MatrixUtil.createTranslationMatrix(-origin[0], -origin[1], -origin[2]);
+            m.mul(matrix);
+            m.mul(MatrixUtil.createTranslationMatrix(origin[0], origin[1], origin[2]));
+            return m;
         }
 
         throw new JsonParseException("Transform entry property 'type' must be one of 'translate', 'scale', or 'rotate', not '" + type + "'!");

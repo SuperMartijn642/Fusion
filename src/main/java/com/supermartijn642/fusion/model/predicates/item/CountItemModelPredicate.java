@@ -17,19 +17,19 @@ public class CountItemModelPredicate implements ItemModelPredicate {
     }
 
     public static ItemModelPredicate create(int min, int max){
-        return new CountItemModelPredicate(Either.left(min), Either.left(max));
+        return create(Either.left(min), Either.left(max));
     }
 
     public static ItemModelPredicate create(int min, float maxPercentage){
-        return new CountItemModelPredicate(Either.left(min), Either.right(maxPercentage));
+        return create(Either.left(min), Either.right(maxPercentage));
     }
 
     public static ItemModelPredicate create(float minPercentage, int max){
-        return new CountItemModelPredicate(Either.right(minPercentage), Either.left(max));
+        return create(Either.right(minPercentage), Either.left(max));
     }
 
     public static ItemModelPredicate create(float minPercentage, float maxPercentage){
-        return new CountItemModelPredicate(Either.right(minPercentage), Either.right(maxPercentage));
+        return create(Either.right(minPercentage), Either.right(maxPercentage));
     }
 
     private static ItemModelPredicate create(Either<Integer,Float> min, Either<Integer,Float> max){

@@ -25,8 +25,8 @@ public class ConnectingModelDataBuilderImpl extends AbstractBaseModelDataBuilder
 
     @Override
     public ConnectingModelDataBuilderImpl connections(String key, Either<String,ConnectionPredicate> predicate){
-        if(!key.matches("[a-zA-Z_]*"))
-            throw new IllegalArgumentException("Connections key must only contain characters [a-zA-Z_]!");
+        if(!key.matches("[a-zA-Z0-9_]*"))
+            throw new IllegalArgumentException("Connections key must only contain characters [a-zA-Z0-9_]!");
         if(this.connections.containsKey(key))
             throw new RuntimeException("Duplicate connections entry for key '" + key + "'!");
 

@@ -61,6 +61,6 @@ public class BlockFeatureRendererMixin {
         at = @At("TAIL")
     )
     private void renderBreakingBlockModelSubmitsTail(CallbackInfo ci){
-        FusionClient.IS_RENDERING_BREAKING_OVERLAY.set(false);
+        FusionClient.IS_RENDERING_BREAKING_OVERLAY.remove();
     }
 }

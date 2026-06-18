@@ -362,6 +362,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                     scaling = json.getAsJsonArray("scaling").asList().stream().map(JsonElement::getAsNumber).mapToDouble(Number::doubleValue).toArray();
                 }else
                     throw new JsonParseException("Scaling transform entry property 'scaling' must be a number or array of 3 numbers!");
+                double[] origin = {0.5, 0.5, 0.5};
                 if(json.has("origin")){
                     if(json.getAsJsonArray("origin").size() != 3)
                         throw new JsonParseException("Scaling transform entry property 'origin' must be an array of 3 numbers!");
@@ -369,13 +370,16 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                         if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber())
                             throw new JsonParseException("Scaling transform entry property 'origin' must be an array of 3 numbers!");
                     }
-                    double[] origin = json.getAsJsonArray("origin").asList().stream().map(JsonElement::getAsNumber).mapToDouble(Number::doubleValue).toArray();
-                    return new Matrix4f().identity().scaleAround(
-                        (float)scaling[0], (float)scaling[1], (float)scaling[2],
-                        (float)origin[0] / 16, (float)origin[1] / 16, (float)origin[2] / 16
-                    );
+                    origin = json.getAsJsonArray("origin").asList().stream()
+                        .map(JsonElement::getAsNumber)
+                        .mapToDouble(Number::doubleValue)
+                        .map(d -> d / 16)
+                        .toArray();
                 }
-                return new Matrix4f().identity().scale((float)scaling[0], (float)scaling[1], (float)scaling[2]);
+                return new Matrix4f().identity().scaleAround(
+                    (float)scaling[0], (float)scaling[1], (float)scaling[2],
+                    (float)origin[0], (float)origin[1], (float)origin[2]
+                );
             }
 
             case "rotate" -> {
@@ -409,6 +413,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                         default -> throw new JsonParseException("Rotation transform entry property 'axis' must be one of 'x', 'y', or 'z', not '" + axis + "'!");
                     }
                 }
+                double[] origin = {0.5, 0.5, 0.5};
                 if(json.has("origin")){
                     if(json.getAsJsonArray("origin").size() != 3)
                         throw new JsonParseException("Rotation transform entry property 'origin' must be an array of 3 numbers!");
@@ -416,13 +421,16 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                         if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber())
                             throw new JsonParseException("Rotation transform entry property 'origin' must be an array of 3 numbers!");
                     }
-                    double[] origin = json.getAsJsonArray("origin").asList().stream().map(JsonElement::getAsNumber).mapToDouble(Number::doubleValue).toArray();
-                    return new Matrix4f().identity()
-                        .translate((float)-origin[0], (float)-origin[1], (float)-origin[2])
-                        .mul(matrix)
-                        .translate((float)origin[0], (float)origin[1], (float)origin[2]);
+                    origin = json.getAsJsonArray("origin").asList().stream()
+                        .map(JsonElement::getAsNumber)
+                        .mapToDouble(Number::doubleValue)
+                        .map(d -> d / 16)
+                        .toArray();
                 }
-                return matrix;
+                return new Matrix4f().identity()
+                    .translate((float)-origin[0], (float)-origin[1], (float)-origin[2])
+                    .mul(matrix)
+                    .translate((float)origin[0], (float)origin[1], (float)origin[2]);
             }
         }
 

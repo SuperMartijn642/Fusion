@@ -113,7 +113,7 @@ public class FusionBlockModelData extends BlockModel {
             bakedModel = context.getMissingBakedModel();
         // Log warnings
         if(!warnings.isEmpty())
-            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '{}':", identifier);
+            LoggingHelper.logUserWarnings(warnings, "Warnings for block model '%s':", identifier);
         return bakedModel;
     }
 
@@ -143,7 +143,7 @@ public class FusionBlockModelData extends BlockModel {
             model = context.getMissingItemModel();
         // Log warnings
         if(!warnings.isEmpty())
-            LoggingHelper.logUserWarnings(warnings, "Warnings for item model '{}':", this.identifier);
+            LoggingHelper.logUserWarnings(warnings, "Warnings for item model '%s':", this.identifier);
 
         return model;
     }

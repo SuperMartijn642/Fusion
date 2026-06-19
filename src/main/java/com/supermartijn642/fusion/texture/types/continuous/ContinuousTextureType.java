@@ -36,13 +36,13 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
     public void createTexture(TextureOutput<ContinuousTextureData> output, TextureCreationContext context, ContinuousTextureData data) throws UserErrorException{
         // Calculate frame size
         int frameWidth = context.getImageWidth(), frameHeight = context.getImageHeight();
-        int defaultTileSize = Math.min(context.getImageWidth() / data.getColumns(), context.getImageHeight() / data.getRows());
         AnimationMetadataSection animationMetadata = context.getAnimationMetadata();
         if(animationMetadata != null){
             if(animationMetadata.frameWidth < 0 && animationMetadata.frameHeight < 0){
                 // Use the expected aspect ratio for the layout
-                frameWidth = defaultTileSize * data.getColumns();
-                frameHeight = defaultTileSize * data.getRows();
+                float tileSize = Math.min((float)context.getImageWidth() / data.getColumns(), (float)context.getImageHeight() / data.getRows());
+                frameWidth = (int)(tileSize * data.getColumns());
+                frameHeight = (int)(tileSize * data.getRows());
             }else{
                 if(animationMetadata.frameWidth >= 0)
                     frameWidth = animationMetadata.frameWidth;
@@ -56,15 +56,13 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
             throw new UserErrorException("Image must not be empty!");
         if(context.getImageWidth() % frameWidth != 0 || context.getImageHeight() % frameHeight != 0)
             throw new UserErrorException("Image size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of frame size " + frameWidth + "x" + frameHeight + "!");
-        if(frameWidth % data.getColumns() != 0 || frameHeight % data.getRows() != 0)
-            throw new UserErrorException("Image/frame size " + context.getImageWidth() + "x" + context.getImageHeight() + " is not a multiple of number of columns " + data.getColumns() + " and rows " + data.getRows() + "!");
 
         // Create sprite
         SpriteImageSource image = SpriteImageSource.vanilla(
             context.getImage(),
             context.getAnimationMetadata(),
-            defaultTileSize * data.getColumns(),
-            defaultTileSize * data.getRows()
+            frameWidth,
+            frameHeight
         );
         output.createSprite()
             .image(image)
@@ -72,6 +70,10 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
         // Create a sprite consisting of just the first tile
         int tileWidth = frameWidth / data.getColumns();
         int tileHeight = frameHeight / data.getRows();
+        if(tileWidth != 0)
+            tileWidth = Math.min(1 << 31 - Integer.numberOfLeadingZeros(tileWidth - 1), frameWidth);
+        if(tileHeight != 0)
+            tileHeight = Math.min(1 << 31 - Integer.numberOfLeadingZeros(tileHeight - 1), frameHeight);
         BufferedImage defaultTileImage = ImageHelper.createCropFramed(context.getImage(), 0, 0, tileWidth, tileHeight, frameWidth, frameHeight);
         SpriteImageSource defaultTileImageSource;
         if(animationMetadata == null)

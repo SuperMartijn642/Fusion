@@ -28,7 +28,7 @@ public interface ConnectingModelData extends BaseModelData {
     /**
      * Creates a builder for connecting model data.
      */
-    static ConnectingModelDataBuilder<?,ConnectingModelData> builder(){
+    static Builder<?,ConnectingModelData> builder(){
         return ConnectingModelDataBuilderImpl.builder();
     }
 
@@ -56,7 +56,7 @@ public interface ConnectingModelData extends BaseModelData {
     Map<String,Either<String,ConnectionPredicate>> getAllConnectionPredicates();
 
     @ApiStatus.NonExtendable
-    interface ConnectingModelDataBuilder<T extends Builder<T,S>, S> extends Builder<T,S> {
+    interface Builder<T extends Builder<T,S>, S> extends BaseModelData.Builder<T,S> {
 
         /**
          * Sets the default connection predicate for this model.

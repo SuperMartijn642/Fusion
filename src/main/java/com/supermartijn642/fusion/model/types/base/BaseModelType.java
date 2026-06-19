@@ -251,9 +251,12 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
     protected JsonObject serializeMaterials(Map<String,Either<String,ModelMaterial>> materials){
         JsonObject materialsJson = new JsonObject();
         for(Map.Entry<String,Either<String,ModelMaterial>> entry : materials.entrySet()){
-            if(entry.getValue().isLeft())
-                materialsJson.addProperty(entry.getKey(), entry.getValue().left());
-            else
+            if(entry.getValue().isLeft()){
+                String reference = entry.getValue().left();
+                if(!reference.startsWith("#"))
+                    reference = "#" + reference;
+                materialsJson.addProperty(entry.getKey(), reference);
+            }else
                 materialsJson.addProperty(entry.getKey(), entry.getValue().right().texture().toString());
         }
         return materialsJson;

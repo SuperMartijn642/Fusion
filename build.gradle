@@ -3,7 +3,7 @@ plugins {
     id "idea"
     id "java"
     id "net.minecraftforge.gradle" version "7.0.25"
-    id "me.modmuss50.mod-publish-plugin" version "0.5.2"
+    id "me.modmuss50.mod-publish-plugin" version "2.0.0"
 }
 
 version = mod_version + "-forge-" + minecraft_suffix

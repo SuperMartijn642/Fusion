@@ -15,10 +15,12 @@ import java.util.Set;
 public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isSodiumLoaded;
+    private boolean isModernFixLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
         this.isSodiumLoaded = isClassAvailable("net.caffeinemc.mods.sodium.client.SodiumClientMod");
+        this.isModernFixLoaded = isClassAvailable("org.embeddedt.modernfix.ModernFix");
     }
 
     private static boolean isClassAvailable(String className){
@@ -37,6 +39,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName){
+        if(this.isModernFixLoaded && mixinClassName.endsWith("ModelManagerMixin"))
+            return false;
         return true;
     }
 
@@ -49,6 +53,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
         List<String> mixins = new ArrayList<>();
         if(this.isSodiumLoaded)
             mixins.add("sodium.BlockRendererMixinSodium");
+        if(this.isModernFixLoaded)
+            mixins.add("modernfix.ModelManagerMixinModernFix");
         return mixins;
     }
 

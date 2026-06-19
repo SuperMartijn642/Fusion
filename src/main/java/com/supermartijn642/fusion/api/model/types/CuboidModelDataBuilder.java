@@ -48,7 +48,7 @@ public interface CuboidModelDataBuilder<T extends CuboidModelDataBuilder<T,S>, S
      * Sets the material for the given key.
      */
     default T material(String key, ResourceLocation texture){
-        return this.material(key, texture);
+        return this.material(key, Either.right(ModelMaterial.of(texture)));
     }
 
     /**

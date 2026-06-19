@@ -7,6 +7,8 @@ import net.minecraft.client.resources.model.ModelState;
 import org.apache.commons.lang3.tuple.Triple;
 import org.joml.*;
 
+import java.lang.Math;
+
 /**
  * Most of this class is just copied from {@link Transformation} as I have no clue how rotation math works.
  * <p>
@@ -42,7 +44,7 @@ public class ModelTransformImpl implements ModelTransform {
         return new ModelTransformImpl(matrix, uvLock);
     }
 
-    private static final float PRECISION = 1e-7f;
+    private static final float PRECISION = 1e-3f;
 
     private final Matrix4fc matrix;
     private final boolean uvLock;
@@ -130,6 +132,26 @@ public class ModelTransformImpl implements ModelTransform {
     @Override
     public ModelState toModelState(){
         if(this.modelState == null){
+            // Check whether this transform's rotations are all at multiples of 90 degrees
+            boolean isAxisAlignedPreserving = true;
+            float pi = (float)Math.PI, halfPi = pi / 2;
+            // Check left rotation
+            Vector3f eulerRotation = this.leftRotation().getEulerAnglesXYZ(new Vector3f());
+            float xRemainder = (eulerRotation.x + pi) % halfPi, yRemainder = (eulerRotation.y + pi) % halfPi, zRemainder = (eulerRotation.z + pi) % halfPi;
+            if(!(xRemainder < PRECISION || halfPi - xRemainder < PRECISION)
+                || !(yRemainder < PRECISION || halfPi - yRemainder < PRECISION)
+                || !(zRemainder % halfPi < PRECISION || halfPi - zRemainder < PRECISION))
+                isAxisAlignedPreserving = false;
+            // Check right rotation
+            this.rightRotation.getEulerAnglesXYZ(eulerRotation);
+            xRemainder = (eulerRotation.x + pi) % halfPi;
+            yRemainder = (eulerRotation.y + pi) % halfPi;
+            zRemainder = (eulerRotation.z + pi) % halfPi;
+            if(!(xRemainder < PRECISION || halfPi - xRemainder < PRECISION)
+                || !(yRemainder < PRECISION || halfPi - yRemainder < PRECISION)
+                || !(zRemainder % halfPi < PRECISION || halfPi - zRemainder < PRECISION))
+                isAxisAlignedPreserving = false;
+            boolean finalIsAxisAlignedPreserving = isAxisAlignedPreserving;
             // Create the model state
             this.modelState = new ModelState() {
                 @Override
@@ -140,6 +162,11 @@ public class ModelTransformImpl implements ModelTransform {
                 @Override
                 public boolean isUvLocked(){
                     return ModelTransformImpl.this.uvLock();
+                }
+
+                @Override
+                public boolean mayApplyArbitraryRotation(){
+                    return !finalIsAxisAlignedPreserving;
                 }
             };
         }

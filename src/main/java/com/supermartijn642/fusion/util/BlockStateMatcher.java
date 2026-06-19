@@ -36,7 +36,7 @@ public class BlockStateMatcher {
         Pair<IProperty<?>,Set<?>>[] flattenedProperties = new Pair[propertyMap.size()];
         int index = 0;
         for(Map.Entry<IProperty<?>,List<Object>> entry : propertyMap.entrySet())
-            properties[index++] = Pair.of(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
+            flattenedProperties[index++] = Pair.of(entry.getKey(), ImmutableSet.copyOf(entry.getValue()));
         return new BlockStateMatcher(block, flattenedProperties);
     }
 

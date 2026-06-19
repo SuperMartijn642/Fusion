@@ -157,13 +157,18 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         String key = properties.getProperty(DefaultModelProperties.FACE_CONNECTIONS_KEY).orElse(null);
         if(key == null)
             key = properties.getProperty(DefaultModelProperties.FACE_MATERIAL_KEY).orElse(null);
-        ConnectionPredicate predicate = key == null ?
-            FALLBACK_PREDICATE :
+        if(key != null && key.startsWith("#"))
+            key = key.substring(1);
+        ConnectionPredicate predicate = key == null ? null :
             resolveConnectionsKey(
                 key,
                 properties,
                 keys -> FusionClient.LOGGER.error("Found circular connections key chain ({})!", keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")))
             );
+        if(predicate == null)
+            predicate = data.getConnectionPredicate();
+        if(predicate == null)
+            predicate = FALLBACK_PREDICATE;
 
         // Create predicates key
         Direction facing = quad.facing();
@@ -417,7 +422,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
                 break;
             }
         }
-        return FALLBACK_PREDICATE;
+        return null;
     }
 
     @Override

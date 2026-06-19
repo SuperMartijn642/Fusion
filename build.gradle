@@ -35,7 +35,7 @@ dependencies {
     implementation "net.neoforged:neoforge:${neoforge_version}"
 
     // ModernFix
-//    runtimeOnly "curse.maven:modernfix-790626:6035152"
+    runtimeOnly "curse.maven:modernfix-790626:6171686"
     // Sodium
     compileOnly "maven.modrinth:sodium:mc1.21.4-0.6.6-neoforge"
     compileOnly "org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:3.4.0+acb05a3919"

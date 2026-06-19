@@ -12,9 +12,9 @@ import java.util.Map;
 /**
  * Created 02/05/2023 by SuperMartijn642
  */
-public class ConnectingModelDataBuilderImpl extends AbstractBaseModelDataBuilder<ConnectingModelDataBuilderImpl,ConnectingModelData> implements ConnectingModelData.ConnectingModelDataBuilder<ConnectingModelDataBuilderImpl,ConnectingModelData> {
+public class ConnectingModelDataBuilderImpl extends AbstractBaseModelDataBuilder<ConnectingModelDataBuilderImpl,ConnectingModelData> implements ConnectingModelData.Builder<ConnectingModelDataBuilderImpl,ConnectingModelData> {
 
-    public static ConnectingModelData.ConnectingModelDataBuilder<?,ConnectingModelData> builder(){
+    public static ConnectingModelData.Builder<?,ConnectingModelData> builder(){
         return new ConnectingModelDataBuilderImpl();
     }
 

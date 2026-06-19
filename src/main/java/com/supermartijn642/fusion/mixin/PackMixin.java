@@ -1,8 +1,8 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.extensions.PackExtension;
-import com.supermartijn642.fusion.extensions.PackResourcesExtension;
 import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.server.packs.PackLocationInfo;
@@ -14,9 +14,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -45,13 +46,27 @@ public class PackMixin implements PackExtension {
         }
     }
 
-    @Inject(
-        method = "open",
-        at = @At("RETURN")
+    @ModifyArg(
+        method = "readPackMetadata",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/server/packs/repository/Pack$Metadata;<init>(Lnet/minecraft/network/chat/Component;Lnet/minecraft/server/packs/repository/PackCompatibility;Lnet/minecraft/world/flag/FeatureFlagSet;Ljava/util/List;Z)V"
+        ),
+        index = 3
     )
-    private void open(CallbackInfoReturnable<PackResources> ci){
-        PackResources resources = ci.getReturnValue();
-        if(this.metadata != null && this.metadata.hasOverridesFolder() && resources instanceof PackResourcesExtension)
-            ((PackResourcesExtension)resources).setFusionOverridesFolder(this.metadata.getOverridesFolder());
+    private static List<String> addFusionOverrideOverlay(List<String> overlays, @Local PackResources resources) {
+        try{
+            FusionPackMetadata metadataSection = resources.getMetadataSection(FusionPackMetadataSection.TYPE);
+            if (metadataSection != null && metadataSection.hasOverridesFolder()) {
+                overlays = new LinkedList<>(overlays);
+                String overridesFolder = metadataSection.getOverridesFolder();
+                // trim trailing slash
+                overridesFolder = overridesFolder.substring(0, overridesFolder.length() - 1);
+                // ensure we are first (overlays will be reversed in CompositePackResources constructor) to override all other assets
+                overlays.addLast(overridesFolder);
+            }
+        }catch(Exception ignored){
+        }
+        return overlays;
     }
 }

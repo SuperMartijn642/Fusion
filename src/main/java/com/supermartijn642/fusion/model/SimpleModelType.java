@@ -107,7 +107,6 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             };
             // Bake the geometry
             this.bakeGeometry(context, modelStack, data, transforms, materialResolver, quadConsumer);
-            geometry.bake(quadConsumer, transforms, materialResolver);
             if(!missingKeys.isEmpty())
                 context.pushWarning("Found missing materials " + missingKeys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(",")) + " for model stack (" + modelStack + ")!");
             // Resolve particle material

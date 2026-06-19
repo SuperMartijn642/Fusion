@@ -109,7 +109,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         // Get sub-texture
         RawTextureInstance<?,?> rawSubTexture = data.subTexture();
         if(rawSubTexture == null)
-            rawSubTexture = RawTextureInstance.of(DefaultTextureTypes.VANILLA, null);
+            rawSubTexture = RawTextureInstance.of(DefaultTextureTypes.BASE, data);
 
         // Create sprites
         int tileWidth = frameWidth / layout.getWidth();

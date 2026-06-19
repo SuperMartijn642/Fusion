@@ -81,7 +81,7 @@ public class RandomTextureType implements TextureType<RandomTextureData,Stitched
         // Get sub-texture
         RawTextureInstance<?,?> rawSubTexture = data.subTexture();
         if(rawSubTexture == null)
-            rawSubTexture = RawTextureInstance.of(DefaultTextureTypes.VANILLA, null);
+            rawSubTexture = RawTextureInstance.of(DefaultTextureTypes.BASE, data);
 
         // Create tiles
         int tileWidth = frameWidth / data.getColumns();

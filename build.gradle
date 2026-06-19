@@ -3,7 +3,7 @@ plugins {
     id "idea"
     id "java-library"
     id "net.neoforged.gradle.userdev" version "7.1.38"
-    id "me.modmuss50.mod-publish-plugin" version "0.5.2"
+    id "me.modmuss50.mod-publish-plugin" version "2.0.0"
 }
 
 version = mod_version + "-neoforge-" + minecraft_suffix

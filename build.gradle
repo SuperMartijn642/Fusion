@@ -35,7 +35,7 @@ dependencies {
     implementation "net.neoforged:neoforge:${neoforge_version}"
 
     // ModernFix
-//    runtimeOnly "curse.maven:modernfix-790626:6025615"
+//    runtimeOnly "curse.maven:modernfix-790626:8255560"
     // Embeddium
     compileOnly "curse.maven:embeddium-908741:5681729"
     // Sodium

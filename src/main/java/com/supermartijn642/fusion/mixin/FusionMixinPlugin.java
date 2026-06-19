@@ -51,7 +51,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
         List<String> mixins = new ArrayList<>();
         if(this.isSodiumLoaded){
             mixins.add("sodium.BlockRendererMixin");
-            mixins.add("sodium.ItemRenderContextMixinSodium");
+            mixins.add("sodium.ExtendedBlockModelFeatureRendererMixinSodium");
+            mixins.add("sodium.ExtendedItemFeatureRendererMixinSodium");
         }
         return mixins;
     }

@@ -1,3 +1,12 @@
+### Fusion 1.3.1
+- Fixed `overlay` connecting texture layout producing way too many quads
+- Fixed `connections` property of connecting textures not working
+- Fixed base texture properties not working for `connecting` and `random` texture types
+- Fixed geometry of `base` models being duplicated
+- Fixed crash with quick pack mod
+- Renamed `ConnectingModelData.ConnectingModelDataBuilder` to `ConnectingModelData.Builder`
+- Fixed model materials map serialization not including '#' for references
+
 ### Fusion 1.3.0
 - Model related changes:
   - Overhauled `ModelType` and how models are loaded:

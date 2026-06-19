@@ -22,6 +22,7 @@ public class OverlayLayoutHandler extends ConnectingTextureLayoutHandler {
         this.tileMapping = new int[(int)Math.pow(2, 8)][];
         IntList temp = new IntArrayList(4);
         for(TextureConnections connections : TextureConnections.iterateAll()){
+            temp.clear();
             int index = this.connectionsIndex(connections);
             for(int quad = 0; quad < 4; quad++){
                 int[] pos = this.getTilePos(quad, connections);

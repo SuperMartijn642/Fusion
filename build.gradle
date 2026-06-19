@@ -39,7 +39,7 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 
     // ModernFix
-//    modRuntimeOnly "curse.maven:modernfix-790626:6025592"
+//    modRuntimeOnly "curse.maven:modernfix-790626:7306748"
     // Embeddium
     modCompileOnly "curse.maven:embeddium-908741:5522040"
     // Sodium

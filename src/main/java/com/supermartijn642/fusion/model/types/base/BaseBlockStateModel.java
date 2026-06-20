@@ -116,9 +116,21 @@ public class BaseBlockStateModel implements BakedModel {
         PropertyStore propertyStore = renderData.propertyStore;
 
         // Get whether the giving render type is the default render type
-        RenderType defaultRenderType = state == null ?
-            RenderType.solid() :
-            ItemBlockRenderTypes.getChunkRenderType(state);
+        RenderType defaultRenderType;
+        if(state != null){
+            ChunkRenderTypeSet renderLayers = ItemBlockRenderTypes.getRenderLayers(state);
+            if(renderLayers.contains(RenderType.translucent()))
+                defaultRenderType = RenderType.translucent();
+            else if(renderLayers.contains(RenderType.cutout()))
+                defaultRenderType = RenderType.cutout();
+            else if(renderLayers.contains(RenderType.cutoutMipped()))
+                defaultRenderType = RenderType.cutoutMipped();
+            else if(!renderLayers.isEmpty())
+                defaultRenderType = renderLayers.iterator().next();
+            else
+                defaultRenderType = RenderType.solid();
+        }else
+            defaultRenderType = RenderType.solid();
 
         // Get texture states
         List<Object>[] extractStates = renderData.combinedTextureStates;

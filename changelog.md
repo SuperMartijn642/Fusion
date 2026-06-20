@@ -1,3 +1,6 @@
+### Fusion 1.3.2
+- Fixed wrong render type being used for modded blocks that set a Forge override
+
 ### Fusion 1.3.1
 - Fixed `overlay` connecting texture layout producing way too many quads
 - Fixed `connections` property of connecting textures not working

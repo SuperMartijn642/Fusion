@@ -131,9 +131,21 @@ public class BaseBakedModel implements BakedModel {
         PropertyStore propertyStore = renderData.propertyStore;
 
         // Get whether the giving render type is the default render type
-        RenderType defaultRenderType = state == null ?
-            RenderType.solid() :
-            ItemBlockRenderTypes.getChunkRenderType(state);
+        RenderType defaultRenderType;
+        if(state != null){
+            ChunkRenderTypeSet renderLayers = ItemBlockRenderTypes.getRenderLayers(state);
+            if(renderLayers.contains(RenderType.translucent()))
+                defaultRenderType = RenderType.translucent();
+            else if(renderLayers.contains(RenderType.cutout()))
+                defaultRenderType = RenderType.cutout();
+            else if(renderLayers.contains(RenderType.cutoutMipped()))
+                defaultRenderType = RenderType.cutoutMipped();
+            else if(!renderLayers.isEmpty())
+                defaultRenderType = renderLayers.iterator().next();
+            else
+                defaultRenderType = RenderType.solid();
+        }else
+            defaultRenderType = RenderType.solid();
 
         // Get texture states
         List<Object>[] extractStates = renderData.combinedTextureStates;
@@ -212,7 +224,7 @@ public class BaseBakedModel implements BakedModel {
 
         // Get default render type to use for the item
         RenderType defaultRenderType;
-        if(stack.getItem() instanceof BlockItem && ItemBlockRenderTypes.getChunkRenderType(((BlockItem)stack.getItem()).getBlock().defaultBlockState()) != RenderType.translucent())
+        if(stack.getItem() instanceof BlockItem && !ItemBlockRenderTypes.getRenderLayers(((BlockItem)stack.getItem()).getBlock().defaultBlockState()).contains(RenderType.translucent()))
             defaultRenderType = Sheets.cutoutBlockSheet();
         else
             defaultRenderType = Sheets.translucentItemSheet();

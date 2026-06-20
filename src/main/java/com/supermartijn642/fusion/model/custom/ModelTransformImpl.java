@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.model.custom;
 import com.mojang.math.MatrixUtil;
 import com.mojang.math.Transformation;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
+import com.supermartijn642.fusion.mixin.TransformationAccessor;
 import net.minecraft.client.renderer.block.dispatch.BlockModelRotation;
 import net.minecraft.client.renderer.block.dispatch.ModelState;
 import net.minecraft.core.BlockMath;
@@ -68,7 +69,8 @@ public class ModelTransformImpl implements ModelTransform {
     private ModelTransformImpl(Transformation transformation, boolean uvLock){
         this(transformation.getMatrix(), uvLock);
         this.transformation = transformation;
-        if(transformation.decomposed){
+        //noinspection DataFlowIssue
+        if(((TransformationAccessor)(Object)transformation).fusion$getDecomposed()){
             this.translation = transformation.translation();
             this.leftRotation = transformation.leftRotation();
             this.scale = transformation.scale();

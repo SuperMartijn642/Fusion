@@ -106,10 +106,21 @@ public class BaseBlockStateModel implements BlockStateModel {
 
         PropertyStore propertyStore = renderData.propertyStore;
 
-        // Get whether the giving render type is the default render type
-        ChunkSectionLayer defaultRenderType = renderData.state == null ?
-            ChunkSectionLayer.SOLID :
-            ItemBlockRenderTypes.getChunkRenderType(renderData.state);
+        // Get the default render type
+        ChunkSectionLayer defaultRenderType;
+        if(renderData.state != null){
+            //noinspection deprecation
+            Collection<ChunkSectionLayer> renderLayers = ItemBlockRenderTypes.getRenderLayers(renderData.state);
+            if(renderLayers.contains(ChunkSectionLayer.TRANSLUCENT))
+                defaultRenderType = ChunkSectionLayer.TRANSLUCENT;
+            else if(renderLayers.contains(ChunkSectionLayer.CUTOUT))
+                defaultRenderType = ChunkSectionLayer.CUTOUT;
+            else if(!renderLayers.isEmpty())
+                defaultRenderType = renderLayers.iterator().next();
+            else
+                defaultRenderType = ChunkSectionLayer.SOLID;
+        }else
+            defaultRenderType = ChunkSectionLayer.SOLID;
 
         // Get texture states
         List<Object>[] extractStates = renderData.combinedTextureStates;

@@ -14,7 +14,6 @@ import com.supermartijn642.fusion.model.WrappedBakedModel;
 import com.supermartijn642.fusion.util.ChunkRenderTypeMap;
 import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.FallbackPropertyStore;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -132,9 +131,18 @@ public class BaseBakedModel implements BakedModel, CustomRenderTypeBakedModel {
         PropertyStore propertyStore = renderData.propertyStore;
 
         // Get whether the giving render type is the default render type
-        RenderType defaultRenderType = state == null ?
-            RenderType.solid() :
-            ItemBlockRenderTypes.getChunkRenderType(state);
+        RenderType defaultRenderType;
+        if(state != null){
+            if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, RenderType.translucent()))
+                defaultRenderType = RenderType.translucent();
+            else if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, RenderType.cutout()))
+                defaultRenderType = RenderType.cutout();
+            else if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, RenderType.cutoutMipped()))
+                defaultRenderType = RenderType.cutoutMipped();
+            else
+                defaultRenderType = RenderType.solid();
+        }else
+            defaultRenderType = RenderType.solid();
 
         // Get texture states
         List<Object>[] extractStates = renderData.combinedTextureStates;

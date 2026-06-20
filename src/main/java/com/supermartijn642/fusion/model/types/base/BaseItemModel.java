@@ -117,7 +117,7 @@ public class BaseItemModel implements ItemModel {
             foilType = null;
         // Get default render type to use for the item
         RenderType defaultRenderType;
-        if(stack.getItem() instanceof BlockItem && ItemBlockRenderTypes.getChunkRenderType(((BlockItem)stack.getItem()).getBlock().defaultBlockState()) != ChunkSectionLayer.TRANSLUCENT)
+        if(stack.getItem() instanceof BlockItem && !ItemBlockRenderTypes.getRenderLayers(((BlockItem)stack.getItem()).getBlock().defaultBlockState()).contains(ChunkSectionLayer.TRANSLUCENT))
             defaultRenderType = Sheets.cutoutBlockSheet();
         else
             defaultRenderType = Sheets.translucentItemSheet();

@@ -10,6 +10,7 @@ import com.supermartijn642.fusion.api.texture.custom.QuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.model.CustomRenderTypeBakedModel;
+import com.supermartijn642.fusion.model.ModelRenderTypeHelper;
 import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.FallbackPropertyStore;
 import net.minecraft.block.BlockState;
@@ -132,9 +133,18 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         PropertyStore propertyStore = renderData.propertyStore;
 
         // Get whether the giving render type is the default render type
-        BlockRenderLayer defaultRenderType = state == null ?
-            BlockRenderLayer.SOLID :
-            state.getBlock().getRenderLayer();
+        BlockRenderLayer defaultRenderType;
+        if(state != null){
+            if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, BlockRenderLayer.TRANSLUCENT))
+                defaultRenderType = BlockRenderLayer.TRANSLUCENT;
+            else if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, BlockRenderLayer.CUTOUT))
+                defaultRenderType = BlockRenderLayer.CUTOUT;
+            else if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, BlockRenderLayer.CUTOUT_MIPPED))
+                defaultRenderType = BlockRenderLayer.CUTOUT_MIPPED;
+            else
+                defaultRenderType = BlockRenderLayer.SOLID;
+        }else
+            defaultRenderType = BlockRenderLayer.SOLID;
 
         // Get texture states
         List<Object>[] extractStates = renderData.combinedTextureStates;

@@ -36,7 +36,8 @@
     "SpriteLoaderMixin",
     "SpriteResourceLoaderMixin",
     "TerrainParticleMixin",
-    "TextureAtlasSpriteMixin"
+    "TextureAtlasSpriteMixin",
+    "TransformationAccessor"
   ],
   "server": [],
   "injectors": {

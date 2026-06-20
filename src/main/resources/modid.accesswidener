@@ -123,5 +123,3 @@ accessible class net/minecraft/client/resources/model/sprite/TextureSlots$Refere
 accessible class net/minecraft/client/resources/model/sprite/TextureSlots$Value
 # TransferableSelectionList
 accessible field net/minecraft/client/gui/screens/packs/TransferableSelectionList screen Lnet/minecraft/client/gui/screens/packs/PackSelectionScreen;
-# Transformation
-accessible field com/mojang/math/Transformation decomposed Z

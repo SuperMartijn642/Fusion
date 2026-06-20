@@ -18,7 +18,6 @@ import com.supermartijn642.fusion.util.FallbackPropertyStore;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.Atlases;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderTypeLookup;
 import net.minecraft.client.renderer.model.*;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.item.BlockItem;
@@ -129,9 +128,18 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         PropertyStore propertyStore = renderData.propertyStore;
 
         // Get whether the giving render type is the default render type
-        RenderType defaultRenderType = state == null ?
-            RenderType.solid() :
-            RenderTypeLookup.getChunkRenderType(state);
+        RenderType defaultRenderType;
+        if(state != null){
+            if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, RenderType.translucent()))
+                defaultRenderType = RenderType.translucent();
+            else if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, RenderType.cutout()))
+                defaultRenderType = RenderType.cutout();
+            else if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, RenderType.cutoutMipped()))
+                defaultRenderType = RenderType.cutoutMipped();
+            else
+                defaultRenderType = RenderType.solid();
+        }else
+            defaultRenderType = RenderType.solid();
 
         // Get texture states
         List<Object>[] extractStates = renderData.combinedTextureStates;

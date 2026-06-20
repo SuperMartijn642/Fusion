@@ -1,3 +1,8 @@
+### Fusion 1.3.2
+- Fixed crash with Sodium reading dummy sprite contents
+- Fixed wrong render type being used for modded blocks that set a Forge override
+- Fixed connecting texture predicate resolution for item models
+
 ### Fusion 1.3.1
 - Fixed `overlay` connecting texture layout producing way too many quads
 - Fixed `connections` property of connecting textures not working

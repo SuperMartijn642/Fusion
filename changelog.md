@@ -1,3 +1,7 @@
+### Fusion 1.3.2
+- Fixed crash with Sodium reading dummy sprite contents
+- Fixed connecting texture predicate resolution for item models
+
 ### Fusion 1.3.1
 - Fixed `overlay` connecting texture layout producing way too many quads
 - Fixed `connections` property of connecting textures not working

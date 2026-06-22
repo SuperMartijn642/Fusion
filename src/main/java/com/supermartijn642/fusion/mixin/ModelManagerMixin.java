@@ -35,7 +35,7 @@ public class ModelManagerMixin {
         at = @At("HEAD")
     )
     private static void captureBlockItemSprites(
-        Map<ResourceLocation, AtlasSet.StitchResult> atlasStitchResults,
+        Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults,
         ModelBakery bakery,
         Object2IntMap<BlockState> modelGroups,
         EntityModelSet entityModelSet,
@@ -43,23 +43,7 @@ public class ModelManagerMixin {
         Executor taskExecutor,
         CallbackInfoReturnable<CompletableFuture<?>> ci
     ){
-        FusionBlockModelData.ATLAS_STITCH_RESULTS = atlasStitchResults;
-    }
-
-    @Inject(
-        method = "loadModels",
-        at = @At("RETURN")
-    )
-    private static void releaseBlockItemSprites(
-        Map<ResourceLocation, AtlasSet.StitchResult> atlasStitchResults,
-        ModelBakery bakery,
-        Object2IntMap<BlockState> modelGroups,
-        EntityModelSet entityModelSet,
-        SpecialBlockModelRenderer specialBlockModelRenderer,
-        Executor taskExecutor,
-        CallbackInfoReturnable<CompletableFuture<?>> ci
-    ){
-        ci.getReturnValue().thenRun(() -> FusionBlockModelData.ATLAS_STITCH_RESULTS = null);
+        FusionBlockModelData.atlasStitchResults = atlasStitchResults;
     }
 
     @Inject(

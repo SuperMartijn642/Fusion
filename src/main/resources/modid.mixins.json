@@ -8,6 +8,7 @@
   "client": [
     "neoforge.DatagenModLoaderMixin",
     "neoforge.NamedRenderTypeManagerMixin",
+    "neoforge.ResourcePackLoaderMixin",
     "AgeableMobMixin",
     "AtlasConfigMixin",
     "BlockModelMixin",

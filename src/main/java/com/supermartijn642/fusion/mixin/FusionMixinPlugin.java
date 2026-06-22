@@ -15,12 +15,10 @@ import java.util.Set;
 public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isEmbeddiumLoaded;
-    private boolean isModernFixLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
         this.isEmbeddiumLoaded = isClassAvailable("org.embeddedt.embeddium.api.eventbus.EmbeddiumEvent");
-        this.isModernFixLoaded = isClassAvailable("org.embeddedt.modernfix.ModernFix");
     }
 
     private static boolean isClassAvailable(String className){
@@ -39,8 +37,6 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName){
-        if(this.isModernFixLoaded && mixinClassName.endsWith("ModelManagerMixin"))
-            return false;
         return true;
     }
 
@@ -53,8 +49,6 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
         List<String> mixins = new ArrayList<>();
         if(this.isEmbeddiumLoaded)
             mixins.add("embeddium.BlockRendererMixinEmbeddium");
-        if(this.isModernFixLoaded)
-            mixins.add("modernfix.ModelManagerMixinModernFix");
         return mixins;
     }
 

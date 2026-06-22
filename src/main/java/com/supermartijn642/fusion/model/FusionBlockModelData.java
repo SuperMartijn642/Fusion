@@ -33,7 +33,7 @@ public class FusionBlockModelData {
 
     public static final ThreadLocal<ResourceLocation> CURRENT_MODEL = new ThreadLocal<>();
     public static final ThreadLocal<ResolvedModel> MISSING_MODEL = new ThreadLocal<>();
-    public static Map<ResourceLocation,AtlasSet.StitchResult> ATLAS_STITCH_RESULTS;
+    public static Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults = Map.of();
 
     @Nullable
     public static FusionBlockModelData get(UnbakedModel model){
@@ -228,7 +228,7 @@ public class FusionBlockModelData {
             if(entry.getValue() instanceof TextureSlots.Value(Material material)){
                 if(!material.atlasLocation().equals(TextureAtlas.LOCATION_BLOCKS))
                     continue;
-                AtlasSet.StitchResult stitchResult = ATLAS_STITCH_RESULTS.get(material.atlasLocation());
+                AtlasSet.StitchResult stitchResult = atlasStitchResults.get(material.atlasLocation());
                 if(stitchResult == null)
                     continue;
                 TextureAtlasSprite sprite = stitchResult.getSprite(material.texture());

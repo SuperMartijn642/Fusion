@@ -9,6 +9,7 @@
     "neoforge.DatagenModLoaderMixin",
     "neoforge.NamedRenderTypeManagerMixin",
     "neoforge.QuadLighterMixin",
+    "neoforge.ResourcePackLoaderMixin",
     "AgeableMobMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",

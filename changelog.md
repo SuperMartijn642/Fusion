@@ -1,3 +1,6 @@
+### Fusion 1.3.2b
+- Fixed `overrides_folder` not working for mod resources
+
 ### Fusion 1.3.2a
 - Fixed crash when mods bake models outside the normal baking window
 

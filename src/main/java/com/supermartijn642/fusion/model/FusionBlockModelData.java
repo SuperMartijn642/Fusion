@@ -47,7 +47,7 @@ public class FusionBlockModelData {
 
     public static final ThreadLocal<Identifier> CURRENT_MODEL = new ThreadLocal<>();
     public static final ThreadLocal<Pair<BlockStateModelPart,ResolvedModel>> MISSING_MODEL = new ThreadLocal<>();
-    public static Pair<SpriteLoader.Preparations,SpriteLoader.Preparations> BLOCK_ITEM_ATLAS_SPRITES;
+    public static Pair<SpriteLoader.Preparations,SpriteLoader.Preparations> blockItemAtlasSprites;
 
     @Nullable
     public static FusionBlockModelData get(UnbakedModel model){
@@ -254,7 +254,7 @@ public class FusionBlockModelData {
     }
 
     private static Predicate<Identifier> isFusionTexture(){
-        Pair<SpriteLoader.Preparations,SpriteLoader.Preparations> sprites = BLOCK_ITEM_ATLAS_SPRITES;
+        Pair<SpriteLoader.Preparations,SpriteLoader.Preparations> sprites = blockItemAtlasSprites;
         SpriteLoader.Preparations blockSprites = sprites.left();
         SpriteLoader.Preparations itemSprites = sprites.right();
         return identifier -> {

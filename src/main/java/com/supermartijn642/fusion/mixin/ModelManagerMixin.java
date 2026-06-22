@@ -47,24 +47,7 @@ public class ModelManagerMixin {
         Executor taskExecutor,
         CallbackInfoReturnable<CompletableFuture<?>> ci
     ){
-        FusionBlockModelData.BLOCK_ITEM_ATLAS_SPRITES = Pair.of(blockAtlas, itemAtlas);
-    }
-
-    @Inject(
-        method = "loadModels",
-        at = @At("RETURN")
-    )
-    private static void releaseBlockItemSprites(
-        SpriteLoader.Preparations blockAtlas,
-        SpriteLoader.Preparations itemAtlas,
-        ModelBakery bakery,
-        LoadedBlockModels blockModels,
-        Object2IntMap<BlockState> modelGroups,
-        EntityModelSet entityModelSet,
-        Executor taskExecutor,
-        CallbackInfoReturnable<CompletableFuture<?>> ci
-    ){
-        ci.getReturnValue().thenRun(() -> FusionBlockModelData.BLOCK_ITEM_ATLAS_SPRITES = null);
+        FusionBlockModelData.blockItemAtlasSprites = Pair.of(blockAtlas, itemAtlas);
     }
 
     @Inject(

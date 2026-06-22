@@ -35,30 +35,14 @@ public class ModelManagerMixin {
     )
     private static void captureBlockItemSprites(
         ProfilerFiller profiler,
-        Map<ResourceLocation, AtlasSet.StitchResult> atlasStitchResults,
+        Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults,
         ModelBakery bakery,
         Object2IntMap<BlockState> modelGroups,
         EntityModelSet entityModelSet,
         SpecialBlockModelRenderer specialBlockModelRenderer,
         CallbackInfoReturnable<?> ci
     ){
-        FusionBlockModelData.ATLAS_STITCH_RESULTS = atlasStitchResults;
-    }
-
-    @Inject(
-        method = "loadModels",
-        at = @At("RETURN")
-    )
-    private static void releaseBlockItemSprites(
-        ProfilerFiller profiler,
-        Map<ResourceLocation, AtlasSet.StitchResult> atlasStitchResults,
-        ModelBakery bakery,
-        Object2IntMap<BlockState> modelGroups,
-        EntityModelSet entityModelSet,
-        SpecialBlockModelRenderer specialBlockModelRenderer,
-        CallbackInfoReturnable<?> ci
-    ){
-        FusionBlockModelData.ATLAS_STITCH_RESULTS = null;
+        FusionBlockModelData.atlasStitchResults = atlasStitchResults;
     }
 
     @Inject(

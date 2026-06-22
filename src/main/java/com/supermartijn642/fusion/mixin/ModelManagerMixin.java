@@ -39,19 +39,6 @@ public class ModelManagerMixin {
     }
 
     @Inject(
-        method = "loadModels",
-        at = @At("RETURN")
-    )
-    private void releaseBlockItemSprites(
-        ProfilerFiller profiler,
-        Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults,
-        ModelBakery bakery,
-        CallbackInfoReturnable<?> ci
-    ){
-        FusionBlockModelData.atlasStitchResults = null;
-    }
-
-    @Inject(
         method = "method_45895(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;",
         at = @At("HEAD")
     )

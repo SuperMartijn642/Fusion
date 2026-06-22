@@ -17,6 +17,8 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
+import net.minecraft.data.AtlasIds;
+import net.minecraft.resources.Identifier;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -100,7 +102,8 @@ public class MutableQuadImpl implements MutableQuad {
             this.uvs[i] = UVPair.pack(quad.u(i), quad.v(i));
         }
         this.facing = null;
-        this.sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(quad.atlas().getTextureId()).spriteFinder().find(quad);
+        Identifier atlasId = quad.atlas() == QuadAtlas.BLOCK ? AtlasIds.BLOCKS : AtlasIds.ITEMS;
+        this.sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(atlasId).spriteFinder().find(quad);
         this.tintIndex = quad.tintIndex();
         this.shade = quad.diffuseShade();
         this.lightEmission = 15;

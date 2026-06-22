@@ -1,3 +1,6 @@
+### Fusion 1.3.2b
+- Fixed crash from `pane_culling_fix` requesting invalid atlas id
+
 ### Fusion 1.3.2a
 - Fixed crash when mods bake models outside the normal baking window
 

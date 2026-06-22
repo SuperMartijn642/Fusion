@@ -1,3 +1,7 @@
+### Fusion 1.3.2a
+- Fixed crash when mods bake models outside the normal baking window
+- Fixed crash when creating texture animation frames
+
 ### Fusion 1.3.2
 - Fixed crash with Sodium reading dummy sprite contents
 - Fixed connecting texture predicate resolution for item models

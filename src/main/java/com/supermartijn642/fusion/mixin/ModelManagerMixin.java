@@ -50,25 +50,7 @@ public class ModelManagerMixin {
         AnimationLoader.PendingAnimations pendingAnimations,
         CallbackInfoReturnable<CompletableFuture<?>> ci
     ){
-        FusionBlockModelData.BLOCK_ITEM_ATLAS_SPRITES = Pair.of(blockAtlas, itemAtlas);
-    }
-
-    @Inject(
-        method = "loadModels(Lnet/minecraft/client/renderer/texture/SpriteLoader$Preparations;Lnet/minecraft/client/renderer/texture/SpriteLoader$Preparations;Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/renderer/block/LoadedBlockModels;Lit/unimi/dsi/fastutil/objects/Object2IntMap;Lnet/minecraft/client/model/geom/EntityModelSet;Ljava/util/concurrent/Executor;Lnet/neoforged/neoforge/client/entity/animation/json/AnimationLoader$PendingAnimations;)Ljava/util/concurrent/CompletableFuture;",
-        at = @At("RETURN")
-    )
-    private static void releaseBlockItemSprites(
-        SpriteLoader.Preparations blockAtlas,
-        SpriteLoader.Preparations itemAtlas,
-        ModelBakery bakery,
-        LoadedBlockModels blockModels,
-        Object2IntMap<BlockState> modelGroups,
-        EntityModelSet entityModelSet,
-        Executor taskExecutor,
-        AnimationLoader.PendingAnimations pendingAnimations,
-        CallbackInfoReturnable<CompletableFuture<?>> ci
-    ){
-        ci.getReturnValue().thenRun(() -> FusionBlockModelData.BLOCK_ITEM_ATLAS_SPRITES = null);
+        FusionBlockModelData.blockItemAtlasSprites = Pair.of(blockAtlas, itemAtlas);
     }
 
     @Inject(

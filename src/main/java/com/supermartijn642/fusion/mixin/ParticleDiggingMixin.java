@@ -37,6 +37,8 @@ public abstract class ParticleDiggingMixin extends Particle {
         cancellable = true
     )
     private void tintQuad(BlockPos pos, CallbackInfo ci){
+        if(this.particleTexture == null)
+            return;
         // If the texture has a custom tinting set, replace the original tinting
         TextureInstance<?> textureInstance = SpriteHelper.getTextureInstance(this.particleTexture);
         if(textureInstance != null && textureInstance.getCustomData() instanceof BaseTextureData){

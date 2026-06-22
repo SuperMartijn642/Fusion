@@ -35,7 +35,7 @@ public class FusionBlockModelData extends BlockModel {
 
     public static final ThreadLocal<ResourceLocation> CURRENT_MODEL = new ThreadLocal<>();
     public static BakedModel missingModel;
-    public static Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults;
+    public static Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults = Map.of();
 
     @Nullable
     public static FusionBlockModelData get(UnbakedModel model){

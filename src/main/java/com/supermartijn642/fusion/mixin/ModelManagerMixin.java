@@ -31,26 +31,12 @@ public class ModelManagerMixin {
     )
     private static void captureBlockItemSprites(
         ProfilerFiller profiler,
-        Map<ResourceLocation, AtlasSet.StitchResult> atlasStitchResults,
+        Map<ResourceLocation,AtlasSet.StitchResult> atlasStitchResults,
         ModelBakery bakery,
         Object2IntMap<BlockState> modelGroups,
         CallbackInfoReturnable<?> ci
     ){
         FusionBlockModelData.atlasStitchResults = atlasStitchResults;
-    }
-
-    @Inject(
-        method = "loadModels",
-        at = @At("RETURN")
-    )
-    private static void releaseBlockItemSprites(
-        ProfilerFiller profiler,
-        Map<ResourceLocation, AtlasSet.StitchResult> atlasStitchResults,
-        ModelBakery bakery,
-        Object2IntMap<BlockState> modelGroups,
-        CallbackInfoReturnable<?> ci
-    ){
-        FusionBlockModelData.atlasStitchResults = null;
     }
 
     @Inject(

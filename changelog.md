@@ -1,3 +1,6 @@
+### Fusion 1.3.2a
+- Fixed crash when rendering terrain particle with `null` sprite
+
 ### Fusion 1.3.2
 - Fixed wrong render type being used for modded blocks that set a Forge override
 

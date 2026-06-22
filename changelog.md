@@ -1,3 +1,6 @@
+### Fusion 1.3.2a
+- Fixed crash when mods bake models outside the normal baking window
+
 ### Fusion 1.3.2
 - Fixed broken mixin crash
 - Fixed "Reference map could not be read" warning

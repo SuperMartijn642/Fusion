@@ -12,9 +12,9 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
-import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
+import net.minecraft.data.AtlasIds;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
@@ -102,7 +102,7 @@ public class MutableQuadImpl implements MutableQuad {
             quad.copyUv(i, this.uvs[i]);
         }
         this.facing = null;
-        this.sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(TextureAtlas.LOCATION_BLOCKS).spriteFinder().find(quad);
+        this.sprite = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.BLOCKS).spriteFinder().find(quad);
         this.tintIndex = quad.tintIndex();
         this.shade = quad.diffuseShade();
         this.lightEmission = 15;

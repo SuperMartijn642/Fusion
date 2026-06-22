@@ -16,13 +16,11 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isSodiumLoaded;
     private boolean isIndiumLoaded;
-    private boolean isModernFixLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
         this.isSodiumLoaded = isClassAvailable("me.jellysquid.mods.sodium.client.SodiumClientMod");
         this.isIndiumLoaded = isClassAvailable("link.infra.indium.Indium");
-        this.isModernFixLoaded = isClassAvailable("org.embeddedt.modernfix.ModernFix");
     }
 
     private static boolean isClassAvailable(String className){
@@ -43,8 +41,6 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName){
         if(this.isSodiumLoaded && mixinClassName.endsWith(".ItemRendererMixin"))
             return false;
-        if(this.isModernFixLoaded && mixinClassName.endsWith("ModelManagerMixin"))
-            return false;
         return true;
     }
 
@@ -61,8 +57,6 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             mixins.add("indium.AbstractBlockRenderContextMixinIndium");
             mixins.add("indium.ItemRenderContextMixinIndium");
         }
-        if(this.isModernFixLoaded)
-            mixins.add("modernfix.ModelManagerMixinModernFix");
         return mixins;
     }
 

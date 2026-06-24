@@ -142,7 +142,7 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
                     try{
                         if(!element.isJsonArray())
                             throw new JsonParseException("Entry must be an array of 3 numbers!");
-                        JsonArray offset = json.getAsJsonArray("offset");
+                        JsonArray offset = element.getAsJsonArray();
                         if(offset.size() != 3
                             || !offset.get(0).isJsonPrimitive() || !offset.get(0).getAsJsonPrimitive().isNumber()
                             || !offset.get(1).isJsonPrimitive() || !offset.get(1).getAsJsonPrimitive().isNumber()

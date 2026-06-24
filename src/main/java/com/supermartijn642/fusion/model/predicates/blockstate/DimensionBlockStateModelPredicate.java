@@ -49,7 +49,7 @@ public class DimensionBlockStateModelPredicate implements BlockStateModelPredica
             if(json.has("dimension") && json.has("dimensions"))
                 throw new JsonParseException("Dimension predicate must have either property 'dimension' or 'dimensions', not both!");
             Set<Integer> dimensions;
-            if(json.has("dimensions")){
+            if(json.has("dimension")){
                 if(!json.get("dimension").isJsonPrimitive() || !json.getAsJsonPrimitive("dimension").isNumber())
                     throw new JsonParseException("Property 'dimension' must be an integer!");
                 int dimension = json.get("dimension").getAsInt();

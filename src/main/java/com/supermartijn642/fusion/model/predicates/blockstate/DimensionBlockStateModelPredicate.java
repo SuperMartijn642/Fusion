@@ -44,7 +44,7 @@ public class DimensionBlockStateModelPredicate implements BlockStateModelPredica
             if(json.has("dimension") && json.has("dimensions"))
                 throw new JsonParseException("Dimension predicate must have either property 'dimension' or 'dimensions', not both!");
             Set<ResourceLocation> dimensions;
-            if(json.has("dimensions")){
+            if(json.has("dimension")){
                 if(!json.get("dimension").isJsonPrimitive() || !json.getAsJsonPrimitive("dimension").isString())
                     throw new JsonParseException("Property 'dimension' must be a string!");
                 if(!IdentifierUtil.isValidIdentifier(json.get("dimension").getAsString()))

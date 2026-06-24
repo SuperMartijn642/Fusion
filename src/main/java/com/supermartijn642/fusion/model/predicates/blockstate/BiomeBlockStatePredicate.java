@@ -80,7 +80,7 @@ public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
                     ResourceLocation identifier = new ResourceLocation(element.getAsString());
                     if(!ForgeRegistries.BLOCKS.containsKey(identifier)){
                         if(!ignoreMissing)
-                            throw new JsonParseException("Unknown biome '" + json.get("biome").getAsString() + "'!");
+                            throw new JsonParseException("Unknown biome '" + identifier + "'!");
                     }else
                         biomes = ImmutableSet.of(ForgeRegistries.BIOMES.getValue(identifier));
                 }

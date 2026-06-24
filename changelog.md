@@ -1,3 +1,6 @@
+### Fusion 1.3.3
+- Fixed deserialization of `dimension`, `match_block`, and `match_state` block predicates
+
 ### Fusion 1.3.2a
 - Fixed crash when rendering terrain particle with `null` sprite
 

@@ -1,3 +1,7 @@
+### Fusion 1.3.3
+- Fixed deserialization of `dimension`, `match_block`, and `match_state` block predicates
+- Fixed deserialization of `dimension` entity predicate
+
 ### Fusion 1.3.2a
 - Fixed crash when mods bake models outside the normal baking window
 - Fixed crash when creating texture animation frames

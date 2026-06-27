@@ -192,7 +192,6 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
     private final boolean containsAir;
     private final Set<BlockPos> offsets;
     private final boolean checkCenter;
-    private final BlockPos.MutableBlockPos dummyBlockPos = new BlockPos.MutableBlockPos();
 
     private MatchBlockBlockStatePredicate(Collection<Block> blocks, Collection<BlockPos> offsets){
         this.blocks = ImmutableSet.copyOf(blocks);
@@ -223,9 +222,10 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
             return false;
         if(level == null || pos == null)
             return this.containsAir;
+        BlockPos.MutableBlockPos dummyBlockPos = new BlockPos.MutableBlockPos();
         for(BlockPos offset : this.offsets){
-            this.dummyBlockPos.setPos(pos.getX() + offset.getX(), pos.getY() + offset.getY(), pos.getZ() + offset.getZ());
-            state = level.getBlockState(this.dummyBlockPos);
+            dummyBlockPos.setPos(pos.getX() + offset.getX(), pos.getY() + offset.getY(), pos.getZ() + offset.getZ());
+            state = level.getBlockState(dummyBlockPos);
             if(this.blocks.contains(state.getBlock()))
                 return true;
         }

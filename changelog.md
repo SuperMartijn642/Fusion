@@ -1,3 +1,7 @@
+### Fusion 1.3.4
+- Fixed threading issue with `match_block` and `match_state` block predicates potentially leading to incorrect results or crashes
+- Fixed element face 'uv' property being ignored
+
 ### Fusion 1.3.3
 - Fixed deserialization of `dimension`, `match_block`, and `match_state` block predicates
 

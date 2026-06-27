@@ -370,6 +370,19 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                 throw new JsonParseException("Element face property 'texture' must not be empty!");
             builder.material(texture);
         }
+        if(json.has("uv")){
+            if(!json.get("uv").isJsonArray() || json.getAsJsonArray("uv").size() != 4)
+                throw new JsonParseException("Element face property 'uv' must be an array of 4 numbers!");
+            float[] uv = new float[4];
+            JsonArray array = json.getAsJsonArray("uv");
+            for(int i = 0; i < array.size(); i++){
+                JsonElement element = array.get(i);
+                if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber())
+                    throw new JsonParseException("Element face property 'uv' must be an array of 4 numbers!");
+                uv[i] = element.getAsFloat();
+            }
+            builder.uv(uv[0], uv[1], uv[2], uv[3]);
+        }
         if(json.has("rotation")){
             if(!json.get("rotation").isJsonPrimitive() || !json.getAsJsonPrimitive("rotation").isNumber())
                 throw new JsonParseException("Element face property 'rotation' must be a number!");

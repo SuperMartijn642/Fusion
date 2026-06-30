@@ -101,10 +101,14 @@ accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTe
 # SpriteContents$FrameInfo
 accessible class net/minecraft/client/renderer/texture/SpriteContents$FrameInfo
 # SpriteContents$InterpolationData
+accessible field net/minecraft/client/renderer/texture/SpriteContents$InterpolationData activeFrame [Lcom/mojang/blaze3d/platform/NativeImage;
 accessible method net/minecraft/client/renderer/texture/SpriteContents$InterpolationData <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;)V
 extendable method net/minecraft/client/renderer/texture/SpriteContents$InterpolationData getPixel (Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;IIII)I
+extendable method net/minecraft/client/renderer/texture/SpriteContents$InterpolationData uploadInterpolatedFrame (IILnet/minecraft/client/renderer/texture/SpriteContents$Ticker;Lcom/mojang/blaze3d/textures/GpuTexture;)V
 accessible class net/minecraft/client/renderer/texture/SpriteContents$InterpolationData
 # SpriteContents$Ticker
+accessible field net/minecraft/client/renderer/texture/SpriteContents$Ticker frame I
+accessible field net/minecraft/client/renderer/texture/SpriteContents$Ticker subFrame I
 accessible method net/minecraft/client/renderer/texture/SpriteContents$Ticker <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;Lnet/minecraft/client/renderer/texture/SpriteContents$InterpolationData;)V
 accessible class net/minecraft/client/renderer/texture/SpriteContents$Ticker
 # Stitcher

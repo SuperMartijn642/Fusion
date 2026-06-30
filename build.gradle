@@ -1,5 +1,5 @@
 plugins {
-    id "fabric-loom" version "1.15-SNAPSHOT"
+    id "fabric-loom" version "1.17-SNAPSHOT"
     id "me.modmuss50.mod-publish-plugin" version "0.5.2"
 }
 
@@ -24,7 +24,6 @@ repositories {
         }
         filter { includeGroup "maven.modrinth" }
     }
-    maven { url = "https://repo.spongepowered.org/maven" }
 }
 
 dependencies {

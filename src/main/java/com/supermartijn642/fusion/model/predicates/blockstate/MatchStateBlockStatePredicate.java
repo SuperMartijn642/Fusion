@@ -98,9 +98,8 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
                         if(!block.isPresent()){
                             if(!ignoreMissing)
                                 throw new JsonParseException("Unknown block '" + identifier + "'!");
-                            blocks = Collections.emptyList();
                         }else
-                            blocks = ImmutableList.of(block.get());
+                            blocks.add(block.get());
                     }catch(JsonParseException e){
                         throw new JsonParseException("Failed to parse 'blocks' entry", e);
                     }

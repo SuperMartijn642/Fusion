@@ -47,8 +47,10 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins(){
         List<String> mixins = new ArrayList<>();
-        if(this.isEmbeddiumLoaded)
+        if(this.isEmbeddiumLoaded){
             mixins.add("embeddium.BlockRendererMixinEmbeddium");
+            mixins.add("embeddium.SpriteContentsInterpolationDataMixinEmbeddium");
+        }
         return mixins;
     }
 

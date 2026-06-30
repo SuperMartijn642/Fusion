@@ -90,14 +90,50 @@ public class FusionSpriteContents extends SpriteContents {
             public SpriteTicker createTicker(){
                 if(!this.interpolateFrames)
                     return super.createTicker();
-                InterpolationData interpolationData = new InterpolationData() {
+                class FusionInterpolationData extends InterpolationData implements SodiumBypassingInterpolationData {
                     @Override
-                    protected int getPixel(AnimatedTexture animatedTexture, int frameIndex, int mipLevel, int x, int y){
-                        SpriteImageSource.AnimationFrame frame = FusionSpriteContents.this.uniqueFrames.get(frameIndex);
-                        return FusionSpriteContents.this.byMipLevel[mipLevel].getPixelRGBA(x + (frame.u() >> mipLevel), y + (frame.v() >> mipLevel));
+                    protected void uploadInterpolatedFrame(int atlasX, int atlasY, SpriteContents.Ticker ticker){
+                        // We have to copy the vanilla code here because of Sodium's mixin that overwrites it
+                        FrameInfo currentFrame = FusionSpriteContents.this.frameInfos.get(ticker.frame);
+                        int currentIndex = currentFrame.index;
+                        int nextIndex = FusionSpriteContents.this.frameInfos.get((ticker.frame + 1) % FusionSpriteContents.this.frameInfos.size()).index;
+                        if(currentIndex == nextIndex)
+                            return;
+                        float progress = (float)ticker.subFrame / currentFrame.time;
+                        float remainder = 1 - progress;
+                        for(int mipLevel = 0; mipLevel < this.activeFrame.length; mipLevel++){
+                            int frameWidth = FusionSpriteContents.this.frameWidth >> mipLevel;
+                            int frameHeight = FusionSpriteContents.this.frameHeight >> mipLevel;
+                            for(int y = 0; y < frameHeight; y++){
+                                for(int x = 0; x < frameWidth; x++){
+                                    int currentPixel = this.getPixel(null, currentIndex, mipLevel, x, y);
+                                    int nextPixel = this.getPixel(null, nextIndex, mipLevel, x, y);
+                                    int alpha = (int)(remainder * (currentPixel >> 24 & 0xff) + progress * (nextPixel >> 24 & 0xff));
+                                    int red = (int)(remainder * (currentPixel >> 16 & 0xff) + progress * (nextPixel >> 16 & 0xff));
+                                    int green = (int)(remainder * (currentPixel >> 8 & 0xff) + progress * (nextPixel >> 8 & 0xff));
+                                    int blue = (int)(remainder * (currentPixel & 0xff) + progress * (nextPixel & 0xff));
+                                    this.activeFrame[mipLevel].setPixelRGBA(x, y, alpha << 24 | red << 16 | green << 8 | blue);
+                                }
+                            }
+                        }
+
+                        FusionSpriteContents.this.upload(atlasX, atlasY, 0, 0, this.activeFrame);
                     }
-                };
-                return new Ticker(this, interpolationData);
+
+                    @Override
+                    protected int getPixel(@Nullable AnimatedTexture animatedTexture, int frameIndex, int mipLevel, int x, int y){
+                        SpriteImageSource.AnimationFrame frame = FusionSpriteContents.this.uniqueFrames.get(frameIndex);
+                        x = (x + (frame.u() >> mipLevel)) % FusionSpriteContents.this.imageWidth;
+                        y = (y + (frame.v() >> mipLevel)) % FusionSpriteContents.this.imageHeight;
+                        return FusionSpriteContents.this.byMipLevel[mipLevel].getPixelRGBA(x, y);
+                    }
+
+                    @Override
+                    public void bypassSodiumUploadInterpolatedFrameOverwrite(int atlasX, int atlasY, SpriteContents.Ticker ticker){
+                        this.uploadInterpolatedFrame(atlasX, atlasY, ticker);
+                    }
+                }
+                return new Ticker(this, new FusionInterpolationData());
             }
         };
     }
@@ -122,5 +158,9 @@ public class FusionSpriteContents extends SpriteContents {
         }
         for(int mipLevel = 0; mipLevel < this.byMipLevel.length; mipLevel++)
             this.byMipLevel[mipLevel].upload(mipLevel, destinationX >> mipLevel, destinationY >> mipLevel, sourceX >> mipLevel, sourceY >> mipLevel, width >> mipLevel, height >> mipLevel, this.byMipLevel.length > 1, false);
+    }
+
+    public interface SodiumBypassingInterpolationData {
+        void bypassSodiumUploadInterpolatedFrameOverwrite(int atlasX, int atlasY, SpriteContents.Ticker ticker);
     }
 }

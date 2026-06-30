@@ -124,12 +124,16 @@ mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
+accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite upload (II[Lcom/mojang/blaze3d/platform/NativeImage;)V
 # TextureAtlasSprite$AnimatedTexture
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture frame I
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture subFrame I
 accessible class net/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture
 accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture <init> (Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Ljava/util/List;ILnet/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData;)V
 extendable method net/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture uploadFrame (I)V
 # TextureAtlasSprite$FrameInfo
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$FrameInfo index I
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$FrameInfo time I
 accessible class net/minecraft/client/renderer/texture/TextureAtlasSprite$FrameInfo
 accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite$FrameInfo <init> (II)V
 # TextureAtlasSprite$Info
@@ -141,10 +145,12 @@ mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info heig
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite$Info metadata Lnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;
 extendable class net/minecraft/client/renderer/texture/TextureAtlasSprite$Info
 # TextureAtlasSprite$InterpolationData
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData activeFrame [Lcom/mojang/blaze3d/platform/NativeImage;
 accessible class net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData
 extendable class net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData
 accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData <init> (Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$Info;I)V
 extendable method net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData getPixel (Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture;IIII)I
+extendable method net/minecraft/client/renderer/texture/TextureAtlasSprite$InterpolationData uploadInterpolatedFrame (Lnet/minecraft/client/renderer/texture/TextureAtlasSprite$AnimatedTexture;)V
 # Transformation
 accessible field com/mojang/math/Transformation decomposed Z
 # VertexFormat

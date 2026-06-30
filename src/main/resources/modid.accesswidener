@@ -107,6 +107,7 @@ mutable field net/minecraft/client/renderer/texture/SpriteContents metadata Lnet
 extendable method net/minecraft/client/renderer/texture/SpriteContents createAnimatedTexture (Lnet/minecraft/client/resources/metadata/animation/FrameSize;IILnet/minecraft/client/resources/metadata/animation/AnimationMetadataSection;)Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
 mutable field net/minecraft/client/renderer/texture/SpriteContents byMipLevel [Lcom/mojang/blaze3d/platform/NativeImage;
 mutable field net/minecraft/client/renderer/texture/SpriteContents animatedTexture Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
+accessible method net/minecraft/client/renderer/texture/SpriteContents upload (IIII[Lcom/mojang/blaze3d/platform/NativeImage;)V
 # SpriteContents$AnimatedTexture
 accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture frames Ljava/util/List;
 accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture interpolateFrames Z
@@ -116,10 +117,14 @@ accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTe
 # SpriteContents$FrameInfo
 accessible class net/minecraft/client/renderer/texture/SpriteContents$FrameInfo
 # SpriteContents$InterpolationData
+accessible field net/minecraft/client/renderer/texture/SpriteContents$InterpolationData activeFrame [Lcom/mojang/blaze3d/platform/NativeImage;
 accessible method net/minecraft/client/renderer/texture/SpriteContents$InterpolationData <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;)V
 extendable method net/minecraft/client/renderer/texture/SpriteContents$InterpolationData getPixel (Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;IIII)I
+extendable method net/minecraft/client/renderer/texture/SpriteContents$InterpolationData uploadInterpolatedFrame (IILnet/minecraft/client/renderer/texture/SpriteContents$Ticker;)V
 accessible class net/minecraft/client/renderer/texture/SpriteContents$InterpolationData
 # SpriteContents$Ticker
+accessible field net/minecraft/client/renderer/texture/SpriteContents$Ticker frame I
+accessible field net/minecraft/client/renderer/texture/SpriteContents$Ticker subFrame I
 accessible method net/minecraft/client/renderer/texture/SpriteContents$Ticker <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;Lnet/minecraft/client/renderer/texture/SpriteContents$InterpolationData;)V
 accessible class net/minecraft/client/renderer/texture/SpriteContents$Ticker
 # SpriteLoader

@@ -26,6 +26,11 @@ accessible class net/minecraft/server/packs/FilePackResources$SharedZipFileAcces
 # ItemModelGenerator$ItemLayerKey
 accessible method net/minecraft/client/resources/model/cuboid/ItemModelGenerator$ItemLayerKey <init> (Lnet/minecraft/client/resources/model/sprite/Material$Baked;Lnet/minecraft/client/renderer/block/dispatch/ModelState;I)V
 accessible class net/minecraft/client/resources/model/cuboid/ItemModelGenerator$ItemLayerKey
+# ItemTransform$Deserializer
+accessible field net/minecraft/client/resources/model/cuboid/ItemTransform$Deserializer DEFAULT_ROTATION Lorg/joml/Vector3f; # DEFAULT_ROTATION
+accessible field net/minecraft/client/resources/model/cuboid/ItemTransform$Deserializer DEFAULT_TRANSLATION Lorg/joml/Vector3f; # DEFAULT_TRANSLATION
+accessible field net/minecraft/client/resources/model/cuboid/ItemTransform$Deserializer DEFAULT_SCALE Lorg/joml/Vector3f; # DEFAULT_SCALE
+accessible class net/minecraft/client/resources/model/cuboid/ItemTransform$Deserializer
 # LayerDefinition
 accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init> (Lnet/minecraft/client/model/geom/builders/MeshDefinition;Lnet/minecraft/client/model/geom/builders/MaterialDefinition;)V
 # Minecraft

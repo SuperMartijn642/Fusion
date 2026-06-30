@@ -89,7 +89,7 @@ public class FusionSpriteContents extends SpriteContents {
             public SpriteTicker createTicker(){
                 if(!this.interpolateFrames)
                     return super.createTicker();
-                InterpolationData interpolationData = new InterpolationData() {
+                class FusionInterpolationData extends InterpolationData implements SodiumBypassingInterpolationData {
                     @Override
                     protected void uploadInterpolatedFrame(int atlasX, int atlasY, SpriteContents.Ticker ticker, GpuTexture atlasTexture){
                         // We have to copy the vanilla code here because of Sodium's mixin that overwrites it
@@ -121,8 +121,13 @@ public class FusionSpriteContents extends SpriteContents {
                         y = (y + (frame.v() >> mipLevel)) % FusionSpriteContents.this.imageHeight;
                         return FusionSpriteContents.this.byMipLevel[mipLevel].getPixel(x, y);
                     }
-                };
-                return new Ticker(this, interpolationData);
+
+                    @Override
+                    public void bypassSodiumUploadInterpolatedFrameOverwrite(int atlasX, int atlasY, SpriteContents.Ticker ticker, GpuTexture atlasTexture){
+                        this.uploadInterpolatedFrame(atlasX, atlasY, ticker, atlasTexture);
+                    }
+                }
+                return new Ticker(this, new FusionInterpolationData());
             }
         };
     }
@@ -147,5 +152,9 @@ public class FusionSpriteContents extends SpriteContents {
         }
         for(int mipLevel = 0; mipLevel < this.byMipLevel.length; mipLevel++)
             RenderSystem.getDevice().createCommandEncoder().writeToTexture(destination, this.byMipLevel[mipLevel], mipLevel, 0, destinationX >> mipLevel, destinationY >> mipLevel, width >> mipLevel, height >> mipLevel, sourceX >> mipLevel, sourceY >> mipLevel);
+    }
+
+    public interface SodiumBypassingInterpolationData {
+        void bypassSodiumUploadInterpolatedFrameOverwrite(int atlasX, int atlasY, SpriteContents.Ticker ticker, GpuTexture atlasTexture);
     }
 }

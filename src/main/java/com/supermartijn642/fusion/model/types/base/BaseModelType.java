@@ -506,9 +506,15 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             throw new JsonParseException("Display entry '" + name + "' must be an object!");
         JsonObject object = json.getAsJsonObject(name);
         return new ItemTransformVec3f(
-            this.deserializeVector3f(object.get("rotation"), () -> "Display '" + name + "' property 'rotation'"),
-            this.deserializeVector3f(object.get("translation"), () -> "Display '" + name + "' property 'translation'"),
-            this.deserializeVector3f(object.get("scale"), () -> "Display '" + name + "' property 'scale'")
+            object.has("rotation") ?
+                this.deserializeVector3f(object.get("rotation"), () -> "Display '" + name + "' property 'rotation'") :
+                ItemTransformVec3f.Deserializer.ROTATION_DEFAULT,
+            object.has("translation") ?
+                this.deserializeVector3f(object.get("translation"), () -> "Display '" + name + "' property 'translation'") :
+                ItemTransformVec3f.Deserializer.TRANSLATION_DEFAULT,
+            object.has("scale") ?
+                this.deserializeVector3f(object.get("scale"), () -> "Display '" + name + "' property 'scale'") :
+                ItemTransformVec3f.Deserializer.SCALE_DEFAULT
         );
     }
 

@@ -87,9 +87,8 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
                         if(!ForgeRegistries.BLOCKS.containsKey(identifier)){
                             if(!ignoreMissing)
                                 throw new JsonParseException("Unknown block '" + identifier + "'!");
-                            blocks = Collections.emptyList();
                         }else
-                            blocks = ImmutableList.of(ForgeRegistries.BLOCKS.getValue(identifier));
+                            blocks.add(ForgeRegistries.BLOCKS.getValue(identifier));
                     }catch(JsonParseException e){
                         throw new JsonParseException("Failed to parse 'blocks' entry", e);
                     }

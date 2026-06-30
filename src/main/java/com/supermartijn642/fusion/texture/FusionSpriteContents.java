@@ -86,7 +86,7 @@ public class FusionSpriteContents extends SpriteContents {
             public SpriteTicker createTicker(){
                 if(!this.interpolateFrames)
                     return super.createTicker();
-                InterpolationData interpolationData = new InterpolationData() {
+                class FusionInterpolationData extends InterpolationData implements SodiumBypassingInterpolationData {
                     @Override
                     protected void uploadInterpolatedFrame(int atlasX, int atlasY, SpriteContents.Ticker ticker){
                         // We have to copy the vanilla code here because of Sodium's mixin that overwrites it
@@ -118,8 +118,13 @@ public class FusionSpriteContents extends SpriteContents {
                         y = (y + (frame.v() >> mipLevel)) % FusionSpriteContents.this.imageHeight;
                         return FusionSpriteContents.this.byMipLevel[mipLevel].getPixel(x, y);
                     }
-                };
-                return new Ticker(this, interpolationData);
+
+                    @Override
+                    public void bypassSodiumUploadInterpolatedFrameOverwrite(int atlasX, int atlasY, SpriteContents.Ticker ticker){
+                        this.uploadInterpolatedFrame(atlasX, atlasY, ticker);
+                    }
+                }
+                return new Ticker(this, new FusionInterpolationData());
             }
         };
     }
@@ -144,5 +149,9 @@ public class FusionSpriteContents extends SpriteContents {
         }
         for(int mipLevel = 0; mipLevel < this.byMipLevel.length; mipLevel++)
             this.byMipLevel[mipLevel].upload(mipLevel, destinationX >> mipLevel, destinationY >> mipLevel, sourceX >> mipLevel, sourceY >> mipLevel, width >> mipLevel, height >> mipLevel, false);
+    }
+
+    public interface SodiumBypassingInterpolationData {
+        void bypassSodiumUploadInterpolatedFrameOverwrite(int atlasX, int atlasY, SpriteContents.Ticker ticker);
     }
 }

@@ -1,3 +1,12 @@
+### Fusion 1.3.5
+- Directional model predicates, i.e. `match_block` and `match_state`, are now rotated along with `composite` model entries
+- Replaced vanilla default uv calculation of model elements with calculation that better handles elements outside the center block space
+- Fixed deserialization of item transforms (`display` property) for Fusion models
+- Fixed `match_block`, `match_state` model predicates and `match_block`, `match_state`, `match_block_in_front`, `match_state_in_front` connection predicates only using the last block from the `blocks` array property
+- Fixed origin being offset for `composite` model transforms
+- Fixed composition order of `composite` model transforms with blockstate file transforms
+- Added workaround for Sodium breaking animated texture interpolation
+
 ### Fusion 1.3.4
 - Fixed threading issue with `match_block` and `match_state` block predicates potentially leading to incorrect results or crashes
 - Fixed element face 'uv' property being ignored

@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.api.model.predicates;
 
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.item.ItemModelPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
@@ -34,6 +35,13 @@ public interface ModelPredicate {
     boolean testForBlockState(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state);
 
     boolean testForItem(ItemStack stack);
+
+    /**
+     * Applies the given model transform to the predicate.
+     */
+    default ModelPredicate applyTransform(ModelTransform transform){
+        return this;
+    }
 
     /**
      * Simplifies the predicate. May be used to simplify user properties.

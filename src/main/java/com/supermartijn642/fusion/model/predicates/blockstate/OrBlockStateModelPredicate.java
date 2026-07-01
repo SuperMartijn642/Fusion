@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.FusionBlockStateModelPredicateRegistry;
@@ -68,6 +69,15 @@ public class OrBlockStateModelPredicate implements BlockStateModelPredicate {
                 return true;
         }
         return false;
+    }
+
+    @Override
+    public BlockStateModelPredicate applyTransform(ModelTransform transform){
+        return new OrBlockStateModelPredicate(
+            Arrays.stream(this.predicates)
+                .map(p -> p.applyTransform(transform))
+                .toArray(BlockStateModelPredicate[]::new)
+        );
     }
 
     @Override

@@ -369,7 +369,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                     }
                 }else
                     throw new JsonParseException("Scaling transform entry property 'scaling' must be a number or array of 3 numbers!");
-                float[] origin = {0.5f, 0.5f, 0.5f};
+                float[] origin = {0, 0, 0};
                 if(json.has("origin")){
                     if(json.getAsJsonArray("origin").size() != 3)
                         throw new JsonParseException("Scaling transform entry property 'origin' must be an array of 3 numbers!");
@@ -379,12 +379,12 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                         JsonElement element = array.get(i);
                         if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber())
                             throw new JsonParseException("Scaling transform entry property 'origin' must be an array of 3 numbers!");
-                        origin[i] = element.getAsFloat() / 16;
+                        origin[i] = element.getAsFloat() / 16 - 0.5f;
                     }
                 }
                 Matrix4f matrix = Matrix4f.createTranslateMatrix(-origin[0], -origin[1], -origin[2]);
                 matrix.multiply(Matrix4f.createScaleMatrix(scaling[0], scaling[1], scaling[2]));
-                matrix.multiply(Matrix4f.createTranslateMatrix(origin[0] * scaling[0], origin[1] * scaling[1], origin[2] * scaling[2]));
+                matrix.multiply(Matrix4f.createTranslateMatrix(origin[0], origin[1], origin[2]));
                 return matrix;
             }
 
@@ -422,7 +422,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                         default -> throw new JsonParseException("Rotation transform entry property 'axis' must be one of 'x', 'y', or 'z', not '" + axis + "'!");
                     }
                 }
-                float[] origin = {0.5f, 0.5f, 0.5f};
+                float[] origin = {0, 0, 0};
                 if(json.has("origin")){
                     if(json.getAsJsonArray("origin").size() != 3)
                         throw new JsonParseException("Rotation transform entry property 'origin' must be an array of 3 numbers!");
@@ -432,7 +432,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                         JsonElement element = array.get(i);
                         if(!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isNumber())
                             throw new JsonParseException("Rotation transform entry property 'origin' must be an array of 3 numbers!");
-                        origin[i] = element.getAsFloat() / 16;
+                        origin[i] = element.getAsFloat() / 16 - 0.5f;
                     }
                 }
                 Matrix4f m = Matrix4f.createTranslateMatrix(-origin[0], -origin[1], -origin[2]);

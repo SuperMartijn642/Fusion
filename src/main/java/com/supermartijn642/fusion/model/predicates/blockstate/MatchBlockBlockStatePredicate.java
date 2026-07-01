@@ -257,6 +257,7 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
         Vector3f dummy = new Vector3f();
         return offsets.stream()
             .map(offset -> {
+                newOffset.set(0, 0, 0);
                 if(offset.getX() != 0){
                     dummy.set(offset.getX(), 0, 0);
                     MatrixUtil.applyRotationToVector(transform.leftRotation(), dummy);

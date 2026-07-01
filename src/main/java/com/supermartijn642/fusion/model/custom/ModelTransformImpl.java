@@ -167,9 +167,16 @@ public class ModelTransformImpl implements ModelTransform {
                 this.modelState = new ModelState() {
                     private final Map<Direction,Matrix4fc> faceTransformation = new EnumMap<>(Direction.class);
                     private final Map<Direction,Matrix4fc> inverseFaceTransformation = new EnumMap<>(Direction.class);
+                    private Matrix4fc rotationOnlyMatrix;
 
                     private void calculateFace(Direction face){
-                        Matrix4fc faceTransform = BlockMath.getFaceTransformation(this.transformation(), face).getMatrix();
+                        if(this.rotationOnlyMatrix == null){
+                            this.rotationOnlyMatrix = new Matrix4f()
+                                .identity()
+                                .rotate(ModelTransformImpl.this.leftRotation())
+                                .rotate(ModelTransformImpl.this.rightRotation());
+                        }
+                        Matrix4fc faceTransform = BlockMath.getFaceTransformation(new Transformation(this.rotationOnlyMatrix), face).getMatrix();
                         this.faceTransformation.put(face, faceTransform);
                         this.inverseFaceTransformation.put(face, faceTransform.invertAffine(new Matrix4f()));
                     }

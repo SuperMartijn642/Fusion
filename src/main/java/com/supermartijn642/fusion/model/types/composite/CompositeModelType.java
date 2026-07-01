@@ -117,6 +117,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
     @Override
     public @Nullable BakedModel bakeBlockStateModel(BlockStateModelBakingContext context, ModelStack modelStack, CompositeModelData data){
         // Bake model entries
+        ModelTransform predicateTransform = ModelTransform.compose(context.getTransformation(), modelStack.composeTransforms());
         List<CompositeBlockStateModel.ConditionalList> lists = new ArrayList<>();
         BakedModel defaultModel = null;
         for(List<CompositeModelData.ModelEntry> series : data.getModels()){
@@ -131,7 +132,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
                 // Simply conditions
                 ModelPredicate conditions = entry.getCondition();
                 if(conditions != null)
-                    conditions = conditions.simplify();
+                    conditions = conditions.applyTransform(predicateTransform).simplify();
                 // Check item condition
                 if(itemModel == null && (conditions == null || conditions.testForItem(ItemStack.EMPTY)))
                     itemModel = baked;

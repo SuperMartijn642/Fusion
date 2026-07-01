@@ -54,6 +54,33 @@ public class FusionTextureAtlasSprite extends TextureAtlasSprite {
         if(imageSource.shouldInterpolateFrames())
             this.interpolationData = new InterpolationData(this.info, this.mainImage.length - 1) {
                 @Override
+                public void uploadInterpolatedFrame(){
+                    AnimationFrame currentFrame = FusionTextureAtlasSprite.this.frameInfos.get(FusionTextureAtlasSprite.this.currentFrame);
+                    int currentIndex = currentFrame.getIndex();
+                    int nextIndex = FusionTextureAtlasSprite.this.frameInfos.get((FusionTextureAtlasSprite.this.currentFrame + 1) % FusionTextureAtlasSprite.this.frameInfos.size()).getIndex();
+                    if(currentIndex == nextIndex)
+                        return;
+                    float progress = (float)FusionTextureAtlasSprite.this.frameTickCounter / currentFrame.getTime();
+                    float remainder = 1 - progress;
+                    for(int mipLevel = 0; mipLevel < this.activeFrame.length; mipLevel++){
+                        int frameWidth = FusionTextureAtlasSprite.this.frameWidth >> mipLevel;
+                        int frameHeight = FusionTextureAtlasSprite.this.frameHeight >> mipLevel;
+                        for(int y = 0; y < frameHeight; y++){
+                            for(int x = 0; x < frameWidth; x++){
+                                int currentPixel = this.getPixel(currentIndex, mipLevel, x, y);
+                                int nextPixel = this.getPixel(nextIndex, mipLevel, x, y);
+                                int alpha = (int)(remainder * (currentPixel >> 24 & 0xff) + progress * (nextPixel >> 24 & 0xff));
+                                int red = (int)(remainder * (currentPixel >> 16 & 0xff) + progress * (nextPixel >> 16 & 0xff));
+                                int green = (int)(remainder * (currentPixel >> 8 & 0xff) + progress * (nextPixel >> 8 & 0xff));
+                                int blue = (int)(remainder * (currentPixel & 0xff) + progress * (nextPixel & 0xff));
+                                this.activeFrame[mipLevel].setPixelRGBA(x, y, alpha << 24 | red << 16 | green << 8 | blue);
+                            }
+                        }
+                    }
+                    FusionTextureAtlasSprite.this.upload(0, 0, this.activeFrame);
+                }
+
+                @Override
                 protected int getPixel(int frameIndex, int mipLevel, int x, int y){
                     SpriteImageSource.AnimationFrame frame = FusionTextureAtlasSprite.this.uniqueFrames.get(frameIndex);
                     return FusionTextureAtlasSprite.this.mainImage[mipLevel].getPixelRGBA(x + (frame.u() >> mipLevel), y + (frame.v() >> mipLevel));
@@ -98,7 +125,7 @@ public class FusionTextureAtlasSprite extends TextureAtlasSprite {
             this.currentFrame = (this.currentFrame + 1) % this.frameInfos.size();
             this.frameTickCounter = 0;
             AnimationFrame newFrame = this.frameInfos.get(this.currentFrame);
-            if(currentFrame.getIndex() != newFrame.getIndex())
+            if(currentFrame.getIndex() != newFrame.getIndex() || this.interpolationData != null)
                 this.uploadUniqueFrame(newFrame.getIndex());
         }else if(this.interpolationData != null){
             if(!RenderSystem.isOnRenderThread())

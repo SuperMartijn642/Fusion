@@ -14,6 +14,7 @@ import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.cuboid.UnbakedCuboidGeometry;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.Direction;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 import java.util.ArrayList;
@@ -84,7 +85,7 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
     public static void bakeFace(QuadConsumer consumer, Face face, Element element, Direction side, ModelTransform transformation, MaterialKeyResolver materialResolver){
         // Create a dummy baked quad
         CuboidFace.UVs uv = face.uv() == null ?
-            FaceBakery.defaultFaceUV(element.from(), element.to(), side) :
+            calculateFaceUV(element, side) :
             face.uv();
         String materialKey = face.material();
         if(!materialKey.isEmpty() && materialKey.charAt(0) == '#')
@@ -119,6 +120,37 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
             Direction.rotate(transformation.matrix(), face.cullDirection());
         // Emit quad
         consumer.consume(quad, cullDirection, PropertyGetter.compose(face, element));
+    }
+
+    private static CuboidFace.UVs calculateFaceUV(Element element, Direction side){
+        Vector3f from = new Vector3f(element.from());
+        Vector3f to = new Vector3f(element.to());
+        if(side.getAxis() == Direction.Axis.X)
+            from.x = to.x = 0;
+        else if(side.getAxis() == Direction.Axis.Y)
+            from.y = to.y = 0;
+        else if(side.getAxis() == Direction.Axis.Z)
+            from.z = to.z = 0;
+        // Check if from and to are within the same block space
+        boolean sameBlockSpace = sameBlockSpace(from.x, to.x) && sameBlockSpace(from.y, to.y) && sameBlockSpace(from.z, to.z);
+        // Use vanilla uv calculation
+        CuboidFace.UVs uv = FaceBakery.defaultFaceUV(from, to, side);
+        // If same block space, use modulo 16
+        if(sameBlockSpace){
+            float blockSpaceU = (float)Math.floor(Math.min(uv.minU(), uv.maxU()) / 16) * 16;
+            float blockSpaceV = (float)Math.floor(Math.min(uv.minV(), uv.maxV()) / 16) * 16;
+            uv = new CuboidFace.UVs(uv.minU() - blockSpaceU, uv.minV() - blockSpaceV, uv.maxU() - blockSpaceU, uv.maxV() - blockSpaceV);
+        }
+        return uv;
+    }
+
+    private static boolean sameBlockSpace(float a, float b){
+        a /= 16;
+        b /= 16;
+        if(a % 1 == 0)
+            return Math.abs(Math.floor(a) - b) <= 1;
+        float blockIndex = (float)Math.floor(a);
+        return b >= blockIndex && b <= blockIndex + 1;
     }
 
     private final List<Element> elements;

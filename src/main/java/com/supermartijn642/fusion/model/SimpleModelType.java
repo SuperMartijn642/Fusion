@@ -50,7 +50,7 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             );
             // Compose transformations
             ModelTransform transforms = modelStack.composeTransforms();
-            transforms = ModelTransform.compose(transforms, context.getTransformation());
+            transforms = ModelTransform.compose(context.getTransformation(), transforms);
             // Combine conditions
             ModelPredicate conditions = modelStack.combineConditions();
             if(conditions != null)

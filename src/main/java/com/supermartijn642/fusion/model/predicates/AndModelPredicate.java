@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.DefaultModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.FusionModelPredicateRegistry;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
@@ -78,6 +79,15 @@ public class AndModelPredicate implements ModelPredicate {
                 return false;
         }
         return true;
+    }
+
+    @Override
+    public ModelPredicate applyTransform(ModelTransform transform){
+        return new AndModelPredicate(
+            Arrays.stream(this.predicates)
+                .map(p -> p.applyTransform(transform))
+                .toArray(ModelPredicate[]::new)
+        );
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.api.model.predicates.blockstate;
 
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.DefaultModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.util.Serializer;
@@ -17,6 +18,13 @@ import org.jetbrains.annotations.Nullable;
 public interface BlockStateModelPredicate {
 
     boolean test(@Nullable IEnviromentBlockReader level, @Nullable BlockPos pos, @Nullable BlockState state);
+
+    /**
+     * Applies the given model transform to the predicate.
+     */
+    default BlockStateModelPredicate applyTransform(ModelTransform transform){
+        return this;
+    }
 
     /**
      * Simplifies the predicate. May be used to simplify user properties.

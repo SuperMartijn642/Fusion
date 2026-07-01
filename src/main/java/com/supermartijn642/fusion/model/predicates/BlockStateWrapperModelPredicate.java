@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.DefaultModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
@@ -56,6 +57,11 @@ public class BlockStateWrapperModelPredicate implements ModelPredicate {
         if(stack.getItem() instanceof BlockItem)
             state = ((BlockItem)stack.getItem()).getBlock().defaultBlockState();
         return this.testForBlockState(null, null, state);
+    }
+
+    @Override
+    public ModelPredicate applyTransform(ModelTransform transform){
+        return new BlockStateWrapperModelPredicate(this.predicate.applyTransform(transform));
     }
 
     @Override

@@ -83,6 +83,9 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
 
     public static void bakeFace(QuadConsumer consumer, Face face, Element element, Direction side, ModelTransform transformation, MaterialKeyResolver materialResolver){
         // Create a dummy baked quad
+        Face.UV uv = face.uv() == null ?
+            calculateFaceUV(element, side) :
+            face.uv();
         String materialKey = face.material();
         if(!materialKey.isEmpty() && materialKey.charAt(0) == '#')
             materialKey = materialKey.substring(1);
@@ -92,7 +95,7 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
             new BlockElementFace(
                 null, -1, "",
                 new BlockFaceUV(
-                    face.uv() == null ? calculateFaceUV(element, side) : new float[]{face.uv().minU(), face.uv().minV(), face.uv().maxU(), face.uv().maxV()},
+                    new float[]{uv.minU(), uv.minV(), uv.maxU(), uv.maxV()},
                     face.rotation() == null ? 0 : face.rotation().angle()
                 )
             ),
@@ -123,15 +126,42 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
         consumer.consume(quad, cullDirection, PropertyGetter.compose(face, element));
     }
 
-    private static float[] calculateFaceUV(Element element, Direction side){
-        return switch(side){
-            case DOWN -> new float[]{element.from().x(), 16.0F - element.to().z(), element.to().x(), 16.0F - element.from().z()};
-            case UP -> new float[]{element.from().x(), element.from().z(), element.to().x(), element.to().z()};
-            case NORTH -> new float[]{16.0F - element.to().x(), 16.0F - element.to().y(), 16.0F - element.from().x(), 16.0F - element.from().y()};
-            case SOUTH -> new float[]{element.from().x(), 16.0F - element.to().y(), element.to().x(), 16.0F - element.from().y()};
-            case WEST -> new float[]{element.from().z(), 16.0F - element.to().y(), element.to().z(), 16.0F - element.from().y()};
-            case EAST -> new float[]{16.0F - element.to().z(), 16.0F - element.to().y(), 16.0F - element.from().z(), 16.0F - element.from().y()};
+    private static Face.UV calculateFaceUV(Element element, Direction side){
+        Vector3f from = new Vector3f(element.from());
+        Vector3f to = new Vector3f(element.to());
+        if(side.getAxis() == Direction.Axis.X)
+            from.x = to.x = 0;
+        else if(side.getAxis() == Direction.Axis.Y)
+            from.y = to.y = 0;
+        else if(side.getAxis() == Direction.Axis.Z)
+            from.z = to.z = 0;
+        // Check if from and to are within the same block space
+        boolean sameBlockSpace = sameBlockSpace(from.x, to.x) && sameBlockSpace(from.y, to.y) && sameBlockSpace(from.z, to.z);
+        // Use vanilla uv calculation
+        Face.UV uv = switch(side){
+            case DOWN -> new Face.UV(element.from().x(), 16.0F - element.to().z(), element.to().x(), 16.0F - element.from().z());
+            case UP -> new Face.UV(element.from().x(), element.from().z(), element.to().x(), element.to().z());
+            case NORTH -> new Face.UV(16.0F - element.to().x(), 16.0F - element.to().y(), 16.0F - element.from().x(), 16.0F - element.from().y());
+            case SOUTH -> new Face.UV(element.from().x(), 16.0F - element.to().y(), element.to().x(), 16.0F - element.from().y());
+            case WEST -> new Face.UV(element.from().z(), 16.0F - element.to().y(), element.to().z(), 16.0F - element.from().y());
+            case EAST -> new Face.UV(16.0F - element.to().z(), 16.0F - element.to().y(), 16.0F - element.from().z(), 16.0F - element.from().y());
         };
+        // If same block space, use modulo 16
+        if(sameBlockSpace){
+            float blockSpaceU = (float)Math.floor(Math.min(uv.minU(), uv.maxU()) / 16) * 16;
+            float blockSpaceV = (float)Math.floor(Math.min(uv.minV(), uv.maxV()) / 16) * 16;
+            uv = new Face.UV(uv.minU() - blockSpaceU, uv.minV() - blockSpaceV, uv.maxU() - blockSpaceU, uv.maxV() - blockSpaceV);
+        }
+        return uv;
+    }
+
+    private static boolean sameBlockSpace(float a, float b){
+        a /= 16;
+        b /= 16;
+        if(a % 1 == 0)
+            return Math.abs(Math.floor(a) - b) <= 1;
+        float blockIndex = (float)Math.floor(a);
+        return b >= blockIndex && b <= blockIndex + 1;
     }
 
     private final List<Element> elements;

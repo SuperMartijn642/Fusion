@@ -1,5 +1,8 @@
 package com.supermartijn642.fusion.util;
 
+import org.lwjgl.util.vector.Quaternion;
+import org.lwjgl.util.vector.Vector3f;
+
 import javax.vecmath.Matrix4f;
 
 /**
@@ -48,5 +51,14 @@ public class MatrixUtil {
         matrix.mul(createYRotationMatrix(y));
         matrix.mul(createXRotationMatrix(x));
         return matrix;
+    }
+
+    public static void applyRotationToVector(Quaternion rotation, Vector3f vector){
+        Quaternion quaternion = new Quaternion(rotation);
+        Quaternion.mul(quaternion, new Quaternion(vector.x, vector.y, vector.z, 0), quaternion);
+        Quaternion negated = new Quaternion(rotation);
+        negated.negate();
+        Quaternion.mul(quaternion, negated, quaternion);
+        vector.set(quaternion.x, quaternion.y, quaternion.z);
     }
 }

@@ -7,6 +7,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.util.Pair;
@@ -45,7 +46,7 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
                 || offset.getZ() < -MAX_OFFSET || offset.getZ() > MAX_OFFSET)
                 throw new JsonParseException("Offset must be between " + -MAX_OFFSET + " and " + MAX_OFFSET + " for each axis, not " + offset + "!");
         }
-        return new MatchStateBlockStatePredicate(matchers, offsets);
+        return new MatchStateBlockStatePredicate(matchers, offsets, true);
     }
 
     public static BlockStateModelPredicate create(IBlockState state, List<BlockPos> offsets){
@@ -161,7 +162,16 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
                 }
             }else
                 offsets = ImmutableSet.of(BlockPos.ORIGIN);
-            return new MatchStateBlockStatePredicate(matchers, offsets);
+
+            // Apply model rotation
+            boolean applyModelRotation = true;
+            if(json.has("apply_model_rotation")){
+                if(!json.get("apply_model_rotation").isJsonPrimitive() || !json.getAsJsonPrimitive("apply_model_rotation").isBoolean())
+                    throw new JsonParseException("Property 'apply_model_rotation' must be a boolean!");
+                applyModelRotation = json.get("apply_model_rotation").getAsBoolean();
+            }
+
+            return new MatchStateBlockStatePredicate(matchers, offsets, applyModelRotation);
         }
 
         @Override
@@ -210,6 +220,8 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
                     json.add("offsets", offsets);
                 }
             }
+            if(!value.applyModelRotation)
+                json.addProperty("apply_model_rotation", false);
             return json;
         }
     };
@@ -218,12 +230,14 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
     private final boolean containsAir;
     private final Set<BlockPos> offsets;
     private final boolean checkCenter;
+    private final boolean applyModelRotation;
 
-    private MatchStateBlockStatePredicate(Map<Block,BlockStateMatcher> blocks, Collection<BlockPos> offsets){
+    private MatchStateBlockStatePredicate(Map<Block,BlockStateMatcher> blocks, Collection<BlockPos> offsets, boolean applyModelRotation){
         this.blocks = ImmutableMap.copyOf(blocks);
         this.containsAir = this.blocks.containsKey(Blocks.AIR);
         this.offsets = offsets.stream().filter(o -> !o.equals(BlockPos.ORIGIN)).collect(Collectors.toSet());
         this.checkCenter = offsets.stream().anyMatch(BlockPos.ORIGIN::equals);
+        this.applyModelRotation = applyModelRotation;
     }
 
     @Override
@@ -258,6 +272,11 @@ public class MatchStateBlockStatePredicate implements BlockStateModelPredicate {
                 return true;
         }
         return false;
+    }
+
+    @Override
+    public BlockStateModelPredicate applyTransform(ModelTransform transform){
+        return this.applyModelRotation ? new MatchStateBlockStatePredicate(this.blocks, MatchBlockBlockStatePredicate.transformOffsets(this.offsets, transform), true) : this;
     }
 
     @Override

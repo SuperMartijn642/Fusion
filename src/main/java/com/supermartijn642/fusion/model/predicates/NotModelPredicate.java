@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.DefaultModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.FusionModelPredicateRegistry;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
@@ -53,6 +54,11 @@ public class NotModelPredicate implements ModelPredicate {
     @Override
     public boolean testForItem(ItemStack stack){
         return !this.predicate.testForItem(stack);
+    }
+
+    @Override
+    public ModelPredicate applyTransform(ModelTransform transform){
+        return new NotModelPredicate(this.predicate.applyTransform(transform));
     }
 
     @Override

@@ -6,12 +6,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
@@ -36,7 +38,7 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
                 || offset.getZ() < -MAX_OFFSET || offset.getZ() > MAX_OFFSET)
                 throw new JsonParseException("Offset must be between " + -MAX_OFFSET + " and " + MAX_OFFSET + " for each axis, not " + offset + "!");
         }
-        return new MatchBlockBlockStatePredicate(blocks, offsets);
+        return new MatchBlockBlockStatePredicate(blocks, offsets, true);
     }
 
     public static BlockStateModelPredicate create(int x, int y, int z, Block... blocks){
@@ -142,7 +144,16 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
                 }
             }else
                 offsets = ImmutableSet.of(BlockPos.ZERO);
-            return new MatchBlockBlockStatePredicate(blocks, offsets);
+
+            // Apply model rotation
+            boolean applyModelRotation = true;
+            if(json.has("apply_model_rotation")){
+                if(!json.get("apply_model_rotation").isJsonPrimitive() || !json.getAsJsonPrimitive("apply_model_rotation").isBoolean())
+                    throw new JsonParseException("Property 'apply_model_rotation' must be a boolean!");
+                applyModelRotation = json.get("apply_model_rotation").getAsBoolean();
+            }
+
+            return new MatchBlockBlockStatePredicate(blocks, offsets, applyModelRotation);
         }
 
         @Override
@@ -171,9 +182,9 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
                 }else{
                     JsonArray offsets = new JsonArray();
                     Stream.concat(
-                        value.checkCenter ? Stream.of(BlockPos.ZERO) : Stream.empty(),
-                        value.offsets.stream()
-                    ).sorted(Comparator.<BlockPos>comparingInt(BlockPos::getX).thenComparingInt(BlockPos::getY).thenComparingInt(BlockPos::getZ))
+                            value.checkCenter ? Stream.of(BlockPos.ZERO) : Stream.empty(),
+                            value.offsets.stream()
+                        ).sorted(Comparator.<BlockPos>comparingInt(BlockPos::getX).thenComparingInt(BlockPos::getY).thenComparingInt(BlockPos::getZ))
                         .forEach(pos -> {
                             JsonArray offset = new JsonArray();
                             offset.add(pos.getX());
@@ -184,6 +195,8 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
                     json.add("offsets", offsets);
                 }
             }
+            if(!value.applyModelRotation)
+                json.addProperty("apply_model_rotation", false);
             return json;
         }
     };
@@ -192,12 +205,14 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
     private final boolean containsAir;
     private final Set<BlockPos> offsets;
     private final boolean checkCenter;
+    private final boolean applyModelRotation;
 
-    private MatchBlockBlockStatePredicate(Collection<Block> blocks, Collection<BlockPos> offsets){
+    private MatchBlockBlockStatePredicate(Collection<Block> blocks, Collection<BlockPos> offsets, boolean applyModelRotation){
         this.blocks = ImmutableSet.copyOf(blocks);
         this.containsAir = this.blocks.stream().anyMatch(b -> b.defaultBlockState().isAir());
         this.offsets = offsets.stream().filter(o -> !o.equals(BlockPos.ZERO)).collect(Collectors.toSet());
         this.checkCenter = offsets.stream().anyMatch(BlockPos.ZERO::equals);
+        this.applyModelRotation = applyModelRotation;
     }
 
     @Override
@@ -236,6 +251,43 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
                 return true;
         }
         return false;
+    }
+
+    @Override
+    public BlockStateModelPredicate applyTransform(ModelTransform transform){
+        return this.applyModelRotation ? new MatchBlockBlockStatePredicate(this.blocks, transformOffsets(this.offsets, transform), true) : this;
+    }
+
+    static List<BlockPos> transformOffsets(Collection<BlockPos> offsets, ModelTransform transform){
+        Vector3f newOffset = new Vector3f();
+        Vector3f dummy = new Vector3f();
+        return offsets.stream()
+            .map(offset -> {
+                if(offset.getX() != 0){
+                    dummy.set(offset.getX(), 0, 0);
+                    dummy.transform(transform.leftRotation());
+                    dummy.transform(transform.rightRotation());
+                    newOffset.add(dummy);
+                }
+                if(offset.getY() != 0){
+                    dummy.set(0, offset.getY(), 0);
+                    dummy.transform(transform.leftRotation());
+                    dummy.transform(transform.rightRotation());
+                    newOffset.add(dummy);
+                }
+                if(offset.getZ() != 0){
+                    dummy.set(0, 0, offset.getZ());
+                    dummy.transform(transform.leftRotation());
+                    dummy.transform(transform.rightRotation());
+                    newOffset.add(dummy);
+                }
+                return new BlockPos(
+                    (int)Math.signum(newOffset.x()),
+                    (int)Math.signum(newOffset.y()),
+                    (int)Math.signum(newOffset.z())
+                );
+            })
+            .collect(Collectors.toList());
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.predicates;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.DefaultModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
@@ -70,6 +71,14 @@ public class BlockAndItemModelPredicate implements ModelPredicate {
     @Override
     public boolean testForItem(ItemStack stack){
         return this.itemPredicate.test(stack);
+    }
+
+    @Override
+    public ModelPredicate applyTransform(ModelTransform transform){
+        return new BlockAndItemModelPredicate(
+            this.blockPredicate.applyTransform(transform),
+            this.itemPredicate
+        );
     }
 
     @Override

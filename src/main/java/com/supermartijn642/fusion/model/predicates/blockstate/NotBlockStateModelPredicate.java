@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.model.predicates.blockstate;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.FusionBlockStateModelPredicateRegistry;
@@ -47,6 +48,11 @@ public class NotBlockStateModelPredicate implements BlockStateModelPredicate {
     @Override
     public boolean test(@Nullable ILightReader level, @Nullable BlockPos pos, @Nullable BlockState state){
         return !this.predicate.test(level, pos, state);
+    }
+
+    @Override
+    public BlockStateModelPredicate applyTransform(ModelTransform transform){
+        return new NotBlockStateModelPredicate(this.predicate.applyTransform(transform));
     }
 
     @Override

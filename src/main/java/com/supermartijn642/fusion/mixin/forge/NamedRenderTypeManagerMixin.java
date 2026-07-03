@@ -23,7 +23,7 @@ public class NamedRenderTypeManagerMixin {
      */
 
     @Shadow(remap = false)
-    private static ImmutableMap<ResourceLocation,RenderTypeGroup> RENDER_TYPES;
+    private static Map<ResourceLocation,RenderTypeGroup> RENDER_TYPES;
 
     @Inject(
         method = "init",

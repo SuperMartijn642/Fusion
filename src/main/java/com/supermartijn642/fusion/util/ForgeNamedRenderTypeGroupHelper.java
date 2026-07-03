@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.util;
 
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.RenderTypeGroup;
 

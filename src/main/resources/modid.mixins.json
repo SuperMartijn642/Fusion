@@ -18,6 +18,7 @@
     "FolderPackResourcesMixin",
     "ItemBlockRenderTypesMixin",
     "ItemModelGeneratorMixin",
+    "ItemModelShaperMixin",
     "ItemRendererMixin",
     "LegacyPackResourcesAdapterMixin",
     "ModelBakeryMixin",

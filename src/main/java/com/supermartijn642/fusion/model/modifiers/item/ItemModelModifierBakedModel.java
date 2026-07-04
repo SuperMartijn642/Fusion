@@ -29,6 +29,14 @@ public class ItemModelModifierBakedModel extends WrappedBakedModel {
         this.appendModels = appendModels;
     }
 
+    public BakedModel preselectModel(ItemStack stack){
+        for(ConditionalModel override : this.defaultModelOverrides){
+            if(override.conditions == null || override.conditions.test(stack))
+                return override.wrapper(this);
+        }
+        return this;
+    }
+
     @Override
     public List<Pair<BakedModel,RenderType>> getLayerModels(ItemStack stack, boolean fabulous){
         // Collect all models
@@ -70,6 +78,50 @@ public class ItemModelModifierBakedModel extends WrappedBakedModel {
         return this;
     }
 
-    record ConditionalModel(BakedModel model, @Nullable ItemModelPredicate conditions) {
+    static class ConditionalModel {
+        private final BakedModel model;
+        private final @Nullable ItemModelPredicate conditions;
+        private SelectedDefaultModel wrapper;
+
+        public ConditionalModel(BakedModel model, @Nullable ItemModelPredicate conditions){
+            this.model = model;
+            this.conditions = conditions;
+        }
+
+        public BakedModel wrapper(ItemModelModifierBakedModel parent){
+            if(this.wrapper == null)
+                this.wrapper = parent.new SelectedDefaultModel(this.model);
+            return this.wrapper;
+        }
+    }
+
+    private class SelectedDefaultModel extends WrappedBakedModel {
+        private final BakedModel mainModel;
+
+        SelectedDefaultModel(BakedModel mainModel){
+            super(mainModel);
+            this.mainModel = mainModel;
+        }
+
+        @Override
+        public List<Pair<BakedModel,RenderType>> getLayerModels(ItemStack stack, boolean fabulous){
+            // Collect all models
+            List<Pair<BakedModel,RenderType>> models = new ArrayList<>(Math.max(8, ItemModelModifierBakedModel.this.appendModels.size() + 1));
+
+            // Default model
+            models.addAll(this.mainModel.getLayerModels(stack, fabulous));
+
+            // Append models
+            for(List<ConditionalModel> appendEntry : ItemModelModifierBakedModel.this.appendModels){
+                // First model whose conditions are met is submitted
+                for(ConditionalModel conditional : appendEntry){
+                    if(conditional.conditions == null || conditional.conditions.test(stack)){
+                        models.addAll(conditional.model.getLayerModels(stack, fabulous));
+                        break;
+                    }
+                }
+            }
+            return models;
+        }
     }
 }

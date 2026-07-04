@@ -37,6 +37,14 @@ public class ItemModelModifierBakedModel extends WrappedBakedModel {
         this.appendModels = appendModels;
     }
 
+    public IBakedModel preselectModel(ItemStack stack){
+        for(ConditionalModel override : this.defaultModelOverrides){
+            if(override.conditions == null || override.conditions.test(stack))
+                return override.wrapper(this);
+        }
+        return this;
+    }
+
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @NotNull Random random){
         // Get item stack context
@@ -112,10 +120,79 @@ public class ItemModelModifierBakedModel extends WrappedBakedModel {
     static final class ConditionalModel {
         private final IBakedModel model;
         private final @Nullable ItemModelPredicate conditions;
+        private SelectedDefaultModel wrapper;
 
-        ConditionalModel(IBakedModel model, @Nullable ItemModelPredicate conditions){
+        public ConditionalModel(IBakedModel model, @Nullable ItemModelPredicate conditions){
             this.model = model;
             this.conditions = conditions;
+        }
+
+        public IBakedModel wrapper(ItemModelModifierBakedModel parent){
+            if(this.wrapper == null)
+                this.wrapper = parent.new SelectedDefaultModel(this.model);
+            return this.wrapper;
+        }
+    }
+
+    private class SelectedDefaultModel extends WrappedBakedModel {
+        private final IBakedModel mainModel;
+
+        SelectedDefaultModel(IBakedModel mainModel){
+            super(mainModel);
+            this.mainModel = mainModel;
+        }
+
+        @Override
+        public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, @NotNull Random random){
+            // Get item stack context
+            ItemStack stack = FusionClient.ITEM_STACK_RENDER_CONTEXT.get();
+
+            // Get seed to reset random instance
+            long seed = random.nextLong();
+            random.setSeed(seed);
+
+            // Collect all quads
+            List<BakedQuad> quads = new ArrayList<>();
+
+            // Default model
+            quads.addAll(this.mainModel.getQuads(state, cullDirection, random));
+
+            // Append models
+            for(List<ConditionalModel> appendEntry : ItemModelModifierBakedModel.this.appendModels){
+                // First model whose conditions are met is submitted
+                for(ConditionalModel conditional : appendEntry){
+                    if(conditional.conditions == null || conditional.conditions.test(stack)){
+                        random.setSeed(seed);
+                        quads.addAll(conditional.model.getQuads(state, cullDirection, random));
+                        break;
+                    }
+                }
+            }
+            return quads;
+        }
+
+        @Override
+        public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, Random random, IModelData modelData){
+            return this.getQuads(state, cullDirection, random);
+        }
+
+        @Override
+        public boolean canRenderInLayer(BlockState state, BlockRenderLayer renderType){
+            // Check whether the render type is a default one for the state
+            boolean isDefaultRenderType = ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
+
+            // Default model
+            if(ModelRenderTypeHelper.canRenderInLayer(this.mainModel, state, renderType, isDefaultRenderType))
+                return true;
+
+            // Append models
+            for(List<ConditionalModel> appendEntry : ItemModelModifierBakedModel.this.appendModels){
+                for(ConditionalModel conditional : appendEntry){
+                    if(ModelRenderTypeHelper.canRenderInLayer(conditional.model, state, renderType, isDefaultRenderType))
+                        return true;
+                }
+            }
+            return false;
         }
     }
 }

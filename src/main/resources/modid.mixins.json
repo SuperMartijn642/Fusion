@@ -20,6 +20,7 @@
     "FilePackResourcesMixin",
     "FolderPackResourcesMixin",
     "ItemModelGeneratorMixin",
+    "ItemModelMesherMixin",
     "ItemRendererMixin",
     "LanguageManagerMixin",
     "LegacyResourcePackWrapperMixin",

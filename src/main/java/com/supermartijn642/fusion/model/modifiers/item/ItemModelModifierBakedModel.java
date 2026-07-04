@@ -32,6 +32,14 @@ public class ItemModelModifierBakedModel extends WrappedBakedModel {
         this.appendModels = appendModels;
     }
 
+    public BakedModel preselectModel(ItemStack stack){
+        for(ConditionalModel override : this.defaultModelOverrides){
+            if(override.conditions == null || override.conditions.test(stack))
+                return override.wrapper(this);
+        }
+        return this;
+    }
+
     @Override
     public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context){
         // Default model
@@ -97,6 +105,72 @@ public class ItemModelModifierBakedModel extends WrappedBakedModel {
         return false;
     }
 
-    record ConditionalModel(BakedModel model, @Nullable ItemModelPredicate conditions) {
+    static class ConditionalModel {
+        private final BakedModel model;
+        private final @Nullable ItemModelPredicate conditions;
+        private SelectedDefaultModel wrapper;
+
+        public ConditionalModel(BakedModel model, @Nullable ItemModelPredicate conditions){
+            this.model = model;
+            this.conditions = conditions;
+        }
+
+        public BakedModel wrapper(ItemModelModifierBakedModel parent){
+            if(this.wrapper == null)
+                this.wrapper = parent.new SelectedDefaultModel(this.model);
+            return this.wrapper;
+        }
+    }
+
+    private class SelectedDefaultModel extends WrappedBakedModel {
+        private final BakedModel mainModel;
+
+        SelectedDefaultModel(BakedModel mainModel){
+            super(mainModel);
+            this.mainModel = mainModel;
+        }
+
+        @Override
+        public void emitItemQuads(ItemStack stack, Supplier<Random> randomSupplier, RenderContext context){
+            ((FabricBakedModel)this.mainModel).emitItemQuads(stack, randomSupplier, context);
+
+            // Append models
+            for(List<ConditionalModel> appendEntry : ItemModelModifierBakedModel.this.appendModels){
+                // First model whose conditions are met is submitted
+                for(ConditionalModel conditional : appendEntry){
+                    if(conditional.conditions == null || conditional.conditions.test(stack)){
+                        ((FabricBakedModel)conditional.model).emitItemQuads(stack, randomSupplier, context);
+                        break;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean isVanillaAdapter(){
+            return false;
+        }
+
+        @Override
+        public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction cullDirection, Random random){
+            long seed = random.nextLong();
+            random.setSeed(seed);
+
+            // Collect all quads
+            List<BakedQuad> quads = new ArrayList<>(this.mainModel.getQuads(state, cullDirection, random));
+
+            // Append models
+            for(List<ConditionalModel> appendEntry : ItemModelModifierBakedModel.this.appendModels){
+                // First model whose conditions are met is submitted
+                for(ConditionalModel conditional : appendEntry){
+                    if(conditional.conditions == null || conditional.conditions.test(ItemStack.EMPTY)){
+                        random.setSeed(seed);
+                        quads.addAll(conditional.model.getQuads(state, cullDirection, random));
+                        break;
+                    }
+                }
+            }
+            return quads;
+        }
     }
 }

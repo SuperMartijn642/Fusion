@@ -136,10 +136,10 @@ public class MatchStateInFrontConnectionPredicate implements ConnectionPredicate
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        if(otherState.isAir())
+        if(blockInFront.isAir())
             return this.containsAir;
-        BlockStateMatcher matcher = this.blocks.get(otherState.getBlock());
-        return matcher != null && matcher.matches(otherState);
+        BlockStateMatcher matcher = this.blocks.get(blockInFront.getBlock());
+        return matcher != null && matcher.matches(blockInFront);
     }
 
     @Override

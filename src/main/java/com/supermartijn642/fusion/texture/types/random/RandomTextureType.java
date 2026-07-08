@@ -19,6 +19,7 @@ import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
+import com.supermartijn642.fusion.util.SeedHelper;
 import com.supermartijn642.fusion.util.Triple;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
@@ -222,11 +223,11 @@ public class RandomTextureType implements TextureType<RandomTextureData,Stitched
         // Calculate seed
         long seed = 1;
         if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION)
-            seed = pos.asLong() + 1;
+            seed = SeedHelper.fromBlockPos(pos);
         else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_FACING)
-            seed = (pos.asLong() + 1) * (side.ordinal() + 1);
+            seed = SeedHelper.fromBlockPos(pos) * (side.ordinal() + 1);
         else if(data.getRandomSource() == RandomTextureData.RandomnessSource.POSITION_AXIS)
-            seed = (pos.asLong() + 1) * (side.getAxis().ordinal() + 1);
+            seed = SeedHelper.fromBlockPos(pos) * (side.getAxis().ordinal() + 1);
         if(data.getSeed() != null)
             seed ^= data.getSeed();
         // Pick which tile to use

@@ -134,8 +134,8 @@ public class MatchStateInFrontConnectionPredicate implements ConnectionPredicate
 
     @Override
     public boolean shouldConnect(EnumFacing side, @Nullable IBlockState ownState, IBlockState otherState, IBlockState blockInFront, ConnectionDirection direction){
-        BlockStateMatcher matcher = this.blocks.get(otherState.getBlock());
-        return matcher != null && matcher.matches(otherState);
+        BlockStateMatcher matcher = this.blocks.get(blockInFront.getBlock());
+        return matcher != null && matcher.matches(blockInFront);
     }
 
     @Override

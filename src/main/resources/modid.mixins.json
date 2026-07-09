@@ -23,6 +23,7 @@
     "ItemRendererMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
+    "ModelDiscoveryMixin",
     "ModelManagerMixin",
     "MultiPartModelMixin",
     "OptionsMixin",

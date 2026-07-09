@@ -22,10 +22,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -68,6 +65,10 @@ public class FusionBlockModelData {
 
     public BlockModel asBlockModel(){
         return this.cuboidModel;
+    }
+
+    public Collection<Identifier> getDependencies(){
+        return this.model.getDependencies();
     }
 
     public BlockStateModel bakeBlockModel(ResolvedModel wrapper, ModelBaker modelBakery, ModelState modelState){

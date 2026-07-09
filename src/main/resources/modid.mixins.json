@@ -27,6 +27,7 @@
     "LevelExtractorMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
+    "ModelDiscoveryMixin",
     "ModelFeatureRendererMixin",
     "ModelManagerMixin",
     "MultiPartModelMixin",

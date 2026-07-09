@@ -22,10 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created 27/04/2023 by SuperMartijn642
@@ -67,6 +64,10 @@ public class FusionBlockModelData {
 
     public BlockModel asBlockModel(){
         return this.cuboidModel;
+    }
+
+    public Collection<ResourceLocation> getDependencies(){
+        return this.model.getDependencies();
     }
 
     public BlockStateModel bakeBlockModel(ResolvedModel wrapper, ModelBaker modelBakery, ModelState modelState){

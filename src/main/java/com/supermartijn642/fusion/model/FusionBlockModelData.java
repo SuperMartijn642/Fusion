@@ -34,10 +34,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4fc;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -80,6 +77,10 @@ public class FusionBlockModelData {
 
     public CuboidModel asCuboidModel(){
         return this.cuboidModel;
+    }
+
+    public Collection<Identifier> getDependencies(){
+        return this.model.getDependencies();
     }
 
     public BlockStateModel bakeBlockModel(ResolvedModel wrapper, ModelBaker modelBakery, ModelState modelState){

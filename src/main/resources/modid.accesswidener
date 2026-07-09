@@ -42,6 +42,7 @@ accessible class net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl
 accessible method net/minecraft/client/resources/model/ModelBakery$InternerImpl <init> ()V
 accessible class net/minecraft/client/resources/model/ModelBakery$InternerImpl
 # ModelDiscovery$ModelWrapper
+accessible field net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper valid Z
 accessible class net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper
 # ModelLayers
 accessible field net/minecraft/client/model/geom/ModelLayers ALL_MODELS Ljava/util/Set;

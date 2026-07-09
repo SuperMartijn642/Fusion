@@ -24,6 +24,7 @@
     "MinecraftMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
+    "ModelDiscoveryMixin",
     "ModelManagerMixin",
     "OutlineBufferSourceMixin",
     "PackEntryMixin",

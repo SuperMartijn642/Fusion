@@ -39,6 +39,7 @@ accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/mine
 accessible method net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl <init> (Lnet/minecraft/client/resources/model/ModelBakery;Lnet/minecraft/client/resources/model/SpriteGetter;)V
 accessible class net/minecraft/client/resources/model/ModelBakery$ModelBakerImpl
 # ModelDiscovery$ModelWrapper
+accessible field net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper valid Z
 accessible method net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper <init> (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/model/UnbakedModel;Z)V
 accessible class net/minecraft/client/resources/model/ModelDiscovery$ModelWrapper
 # ModelLayers

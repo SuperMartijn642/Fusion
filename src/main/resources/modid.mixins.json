@@ -25,6 +25,7 @@
     "ItemFeatureRendererMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
+    "ModelDiscoveryMixin",
     "ModelFeatureRendererMixin",
     "ModelManagerMixin",
     "MultiPartModelMixin",

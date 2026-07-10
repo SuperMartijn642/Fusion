@@ -59,10 +59,6 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             mixins.add("embeddium.BlockRendererMixinEmbeddium");
         if(this.isSodiumLoaded)
             mixins.add("sodium.BlockRendererMixinSodium");
-        if(this.isIndiumLoaded){
-            mixins.add("indium.AbstractBlockRenderContextMixinIndium");
-            mixins.add("indium.ItemRenderContextMixinIndium");
-        }
         return mixins;
     }
 

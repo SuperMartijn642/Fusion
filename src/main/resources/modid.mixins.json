@@ -7,9 +7,11 @@
   "mixins": [],
   "client": [
     "fabric.AbstractBlockRenderContextMixin",
+    "fabric.BlockRenderContextMixin",
     "fabric.FabricDataGenHelperMixin",
     "fabric.ItemRenderContextMixin",
     "fabric.ModNioResourcePackMixin",
+    "fabric.TerrainRenderContextMixin",
     "AgeableMobMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",

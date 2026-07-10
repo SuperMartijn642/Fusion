@@ -129,7 +129,7 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
     }
 
     private static JsonElement serializeModelEntry(ModelEntry entry){
-        if(entry.conditions.isEmpty() && entry.showBreakingOverlay == null)
+        if(entry.conditions.isEmpty() && entry.showBreakingOverlay == null && entry.randomOffset == null)
             return new JsonPrimitive(entry.model.toString());
         JsonObject json = new JsonObject();
         json.addProperty("model", entry.model.toString());
@@ -143,6 +143,8 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
                 conditions.add(FusionBlockStateModelPredicateRegistry.serializeBlockStateModelPredicate(condition));
             json.add("conditions", conditions);
         }
+        if(entry.randomOffset != null)
+            json.add("random_offset", entry.randomOffset.serialize());
         return json;
     }
 
@@ -308,6 +310,7 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
         private final ResourceLocation model;
         private final List<BlockStateModelPredicate> conditions = new ArrayList<>();
         private Boolean showBreakingOverlay;
+        private RandomOffset randomOffset = null;
 
         private ModelEntry(ResourceLocation model){
             this.model = model;
@@ -329,5 +332,61 @@ public abstract class FusionBlockModelModifierProvider implements DataProvider {
             this.showBreakingOverlay = show;
             return this;
         }
+
+        /**
+         * Sets no random offset for this model entry.
+         */
+        public ModelEntry noRandomOffset(){
+            this.randomOffset = null;
+            return this;
+        }
+
+        /**
+         * Sets the random offset applied to this model entry to match the block.
+         */
+        public ModelEntry matchBlockRandomOffset(){
+            this.randomOffset = () -> new JsonPrimitive("match_block");
+            return this;
+        }
+
+        /**
+         * Sets the random offset applied to this model entry to the given ranges.
+         */
+        public ModelEntry randomXYZOffset(@Nullable Long seed, float minXOffset, float maxXOffset, float minYOffset, float maxYOffset, float minZOffset, float maxZOffset){
+            if(minXOffset > maxXOffset || minYOffset > maxYOffset || minZOffset > maxZOffset)
+                throw new IllegalArgumentException("Min offset must be less than max offset!");
+            if(minXOffset == 0 && maxXOffset == 0 && minYOffset == 0 && maxYOffset == 0 && minZOffset == 0 && maxZOffset == 0)
+                return this.noRandomOffset();
+            this.randomOffset = () -> {
+                JsonObject json = new JsonObject();
+                json.addProperty("type", "xyz");
+                if(seed != null)
+                    json.addProperty("seed", seed);
+                if(minXOffset != 0 || maxXOffset != 0){
+                    JsonArray arr = new JsonArray();
+                    arr.add(minXOffset);
+                    arr.add(maxXOffset);
+                    json.add("x", arr);
+                }
+                if(minYOffset != 0 || maxYOffset != 0){
+                    JsonArray arr = new JsonArray();
+                    arr.add(minYOffset);
+                    arr.add(maxYOffset);
+                    json.add("y", arr);
+                }
+                if(minZOffset != 0 || maxZOffset != 0){
+                    JsonArray arr = new JsonArray();
+                    arr.add(minZOffset);
+                    arr.add(maxZOffset);
+                    json.add("z", arr);
+                }
+                return json;
+            };
+            return this;
+        }
+    }
+
+    private interface RandomOffset {
+        JsonElement serialize();
     }
 }

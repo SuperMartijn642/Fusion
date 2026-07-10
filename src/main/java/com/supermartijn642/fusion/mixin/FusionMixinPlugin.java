@@ -64,6 +64,7 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
         if(this.isIndiumLoaded){
             mixins.add("indium.BaseQuadRendererMixin");
             mixins.add("indium.ItemRenderContextMixinIndium");
+            mixins.add("indium.TerrainRenderContextMixinIndium");
         }
         return mixins;
     }

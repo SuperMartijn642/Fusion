@@ -49,6 +49,36 @@ public class BlockModelModifierBakedModel implements BakedModel {
         this.ambientOcclusion = ambientOcclusion;
     }
 
+    public void collectByOffset(ModelsByRandomOffset output, @Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
+        // Check whether the breaking overlay is being rendered
+        boolean isBreakingOverlay = FusionClient.isRenderingBreakingOverlay();
+
+        // Default model
+        overrides:
+        {
+            for(ConditionalModel override : this.defaultModelOverrides){
+                if(override.conditions == null || override.conditions.test(level, pos, state)){
+                    if(!isBreakingOverlay || override.showBreakingOverlay)
+                        output.add(override.randomOffset, override.model);
+                    break overrides;
+                }
+            }
+            output.add(RandomOffsetFunction.MATCH_BLOCK, this.original);
+        }
+
+        // Append models
+        for(List<ConditionalModel> appendEntry : this.appendModels){
+            // First model whose conditions are met is submitted
+            for(ConditionalModel conditional : appendEntry){
+                if(conditional.conditions == null || conditional.conditions.test(level, pos, state)){
+                    if(!isBreakingOverlay || conditional.showBreakingOverlay)
+                        output.add(conditional.randomOffset, conditional.model);
+                    break;
+                }
+            }
+        }
+    }
+
     @Override
     public void emitBlockQuads(QuadEmitter emitter, BlockAndTintGetter level, BlockState state, BlockPos pos, Supplier<RandomSource> randomSupplier, Predicate<@Nullable Direction> cullTest){
         // Check whether the breaking overlay is being rendered
@@ -151,6 +181,6 @@ public class BlockModelModifierBakedModel implements BakedModel {
         return this.original.getTransforms();
     }
 
-    record ConditionalModel(BakedModel model, @Nullable BlockStateModelPredicate conditions, boolean showBreakingOverlay) {
+    record ConditionalModel(BakedModel model, @Nullable BlockStateModelPredicate conditions, boolean showBreakingOverlay, RandomOffsetFunction randomOffset) {
     }
 }

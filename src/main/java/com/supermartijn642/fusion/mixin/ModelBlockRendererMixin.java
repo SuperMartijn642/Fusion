@@ -1,10 +1,12 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.model.modifiers.block.ModelsByRandomOffset;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import net.minecraft.client.renderer.block.ModelBlockRenderer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -12,6 +14,8 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3fc;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -21,6 +25,20 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
  */
 @Mixin(ModelBlockRenderer.class)
 public class ModelBlockRendererMixin {
+
+    @ModifyExpressionValue(
+        method = "tesselateBlock(Lnet/minecraft/world/level/BlockAndTintGetter;Ljava/util/List;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/util/function/Function;ZI)V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/block/state/BlockState;getOffset(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;"
+        )
+    )
+    private Vec3 modifyRandomOffset(Vec3 original){
+        Vector3fc offset = ModelsByRandomOffset.RANDOM_OFFSET_OVERWRITE.get();
+        if(offset != null)
+            return new Vec3(offset.x(), offset.y(), offset.z());
+        return original;
+    }
 
     @ModifyVariable(
         method = "putQuadData",

@@ -1,16 +1,28 @@
 package com.supermartijn642.fusion.mixin.sodium;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierBakedModel;
+import com.supermartijn642.fusion.model.modifiers.block.ModelsByRandomOffset;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import net.caffeinemc.mods.sodium.api.util.ColorMixer;
 import net.caffeinemc.mods.sodium.client.render.chunk.compile.pipeline.BlockRenderer;
 import net.caffeinemc.mods.sodium.client.render.model.AbstractBlockRenderContext;
 import net.caffeinemc.mods.sodium.client.render.model.MutableQuadViewImpl;
 import net.caffeinemc.mods.sodium.client.render.texture.SpriteFinderCache;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -20,6 +32,54 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(BlockRenderer.class)
 public abstract class BlockRendererMixinSodium extends AbstractBlockRenderContext {
+
+    @Final
+    @Shadow
+    private Vector3f posOffset;
+
+    @Unique
+    private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
+
+    @Shadow
+    private void renderModel(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin){
+        throw new AssertionError();
+    }
+
+    @Inject(
+        method = "renderModel",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void renderModel(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin, CallbackInfo ci){
+        if(!(model instanceof BlockModelModifierBakedModel))
+            return;
+        this.modelsByRandomOffset.setContext(pos, state.getOffset(pos));
+        try{
+            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, this.level, pos, state);
+            this.modelsByRandomOffset.foreach(
+                entry -> this.renderModel(entry, state, pos, origin)
+            );
+        }finally{
+            this.modelsByRandomOffset.reset();
+        }
+        ci.cancel();
+    }
+
+    @ModifyExpressionValue(
+        method = "renderModel",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/level/block/state/BlockState;hasOffsetFunction()Z"
+        )
+    )
+    private boolean modifyRandomOffset(boolean original, @Local BlockStateModel model){
+        if(model instanceof ModelsByRandomOffset.Entry entry){
+            Vector3fc offset = entry.getOffset();
+            this.posOffset.add(offset.x(), offset.y(), offset.z());
+            return false;
+        }
+        return original;
+    }
 
     @Inject(
         method = "tintQuad",

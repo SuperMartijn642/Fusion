@@ -10,6 +10,7 @@
     "neoforge.ResourcePackLoaderMixin",
     "AgeableMobMixin",
     "AtlasConfigMixin",
+    "BlockBreakingStateMixin",
     "BlockFeatureRendererMixin",
     "CuboidItemModelWrapperMixin",
     "CuboidModelMixin",

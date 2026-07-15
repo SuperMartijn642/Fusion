@@ -130,7 +130,8 @@ public class BlockModelModifierReloadListener {
             conditionals.add(new BlockModelModifierBakedModel.ConditionalModel(
                 modelResolver.apply(entry.model),
                 entry.conditions,
-                entry.showBreakingOverlay == null ? showBreakingOverlay : entry.showBreakingOverlay
+                entry.showBreakingOverlay == null ? showBreakingOverlay : entry.showBreakingOverlay,
+                entry.randomOffset
             ));
             if(entry.conditions == null || entry.conditions.alwaysTrue()) // If the condition is always true, any later entries will never be reached
                 break;
@@ -419,7 +420,73 @@ public class BlockModelModifierReloadListener {
             showBreakingOverlay = object.get("show_breaking_overlay").getAsBoolean();
         }
 
-        return ImmutableList.of(new ModelEntry(model, conditions, showBreakingOverlay));
+        // Random offset
+        RandomOffsetFunction randomOffset = RandomOffsetFunction.NONE;
+        if(object.has("random_offset")){
+            if(!object.get("random_offset").isJsonObject() && !(object.get("random_offset").isJsonPrimitive() && object.getAsJsonPrimitive("random_offset").isString()))
+                throw new JsonParseException("Property 'random_offset' must be a string or object!");
+            try{
+                randomOffset = parseRandomOffset(object.get("random_offset"));
+            }catch(JsonParseException e){
+                throw new JsonParseException("Failed to parse property 'random_offset':", e);
+            }
+        }
+
+        return ImmutableList.of(new ModelEntry(model, conditions, showBreakingOverlay, randomOffset));
+    }
+
+    private static RandomOffsetFunction parseRandomOffset(JsonElement element){
+        boolean isObject = element.isJsonObject();
+        JsonObject json = isObject ? element.getAsJsonObject() : new JsonObject();
+        String type;
+        if(isObject){
+            if(!json.has("type"))
+                throw new JsonParseException("Must have property 'type'!");
+            if(!json.get("type").isJsonPrimitive() || !json.getAsJsonPrimitive("type").isString())
+                throw new JsonParseException("Property 'type' must be a string or object!");
+            type = json.get("type").getAsString();
+        }else
+            type = element.getAsString();
+        if(type.equalsIgnoreCase("none"))
+            return RandomOffsetFunction.NONE;
+        else if(type.equalsIgnoreCase("match_block"))
+            return RandomOffsetFunction.MATCH_BLOCK;
+        else if(type.equalsIgnoreCase("xyz")){
+            if(!json.has("x") && !json.has("y") && !json.has("z"))
+                throw new JsonParseException("XYZ random offset must have at least one of properties 'x','y','z'!");
+            Long seed = null;
+            if(json.has("seed")){
+                if(!json.get("seed").isJsonPrimitive() || !json.getAsJsonPrimitive("seed").isNumber())
+                    throw new JsonParseException("Property 'seed' must be a number!");
+                seed = json.get("seed").getAsLong();
+            }
+            float[] xRange = {0, 0};
+            if(json.has("x"))
+                xRange = parseRandomOffsetRange(json, "x");
+            float[] yRange = {0, 0};
+            if(json.has("y"))
+                yRange = parseRandomOffsetRange(json, "y");
+            float[] zRange = {0, 0};
+            if(json.has("z"))
+                zRange = parseRandomOffsetRange(json, "z");
+            return RandomOffsetFunction.xyz(seed, xRange[0], xRange[1], yRange[0], yRange[1], zRange[0], zRange[1]);
+        }else
+            throw new JsonParseException("Unknown random offset type '" + type + "'!");
+    }
+
+    private static float[] parseRandomOffsetRange(JsonObject json, String property){
+        if(!json.get(property).isJsonArray())
+            throw new JsonParseException("Property '" + property + "' must be an array of 2 numbers!");
+        JsonArray range = json.getAsJsonArray(property);
+        if(range.size() != 2
+            || !range.get(0).isJsonPrimitive() || !range.get(0).getAsJsonPrimitive().isNumber()
+            || !range.get(1).isJsonPrimitive() || !range.get(1).getAsJsonPrimitive().isNumber())
+            throw new JsonParseException("Property '" + property + "' must be an array of 2 numbers!");
+        float min = range.get(0).getAsFloat() / 16;
+        float max = range.get(1).getAsFloat() / 16;
+        if(min > max)
+            throw new JsonParseException(property.toUpperCase(Locale.ROOT) + "-range minimum must be less than maximum!");
+        return new float[]{min, max};
     }
 
     private static final class Properties{
@@ -442,17 +509,19 @@ public class BlockModelModifierReloadListener {
 
     private static final class ModelEntry{
         static ModelEntry simple (ResourceLocation model){
-            return new ModelEntry(model, null, null);
+            return new ModelEntry(model, null, null, RandomOffsetFunction.NONE);
         }
 
         private final ResourceLocation model;
         private final @Nullable BlockStateModelPredicate conditions;
         private final Boolean showBreakingOverlay;
+        private final RandomOffsetFunction randomOffset;
 
-        private ModelEntry(ResourceLocation model, @Nullable BlockStateModelPredicate conditions, Boolean showBreakingOverlay){
+        private ModelEntry(ResourceLocation model, @Nullable BlockStateModelPredicate conditions, Boolean showBreakingOverlay, RandomOffsetFunction randomOffset){
             this.model = model;
             this.conditions = conditions;
             this.showBreakingOverlay = showBreakingOverlay;
+            this.randomOffset = randomOffset;
         }
     }
 }

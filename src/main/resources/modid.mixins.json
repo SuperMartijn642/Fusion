@@ -29,6 +29,7 @@
     "OutlineBufferSourceMixin",
     "PackEntryMixin",
     "PackMixin",
+    "SectionCompilerMixin",
     "SingleVariantMixin",
     "SpriteLoaderMixin",
     "SpriteResourceLoaderMixin",

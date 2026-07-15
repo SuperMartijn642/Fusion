@@ -1,29 +1,92 @@
 package com.supermartijn642.fusion.mixin.embeddium;
 
+import com.mojang.math.Vector3f;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierBakedModel;
+import com.supermartijn642.fusion.model.modifiers.block.ModelsByRandomOffset;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import me.jellysquid.mods.sodium.client.model.IndexBufferBuilder;
 import me.jellysquid.mods.sodium.client.model.quad.blender.ColorSampler;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.format.ModelVertexSink;
 import me.jellysquid.mods.sodium.client.render.pipeline.BlockRenderer;
 import me.jellysquid.mods.sodium.client.util.color.ColorARGB;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.model.data.ModelData;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created 02/01/2025 by SuperMartijn642
  */
 @Mixin(BlockRenderer.class)
 public class BlockRendererMixinEmbeddium {
+
+    @Unique
+    private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
+
+    @Shadow
+    private boolean renderModel(BlockAndTintGetter level, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed, ModelData modelData, RenderType layer, RandomSource random){
+        throw new AssertionError();
+    }
+
+    @Inject(
+        method = "renderModel",
+        at = @At("HEAD"),
+        cancellable = true,
+        remap = false
+    )
+    private void renderModel(BlockAndTintGetter level, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed, ModelData modelData, RenderType layer, RandomSource random, CallbackInfoReturnable<Boolean> ci){
+        if(!(model instanceof BlockModelModifierBakedModel))
+            return;
+        AtomicBoolean rendered = new AtomicBoolean(false);
+        this.modelsByRandomOffset.setContext(pos, state.getOffset(level, pos));
+        try{
+            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, level, pos, state);
+            this.modelsByRandomOffset.foreach(
+                entry -> {
+                    if(this.renderModel(level, state, pos, origin, entry, buffers, cull, seed, modelData, layer, random))
+                        rendered.set(true);
+                }
+            );
+        }finally{
+            this.modelsByRandomOffset.reset();
+        }
+        ci.setReturnValue(rendered.get());
+    }
+
+    @ModifyVariable(
+        method = "renderModel",
+        at = @At(
+            value = "INVOKE",
+            target = "Lorg/embeddedt/embeddium/api/BlockRendererRegistry;fillCustomRenderers(Ljava/util/List;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/BlockAndTintGetter;Lnet/minecraft/client/renderer/RenderType;)V",
+            shift = At.Shift.BEFORE
+        ),
+        remap = false
+    )
+    private Vec3 modifyRandomOffset(Vec3 original, BlockAndTintGetter level, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed, ModelData modelData, RenderType layer, RandomSource random){
+        if(!(model instanceof ModelsByRandomOffset.Entry entry))
+            return original;
+        Vector3f offset = entry.getOffset();
+        return new Vec3(offset.x(), offset.y(), offset.z());
+    }
 
     @ModifyVariable(
         method = "renderQuad",

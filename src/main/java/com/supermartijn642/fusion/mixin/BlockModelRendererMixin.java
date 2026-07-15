@@ -1,28 +1,93 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.MixinReEntrancePreventer;
 import com.supermartijn642.fusion.api.texture.SpriteHelper;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.model.modifiers.block.ModelsByRandomOffset;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Vector3f;
 import net.minecraft.client.renderer.model.BakedQuad;
+import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraftforge.client.model.data.IModelData;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.BitSet;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created 07/09/2024 by SuperMartijn642
  */
 @Mixin(BlockModelRenderer.class)
 public class BlockModelRendererMixin {
+
+    @Unique
+    private final ThreadLocal<ModelsByRandomOffset> modelsByRandomOffset = ThreadLocal.withInitial(ModelsByRandomOffset::new);
+
+    @Inject(
+        method = "renderModelSmooth(Lnet/minecraft/world/IEnviromentBlockReader;Lnet/minecraft/client/renderer/model/IBakedModel;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;ZLjava/util/Random;JLnet/minecraftforge/client/model/data/IModelData;)Z",
+        at = @At("HEAD"),
+        cancellable = true,
+        remap = false
+    )
+    private void collectModelsByRandomOffsetWithAO(IEnviromentBlockReader level, IBakedModel model, BlockState state, BlockPos pos, BufferBuilder buffer, boolean cull, Random random, long seed, IModelData modelData, CallbackInfoReturnable<Boolean> ci){
+        //noinspection DataFlowIssue
+        BlockModelRenderer self = (BlockModelRenderer)(Object)this;
+        MixinReEntrancePreventer.modelBlockRendererMixin$collectModelsByRandomOffsetWithAO(self, level, model, state, pos, buffer, cull, random, seed, modelData, ci, this.modelsByRandomOffset);
+    }
+
+    @Inject(
+        method = "renderModelFlat(Lnet/minecraft/world/IEnviromentBlockReader;Lnet/minecraft/client/renderer/model/IBakedModel;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;ZLjava/util/Random;JLnet/minecraftforge/client/model/data/IModelData;)Z",
+        at = @At("HEAD"),
+        cancellable = true,
+        remap = false
+    )
+    private void collectModelsByRandomOffsetWithoutAO(IEnviromentBlockReader level, IBakedModel model, BlockState state, BlockPos pos, BufferBuilder buffer, boolean cull, Random random, long seed, IModelData modelData, CallbackInfoReturnable<Boolean> ci){
+        //noinspection DataFlowIssue
+        BlockModelRenderer self = (BlockModelRenderer)(Object)this;
+        MixinReEntrancePreventer.modelBlockRendererMixin$collectModelsByRandomOffsetWithoutAO(self, level, model, state, pos, buffer, cull, random, seed, modelData, ci, this.modelsByRandomOffset);
+    }
+
+    @ModifyVariable(
+        method = "renderModelFaceAO(Lnet/minecraft/world/IEnviromentBlockReader;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;Ljava/util/List;[FLjava/util/BitSet;Lnet/minecraft/client/renderer/BlockModelRenderer$AmbientOcclusionFace;)V",
+        at = @At(
+            value = "INVOKE_ASSIGN",
+            target = "Lnet/minecraft/block/BlockState;getOffset(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/Vec3d;"
+        )
+    )
+    private Vec3d modifyRandomOffsetWithAO(Vec3d original, IEnviromentBlockReader level, BlockState state, BlockPos pos, BufferBuilder buffer, List<BakedQuad> quads, float[] arr, BitSet o, BlockModelRenderer.AmbientOcclusionFace o2){
+        Vector3f offset = ModelsByRandomOffset.RANDOM_OFFSET_OVERWRITE.get();
+        if(offset == null)
+            return original;
+        return new Vec3d(offset.x(), offset.y(), offset.z());
+    }
+
+    @ModifyVariable(
+        method = "renderModelFaceFlat(Lnet/minecraft/world/IEnviromentBlockReader;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;IZLnet/minecraft/client/renderer/BufferBuilder;Ljava/util/List;Ljava/util/BitSet;)V",
+        at = @At(
+            value = "INVOKE_ASSIGN",
+            target = "Lnet/minecraft/block/BlockState;getOffset(Lnet/minecraft/world/IBlockReader;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/Vec3d;"
+        )
+    )
+    private Vec3d modifyRandomOffsetWithoutAO(Vec3d original, IEnviromentBlockReader level, BlockState state, BlockPos pos, int lighting, boolean calculateFacing, BufferBuilder buffer, List<BakedQuad> quads, BitSet o){
+        Vector3f offset = ModelsByRandomOffset.RANDOM_OFFSET_OVERWRITE.get();
+        if(offset == null)
+            return original;
+        return new Vec3d(offset.x(), offset.y(), offset.z());
+    }
 
     @ModifyVariable(
         method = "renderModelFaceAO",

@@ -8,9 +8,12 @@
     "forge.DatagenModLoaderMixin"
   ],
   "client": [
+    "forge.BlockInfoMixin",
+    "forge.ForgeBlockModelRendererMixin",
     "forge.LightUtilMixin",
     "forge.ModFileResourcePackMixin",
     "forge.VertexLighterFlatMixin",
+    "forge.VertexLighterSmoothAoMixin",
     "BlockModelDeserializerMixin",
     "BlockModelMixin",
     "BlockModelRendererMixin",

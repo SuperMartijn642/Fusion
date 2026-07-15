@@ -1,8 +1,10 @@
 package com.supermartijn642.fusion.mixin.forge;
 
 import com.supermartijn642.fusion.api.texture.types.base.BaseTextureData;
+import com.supermartijn642.fusion.extensions.BlockInfoExtension;
 import com.supermartijn642.fusion.extensions.VertexLighterFlatExtension;
 import com.supermartijn642.fusion.texture.QuadTintingHelper;
+import net.minecraft.client.renderer.Vector3f;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.VertexLighterFlat;
 import org.spongepowered.asm.mixin.Final;
@@ -22,6 +24,9 @@ public class VertexLighterFlatMixin implements VertexLighterFlatExtension {
 
     @Unique
     private BaseTextureData.QuadTinting tinting;
+    @Unique
+    private Vector3f offset;
+
     @Final
     @Shadow(remap = false)
     private BlockInfo blockInfo;
@@ -29,6 +34,21 @@ public class VertexLighterFlatMixin implements VertexLighterFlatExtension {
     @Override
     public void setFusionCustomTinting(BaseTextureData.QuadTinting tinting){
         this.tinting = tinting;
+    }
+
+    @Override
+    public void setFusionRandomOffsetOverwrite(Vector3f offset){
+        this.offset = offset;
+    }
+
+    @Override
+    public Vector3f getFusionRandomOffsetOverwrite(){
+        return this.offset;
+    }
+
+    @Override
+    public BlockInfo fusionGetBlockInfo(){
+        return this.blockInfo;
     }
 
     @ModifyArg(
@@ -54,5 +74,15 @@ public class VertexLighterFlatMixin implements VertexLighterFlatExtension {
     )
     private void clearTinting(CallbackInfo ci){
         this.tinting = null;
+    }
+
+    @Inject(
+        method = "updateBlockInfo",
+        at = @At("TAIL"),
+        remap = false
+    )
+    public void modifyRandomOffset(){
+        if(this.offset != null)
+            ((BlockInfoExtension)this.blockInfo).fusionSetOffset(this.offset.x(), this.offset.y(), this.offset.z());
     }
 }

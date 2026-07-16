@@ -194,7 +194,7 @@ public class MutableQuadImpl implements MutableQuad {
     @Override
     public RenderType itemRenderType(){
         if(this.itemRenderType == null && this.chunkRenderType != null)
-            return this.chunkRenderType == RenderType.translucent() ? Atlases.translucentItemSheet() : Atlases.cutoutBlockSheet();
+            return this.chunkRenderType == RenderType.translucent() ? Atlases.translucentCullBlockSheet() : Atlases.cutoutBlockSheet();
         return this.itemRenderType;
     }
 

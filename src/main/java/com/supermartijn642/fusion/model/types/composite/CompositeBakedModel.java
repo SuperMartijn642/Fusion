@@ -116,6 +116,8 @@ public class CompositeBakedModel implements IBakedModel, CustomRenderTypeBakedMo
         List<BakedQuad> quads = new ArrayList<>();
         for(ConditionalList list : this.entries){
             IBakedModel model = list.get(null, null, state);
+            if(model == null)
+                continue;
             if(!shouldCheckRenderType || ModelRenderTypeHelper.canRenderInLayer(model, state, renderType, isDefaultRenderType)){
                 random.setSeed(seed);
                 quads.addAll(model.getQuads(state, cullDirection, random));

@@ -66,6 +66,8 @@ public class CompositeBakedModel implements IBakedModel, CustomRenderTypeBakedMo
             IBakedModel model = stack == null ?
                 list.get(level, pos, state) :
                 list.get(stack);
+            if(model == null)
+                continue;
             if(!shouldCheckRenderType || ModelRenderTypeHelper.canRenderInLayer(model, state, renderType, isDefaultRenderType))
                 quads.addAll(model.getQuads(state, cullDirection, seed));
         }
@@ -147,14 +149,6 @@ public class CompositeBakedModel implements IBakedModel, CustomRenderTypeBakedMo
         public ModelEntry(IBakedModel model, ModelPredicate predicate){
             this.model = model;
             this.predicate = predicate;
-        }
-    }
-
-    private static class RenderData {
-        private final List<IBakedModel> models;
-
-        private RenderData(List<IBakedModel> models){
-            this.models = models;
         }
     }
 }

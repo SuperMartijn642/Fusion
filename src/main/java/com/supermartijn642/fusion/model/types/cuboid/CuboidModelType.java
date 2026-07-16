@@ -99,6 +99,13 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
 
     @Override
     public <X, C> Optional<X> getProperty(Property<X,C> property, C context, BlockModel data){
+        // NeoForge render type
+        if(property == DefaultModelProperties.NEO_MODEL_RENDER_TYPE){
+            ResourceLocation renderTypeHint = data.customData.getRenderTypeHint();
+            return renderTypeHint == null ?
+                Optional.empty() :
+                DefaultModelProperties.NEO_MODEL_RENDER_TYPE.cast(NamedRenderTypeManager.get(renderTypeHint));
+        }
         return DefaultModelTypes.UNKNOWN.getProperty(property, context, data);
     }
 

@@ -80,6 +80,13 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
 
     @Override
     public <X, C> Optional<X> getProperty(Property<X,C> property, C context, BlockModel data){
+        // Forge render type
+        if(property == DefaultModelProperties.FORGE_MODEL_RENDER_TYPE){
+            ResourceLocation renderTypeHint = data.customData.getRenderTypeHint();
+            return renderTypeHint == null ?
+                Optional.empty() :
+                DefaultModelProperties.FORGE_MODEL_RENDER_TYPE.cast(NamedRenderTypeManager.get(renderTypeHint));
+        }
         return Optional.empty();
     }
 

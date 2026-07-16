@@ -81,7 +81,7 @@ public class SpriteImageSourceImpl implements SpriteImageSource {
         for(net.minecraft.client.resources.data.AnimationFrame frame : vanillaMetadata.animationFrames){
             frames.add(AnimationFrame.of(
                 (frame.getFrameIndex() % frameColumns) * frameWidth,
-                frame.getFrameIndex() / frameRows * frameHeight,
+                frame.getFrameIndex() / frameColumns * frameHeight,
                 frame.hasNoTime() ? vanillaMetadata.getFrameTime() : frame.getFrameTime()
             ));
         }

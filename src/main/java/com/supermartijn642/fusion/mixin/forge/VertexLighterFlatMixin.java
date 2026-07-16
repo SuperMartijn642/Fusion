@@ -22,6 +22,7 @@ public class VertexLighterFlatMixin implements VertexLighterFlatExtension {
 
     @Unique
     private BaseTextureData.QuadTinting tinting;
+
     @Final
     @Shadow(remap = false)
     private BlockInfo blockInfo;
@@ -29,6 +30,11 @@ public class VertexLighterFlatMixin implements VertexLighterFlatExtension {
     @Override
     public void setFusionCustomTinting(BaseTextureData.QuadTinting tinting){
         this.tinting = tinting;
+    }
+
+    @Override
+    public BlockInfo fusionGetBlockInfo(){
+        return this.blockInfo;
     }
 
     @ModifyArg(

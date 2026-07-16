@@ -4,24 +4,40 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
 import com.supermartijn642.fusion.api.model.custom.BlockStateModelBakingContext;
+import com.supermartijn642.fusion.api.model.custom.DefaultModelProperties;
 import com.supermartijn642.fusion.api.model.custom.ModelStack;
 import com.supermartijn642.fusion.api.model.custom.ModelTransform;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
+import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import net.minecraft.client.renderer.block.model.BlockElement;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.SimpleUnbakedGeometry;
 import net.minecraft.client.renderer.block.model.TextureSlots;
 import net.minecraftforge.client.NamedRenderTypeManager;
+import net.minecraftforge.client.model.ForgeBlockModelData;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
  */
 public class CuboidModelType extends UnknownModelType<BlockModel> {
+
+    @Override
+    public <X, C> Optional<X> getProperty(Property<X,C> property, C context, BlockModel data){
+        // Forge render type
+        if(property == DefaultModelProperties.FORGE_MODEL_RENDER_TYPE){
+            ForgeBlockModelData forgeData = data.forgeData();
+            if(forgeData == null || forgeData.renderType().isEmpty())
+                return Optional.empty();
+            return DefaultModelProperties.FORGE_MODEL_RENDER_TYPE.cast(NamedRenderTypeManager.get(forgeData.renderType().get()));
+        }
+        return super.getProperty(property, context, data);
+    }
 
     @Override
     protected void bakeGeometry(BlockStateModelBakingContext context, ModelStack modelStack, BlockModel data, ModelTransform transform, ModelGeometry.MaterialKeyResolver materialResolver, ModelGeometry.QuadConsumer quadConsumer){

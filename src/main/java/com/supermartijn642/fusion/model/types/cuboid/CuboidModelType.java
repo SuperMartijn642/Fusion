@@ -74,8 +74,8 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
 
     @Override
     public ModelGeometry getGeometry(BlockModel data){
-        List<BlockPart> elements = data.getElements();
-        return elements.isEmpty() ? null : CuboidModelGeometry.of(data);
+        List<BlockPart> elements = data.elements;
+        return elements == null || elements.isEmpty() ? null : CuboidModelGeometry.of(data);
     }
 
     @Override

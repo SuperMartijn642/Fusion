@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
@@ -34,6 +35,11 @@ public interface QuadAccess {
      * Copies the properties to a Fabric Rendering API quad view.
      */
     void toFrapiQuad(MutableQuadView quad);
+
+    /**
+     * Position of the given vertex.
+     */
+    Vector3fc copyPosition(int vertexIndex, @Nullable Vector3f dest);
 
     /**
      * Position of the given vertex.

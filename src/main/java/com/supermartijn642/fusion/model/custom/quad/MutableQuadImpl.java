@@ -5,16 +5,17 @@ import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.extensions.MaterialInfoExtension;
+import com.supermartijn642.fusion.util.BakedQuadHelper;
 import net.minecraft.client.model.geom.builders.UVPair;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.cuboid.FaceBakery;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -27,72 +28,71 @@ public class MutableQuadImpl implements MutableQuad {
         return new MutableQuadImpl();
     }
 
-    // Quad data
-    private BakedQuad bakedQuadCache;
-    private final Vector3f[] positions = new Vector3f[4];
-    private final long[] uvs = new long[4];
+    // Flags
+    private static final int SHADE = 0;
+    private static final int LIGHT_EMISSION = 1;
+    private static final int AMBIENT_OCCLUSION = 5;
+    private static final int EMISSIVE = 6;
+    // Vertices
+    private static final int VERTEX_SIZE = 3 + 2;
+    private static final int VERTEX_POSITION = 0;
+    private static final int VERTEX_UV = 3;
+
+    private final float[] vertices = new float[4 * VERTEX_SIZE];
+    private int flags;
+    private int tintIndex = -1;
     private Direction facing;
-    // Material data
-    private BakedQuad.MaterialInfo materialInfoCache;
     private TextureAtlasSprite sprite;
     private ChunkSectionLayer chunkLayer;
     private RenderType itemRenderType;
-    private int tintIndex = -1;
-    private boolean shade = true;
-    private int lightEmission = 0;
-    // Our properties
-    private boolean ambientOcclusion = true;
-    private boolean emissive = false;
+
+    private BakedQuad bakedQuadCache;
+    private BakedQuad.MaterialInfo materialInfoCache;
 
     public MutableQuadImpl(){
-        for(int i = 0; i < 4; i++)
-            this.positions[i] = new Vector3f();
     }
 
     @Override
     public MutableQuad copyFrom(QuadAccess quad){
         MutableQuadImpl impl = (MutableQuadImpl)quad;
-        // Quad data
-        this.bakedQuadCache = impl.bakedQuadCache;
-        for(int i = 0; i < 4; i++)
-            this.positions[i].set(impl.positions[i]);
-        System.arraycopy(impl.uvs, 0, this.uvs, 0, 4);
+        System.arraycopy(impl.vertices, 0, this.vertices, 0, this.vertices.length);
+        this.flags = impl.flags;
         this.facing = impl.facing;
-        // Material data
-        this.materialInfoCache = impl.materialInfoCache;
         this.sprite = impl.sprite;
+        this.tintIndex = impl.tintIndex;
         this.chunkLayer = impl.chunkLayer;
         this.itemRenderType = impl.itemRenderType;
-        this.tintIndex = impl.tintIndex;
-        this.shade = impl.shade;
-        this.lightEmission = impl.lightEmission;
-        // Our properties
-        this.ambientOcclusion = impl.ambientOcclusion;
-        this.emissive = impl.emissive;
+        this.bakedQuadCache = impl.bakedQuadCache;
         return this;
     }
 
     @Override
     public MutableQuad copyBakedQuad(BakedQuad quad){
-        // Quad data
         this.bakedQuadCache = quad;
         for(int i = 0; i < 4; i++){
-            this.positions[i].set(quad.position(i));
-            this.uvs[i] = quad.packedUV(i);
+            int offset = i * VERTEX_SIZE + VERTEX_POSITION;
+            Vector3fc position = quad.position(i);
+            this.vertices[offset] = position.x();
+            this.vertices[offset + 1] = position.y();
+            this.vertices[offset + 2] = position.z();
+            offset = i * VERTEX_SIZE + VERTEX_UV;
+            long packedUV = quad.packedUV(i);
+            this.vertices[offset] = UVPair.unpackU(packedUV);
+            this.vertices[offset + 1] = UVPair.unpackV(packedUV);
         }
         this.facing = quad.direction();
-        // Material data
         BakedQuad.MaterialInfo materialInfo = quad.materialInfo();
         this.materialInfoCache = materialInfo;
         this.sprite = materialInfo.sprite();
+        this.tintIndex = materialInfo.tintIndex();
+        this.flags = 0;
+        if(materialInfo.shade())
+            this.flags |= (1 << SHADE);
+        this.flags |= (materialInfo.lightEmission() << LIGHT_EMISSION);
+        if(MaterialInfoExtension.getAmbientOcclusion(materialInfo))
+            this.flags |= (1 << AMBIENT_OCCLUSION);
         this.chunkLayer = materialInfo.layer();
         this.itemRenderType = materialInfo.itemRenderType();
-        this.tintIndex = materialInfo.tintIndex();
-        this.shade = materialInfo.shade();
-        this.lightEmission = materialInfo.lightEmission();
-        // Our properties
-        this.ambientOcclusion = MaterialInfoExtension.getAmbientOcclusion(materialInfo);
-        this.emissive = false;
         return this;
     }
 
@@ -103,7 +103,10 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad position(int vertexIndex, float x, float y, float z){
-        this.positions[vertexIndex].set(x, y, z);
+        int offset = vertexIndex * VERTEX_SIZE + VERTEX_POSITION;
+        this.vertices[offset] = x;
+        this.vertices[offset + 1] = y;
+        this.vertices[offset + 2] = z;
         this.facing = null;
         this.invalidateBakedQuadCache();
         return this;
@@ -111,47 +114,64 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad position(int vertexIndex, Vector3fc position){
-        this.positions[vertexIndex].set(position);
-        this.facing = null;
-        this.invalidateBakedQuadCache();
-        return this;
+        return this.position(vertexIndex, position.x(), position.y(), position.z());
+    }
+
+    @Override
+    public Vector3fc copyPosition(int vertexIndex, @Nullable Vector3f dest){
+        if(dest == null)
+            dest = new Vector3f();
+        int offset = vertexIndex * VERTEX_SIZE + VERTEX_POSITION;
+        dest.set(
+            this.vertices[offset],
+            this.vertices[offset + 1],
+            this.vertices[offset + 2]
+        );
+        return dest;
     }
 
     @Override
     public Vector3fc position(int vertexIndex){
-        return this.positions[vertexIndex];
+        return this.copyPosition(vertexIndex, null);
     }
 
     @Override
     public float x(int vertexIndex){
-        return this.positions[vertexIndex].x();
+        int offset = vertexIndex * VERTEX_SIZE + VERTEX_POSITION;
+        return this.vertices[offset];
     }
 
     @Override
     public float y(int vertexIndex){
-        return this.positions[vertexIndex].y();
+        int offset = vertexIndex * VERTEX_SIZE + VERTEX_POSITION;
+        return this.vertices[offset + 1];
     }
 
     @Override
     public float z(int vertexIndex){
-        return this.positions[vertexIndex].z();
+        int offset = vertexIndex * VERTEX_SIZE + VERTEX_POSITION;
+        return this.vertices[offset + 2];
     }
 
     @Override
     public MutableQuad uv(int vertexIndex, float u, float v){
-        this.uvs[vertexIndex] = UVPair.pack(u, v);
+        int offset = vertexIndex * VERTEX_SIZE + VERTEX_UV;
+        this.vertices[offset] = u;
+        this.vertices[offset + 1] = v;
         this.invalidateBakedQuadCache();
         return this;
     }
 
     @Override
     public float u(int vertexIndex){
-        return UVPair.unpackU(this.uvs[vertexIndex]);
+        int offset = vertexIndex * VERTEX_SIZE + VERTEX_UV;
+        return this.vertices[offset];
     }
 
     @Override
     public float v(int vertexIndex){
-        return UVPair.unpackV(this.uvs[vertexIndex]);
+        int offset = vertexIndex * VERTEX_SIZE + VERTEX_UV;
+        return this.vertices[offset + 1];
     }
 
     @Override
@@ -161,14 +181,14 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad copyMaterialInfo(BakedQuad.MaterialInfo materialInfo){
-        this.materialInfoCache = materialInfo;
         this.sprite = materialInfo.sprite();
         this.chunkLayer = materialInfo.layer();
         this.itemRenderType = materialInfo.itemRenderType();
         this.tintIndex = materialInfo.tintIndex();
-        this.shade = materialInfo.shade();
-        this.lightEmission = materialInfo.lightEmission();
-        this.ambientOcclusion = MaterialInfoExtension.getAmbientOcclusion(materialInfo);
+        this.shade(materialInfo.shade());
+        this.lightEmission(materialInfo.lightEmission());
+        this.ambientOcclusion(MaterialInfoExtension.getAmbientOcclusion(materialInfo));
+        this.materialInfoCache = materialInfo;
         this.invalidateBakedQuadCache();
         return this;
     }
@@ -266,50 +286,51 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad shade(boolean shade){
-        this.shade = shade;
+        this.flags = shade ? this.flags | (1 << SHADE) : this.flags & ~(1 << SHADE);
         this.invalidateMaterialInfoCache();
         return this;
     }
 
     @Override
     public boolean shade(){
-        return this.shade;
+        return (this.flags & (1 << SHADE)) != 0;
     }
 
     @Override
     public MutableQuad lightEmission(int lightEmission){
-        this.lightEmission = lightEmission;
+        lightEmission = Math.clamp(lightEmission, 0, 15);
+        this.flags &= ~(15 << LIGHT_EMISSION) | (lightEmission << LIGHT_EMISSION);
         this.invalidateMaterialInfoCache();
         return this;
     }
 
     @Override
     public int lightEmission(){
-        return this.lightEmission;
+        return (this.flags >> LIGHT_EMISSION) & 15;
     }
 
     @Override
     public MutableQuad ambientOcclusion(boolean ambientOcclusion){
-        this.ambientOcclusion = ambientOcclusion;
+        this.flags = ambientOcclusion ? this.flags | (1 << AMBIENT_OCCLUSION) : this.flags & ~(1 << AMBIENT_OCCLUSION);
         this.invalidateMaterialInfoCache();
         return this;
     }
 
     @Override
     public boolean ambientOcclusion(){
-        return this.ambientOcclusion;
+        return (this.flags & (1 << AMBIENT_OCCLUSION)) != 0;
     }
 
     @Override
     public MutableQuad emissive(boolean emissive){
-        this.emissive = emissive;
-        this.invalidateMaterialInfoCache();
+        this.flags = emissive ? this.flags | (1 << EMISSIVE) : this.flags & ~(1 << EMISSIVE);
+        this.invalidateBakedQuadCache();
         return this;
     }
 
     @Override
     public boolean emissive(){
-        return this.emissive;
+        return (this.flags & (1 << EMISSIVE)) != 0;
     }
 
     private void invalidateBakedQuadCache(){
@@ -324,7 +345,14 @@ public class MutableQuadImpl implements MutableQuad {
     public BakedQuad toBakedQuad(){
         if(this.bakedQuadCache == null){
             if(this.facing == null){
-                this.facing = FaceBakery.calculateFacing(this.positions);
+                int offsetV0 = VERTEX_POSITION;
+                int offsetV1 = VERTEX_SIZE + VERTEX_POSITION;
+                int offsetV2 = 2 * VERTEX_SIZE + VERTEX_POSITION;
+                this.facing = BakedQuadHelper.calculateFacing(
+                    this.vertices[offsetV0], this.vertices[offsetV0 + 1], this.vertices[offsetV0 + 2],
+                    this.vertices[offsetV1], this.vertices[offsetV1 + 1], this.vertices[offsetV1 + 2],
+                    this.vertices[offsetV2], this.vertices[offsetV2 + 1], this.vertices[offsetV2 + 2]
+                );
                 if(this.facing == null)
                     this.facing = Direction.UP;
             }
@@ -343,18 +371,19 @@ public class MutableQuadImpl implements MutableQuad {
                         transparency.hasTranslucent() ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockItemSheet() :
                         transparency.hasTranslucent() ? Sheets.translucentItemSheet() : Sheets.cutoutItemSheet();
                 }
+                boolean emissive = this.emissive();
                 this.materialInfoCache = new BakedQuad.MaterialInfo(
                     this.sprite,
                     chunkLayer, itemRenderType,
                     this.tintIndex,
-                    !this.emissive && this.shade,
-                    this.emissive ? 15 : this.lightEmission
+                    !emissive && this.shade(),
+                    emissive ? 15 : this.lightEmission()
                 );
-                MaterialInfoExtension.setAmbientOcclusion(this.materialInfoCache, !this.emissive && this.ambientOcclusion);
+                MaterialInfoExtension.setAmbientOcclusion(this.materialInfoCache, !emissive && this.ambientOcclusion());
             }
             this.bakedQuadCache = new BakedQuad(
-                new Vector3f(this.positions[0]), new Vector3f(this.positions[1]), new Vector3f(this.positions[2]), new Vector3f(this.positions[3]),
-                this.uvs[0], this.uvs[1], this.uvs[2], this.uvs[3],
+                this.position(0), this.position(1), this.position(2), this.position(3),
+                UVPair.pack(this.u(0), this.v(0)), UVPair.pack(this.u(1), this.v(1)), UVPair.pack(this.u(2), this.v(2)), UVPair.pack(this.u(3), this.v(3)),
                 this.facing,
                 this.materialInfoCache
             );

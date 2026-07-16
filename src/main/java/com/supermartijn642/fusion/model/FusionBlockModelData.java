@@ -64,7 +64,10 @@ public class FusionBlockModelData extends BlockModel {
     public void resolveParents(Function<ResourceLocation,UnbakedModel> resolver){
         // Dependencies
         this.dependencies = new HashMap<>();
-        this.dependencies.put(this.identifier, this.model);
+        this.dependencies.put(
+            this.identifier instanceof ModelResourceLocation ? new ResourceLocation(this.identifier.getNamespace(), this.identifier.getPath()) : this.identifier,
+            this.model
+        );
         // Track resolved models
         AtomicReference<Function<ResourceLocation,UnbakedModel>> trackingResolverHolder = new AtomicReference<>();
         Function<ResourceLocation,UnbakedModel> trackingResolver = new Function<>() {

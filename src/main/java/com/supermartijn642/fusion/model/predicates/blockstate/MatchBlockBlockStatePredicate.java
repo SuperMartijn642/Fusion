@@ -278,9 +278,9 @@ public class MatchBlockBlockStatePredicate implements BlockStateModelPredicate {
                     newOffset.add(dummy);
                 }
                 return new BlockPos(
-                    (int)Math.signum(newOffset.x),
-                    (int)Math.signum(newOffset.y),
-                    (int)Math.signum(newOffset.z)
+                    Math.abs(newOffset.x) < 1e-7 ? 0 : newOffset.x < 0 ? -1 : 1,
+                    Math.abs(newOffset.y) < 1e-7 ? 0 : newOffset.y < 0 ? -1 : 1,
+                    Math.abs(newOffset.z) < 1e-7 ? 0 : newOffset.z < 0 ? -1 : 1
                 );
             })
             .toList();

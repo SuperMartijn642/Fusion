@@ -31,6 +31,9 @@ public abstract class TerrainRenderContextMixin {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private TerrainRenderContextMixin(){
+    }
+
     @Shadow
     private boolean tessellateBlock(BlockState state, BlockPos pos, BakedModel model, PoseStack poseStack){
         throw new AssertionError();

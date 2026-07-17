@@ -1,3 +1,13 @@
+### Fusion 1.3.6
+- Added `random_offset` property for block model modifier model entries to overwrite hardcoded block random offsets
+- Improved randomness of `random` texture type
+- Significantly reduced memory footprint of `MutableQuad`s and thus models from Fusion
+- Fixed `match_state_in_front` behaving as `match_state`
+- Fixed incorrect uv calculation when explicitly specifying frame indices for animated textures leading to it always showing the first frame
+- Fixed block model predicates being rotated incorrectly due to floating point errors
+- Fixed Forge/NeoForge `render_type` property not working for `cuboid` models
+- Fixed `composite` model parents not being loaded
+
 ### Fusion 1.3.5
 - Directional model predicates, i.e. `match_block` and `match_state`, are now rotated along with `composite` model entries
 - Replaced vanilla default uv calculation of model elements with calculation that better handles elements outside the center block space

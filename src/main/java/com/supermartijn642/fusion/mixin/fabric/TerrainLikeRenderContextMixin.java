@@ -29,6 +29,9 @@ public class TerrainLikeRenderContextMixin {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private TerrainLikeRenderContextMixin(){
+    }
+
     @Shadow
     private void bufferModel(BlockAndTintGetter level, BlockStateModel model, BlockState state, BlockPos pos, PoseStack poseStack, MultiBufferSource buffers, boolean cull, long seed, int overlay){
         throw new AssertionError();

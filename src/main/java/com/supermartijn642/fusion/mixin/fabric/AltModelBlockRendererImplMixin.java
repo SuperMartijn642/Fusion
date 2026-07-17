@@ -45,6 +45,9 @@ public class AltModelBlockRendererImplMixin {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private AltModelBlockRendererImplMixin(){
+    }
+
     @Shadow
     private void tesselateBlock(QuadEmitter output, float x, float y, float z, BlockAndTintGetter level, BlockPos pos, BlockState state, BlockStateModel model, long seed){
         throw new AssertionError();

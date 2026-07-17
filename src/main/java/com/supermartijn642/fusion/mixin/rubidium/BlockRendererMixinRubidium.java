@@ -51,6 +51,9 @@ public class BlockRendererMixinRubidium {
     @Unique
     private final BlockPos.MutableBlockPos dummyOrigin = new BlockPos.MutableBlockPos();
 
+    private BlockRendererMixinRubidium(){
+    }
+
     @Shadow
     private void renderModel(BlockRenderContext context, ChunkBuildBuffers buffers){
         throw new AssertionError();

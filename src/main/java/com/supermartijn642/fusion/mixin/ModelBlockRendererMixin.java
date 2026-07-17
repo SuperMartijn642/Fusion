@@ -78,8 +78,7 @@ public class ModelBlockRendererMixin {
         at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/world/level/block/state/BlockState;getOffset(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;"
-        ),
-        remap = false
+        )
     )
     private Vec3 modifyRandomOffset(Vec3 original, @Local BakedModel model){
         if(model instanceof ModelsByRandomOffset.Entry entry){

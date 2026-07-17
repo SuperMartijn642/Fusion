@@ -42,6 +42,9 @@ public class LevelExtractorMixin {
     @Unique
     private final RandomSource randomSource = RandomSource.create();
 
+    private LevelExtractorMixin(){
+    }
+
     @ModifyExpressionValue(
         method = "extractBlockDestroyAnimation",
         at = @At(

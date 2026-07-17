@@ -28,6 +28,9 @@ public abstract class TerrainRenderContextMixin extends AbstractBlockRenderConte
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private TerrainRenderContextMixin(){
+    }
+
     @Shadow
     private void tessellateBlock(BlockState state, BlockPos pos, BakedModel model, PoseStack poseStack){
         throw new AssertionError();

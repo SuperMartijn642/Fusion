@@ -40,6 +40,9 @@ public abstract class BlockRendererMixin extends AbstractBlockRenderContext {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private BlockRendererMixin(){
+    }
+
     @Shadow
     private void renderModel(BlockStateModel model, BlockState state, BlockPos pos, BlockPos origin){
         throw new AssertionError();

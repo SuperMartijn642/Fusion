@@ -6,7 +6,6 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 import net.minecraft.core.Direction;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector2f;
-import org.joml.Vector2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -22,6 +21,8 @@ public class BakedQuadHelper {
     private static final int UV = findComponentOffset(VertexFormatElement.UV0);
     private static final int LIGHTING = findComponentOffset(VertexFormatElement.UV2);
     private static final int NORMAL = findComponentOffset(VertexFormatElement.NORMAL);
+
+    private static final ThreadLocal<Vector3f> HELPER = ThreadLocal.withInitial(Vector3f::new);
 
     private static int findComponentOffset(VertexFormatElement component){
         if(!VERTEX_FORMAT.contains(component))
@@ -74,11 +75,11 @@ public class BakedQuadHelper {
         );
     }
 
-    public static void setPosition(int[] vertices, int vertex, Vector3fc pos){
+    public static void setPosition(int[] vertices, int vertex, float x, float y, float z){
         int offset = vertex * VERTEX_SIZE + POSITION;
-        vertices[offset] = Float.floatToIntBits(pos.x());
-        vertices[offset + 1] = Float.floatToIntBits(pos.y());
-        vertices[offset + 2] = Float.floatToIntBits(pos.z());
+        vertices[offset] = Float.floatToIntBits(x);
+        vertices[offset + 1] = Float.floatToIntBits(y);
+        vertices[offset + 2] = Float.floatToIntBits(z);
     }
 
     public static int getColor(int[] vertices, int vertex){
@@ -121,10 +122,10 @@ public class BakedQuadHelper {
         );
     }
 
-    public static void setUV(int[] vertices, int vertex, Vector2fc uv){
+    public static void setUV(int[] vertices, int vertex, float u, float v){
         int offset = vertex * VERTEX_SIZE + UV;
-        vertices[offset] = Float.floatToIntBits(uv.x());
-        vertices[offset + 1] = Float.floatToIntBits(uv.y());
+        vertices[offset] = Float.floatToIntBits(u);
+        vertices[offset + 1] = Float.floatToIntBits(v);
     }
 
     public static int getLighting(int[] vertices, int vertex){
@@ -185,18 +186,19 @@ public class BakedQuadHelper {
         vertices[offset + 2] = Float.floatToIntBits(normal.z());
     }
 
-    public static Direction calculateFacing(Vector3fc pos0, Vector3fc pos1, Vector3fc pos2){
-        Vector3f v1to0 = new Vector3f(pos0).sub(pos1);
-        Vector3f v1to2 = new Vector3f(pos2).sub(pos1);
-        Vector3f perpendicular = new Vector3f(v1to2).cross(v1to0).normalize();
-        if (!perpendicular.isFinite())
+    public static Direction calculateFacing(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2){
+        Vector3f helper = HELPER.get();
+        Vector3f perpendicular = helper.set(x2 - x1, y2 - y1, z2 - z1)
+            .cross(x0 - x1, y0 - y1, z0 - z1)
+            .normalize();
+        if(!perpendicular.isFinite())
             return null;
 
         Direction closestDirection = null;
         float bestDotProduct = 0;
-        for (Direction direction : Direction.values()) {
+        for(Direction direction : Direction.values()){
             float dot = perpendicular.dot(direction.getUnitVec3f());
-            if (dot >= 0 && dot > bestDotProduct) {
+            if(dot >= 0 && dot > bestDotProduct){
                 bestDotProduct = dot;
                 closestDirection = direction;
             }

@@ -1,3 +1,6 @@
+### Fusion 1.3.7
+- Fixed crash when breaking blocks targeted by block model modifiers due to Mixin bug
+
 ### Fusion 1.3.6
 - Added `random_offset` property for block model modifier model entries to overwrite hardcoded block random offsets
 - Improved randomness of `random` texture type

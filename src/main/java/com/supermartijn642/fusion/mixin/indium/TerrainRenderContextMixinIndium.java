@@ -32,6 +32,9 @@ public abstract class TerrainRenderContextMixinIndium {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private TerrainRenderContextMixinIndium(){
+    }
+
     @Shadow
     private boolean tessellateBlock(BlockState state, BlockPos pos, BlockPos origin, BakedModel model, Vec3 modelOffset){
         throw new AssertionError();

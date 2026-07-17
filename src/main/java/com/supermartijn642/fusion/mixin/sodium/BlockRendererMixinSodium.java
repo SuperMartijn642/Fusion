@@ -41,6 +41,9 @@ public class BlockRendererMixinSodium {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private BlockRendererMixinSodium(){
+    }
+
     @Shadow
     private boolean renderModel(BlockAndTintGetter level, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed){
         throw new AssertionError();

@@ -27,6 +27,9 @@ public abstract class TerrainRenderContextMixin extends AbstractTerrainRenderCon
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private TerrainRenderContextMixin() {
+    }
+
     @Shadow
     private void bufferModel(BlockStateModel model, BlockState state, BlockPos pos){
         throw new AssertionError();

@@ -38,6 +38,9 @@ public class ModelBlockRendererMixin {
     @Unique
     private final ThreadLocal<ModelsByRandomOffset> modelsByRandomOffset = ThreadLocal.withInitial(ModelsByRandomOffset::new);
 
+    private ModelBlockRendererMixin(){
+    }
+
     @Shadow
     private void tesselateBlock(BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer buffer, boolean cull, RandomSource random, long seed, int overlay, ModelData entityData, RenderType renderType, boolean queryModelSpecificData){
         throw new AssertionError();

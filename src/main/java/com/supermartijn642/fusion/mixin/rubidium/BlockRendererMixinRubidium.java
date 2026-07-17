@@ -42,6 +42,9 @@ public class BlockRendererMixinRubidium {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private BlockRendererMixinRubidium(){
+    }
+
     @Shadow
     private boolean renderModel(BlockAndTintGetter level, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed, ModelData modelData, RenderType layer, RandomSource random){
         throw new AssertionError();

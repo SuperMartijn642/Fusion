@@ -39,6 +39,9 @@ public class ModelBlockRendererMixin {
     @Unique
     private final ThreadLocal<ModelsByRandomOffset> modelsByRandomOffset = ThreadLocal.withInitial(ModelsByRandomOffset::new);
 
+    private ModelBlockRendererMixin(){
+    }
+
     @Shadow
     private boolean renderModel(ILightReader level, IBakedModel model, BlockState state, BlockPos pos, MatrixStack poseStack, IVertexBuilder buffer, boolean cull, Random random, long seed, int overlay, IModelData entityData){
         throw new AssertionError();

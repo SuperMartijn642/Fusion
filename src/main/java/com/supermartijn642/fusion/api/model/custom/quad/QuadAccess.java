@@ -32,6 +32,11 @@ public interface QuadAccess {
     /**
      * Position of the given vertex.
      */
+    Vector3f copyPosition(int vertexIndex, @Nullable Vector3f dest);
+
+    /**
+     * Position of the given vertex.
+     */
     Vector3f position(int vertexIndex);
 
     /**

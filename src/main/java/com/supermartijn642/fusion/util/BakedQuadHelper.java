@@ -24,6 +24,8 @@ public class BakedQuadHelper {
         .addElement(DefaultVertexFormats.NORMAL_3B)
         .addElement(DefaultVertexFormats.PADDING_1B);
 
+    private static final ThreadLocal<Vector3f> HELPER = ThreadLocal.withInitial(Vector3f::new);
+
     private static Offsets getOffsets(VertexFormat format){
         return VERTEX_ELEMENT_OFFSETS.computeIfAbsent(format, Offsets::new);
     }
@@ -95,12 +97,12 @@ public class BakedQuadHelper {
         return dest;
     }
 
-    public static void setPosition(VertexFormat format, int[] vertices, int vertex, Vector3f pos){
+    public static void setPosition(VertexFormat format, int[] vertices, int vertex, float x, float y, float z){
         Offsets offsets = getOffsets(format);
         int offset = vertex * offsets.vertexSize + offsets.position;
-        vertices[offset] = Float.floatToIntBits(pos.x);
-        vertices[offset + 1] = Float.floatToIntBits(pos.y);
-        vertices[offset + 2] = Float.floatToIntBits(pos.z);
+        vertices[offset] = Float.floatToIntBits(x);
+        vertices[offset + 1] = Float.floatToIntBits(y);
+        vertices[offset + 2] = Float.floatToIntBits(z);
     }
 
     public static int getColor(VertexFormat format, int[] vertices, int vertex){
@@ -149,11 +151,11 @@ public class BakedQuadHelper {
         return dest;
     }
 
-    public static void setUV(VertexFormat format, int[] vertices, int vertex, float[] uv){
+    public static void setUV(VertexFormat format, int[] vertices, int vertex, float u, float v){
         Offsets offsets = getOffsets(format);
         int offset = vertex * offsets.vertexSize + offsets.uv;
-        vertices[offset] = Float.floatToIntBits(uv[0]);
-        vertices[offset + 1] = Float.floatToIntBits(uv[1]);
+        vertices[offset] = Float.floatToIntBits(u);
+        vertices[offset + 1] = Float.floatToIntBits(v);
     }
 
     public static boolean hasLighting(VertexFormat format){
@@ -255,13 +257,15 @@ public class BakedQuadHelper {
         }
     }
 
-    public static EnumFacing calculateFacing(Vector3f pos0, Vector3f pos1, Vector3f pos2){
-        Vector3f v1to0 = new Vector3f(pos0.x, pos0.y, pos0.z);
-        v1to0.sub(pos1);
-        Vector3f v1to2 = new Vector3f(pos2.x, pos2.y, pos2.z);
-        v1to2.sub(pos1);
-        Vector3f perpendicular = new Vector3f(v1to2.x, v1to2.y, v1to2.z);
-        perpendicular.cross(perpendicular, v1to0);
+    public static EnumFacing calculateFacing(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2){
+        Vector3f perpendicular = HELPER.get();
+        perpendicular.set(x2 - x1, y2 - y1, z2 - z1);
+        float v1to0X = x0 - x1, v1to0Y = y0 - y1, v1to0Z = z0 - z1;
+        perpendicular.set( // Cross product of (v2 - v1) and (v0 - v1)
+            perpendicular.y * v1to0Z - perpendicular.z * v1to0Y,
+            perpendicular.z * v1to0X - perpendicular.x * v1to0Z,
+            perpendicular.x * v1to0Y - perpendicular.y * v1to0X
+        );
         perpendicular.normalize();
         if(Math.abs(perpendicular.x) > Float.MAX_VALUE || Math.abs(perpendicular.y) > Float.MAX_VALUE || Math.abs(perpendicular.z) > Float.MAX_VALUE)
             return null;

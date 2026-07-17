@@ -42,6 +42,9 @@ public abstract class BlockRendererMixinSodium extends AbstractBlockRenderContex
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private BlockRendererMixinSodium(){
+    }
+
     @Shadow
     private void renderModel(BakedModel model, BlockState state, BlockPos pos, BlockPos origin){
         throw new AssertionError();

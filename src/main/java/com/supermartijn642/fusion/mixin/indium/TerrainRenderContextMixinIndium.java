@@ -38,6 +38,9 @@ public abstract class TerrainRenderContextMixinIndium extends AbstractBlockRende
     @Unique
     private final BlockPos.MutableBlockPos dummyOrigin = new BlockPos.MutableBlockPos();
 
+    private TerrainRenderContextMixinIndium(){
+    }
+
     @Shadow
     private boolean tessellateBlock(BlockRenderContext context){
         throw new AssertionError();

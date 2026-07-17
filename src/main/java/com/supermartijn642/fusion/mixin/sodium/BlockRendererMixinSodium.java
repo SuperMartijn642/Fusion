@@ -47,6 +47,9 @@ public class BlockRendererMixinSodium {
     @Unique
     private final BlockPos.MutableBlockPos dummyOrigin = new BlockPos.MutableBlockPos();
 
+    private BlockRendererMixinSodium(){
+    }
+
     @Shadow
     private boolean renderModel(BlockRenderContext context, ChunkModelBuilder buffers){
         throw new AssertionError();

@@ -8,6 +8,8 @@ import net.minecraft.core.Direction;
 import net.neoforged.neoforge.client.model.quad.BakedColors;
 import net.neoforged.neoforge.client.model.quad.BakedNormals;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
 /**
@@ -29,6 +31,11 @@ public interface QuadAccess {
      * Creates a baked quad instance from the properties.
      */
     BakedQuad toBakedQuad();
+
+    /**
+     * Position of the given vertex.
+     */
+    Vector3fc copyPosition(int vertexIndex, @Nullable Vector3f dest);
 
     /**
      * Position of the given vertex.
@@ -111,6 +118,13 @@ public interface QuadAccess {
      * @see BakedNormals
      */
     BakedNormals neoBakedNormals();
+
+    /**
+     * NeoForge's baked normal for the given vertex.
+     * @see BakedQuad#bakedNormals()
+     * @see BakedNormals
+     */
+    Vector3fc copyNeoNormal(int vertexIndex, @Nullable Vector3f dest);
 
     /**
      * NeoForge's baked normal for the given vertex.

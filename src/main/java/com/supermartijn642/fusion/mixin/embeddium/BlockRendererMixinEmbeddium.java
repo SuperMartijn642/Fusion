@@ -40,6 +40,9 @@ public class BlockRendererMixinEmbeddium {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private BlockRendererMixinEmbeddium(){
+    }
+
     @Shadow
     private boolean renderModel(BlockAndTintGetter level, BlockState state, BlockPos pos, BlockPos origin, BakedModel model, ChunkModelBuilder buffers, boolean cull, long seed, IModelData modelData){
         throw new AssertionError();

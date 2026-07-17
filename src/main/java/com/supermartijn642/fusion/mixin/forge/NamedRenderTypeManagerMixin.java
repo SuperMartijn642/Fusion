@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.mixin.forge;
 
-import com.google.common.collect.ImmutableMap;
 import com.supermartijn642.fusion.util.ForgeNamedRenderTypeGroupHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.NamedRenderTypeManager;
@@ -10,6 +9,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Map;
 
 /**
  * Created 07/06/2026 by SuperMartijn642
@@ -23,7 +24,7 @@ public class NamedRenderTypeManagerMixin {
      */
 
     @Shadow(remap = false)
-    private static ImmutableMap<ResourceLocation,RenderTypeGroup> RENDER_TYPES;
+    private static Map<ResourceLocation,RenderTypeGroup> RENDER_TYPES;
 
     @Inject(
         method = "init",

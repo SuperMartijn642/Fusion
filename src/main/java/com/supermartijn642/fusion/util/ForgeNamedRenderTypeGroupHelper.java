@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.util;
 
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.RenderTypeGroup;
 
@@ -15,7 +14,7 @@ public class ForgeNamedRenderTypeGroupHelper {
 
     private static Map<RenderTypeGroup,ResourceLocation> RENDER_TYPE_GROUPS = Map.of();
 
-    public static void updateMappings(ImmutableMap<ResourceLocation,RenderTypeGroup> renderTypes){
+    public static void updateMappings(Map<ResourceLocation,RenderTypeGroup> renderTypes){
         // Sort identifiers, so behavior is consistent
         List<ResourceLocation> identifiers = new ArrayList<>(renderTypes.keySet());
         identifiers.sort(Comparator.comparing(ResourceLocation::toString));

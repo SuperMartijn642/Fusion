@@ -30,6 +30,9 @@ public class NonTerrainBlockRenderContextMixinIndium {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private NonTerrainBlockRenderContextMixinIndium(){
+    }
+
     @Shadow
     private void render(BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer buffer, boolean cull, RandomSource random, long seed, int overlay){
         throw new AssertionError();

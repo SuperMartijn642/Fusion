@@ -78,8 +78,7 @@ public class ModelBlockRendererMixin {
             value = "INVOKE_ASSIGN",
             target = "Lnet/minecraft/world/level/block/state/BlockState;getOffset(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/phys/Vec3;"
         ),
-        locals = LocalCapture.CAPTURE_FAILHARD,
-        remap = false
+        locals = LocalCapture.CAPTURE_FAILHARD
     )
     private void modifyRandomOffset(BlockAndTintGetter level, BakedModel model, BlockState state, BlockPos pos, PoseStack poseStack, VertexConsumer buffer, boolean cull, RandomSource random, long seed, int overlay, ModelData modelData, RenderType renderType, CallbackInfo ci, boolean ambientOcclusion, Vec3 defaultOffset){
         if(!(model instanceof ModelsByRandomOffset.Entry entry))

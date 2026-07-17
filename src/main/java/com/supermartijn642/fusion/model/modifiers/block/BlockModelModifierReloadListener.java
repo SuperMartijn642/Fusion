@@ -288,7 +288,7 @@ public class BlockModelModifierReloadListener {
         Map<Property<?>,Set<?>> properties = new HashMap<>();
         if(!json.has("properties") || !json.get("properties").isJsonObject())
             throw new JsonParseException("Entry must have object property 'properties'!");
-        if(json.getAsJsonObject("properties").isEmpty())
+        if(json.getAsJsonObject("properties").size() == 0)
             throw new JsonParseException("At least one property must be specified!");
         for(Map.Entry<String,JsonElement> entry : json.getAsJsonObject("properties").entrySet()){
             try{

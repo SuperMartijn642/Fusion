@@ -502,7 +502,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         // Per tile animation
         if(data.perTileAnimation())
             json.addProperty("per_tile_animation", true);
-        return json.isEmpty() ? null : json;
+        return json.size() == 0 ? null : json;
     }
 
     record QuadPredicatesKey(Direction side, TextureOrientation orientation, ConnectionPredicate predicate) {

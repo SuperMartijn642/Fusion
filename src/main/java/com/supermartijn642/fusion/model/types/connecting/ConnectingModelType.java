@@ -49,7 +49,7 @@ public class ConnectingModelType extends BaseModelType<ConnectingModelData,Conne
                 builder.defaultConnections(loadPredicate(connectionsElement, "connections"));
             else if(connectionsElement.isJsonObject()){ // Load predicates per texture
                 JsonObject object = connectionsElement.getAsJsonObject();
-                if(object.isEmpty())
+                if(object.size() == 0)
                     throw new JsonParseException("Property 'connections' must have a 'type' key or keys per texture!");
                 for(String key : object.keySet()){
                     if(object.get(key).isJsonPrimitive() && object.getAsJsonPrimitive(key).isString()){

@@ -96,7 +96,7 @@ public class MatchStateConnectionPredicate implements ConnectionPredicate {
             // Parse properties
             if(!json.has("properties") || !json.get("properties").isJsonObject())
                 throw new JsonParseException("Match state predicate must have object property 'properties'!");
-            if(json.getAsJsonObject("properties").isEmpty())
+            if(json.getAsJsonObject("properties").size() == 0)
                 throw new JsonParseException("At least one property must be specified for match state predicate!");
             JsonObject properties = json.getAsJsonObject("properties");
             Map<Block,BlockStateMatcher> matchers = new HashMap<>(blocks.size());

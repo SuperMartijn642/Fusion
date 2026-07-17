@@ -222,7 +222,7 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             json.add("elements", elementsJson);
         }
         JsonObject itemTransformsJson = this.serializeItemTransforms(data);
-        if(!itemTransformsJson.isEmpty())
+        if(itemTransformsJson.size() != 0)
             json.add("display", itemTransformsJson);
         if(!data.getItemOverrides().isEmpty())
             json.add("overrides", this.serializeItemOverrides(data.getItemOverrides()));
@@ -232,7 +232,7 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
     }
 
     protected Map<String,Either<String,ModelMaterial>> deserializeMaterials(JsonObject json){
-        if(json.isEmpty())
+        if(json.size() == 0)
             return Map.of();
         Map<String,Either<String,ModelMaterial>> materials = new HashMap<>();
         for(String key : json.keySet()){

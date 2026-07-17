@@ -36,6 +36,9 @@ public class BlockFeatureRendererMixin {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private BlockFeatureRendererMixin(){
+    }
+
     @ModifyExpressionValue(
         method = "render",
         at = @At(

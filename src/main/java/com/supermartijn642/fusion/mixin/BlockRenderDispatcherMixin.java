@@ -44,6 +44,9 @@ public class BlockRenderDispatcherMixin {
     @Unique
     private final ModelsByRandomOffset modelsByRandomOffset = new ModelsByRandomOffset();
 
+    private BlockRenderDispatcherMixin(){
+    }
+
     @Inject(
         method = "renderBreakingTexture",
         at = @At(

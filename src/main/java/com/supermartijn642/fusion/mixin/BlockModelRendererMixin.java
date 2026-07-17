@@ -39,6 +39,9 @@ public class BlockModelRendererMixin {
     @Unique
     private final ThreadLocal<ModelsByRandomOffset> modelsByRandomOffset = ThreadLocal.withInitial(ModelsByRandomOffset::new);
 
+    private BlockModelRendererMixin(){
+    }
+
     @Shadow
     private boolean renderModelSmooth(IBlockAccess level, IBakedModel model, IBlockState state, BlockPos pos, BufferBuilder buffer, boolean cull, long seed){
         throw new AssertionError();

@@ -52,6 +52,9 @@ public class BlockRendererMixinEmbeddium {
     @Unique
     private final BlockPos.MutableBlockPos dummyOrigin = new BlockPos.MutableBlockPos();
 
+    private BlockRendererMixinEmbeddium(){
+    }
+
     @Shadow
     private void renderModel(BlockRenderContext context, ChunkBuildBuffers buffers){
         throw new AssertionError();

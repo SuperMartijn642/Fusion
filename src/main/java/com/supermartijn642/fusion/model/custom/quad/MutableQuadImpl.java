@@ -63,6 +63,7 @@ public class MutableQuadImpl implements MutableQuad {
         this.chunkLayer = impl.chunkLayer;
         this.itemRenderType = impl.itemRenderType;
         this.bakedQuadCache = impl.bakedQuadCache;
+        this.materialInfoCache = impl.materialInfoCache;
         return this;
     }
 
@@ -248,7 +249,6 @@ public class MutableQuadImpl implements MutableQuad {
     public ChunkSectionLayer chunkLayer(){
         if(this.chunkLayer == null && this.sprite != null)
             return ChunkSectionLayer.byTransparency(this.sprite.transparency());
-        this.invalidateMaterialInfoCache();
         return this.chunkLayer;
     }
 

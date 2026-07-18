@@ -50,10 +50,15 @@ public abstract class CombinedBakedModel implements BakedModel {
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource randomSource, ModelData modelData, @Nullable RenderType renderType){
         ModelData[] subModelData = modelData.get(SUB_MODEL_DATA);
+        boolean doRenderTypeCheck = renderType != null && state != null;
         List<BakedQuad> quads = new ArrayList<>();
         List<BakedModel> models = this.getModels();
-        for(int i = 0; i < models.size(); i++)
-            quads.addAll(models.get(i).getQuads(state, side, randomSource, subModelData == null ? ModelData.EMPTY : subModelData[i], renderType));
+        for(int i = 0; i < models.size(); i++){
+            BakedModel model = models.get(i);
+            ModelData subData = subModelData == null ? ModelData.EMPTY : subModelData[i];
+            if(!doRenderTypeCheck || model.getRenderTypes(state, randomSource, subData).contains(renderType))
+                quads.addAll(model.getQuads(state, side, randomSource, subData, renderType));
+        }
         return quads;
     }
 
@@ -112,8 +117,12 @@ public abstract class CombinedBakedModel implements BakedModel {
     }
 
     @Override
-    public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource rand, ModelData modelData){
+    public ChunkRenderTypeSet getRenderTypes(BlockState state, RandomSource random, ModelData modelData){
         ModelData[] subModelData = modelData.get(SUB_MODEL_DATA);
-        return this.getModels().getFirst().getRenderTypes(state, rand, subModelData == null ? ModelData.EMPTY : subModelData[0]);
+        ChunkRenderTypeSet renderTypes = ChunkRenderTypeSet.none();
+        List<BakedModel> models = this.getModels();
+        for(int i = 0; i < models.size(); i++)
+            renderTypes = ChunkRenderTypeSet.union(renderTypes, models.get(i).getRenderTypes(state, random, subModelData == null ? ModelData.EMPTY : subModelData[i]));
+        return renderTypes;
     }
 }

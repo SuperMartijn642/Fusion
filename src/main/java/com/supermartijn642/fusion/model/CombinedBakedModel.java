@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraftforge.client.MinecraftForgeClient;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,9 +35,16 @@ public abstract class CombinedBakedModel implements IBakedModel, CustomRenderTyp
 
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long seed){
+        // Check whether we need to check the models' render types against the given one
+        BlockRenderLayer renderType = MinecraftForgeClient.getRenderLayer();
+        boolean doRenderTypeCheck = renderType != null && state != null;
+        boolean isDefaultRenderType = !doRenderTypeCheck || ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
+
         List<BakedQuad> quads = new ArrayList<>();
-        for(IBakedModel model : this.getModels())
-            quads.addAll(model.getQuads(state, side, seed));
+        for(IBakedModel model : this.getModels()){
+            if(!doRenderTypeCheck || ModelRenderTypeHelper.canRenderInLayer(model, state, renderType, isDefaultRenderType))
+                quads.addAll(model.getQuads(state, side, seed));
+        }
         return quads;
     }
 

@@ -50,7 +50,8 @@ public class BlockRenderDispatcherMixin {
             value = "INVOKE_ASSIGN",
             target = "Lnet/minecraft/client/renderer/block/BlockModelShaper;getBlockModel(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/client/renderer/block/model/BlockStateModel;",
             shift = At.Shift.AFTER
-        )
+        ),
+        cancellable = true
     )
     private void collectModelsByOffset(BlockState blockState, BlockPos pos, BlockAndTintGetter level, PoseStack poseStack, VertexConsumer buffer, CallbackInfo ci, @Local BlockStateModel model) {
         if(!(model instanceof BlockModelModifierBakedModel))

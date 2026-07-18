@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockDisplayReader;
+import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 import net.minecraftforge.client.model.data.ModelDataMap;
@@ -54,10 +55,19 @@ public abstract class CombinedBakedModel implements IBakedModel, CustomRenderTyp
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, Random random, IModelData modelData){
         IModelData[] subModelData = modelData.getData(SUB_MODEL_DATA);
+
+        // Check whether we need to check the models' render types against the given one
+        RenderType renderType = MinecraftForgeClient.getRenderLayer();
+        boolean doRenderTypeCheck = renderType != null && state != null;
+        boolean isDefaultRenderType = !doRenderTypeCheck || ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, renderType);
+
         List<BakedQuad> quads = new ArrayList<>();
         List<IBakedModel> models = this.getModels();
-        for(int i = 0; i < models.size(); i++)
-            quads.addAll(models.get(i).getQuads(state, side, random, subModelData == null ? EmptyModelData.INSTANCE : subModelData[i]));
+        for(int i = 0; i < models.size(); i++){
+            IBakedModel model = models.get(i);
+            if(!doRenderTypeCheck || ModelRenderTypeHelper.canRenderInLayer(model, state, renderType, isDefaultRenderType))
+                quads.addAll(model.getQuads(state, side, random, subModelData == null ? EmptyModelData.INSTANCE : subModelData[i]));
+        }
         return quads;
     }
 

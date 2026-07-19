@@ -1,3 +1,9 @@
+### Fusion 1.3.8
+- Fixed crash when using `continuous` texture type as a sub texture for other texture types
+- Fixed models from block model modifiers grouped by random offset being submitted for all models' render types
+- Fixed texture dependencies for composite model not always being loaded
+- Fixed crash when breaking a block targeted by a block model modifier
+
 ### Fusion 1.3.7
 - Fixed crash when breaking blocks targeted by block model modifiers due to Mixin bug
 

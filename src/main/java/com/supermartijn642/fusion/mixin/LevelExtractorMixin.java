@@ -67,7 +67,7 @@ public class LevelExtractorMixin {
         long seed = blockState.getSeed(pos);
         this.modelsByRandomOffset.setContext(pos, blockState.getOffset(pos));
         try{
-            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, this.level, pos, blockState);
+            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, this.level, pos, blockState, null);
             List<BlockStateModelPart> finalPartsList = partsList;
             this.modelsByRandomOffset.foreach(
                 entry -> {

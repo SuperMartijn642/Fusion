@@ -40,12 +40,16 @@ public abstract class CombinedBakedModel implements BakedModel {
 
     protected abstract List<BakedModel> getModels();
 
+    protected ModelData getModelData(int modelIndex, BakedModel model, BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData modelData){
+        return model.getModelData(level, pos, state, modelData);
+    }
+
     @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData modelData){
         List<BakedModel> models = this.getModels();
         ModelData[] subModelData = new ModelData[models.size()];
         for(int i = 0; i < models.size(); i++)
-            subModelData[i] = models.get(i).getModelData(level, pos, state, modelData);
+            subModelData[i] = this.getModelData(i, models.get(i), level, pos, state, modelData);
         return ModelData.builder().with(SUB_MODEL_DATA, subModelData).build();
     }
 

@@ -60,7 +60,7 @@ public abstract class BlockRendererMixinSodium extends AbstractBlockRenderContex
             return;
         this.modelsByRandomOffset.setContext(pos, state.getOffset(pos));
         try{
-            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, this.level, pos, state);
+            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, this.level, pos, state, null);
             this.modelsByRandomOffset.foreach(
                 entry -> this.renderModel(entry, state, pos, origin)
             );

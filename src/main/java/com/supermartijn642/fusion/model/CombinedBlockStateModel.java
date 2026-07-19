@@ -29,7 +29,12 @@ public abstract class CombinedBlockStateModel implements BlockStateModel {
         };
     }
 
-    private static final ModelProperty<ModelData[]> SUB_MODEL_DATA = new ModelProperty<>();
+    private static final ModelProperty<RenderData> RENDER_DATA = new ModelProperty<>();
+
+    private static RenderData getRenderData(ModelData modelData){
+        RenderData renderData = modelData.get(RENDER_DATA);
+        return renderData == null ? RenderData.EMPTY : renderData;
+    }
 
     protected abstract List<BlockStateModel> getModels();
 
@@ -39,17 +44,28 @@ public abstract class CombinedBlockStateModel implements BlockStateModel {
         ModelData[] subModelData = new ModelData[models.size()];
         for(int i = 0; i < models.size(); i++)
             subModelData[i] = models.get(i).getModelData(level, pos, state, modelData);
-        return ModelData.builder().with(SUB_MODEL_DATA, subModelData).build();
+        return ModelData.builder().with(RENDER_DATA, new RenderData(state, subModelData)).build();
     }
 
     @Override
     public void collectParts(RandomSource random, List<BlockModelPart> parts, ModelData modelData, RenderType renderType){
-        ModelData[] subModelData = modelData.get(SUB_MODEL_DATA);
+        RenderData renderData = getRenderData(modelData);
+        ModelData[] subModelData = renderData.subModelData;
+        BlockState state = renderData.state;
+
+        // Check whether we need to check the models' render types against the given one
+        boolean doRenderTypeCheck = renderType != null && state != null;
+
         List<BlockStateModel> models = this.getModels();
         long seed = random.nextLong();
         for(int i = 0; i < models.size(); i++){
             random.setSeed(seed);
-            models.get(i).collectParts(random, parts, subModelData == null ? ModelData.EMPTY : subModelData[i], renderType);
+            BlockStateModel model = models.get(i);
+            ModelData subData = subModelData == null ? ModelData.EMPTY : subModelData[i];
+            if(!doRenderTypeCheck || model.getRenderTypes(state, random, subData).contains(renderType)){
+                random.setSeed(seed);
+                model.collectParts(random, parts, subData, renderType);
+            }
         }
     }
 
@@ -69,13 +85,15 @@ public abstract class CombinedBlockStateModel implements BlockStateModel {
 
     @Override
     public TextureAtlasSprite particleIcon(@NotNull ModelData modelData){
-        ModelData[] subModelData = modelData.get(SUB_MODEL_DATA);
+        RenderData renderData = getRenderData(modelData);
+        ModelData[] subModelData = renderData.subModelData;
         return this.getModels().getFirst().particleIcon(subModelData == null ? ModelData.EMPTY : subModelData[0]);
     }
 
     @Override
     public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource random, @NotNull ModelData modelData){
-        ModelData[] subModelData = modelData.get(SUB_MODEL_DATA);
+        RenderData renderData = getRenderData(modelData);
+        ModelData[] subModelData = renderData.subModelData;
         List<BlockStateModel> models = this.getModels();
         ChunkRenderTypeSet renderTypes = ChunkRenderTypeSet.none();
         long seed = random.nextLong();
@@ -84,5 +102,9 @@ public abstract class CombinedBlockStateModel implements BlockStateModel {
             renderTypes = ChunkRenderTypeSet.union(renderTypes, models.get(i).getRenderTypes(state, random, subModelData == null ? ModelData.EMPTY : subModelData[i]));
         }
         return renderTypes;
+    }
+
+    private record RenderData(BlockState state, ModelData[] subModelData) {
+        static final RenderData EMPTY = new RenderData(null, new ModelData[0]);
     }
 }

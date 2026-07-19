@@ -1,3 +1,10 @@
+### Fusion 1.3.8
+- Fixed crash when using `continuous` texture type as a sub texture for other texture types
+- Fixed texture dependencies for composite model not always being loaded
+- Fixed crash when breaking a block targeted by a block model modifier
+- Fixed quad material cache not being invalidated when copying quad properties leading to incorrect material properties
+- Fixed Sodium preventing Fusion animated textures from animating
+
 ### Fusion 1.3.7
 - Fixed crash when breaking blocks targeted by block model modifiers due to Mixin bug
 

@@ -81,10 +81,11 @@ public class BlockRendererMixinRubidium {
         RenderType renderType = context.renderLayer();
         this.modelsByRandomOffset.setContext(pos, state.getOffset(level, pos));
         try{
-            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, level, pos, state);
+            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, level, pos, state, modelData);
             this.modelsByRandomOffset.foreach(
                 entry -> {
-                    this.dummyRenderContext.update(pos, this.dummyOrigin, state, entry, seed, modelData, renderType);
+                    ModelData subData = entry.getModelData(level, pos, state, ModelData.EMPTY);
+                    this.dummyRenderContext.update(pos, this.dummyOrigin, state, entry, seed, subData, renderType);
                     this.renderModel(this.dummyRenderContext, buffers);
                 }
             );

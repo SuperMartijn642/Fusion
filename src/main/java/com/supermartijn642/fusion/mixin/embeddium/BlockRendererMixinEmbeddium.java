@@ -62,10 +62,11 @@ public class BlockRendererMixinEmbeddium {
         AtomicBoolean rendered = new AtomicBoolean(false);
         this.modelsByRandomOffset.setContext(pos, state.getOffset(level, pos));
         try{
-            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, level, pos, state);
+            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, level, pos, state, modelData);
             this.modelsByRandomOffset.foreach(
                 entry -> {
-                    if(this.renderModel(level, state, pos, origin, entry, buffers, cull, seed, modelData, layer, random))
+                    ModelData subData = entry.getModelData(level, pos, state, ModelData.EMPTY);
+                    if(this.renderModel(level, state, pos, origin, entry, buffers, cull, seed, subData, layer, random))
                         rendered.set(true);
                 }
             );

@@ -7,7 +7,6 @@ import com.supermartijn642.fusion.api.model.FusionModelTypeRegistry;
 import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.ModelType;
 import com.supermartijn642.fusion.api.model.custom.*;
-import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.predicates.DefaultModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.FusionModelPredicateRegistry;
@@ -100,7 +99,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
 
     @Override
     public @Nullable ModelGeometry getGeometry(CompositeModelData data){
-        return CuboidModelGeometry.of(List.of());
+        return null;
     }
 
     @Override

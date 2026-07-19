@@ -20,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -60,10 +61,11 @@ public class BlockRendererMixinRubidium {
         AtomicBoolean rendered = new AtomicBoolean(false);
         this.modelsByRandomOffset.setContext(pos, state.getOffset(level, pos));
         try{
-            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, level, pos, state);
+            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, level, pos, state, modelData);
             this.modelsByRandomOffset.foreach(
                 entry -> {
-                    if(this.renderModel(level, state, pos, origin, entry, buffers, cull, seed, modelData))
+                    IModelData subData = entry.getModelData(level, pos, state, EmptyModelData.INSTANCE);
+                    if(this.renderModel(level, state, pos, origin, entry, buffers, cull, seed, subData))
                         rendered.set(true);
                 }
             );

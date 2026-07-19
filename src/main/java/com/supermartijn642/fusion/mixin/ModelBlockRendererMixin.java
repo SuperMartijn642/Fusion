@@ -17,6 +17,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -60,11 +61,12 @@ public class ModelBlockRendererMixin {
         AtomicBoolean rendered = new AtomicBoolean(false);
         modelsByRandomOffset.setContext(pos, state.getOffset(level, pos));
         try{
-            ((BlockModelModifierBakedModel)model).collectByOffset(modelsByRandomOffset, level, pos, state);
+            ((BlockModelModifierBakedModel)model).collectByOffset(modelsByRandomOffset, level, pos, state, modelData);
             modelsByRandomOffset.foreach(
                 entry -> {
                     poseStack.pushPose();
-                    if(this.tesselateBlock(level, entry, state, pos, poseStack, buffer, cull, random, seed, overlay, modelData))
+                    IModelData subData = entry.getModelData(level, pos, state, EmptyModelData.INSTANCE);
+                    if(this.tesselateBlock(level, entry, state, pos, poseStack, buffer, cull, random, seed, overlay, subData))
                         rendered.set(true);
                     poseStack.popPose();
                 }

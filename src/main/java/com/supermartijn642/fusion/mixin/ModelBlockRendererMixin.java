@@ -59,11 +59,12 @@ public class ModelBlockRendererMixin {
         ModelsByRandomOffset modelsByRandomOffset = this.modelsByRandomOffset.get();
         modelsByRandomOffset.setContext(pos, state.getOffset(level, pos));
         try{
-            ((BlockModelModifierBakedModel)model).collectByOffset(modelsByRandomOffset, level, pos, state);
+            ((BlockModelModifierBakedModel)model).collectByOffset(modelsByRandomOffset, level, pos, state, modelData);
             modelsByRandomOffset.foreach(
                 entry -> {
                     poseStack.pushPose();
-                    this.tesselateBlock(level, entry, state, pos, poseStack, buffer, cull, random, seed, overlay, modelData, renderType);
+                    ModelData subData = entry.getModelData(level, pos, state, ModelData.EMPTY);
+                    this.tesselateBlock(level, entry, state, pos, poseStack, buffer, cull, random, seed, overlay, subData, renderType);
                     poseStack.popPose();
                 }
             );

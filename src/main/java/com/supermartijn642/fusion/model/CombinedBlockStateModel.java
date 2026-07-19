@@ -32,6 +32,10 @@ public abstract class CombinedBlockStateModel implements BlockStateModel {
 
     protected abstract List<BlockStateModel> getModels();
 
+    protected ModelData getModelData(int modelIndex, BlockStateModel model, BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData modelData){
+        return model.getModelData(level, pos, state, modelData);
+    }
+
     @Override
     public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData){
         List<BlockStateModel> models = this.getModels();

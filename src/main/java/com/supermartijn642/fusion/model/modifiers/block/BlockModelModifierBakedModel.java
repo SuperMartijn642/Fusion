@@ -59,32 +59,30 @@ public class BlockModelModifierBakedModel implements BlockStateModel {
         this.materialFlags = materialFlags;
     }
 
-    public void collectByOffset(ModelsByRandomOffset output, @Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
+    public void collectByOffset(ModelsByRandomOffset output, @Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state, @Nullable ModelData modelData){
+        RenderData renderData = modelData == null ? null : modelData.get(RENDER_DATA);
+        if(renderData == null)
+            renderData = this.getRenderData(null, null, null, ModelData.EMPTY);
+
         // Check whether the breaking overlay is being rendered
         boolean isBreakingOverlay = FusionClient.isRenderingBreakingOverlay();
 
         // Default model
-        overrides:
-        {
-            for(ConditionalModel override : this.defaultModelOverrides){
-                if(override.conditions == null || override.conditions.test(level, pos, state)){
-                    if(!isBreakingOverlay || override.showBreakingOverlay)
-                        output.add(override.randomOffset, override.model);
-                    break overrides;
-                }
-            }
-            output.add(RandomOffsetFunction.MATCH_BLOCK, this.original);
-        }
+        if(renderData.defaultModel != -1){
+            ConditionalModel override = this.defaultModelOverrides.get(renderData.defaultModel);
+            if(!isBreakingOverlay || override.showBreakingOverlay)
+                output.add(override.randomOffset, override.model, renderData.defaultModelData);
+        }else
+            output.add(RandomOffsetFunction.MATCH_BLOCK, this.original, renderData.defaultModelData);
 
         // Append models
-        for(List<ConditionalModel> appendEntry : this.appendModels){
-            // First model whose conditions are met is submitted
-            for(ConditionalModel conditional : appendEntry){
-                if(conditional.conditions == null || conditional.conditions.test(level, pos, state)){
-                    if(!isBreakingOverlay || conditional.showBreakingOverlay)
-                        output.add(conditional.randomOffset, conditional.model);
-                    break;
-                }
+        for(int i = 0; i < this.appendModels.size(); i++){
+            if(renderData.appendModels[i] == -1)
+                continue;
+            ConditionalModel conditional = this.appendModels.get(i).get(renderData.appendModels[i]);
+            if(!isBreakingOverlay || conditional.showBreakingOverlay){
+                ModelData conditionalData = renderData.appendModelsData[i];
+                output.add(conditional.randomOffset, conditional.model, conditionalData);
             }
         }
     }

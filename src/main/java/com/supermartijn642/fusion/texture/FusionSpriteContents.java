@@ -104,8 +104,8 @@ public class FusionSpriteContents extends SpriteContents {
         for(int mipLevel = 0; mipLevel < this.byMipLevel.length; mipLevel++)
             gpuBufferSlices[mipLevel] = bufferSlice.slice((long)mipLevel * offset, offset);
 
-        AnimatedTexture animatedTexture = new AnimatedTexture(this.frameInfos, 0, this.imageSource.shouldInterpolateFrames());
-        return new AnimationState(animatedTexture, uniqueFrameGpuTextures, gpuBufferSlices);
+        this.animatedTexture = new AnimatedTexture(this.frameInfos, 0, this.imageSource.shouldInterpolateFrames());
+        return new AnimationState(this.animatedTexture, uniqueFrameGpuTextures, gpuBufferSlices);
     }
 
     private void uploadUniqueFrame(GpuTexture destination, int mipLevel, int frameIndex){

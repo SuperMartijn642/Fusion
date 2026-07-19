@@ -12,6 +12,8 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -51,10 +53,13 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         BlockRenderContext blockRenderContext = FusionClient.BLOCK_RENDER_CONTEXT.get();
         if(blockRenderContext == null || blockRenderContext.level() == null || blockRenderContext.pos() == null)
             return super.getQuads(state, cullDirection, seed);
-        IBlockState stateAbove = blockRenderContext.level().getBlockState(blockRenderContext.pos().up());
+        IBlockAccess level = blockRenderContext.level();
+        BlockPos posAbove = blockRenderContext.pos().up();
+        IBlockState stateAbove = level.getBlockState(posAbove).getActualState(level, posAbove);
         if(stateAbove.getBlock() != state.getBlock())
             stateAbove = null;
-        IBlockState stateBelow = blockRenderContext.level().getBlockState(blockRenderContext.pos().down());
+        BlockPos posBelow = blockRenderContext.pos().down();
+        IBlockState stateBelow = level.getBlockState(posBelow).getActualState(level, posBelow);
         if(stateBelow.getBlock() != state.getBlock())
             stateBelow = null;
 

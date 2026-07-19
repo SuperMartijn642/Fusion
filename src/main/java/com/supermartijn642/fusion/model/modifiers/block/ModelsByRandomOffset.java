@@ -3,7 +3,11 @@ package com.supermartijn642.fusion.model.modifiers.block;
 import com.supermartijn642.fusion.model.CombinedBakedModel;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.model.data.ModelData;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 
@@ -30,9 +34,11 @@ public class ModelsByRandomOffset {
         this.defaultBlockOffset = defaultBlockOffset;
     }
 
-    public void add(RandomOffsetFunction offset, BakedModel model){
+    public void add(RandomOffsetFunction offset, BakedModel model, @Nullable ModelData modelData){
         if(offset.equals(this.lastOffsetFunction)){
-            this.entries.get(this.entryIndex).models.add(model);
+            Entry entry = this.entries.get(this.entryIndex);
+            entry.models.add(model);
+            entry.modelData.add(modelData);
             return;
         }
         this.entryIndex++;
@@ -42,7 +48,9 @@ public class ModelsByRandomOffset {
         Entry entry = this.entries.get(this.entryIndex);
         offset.getOffset(this.defaultBlockOffset, this.blockPos, entry.offset);
         entry.models.clear();
+        entry.modelData.clear();
         entry.models.add(model);
+        entry.modelData.add(modelData);
     }
 
     public List<Entry> getEntries(){
@@ -66,6 +74,7 @@ public class ModelsByRandomOffset {
     public static class Entry extends CombinedBakedModel {
         final Vector3f offset = new Vector3f();
         final List<BakedModel> models = new ArrayList<>();
+        final List<ModelData> modelData = new ArrayList<>();
 
         public Vector3fc getOffset(){
             return this.offset;
@@ -74,6 +83,12 @@ public class ModelsByRandomOffset {
         @Override
         protected List<BakedModel> getModels(){
             return this.models;
+        }
+
+        @Override
+        protected ModelData getModelData(int modelIndex, BakedModel model, BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData modelData){
+            ModelData subData = this.modelData.get(modelIndex);
+            return subData == null ? super.getModelData(modelIndex, model, level, pos, state, modelData) : subData;
         }
     }
 }

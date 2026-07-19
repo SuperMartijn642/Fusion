@@ -17,6 +17,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.world.IBlockDisplayReader;
+import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -60,11 +61,12 @@ public class ModelBlockRendererMixin {
         AtomicBoolean rendered = new AtomicBoolean(false);
         modelsByRandomOffset.setContext(pos, state.getOffset(level, pos));
         try{
-            ((BlockModelModifierBakedModel)model).collectByOffset(modelsByRandomOffset, level, pos, state);
+            ((BlockModelModifierBakedModel)model).collectByOffset(modelsByRandomOffset, level, pos, state, modelData);
             modelsByRandomOffset.foreach(
                 entry -> {
                     poseStack.pushPose();
-                    if(this.renderModel(level, entry, state, pos, poseStack, buffer, cull, random, seed, overlay, modelData))
+                    IModelData subData = entry.getModelData(level, pos, state, EmptyModelData.INSTANCE);
+                    if(this.renderModel(level, entry, state, pos, poseStack, buffer, cull, random, seed, overlay, subData))
                         rendered.set(true);
                     poseStack.popPose();
                 }

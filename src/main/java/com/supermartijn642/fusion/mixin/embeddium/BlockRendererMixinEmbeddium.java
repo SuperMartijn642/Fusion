@@ -19,6 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.math.vector.Vector3f;
 import net.minecraft.world.IBlockDisplayReader;
+import net.minecraftforge.client.model.data.EmptyModelData;
 import net.minecraftforge.client.model.data.IModelData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -59,10 +60,11 @@ public class BlockRendererMixinEmbeddium {
         AtomicBoolean rendered = new AtomicBoolean(false);
         this.modelsByRandomOffset.setContext(pos, state.getOffset(level, pos));
         try{
-            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, level, pos, state);
+            ((BlockModelModifierBakedModel)model).collectByOffset(this.modelsByRandomOffset, level, pos, state, modelData);
             this.modelsByRandomOffset.foreach(
                 entry -> {
-                    if(this.renderModel(level, state, pos, entry, buffers, cull, seed, modelData))
+                    IModelData subData = entry.getModelData(level, pos, state, EmptyModelData.INSTANCE);
+                    if(this.renderModel(level, state, pos, entry, buffers, cull, seed, subData))
                         rendered.set(true);
                 }
             );

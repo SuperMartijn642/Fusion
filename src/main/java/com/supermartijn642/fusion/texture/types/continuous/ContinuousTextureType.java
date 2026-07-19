@@ -116,6 +116,7 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
         BaseTextureType.applyProperties(quad, data);
 
         // Create processor
+        TextureInstance<?> texture = sprite.getTexture();
         return new QuadProcessor<BlockPos>() {
             @Override
             public BlockPos extractState(Supplier<RandomSource> randomSupplier, PropertyStore properties){
@@ -156,7 +157,7 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
                 x = x < 0 ? ((x % data.getColumns()) + data.getColumns()) % data.getColumns() : x % data.getColumns();
                 y = y < 0 ? ((y % data.getRows()) + data.getRows()) % data.getRows() : y % data.getRows();
                 // Adjust the quad's uv
-                SpriteInstance newSprite = sprite.getTexture().getSprites().get(0);
+                SpriteInstance newSprite = texture.getSprites().get(0);
                 float oldWidth = sprite.getU1() - sprite.getU0();
                 float oldHeight = sprite.getV1() - sprite.getV0();
                 float newWidth = (newSprite.getU1() - newSprite.getU0()) / data.getColumns();

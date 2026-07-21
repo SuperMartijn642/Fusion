@@ -8,12 +8,13 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.util.Serializer;
+import com.supermartijn642.fusion.util.Dimensional;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,14 +96,18 @@ public class DimensionBlockStateModelPredicate implements BlockStateModelPredica
     };
 
     private final IntSet dimensions;
+    private final boolean containsOverworld;
 
     private DimensionBlockStateModelPredicate(int[] dimensions){
         this.dimensions = new IntArraySet(dimensions);
+        this.containsOverworld = this.dimensions.contains(DimensionType.OVERWORLD.getId());
     }
 
     @Override
     public boolean test(@Nullable IBlockAccess level, @Nullable BlockPos pos, @Nullable IBlockState state){
-        return level instanceof World && this.dimensions.contains(((World)level).provider.getDimension());
+        if(!(level instanceof Dimensional))
+            return this.containsOverworld;
+        return this.dimensions.contains(((Dimensional)level).fusionGetDimension());
     }
 
     @Override

@@ -47,8 +47,10 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
     @Override
     public List<String> getMixins(){
         List<String> mixins = new ArrayList<>();
-        if(this.isVintagiumLoaded)
+        if(this.isVintagiumLoaded){
             mixins.add("vintagium.BlockRendererMixinVintagium");
+            mixins.add("vintagium.WorldSliceMixinVintagium");
+        }
         return mixins;
     }
 

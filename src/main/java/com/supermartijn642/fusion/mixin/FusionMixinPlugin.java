@@ -53,6 +53,7 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             mixins.add("sodium.BlockRendererMixinSodium");
             mixins.add("sodium.ExtendedBlockModelFeatureRendererMixinSodium");
             mixins.add("sodium.ExtendedItemFeatureRendererMixinSodium");
+            mixins.add("sodium.LevelSliceMixin");
         }
         return mixins;
     }

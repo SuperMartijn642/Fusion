@@ -7,6 +7,7 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.util.Serializer;
+import com.supermartijn642.fusion.util.Dimensional;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -89,14 +90,18 @@ public class DimensionBlockStateModelPredicate implements BlockStateModelPredica
     };
 
     private final Set<ResourceLocation> dimensions;
+    private final boolean containsOverworld;
 
     private DimensionBlockStateModelPredicate(Collection<ResourceLocation> dimensions){
         this.dimensions = Set.copyOf(dimensions);
+        this.containsOverworld = this.dimensions.contains(Level.OVERWORLD.location());
     }
 
     @Override
     public boolean test(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
-        return level instanceof Level && this.dimensions.contains(((Level)level).dimension().location());
+        if(!(level instanceof Dimensional dimensional))
+            return this.containsOverworld;
+        return this.dimensions.contains(dimensional.fusionGetDimension());
     }
 
     @Override

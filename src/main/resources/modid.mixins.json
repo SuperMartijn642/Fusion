@@ -26,6 +26,7 @@
     "ItemModelGeneratorMixin",
     "ItemModelShaperMixin",
     "ItemRendererMixin",
+    "LevelMixin",
     "MinecraftMixin",
     "ModelBakeryMixin",
     "ModelBakeryModelBakerImplMixin",
@@ -35,6 +36,7 @@
     "PackEntryMixin",
     "PackMixin",
     "PathPackResourcesMixin",
+    "RenderChunkRegionMixin",
     "SpriteLoaderMixin",
     "TerrainParticleMixin",
     "TextureAtlasSpriteMixin"

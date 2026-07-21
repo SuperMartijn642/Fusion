@@ -1,3 +1,6 @@
+### Fusion 1.3.9
+- Fixed `dimension` block model predicate not working for chunk geometry
+
 ### Fusion 1.3.8
 - Fixed crash when using `continuous` texture type as a sub texture for other texture types
 - Fixed texture dependencies for composite model not always being loaded

@@ -60,6 +60,7 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
         if(this.isSodiumLoaded){
             mixins.add("sodium.BlockRendererMixinSodium");
             mixins.add("sodium.ItemRendererMixinSodium");
+            mixins.add("sodium.WorldSliceMixinSodium");
         }
         if(this.isIndiumLoaded){
             mixins.add("indium.BaseQuadRendererMixin");

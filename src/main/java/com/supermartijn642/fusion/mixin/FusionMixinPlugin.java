@@ -52,10 +52,12 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
         if(this.isEmbeddiumLoaded){
             mixins.add("embeddium.BlockRendererMixinEmbeddium");
             mixins.add("embeddium.SpriteContentsInterpolationDataMixinEmbeddium");
+            mixins.add("embeddium.WorldSliceMixinEmbeddium");
         }
         if(this.isSodiumLoaded){
             mixins.add("sodium.BlockRendererMixinSodium");
             mixins.add("sodium.SpriteContentsInterpolationDataMixinSodium");
+            mixins.add("sodium.LevelSliceMixinSodium");
         }
         return mixins;
     }

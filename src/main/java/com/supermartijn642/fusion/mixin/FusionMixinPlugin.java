@@ -53,6 +53,7 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rubidium.BlockRendererMixinRubidium");
             mixins.add("rubidium.ItemRendererMixinRubidium");
             mixins.add("rubidium.SpriteContentsInterpolationDataMixinRubidium");
+            mixins.add("rubidium.WorldSliceMixinRubidium");
         }
         return mixins;
     }

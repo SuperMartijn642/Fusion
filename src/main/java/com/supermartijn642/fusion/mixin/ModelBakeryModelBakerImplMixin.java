@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.api.model.custom.ModelResolver;
 import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.renderer.block.model.BlockModel;
@@ -23,11 +22,13 @@ import java.util.function.Function;
 public class ModelBakeryModelBakerImplMixin {
 
     @Final
-    @Shadow(aliases = "field_40571")
-    private ModelBakery this$0;
-    @Final
     @Shadow
     private Function<Material, TextureAtlasSprite> modelTextureGetter;
+
+    @Shadow
+    private UnbakedModel getModel(ResourceLocation location){
+        throw new AssertionError();
+    }
 
     @Inject(
         method = "bakeUncached(Lnet/minecraft/client/resources/model/UnbakedModel;Lnet/minecraft/client/resources/model/ModelState;)Lnet/minecraft/client/resources/model/BakedModel;",
@@ -44,10 +45,7 @@ public class ModelBakeryModelBakerImplMixin {
                 ResourceLocation location = ResourceLocation.parse(((BlockModel)unbakedModel).name);
                 UntypedModelInstance model = FusionBlockModelData.getModelInstance(unbakedModel);
                 fusionData = new FusionBlockModelData(location, model);
-                fusionData.resolveParents(l -> {
-                    UnbakedModel m = this.this$0.unbakedCache.get(l);
-                    return m == null ? this.this$0.unbakedCache.get(ModelResolver.MISSING_MODEL) : m;
-                });
+                fusionData.resolveParents(this::getModel);
             }
             ci.setReturnValue(fusionData.bake((ModelBaker)this, this.modelTextureGetter, modelState));
         }

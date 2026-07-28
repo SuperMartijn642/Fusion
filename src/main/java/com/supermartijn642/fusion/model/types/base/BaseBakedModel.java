@@ -227,7 +227,7 @@ public class BaseBakedModel implements BakedModel {
         if(stack.getItem() instanceof BlockItem && !ItemBlockRenderTypes.getRenderLayers(((BlockItem)stack.getItem()).getBlock().defaultBlockState()).contains(RenderType.translucent()))
             defaultRenderType = Sheets.cutoutBlockSheet();
         else
-            defaultRenderType = Sheets.translucentItemSheet();
+            defaultRenderType = fabulous ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet();
 
         PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
 
@@ -236,7 +236,7 @@ public class BaseBakedModel implements BakedModel {
         List<List<BakedQuad>> quadsByRenderType = new ArrayList<>(4);
         Consumer<QuadAccess> submitter = quad -> {
             // Get render type
-            RenderType renderType = quad.itemRenderType();
+            RenderType renderType = quad.itemRenderType(fabulous);
             if(renderType == null)
                 renderType = defaultRenderType;
             // Get or quad list

@@ -23,7 +23,7 @@ public class MutableQuadImpl implements MutableQuad {
         return new MutableQuadImpl();
     }
 
-    static {
+    static{
         if(ChunkRenderTypeHelper.all().size() > 31)
             throw new AssertionError("More than 31 chunk render types!");
     }
@@ -216,11 +216,13 @@ public class MutableQuadImpl implements MutableQuad {
     }
 
     @Override
-    public RenderType itemRenderType(){
+    public RenderType itemRenderType(boolean fabulous){
         RenderType chunkRenderType = this.chunkRenderType();
         if(chunkRenderType == null)
             return null;
-        return chunkRenderType == RenderType.translucent() ? Sheets.translucentCullBlockSheet() : Sheets.cutoutBlockSheet();
+        return chunkRenderType == RenderType.translucent() ?
+            fabulous ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet() :
+            Sheets.cutoutBlockSheet();
     }
 
     @Override

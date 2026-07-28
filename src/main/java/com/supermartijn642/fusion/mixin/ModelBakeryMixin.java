@@ -63,7 +63,7 @@ public class ModelBakeryMixin {
     private void bake(ResourceLocation location, IModelTransform modelState, Function<RenderMaterial,TextureAtlasSprite> spriteGetter, CallbackInfoReturnable<IBakedModel> ci){
         //noinspection DataFlowIssue
         ModelBakery modelBakery = (ModelBakery)(Object)this;
-        IUnbakedModel unbakedModel = modelBakery.unbakedCache.get(location);
+        IUnbakedModel unbakedModel = modelBakery.getModel(location);
         if(unbakedModel == null)
             return;
         // Handle Fusion models and models with Fusion textures
@@ -72,10 +72,7 @@ public class ModelBakeryMixin {
             if(fusionData == null){
                 UntypedModelInstance model = FusionBlockModelData.getModelInstance(unbakedModel);
                 fusionData = new FusionBlockModelData(location, model);
-                FusionBlockModelData.gatherBlockModelMaterials(fusionData, l -> {
-                    IUnbakedModel m = modelBakery.unbakedCache.get(l);
-                    return m == null ? modelBakery.unbakedCache.get(l) : m;
-                }, new LinkedHashSet<>());
+                FusionBlockModelData.gatherBlockModelMaterials(fusionData, modelBakery::getModel, new LinkedHashSet<>());
             }
             IBakedModel baked = fusionData.bake(modelBakery, spriteGetter, modelState, location);
             // Add baked model to the cache

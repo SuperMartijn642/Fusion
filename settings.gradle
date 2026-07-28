@@ -3,7 +3,6 @@ pluginManagement {
         mavenLocal()
         gradlePluginPortal()
         maven {
-            name = 'MinecraftForge'
             url = 'https://maven.neoforged.net/releases'
         }
     }

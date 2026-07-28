@@ -558,16 +558,22 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         if(!json.get(type.getSerializedName()).isJsonObject())
             throw new JsonParseException("Display entry '" + type.getSerializedName() + "' must be an object!");
         JsonObject object = json.getAsJsonObject(type.getSerializedName());
+        Vector3f rotation = object.has("rotation") ?
+            this.deserializeVector3f(object.get("rotation"), () -> "Display '" + type.getSerializedName() + "' property 'rotation'") :
+            new Vector3f(ItemTransform.Deserializer.DEFAULT_ROTATION);
+        Vector3f translation = object.has("translation") ?
+            this.deserializeVector3f(object.get("translation"), () -> "Display '" + type.getSerializedName() + "' property 'translation'") :
+            new Vector3f(ItemTransform.Deserializer.DEFAULT_TRANSLATION);
+        translation.div(16);
+        translation.set(Math.clamp(translation.x, -5, 5), Math.clamp(translation.y, -5, 5), Math.clamp(translation.z, -5, 5));
+        Vector3f scale = object.has("scale") ?
+            this.deserializeVector3f(object.get("scale"), () -> "Display '" + type.getSerializedName() + "' property 'scale'") :
+            new Vector3f(ItemTransform.Deserializer.DEFAULT_SCALE);
+        scale.set(Math.clamp(scale.x, -4, 4), Math.clamp(scale.y, -4, 4), Math.clamp(scale.z, -4, 4));
         return new ItemTransform(
-            object.has("rotation") ?
-                this.deserializeVector3f(object.get("rotation"), () -> "Display '" + type.getSerializedName() + "' property 'rotation'") :
-                ItemTransform.Deserializer.DEFAULT_ROTATION,
-            object.has("translation") ?
-                this.deserializeVector3f(object.get("translation"), () -> "Display '" + type.getSerializedName() + "' property 'translation'") :
-                ItemTransform.Deserializer.DEFAULT_TRANSLATION,
-            object.has("scale") ?
-                this.deserializeVector3f(object.get("scale"), () -> "Display '" + type.getSerializedName() + "' property 'scale'") :
-                ItemTransform.Deserializer.DEFAULT_SCALE
+            rotation,
+            translation,
+            scale
         );
     }
 

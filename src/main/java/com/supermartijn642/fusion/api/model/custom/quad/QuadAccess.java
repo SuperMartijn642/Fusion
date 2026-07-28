@@ -83,7 +83,17 @@ public interface QuadAccess {
      * Render type that should be used when rendering the quad as an item.
      */
     @Nullable
-    RenderType itemRenderType();
+    RenderType itemRenderType(boolean fabulous);
+
+    /**
+     * Render type that should be used when rendering the quad as an item.
+     * @deprecated Use {@link #itemRenderType(boolean)} with the parameter for fabulous graphics
+     */
+    @Deprecated
+    @Nullable
+    default RenderType itemRenderType(){
+        return this.itemRenderType(false);
+    }
 
     /**
      * Tint index to use for tinting the quad.

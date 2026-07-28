@@ -211,9 +211,11 @@ public class MutableQuadImpl implements MutableQuad {
     }
 
     @Override
-    public RenderType itemRenderType(){
+    public RenderType itemRenderType(boolean fabulous){
         if(this.itemRenderType == null && this.chunkRenderType != null)
-            return this.chunkRenderType == RenderType.translucent() ? Sheets.translucentCullBlockSheet() : Sheets.cutoutBlockSheet();
+            return this.chunkRenderType == RenderType.translucent() ?
+                fabulous ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet() :
+                Sheets.cutoutBlockSheet();
         return this.itemRenderType;
     }
 

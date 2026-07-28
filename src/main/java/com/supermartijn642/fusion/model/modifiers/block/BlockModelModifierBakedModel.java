@@ -60,7 +60,7 @@ public class BlockModelModifierBakedModel extends WrappedBakedModel {
     public void collectByOffset(ModelsByRandomOffset output, @Nullable ILightReader level, @Nullable BlockPos pos, @Nullable BlockState state, @Nullable IModelData modelData){
         RenderData renderData = modelData == null ? null : modelData.getData(RENDER_DATA);
         if(renderData == null)
-            renderData = this.getRenderData(null, null, null, EmptyModelData.INSTANCE);
+            renderData = this.getRenderData(level, pos, state, EmptyModelData.INSTANCE);
 
         // Check whether the breaking overlay is being rendered
         boolean isBreakingOverlay = FusionClient.isRenderingBreakingOverlay();

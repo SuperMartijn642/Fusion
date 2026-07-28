@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.mixin;
 
-import com.supermartijn642.fusion.api.model.custom.ModelResolver;
 import com.supermartijn642.fusion.api.model.custom.UntypedModelInstance;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -25,6 +24,11 @@ public class ModelBakeryModelBakerImplMixin {
     @Shadow
     private ModelBakery this$0;
 
+    @Shadow
+    private UnbakedModel getModel(ResourceLocation location){
+        throw new AssertionError();
+    }
+
     @Inject(
         method = "bake(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/resources/model/ModelState;Ljava/util/function/Function;)Lnet/minecraft/client/resources/model/BakedModel;",
         at = @At(
@@ -35,7 +39,7 @@ public class ModelBakeryModelBakerImplMixin {
         cancellable = true
     )
     private void bake(ResourceLocation location, ModelState modelState, Function<Material,TextureAtlasSprite> spriteGetter, CallbackInfoReturnable<BakedModel> ci){
-        UnbakedModel unbakedModel = this.this$0.unbakedCache.get(location);
+        UnbakedModel unbakedModel = this.getModel(location);
         if(unbakedModel == null)
             return;
         // Handle Fusion models and models with Fusion textures
@@ -44,10 +48,7 @@ public class ModelBakeryModelBakerImplMixin {
             if(fusionData == null){
                 UntypedModelInstance model = FusionBlockModelData.getModelInstance(unbakedModel);
                 fusionData = new FusionBlockModelData(location, model);
-                fusionData.resolveParents(l -> {
-                    UnbakedModel m = this.this$0.unbakedCache.get(l);
-                    return m == null ? this.this$0.unbakedCache.get(ModelResolver.MISSING_MODEL) : m;
-                });
+                fusionData.resolveParents(this::getModel);
             }
             BakedModel baked = fusionData.bake((ModelBaker)this, spriteGetter, modelState, location);
             // Add baked model to the cache

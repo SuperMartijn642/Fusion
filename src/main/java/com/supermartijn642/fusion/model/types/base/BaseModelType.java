@@ -506,16 +506,22 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         if(!json.get(name).isJsonObject())
             throw new JsonParseException("Display entry '" + name + "' must be an object!");
         JsonObject object = json.getAsJsonObject(name);
+        Vector3f rotation = object.has("rotation") ?
+            this.deserializeVector3f(object.get("rotation"), () -> "Display '" + name + "' property 'rotation'") :
+            ItemTransformVec3f.Deserializer.DEFAULT_ROTATION.copy();
+        Vector3f translation = object.has("translation") ?
+            this.deserializeVector3f(object.get("translation"), () -> "Display '" + name + "' property 'translation'") :
+            ItemTransformVec3f.Deserializer.DEFAULT_TRANSLATION.copy();
+        translation.mul(1 / 16f);
+        translation.clamp(-5, 5);
+        Vector3f scale = object.has("scale") ?
+            this.deserializeVector3f(object.get("scale"), () -> "Display '" + name + "' property 'scale'") :
+            ItemTransformVec3f.Deserializer.DEFAULT_SCALE.copy();
+        scale.clamp(-4, 4);
         return new ItemTransformVec3f(
-            object.has("rotation") ?
-                this.deserializeVector3f(object.get("rotation"), () -> "Display '" + name + "' property 'rotation'") :
-                ItemTransformVec3f.Deserializer.DEFAULT_ROTATION,
-            object.has("translation") ?
-                this.deserializeVector3f(object.get("translation"), () -> "Display '" + name + "' property 'translation'") :
-                ItemTransformVec3f.Deserializer.DEFAULT_TRANSLATION,
-            object.has("scale") ?
-                this.deserializeVector3f(object.get("scale"), () -> "Display '" + name + "' property 'scale'") :
-                ItemTransformVec3f.Deserializer.DEFAULT_SCALE
+            rotation,
+            translation,
+            scale
         );
     }
 

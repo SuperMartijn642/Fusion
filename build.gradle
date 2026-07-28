@@ -44,6 +44,8 @@ dependencies {
     modCompileOnly "curse.maven:embeddium-908741:5522040"
     // Sodium
     modCompileOnly "maven.modrinth:sodium:mc1.20.1-0.5.13-fabric"
+    // Indium
+    modCompileOnly "curse.maven:indium-459496:6237037"
     // Iris
 //    runtimeOnly "maven.modrinth:iris:1.7.5+1.20.1"
 

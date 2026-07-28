@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemTransformVec3f;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -505,16 +506,22 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         if(!json.get(name).isJsonObject())
             throw new JsonParseException("Display entry '" + name + "' must be an object!");
         JsonObject object = json.getAsJsonObject(name);
+        Vector3f rotation = object.has("rotation") ?
+            this.deserializeVector3f(object.get("rotation"), () -> "Display '" + name + "' property 'rotation'") :
+            new Vector3f(ItemTransformVec3f.Deserializer.ROTATION_DEFAULT);
+        Vector3f translation = object.has("translation") ?
+            this.deserializeVector3f(object.get("translation"), () -> "Display '" + name + "' property 'translation'") :
+            new Vector3f(ItemTransformVec3f.Deserializer.TRANSLATION_DEFAULT);
+        translation.scale(1 / 16f);
+        translation.set(MathHelper.clamp(translation.x, -5, 5), MathHelper.clamp(translation.y, -5, 5), MathHelper.clamp(translation.z, -5, 5));
+        Vector3f scale = object.has("scale") ?
+            this.deserializeVector3f(object.get("scale"), () -> "Display '" + name + "' property 'scale'") :
+            new Vector3f(ItemTransformVec3f.Deserializer.SCALE_DEFAULT);
+        scale.set(MathHelper.clamp(scale.x, -4, 4), MathHelper.clamp(scale.y, -4, 4), MathHelper.clamp(scale.z, -4, 4));
         return new ItemTransformVec3f(
-            object.has("rotation") ?
-                this.deserializeVector3f(object.get("rotation"), () -> "Display '" + name + "' property 'rotation'") :
-                ItemTransformVec3f.Deserializer.ROTATION_DEFAULT,
-            object.has("translation") ?
-                this.deserializeVector3f(object.get("translation"), () -> "Display '" + name + "' property 'translation'") :
-                ItemTransformVec3f.Deserializer.TRANSLATION_DEFAULT,
-            object.has("scale") ?
-                this.deserializeVector3f(object.get("scale"), () -> "Display '" + name + "' property 'scale'") :
-                ItemTransformVec3f.Deserializer.SCALE_DEFAULT
+            rotation,
+            translation,
+            scale
         );
     }
 

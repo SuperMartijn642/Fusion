@@ -22,22 +22,27 @@ public class MutableQuadImpl implements MutableQuad {
         return new MutableQuadImpl();
     }
 
+    static {
+        if(BlockRenderLayer.values().length > 31)
+            throw new AssertionError("More than 31 chunk render types!");
+    }
+
     // Flags
     private static final int SHADE = 0;
     private static final int LIGHT_EMISSION = 1; // 4 bits
     private static final int EMISSIVE = 5;
     private static final int FACING = 6; // 3 bits
+    private static final int CHUNK_RENDER_TYPE = 9; // 5 bits
     // Vertices
     private static final int VERTEX_SIZE = 3 + 2;
-    private static final int VERTEX_POSITION = 0;
-    private static final int VERTEX_UV = 3;
+    private static final int VERTEX_POSITION = 0; // 3 floats
+    private static final int VERTEX_UV = 3; // 2 floats
 
     private final float[] vertices = new float[4 * VERTEX_SIZE];
     private int flags;
     private int tintIndex = -1;
     private EnumFacing facing;
     private TextureAtlasSprite sprite;
-    private BlockRenderLayer renderLayer;
 
     private BakedQuad bakedQuadCache;
 
@@ -51,7 +56,6 @@ public class MutableQuadImpl implements MutableQuad {
         this.flags = impl.flags;
         this.sprite = impl.sprite;
         this.tintIndex = impl.tintIndex;
-        this.renderLayer = impl.renderLayer;
         this.bakedQuadCache = impl.bakedQuadCache;
         return this;
     }
@@ -86,7 +90,6 @@ public class MutableQuadImpl implements MutableQuad {
             }
         }
         this.flags |= (lightEmission << LIGHT_EMISSION);
-        this.renderLayer = null;
         return this;
     }
 
@@ -202,13 +205,14 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad renderLayer(BlockRenderLayer renderLayer){
-        this.renderLayer = renderLayer;
+        this.flags &= ~(31 << CHUNK_RENDER_TYPE) | ((renderLayer == null ? 0 : renderLayer.ordinal() + 1) << CHUNK_RENDER_TYPE);
         return this;
     }
 
     @Override
     public BlockRenderLayer renderLayer(){
-        return this.renderLayer;
+        int ordinal = (this.flags >> CHUNK_RENDER_TYPE) & 31;
+        return ordinal == 0 ? null : BlockRenderLayer.values()[ordinal - 1];
     }
 
     @Override

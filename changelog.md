@@ -1,3 +1,6 @@
+### Fusion 1.3.11a
+- Fixed error when baking faces with `null` chunk layer
+
 ### Fusion 1.3.11
 - Significantly reduced memory used by Fusion models
   - Facing and chunk render type of `MutableQuad`s are now stored as bit flags

@@ -205,7 +205,7 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad renderLayer(BlockRenderLayer renderLayer){
-        this.flags &= ~(31 << CHUNK_RENDER_TYPE) | ((renderLayer == null ? 0 : renderLayer.ordinal() + 1) << CHUNK_RENDER_TYPE);
+        this.flags = (this.flags & ~(31 << CHUNK_RENDER_TYPE)) | ((renderLayer == null ? 0 : renderLayer.ordinal() + 1) << CHUNK_RENDER_TYPE);
         return this;
     }
 

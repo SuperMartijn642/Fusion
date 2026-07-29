@@ -1,6 +1,5 @@
 package com.supermartijn642.fusion.util;
 
-import com.google.common.collect.ImmutableMap;
 import net.minecraft.client.renderer.RenderType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,46 +12,18 @@ import java.util.*;
  */
 public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
 
-    private static final int RENDER_TYPES;
-    private static final Map<RenderType,Integer> RENDER_TYPE_TO_ID;
-    private static final RenderType[] ID_TO_RENDER_TYPE;
-
-    static{
-        List<RenderType> renderTypes = ChunkRenderTypeHelper.allChunkRenderTypes();
-        RENDER_TYPES = renderTypes.size() + 1;
-        ImmutableMap.Builder<RenderType,Integer> renderTypeToId = ImmutableMap.builder();
-        ID_TO_RENDER_TYPE = new RenderType[renderTypes.size() + 1];
-        for(int i = 0; i < renderTypes.size(); i++){
-            RenderType renderType = renderTypes.get(i);
-            renderTypeToId.put(renderType, i + 1);
-            ID_TO_RENDER_TYPE[i + 1] = renderType;
-        }
-        RENDER_TYPE_TO_ID = renderTypeToId.build();
-        if(RENDER_TYPES > 32)
+    static {
+        if(ChunkRenderTypeHelper.all().size() > 31)
             throw new AssertionError("More than 31 chunk render types!");
     }
 
-    private static int getId(@Nullable RenderType renderType){
-        if(renderType == null)
-            return 0;
-        Integer id = RENDER_TYPE_TO_ID.get(renderType);
-        if(id == null)
-            throw new IllegalArgumentException("Key must be a chunk render type!");
-        return id;
-    }
-
-    @Nullable
-    private static RenderType byId(int id){
-        return ID_TO_RENDER_TYPE[id];
-    }
-
     private static boolean isValidKey(Object key){
-        return key == null || (key instanceof RenderType && RENDER_TYPE_TO_ID.containsKey(key));
+        return key == null || (key instanceof RenderType && ChunkRenderTypeHelper.isChunkRenderType((RenderType)key));
     }
 
     private int keys;
     @SuppressWarnings("unchecked")
-    private final T[] values = (T[])new Object[RENDER_TYPES];
+    private final T[] values = (T[])new Object[ChunkRenderTypeHelper.all().size() + 1];
     private int size;
 
     private Set<RenderType> keySet;
@@ -73,7 +44,7 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
     public boolean containsKey(Object key){
         if(!isValidKey(key))
             return false;
-        int id = getId((RenderType)key);
+        int id = ChunkRenderTypeHelper.getId((RenderType)key);
         return (this.keys & (1 << id)) != 0;
     }
 
@@ -96,7 +67,7 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
     private boolean containsMapping(Object key, Object value){
         if(!isValidKey(key))
             return false;
-        int id = getId((RenderType)key);
+        int id = ChunkRenderTypeHelper.getId((RenderType)key);
         return (this.keys & (1 << id)) != 0 && Objects.equals(this.values[id], value);
     }
 
@@ -104,7 +75,7 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
     public T get(Object key){
         if(!isValidKey(key))
             return null;
-        int id = getId((RenderType)key);
+        int id = ChunkRenderTypeHelper.getId((RenderType)key);
         return this.values[id];
     }
 
@@ -112,7 +83,7 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
     public @Nullable T put(RenderType key, T value){
         if(!isValidKey(key))
             throw new IllegalArgumentException("Key must be a chunk render type!");
-        int id = getId(key);
+        int id = ChunkRenderTypeHelper.getId(key);
         T old = this.values[id];
         this.values[id] = value;
         if((this.keys & (1 << id)) == 0){
@@ -126,7 +97,7 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
     public T remove(Object key){
         if(!isValidKey(key))
             return null;
-        int id = getId((RenderType)key);
+        int id = ChunkRenderTypeHelper.getId((RenderType)key);
         if((this.keys & (1L << id)) == 0)
             return null;
         this.size--;
@@ -203,7 +174,7 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
         public RenderType next(){
             if(!this.hasNext())
                 throw new NoSuchElementException();
-            return ID_TO_RENDER_TYPE[this.index++];
+            return ChunkRenderTypeHelper.byId(this.index++);
         }
     }
 
@@ -303,7 +274,7 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
             int j = 0;
             for(int i = 0; i < ChunkRenderTypeMap.this.values.length; i++){
                 if((ChunkRenderTypeMap.this.keys & (1 << i)) != 0)
-                    a[j++] = new AbstractMap.SimpleEntry<>(byId(i), ChunkRenderTypeMap.this.values[i]);
+                    a[j++] = new AbstractMap.SimpleEntry<>(ChunkRenderTypeHelper.byId(i), ChunkRenderTypeMap.this.values[i]);
             }
             return a;
         }
@@ -335,7 +306,7 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
 
             public RenderType getKey(){
                 this.checkIndex();
-                return byId(this.index);
+                return ChunkRenderTypeHelper.byId(this.index);
             }
 
             public T getValue(){
@@ -358,21 +329,21 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
                     return false;
 
                 Map.Entry<?,?> e = (Map.Entry<?,?>)o;
-                return Objects.equals(e.getKey(), byId(this.index)) && Objects.equals(e.getValue(), ChunkRenderTypeMap.this.values[this.index]);
+                return Objects.equals(e.getKey(), ChunkRenderTypeHelper.byId(this.index)) && Objects.equals(e.getValue(), ChunkRenderTypeMap.this.values[this.index]);
             }
 
             public int hashCode(){
                 if(this.index < 0)
                     return super.hashCode();
 
-                return byId(this.index).hashCode() ^ ChunkRenderTypeMap.this.values[this.index].hashCode();
+                return ChunkRenderTypeHelper.byId(this.index).hashCode() ^ ChunkRenderTypeMap.this.values[this.index].hashCode();
             }
 
             public String toString(){
                 if(this.index < 0)
                     return super.toString();
 
-                return byId(this.index) + "=" + ChunkRenderTypeMap.this.values[this.index];
+                return ChunkRenderTypeHelper.byId(this.index) + "=" + ChunkRenderTypeMap.this.values[this.index];
             }
 
             private void checkIndex(){
@@ -396,7 +367,7 @@ public class ChunkRenderTypeMap<T> implements Map<RenderType,T> {
         public void remove(){
             if(this.lastIndex < 0)
                 throw new IllegalStateException();
-            ChunkRenderTypeMap.this.remove(byId(this.lastIndex));
+            ChunkRenderTypeMap.this.remove(ChunkRenderTypeHelper.byId(this.lastIndex));
             this.lastIndex = -1;
         }
     }

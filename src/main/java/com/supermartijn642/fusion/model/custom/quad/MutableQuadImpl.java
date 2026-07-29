@@ -23,23 +23,27 @@ public class MutableQuadImpl implements MutableQuad {
         return new MutableQuadImpl();
     }
 
+    static{
+        if(ChunkRenderTypeHelper.all().size() > 31)
+            throw new AssertionError("More than 31 chunk render types!");
+    }
+
     // Flags
     private static final int SHADE = 0;
     private static final int LIGHT_EMISSION = 1; // 4 bits
     private static final int AMBIENT_OCCLUSION = 5;
     private static final int EMISSIVE = 6;
     private static final int FACING = 7; // 3 bits
+    private static final int CHUNK_RENDER_TYPE = 10; // 5 bits
     // Vertices
     private static final int VERTEX_SIZE = 3 + 2;
-    private static final int VERTEX_POSITION = 0;
-    private static final int VERTEX_UV = 3;
+    private static final int VERTEX_POSITION = 0; // 3 floats
+    private static final int VERTEX_UV = 3; // 2 floats
 
     private final float[] vertices = new float[4 * VERTEX_SIZE];
     private int flags;
     private int tintIndex = -1;
     private TextureAtlasSprite sprite;
-    private RenderType chunkRenderType;
-    private RenderType itemRenderType;
 
     private BakedQuad bakedQuadCache;
 
@@ -53,8 +57,6 @@ public class MutableQuadImpl implements MutableQuad {
         this.flags = impl.flags;
         this.sprite = impl.sprite;
         this.tintIndex = impl.tintIndex;
-        this.chunkRenderType = impl.chunkRenderType;
-        this.itemRenderType = impl.itemRenderType;
         this.bakedQuadCache = impl.bakedQuadCache;
         return this;
     }
@@ -87,8 +89,6 @@ public class MutableQuadImpl implements MutableQuad {
         this.flags |= (lightEmission << LIGHT_EMISSION);
         if(quad.hasAmbientOcclusion())
             this.flags |= (1 << AMBIENT_OCCLUSION);
-        this.chunkRenderType = null;
-        this.itemRenderType = null;
         return this;
     }
 
@@ -203,38 +203,24 @@ public class MutableQuadImpl implements MutableQuad {
     }
 
     @Override
-    public MutableQuad renderTypes(RenderType chunkRenderType, RenderType itemRenderType){
-        this.chunkRenderType(chunkRenderType);
-        this.itemRenderType = itemRenderType;
-        return this;
-    }
-
-    @Override
     public MutableQuad chunkRenderType(RenderType chunkRenderType){
         if(!ChunkRenderTypeHelper.isChunkRenderType(chunkRenderType))
             throw new IllegalArgumentException("Render type '" + chunkRenderType + "' is not a chunk render type!");
-        this.chunkRenderType = chunkRenderType;
+        this.flags &= ~(31 << CHUNK_RENDER_TYPE) | (ChunkRenderTypeHelper.getId(chunkRenderType) << CHUNK_RENDER_TYPE);
         return this;
     }
 
     @Override
     public RenderType chunkRenderType(){
-        return this.chunkRenderType;
-    }
-
-    @Override
-    public MutableQuad itemRenderType(RenderType itemRenderType){
-        this.itemRenderType = itemRenderType;
-        return this;
+        return ChunkRenderTypeHelper.byId((this.flags >> CHUNK_RENDER_TYPE) & 31);
     }
 
     @Override
     public RenderType itemRenderType(boolean fabulous){
-        if(this.itemRenderType == null && this.chunkRenderType != null)
-            return this.chunkRenderType == RenderType.translucent() ?
-                fabulous ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet() :
-                Sheets.cutoutBlockSheet();
-        return this.itemRenderType;
+        RenderType chunkRenderType = this.chunkRenderType();
+        return chunkRenderType == RenderType.translucent() ?
+            fabulous ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet() :
+            Sheets.cutoutBlockSheet();
     }
 
     @Override

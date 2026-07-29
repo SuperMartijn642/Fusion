@@ -8,6 +8,8 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.model.custom.quad.QuadAccess;
 import com.supermartijn642.fusion.api.util.PropertyGetter;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.client.resources.model.cuboid.CuboidModelElement;
 import net.minecraft.client.resources.model.cuboid.FaceBakery;
@@ -94,7 +96,7 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
             element.from(), element.to(),
             uv,
             face.rotation() == null ? Quadrant.R0 : face.rotation(),
-            new BakedQuad.MaterialInfo(sprite.sprite(), null, null, -1, true, 0),
+            new BakedQuad.MaterialInfo(sprite.sprite(), ChunkSectionLayer.SOLID, Sheets.cutoutBlockItemSheet(), -1, true, 0),
             side,
             transformation.toModelState(),
             element.rotation()

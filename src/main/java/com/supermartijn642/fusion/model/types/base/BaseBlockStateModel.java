@@ -86,7 +86,7 @@ public class BaseBlockStateModel implements BlockStateModel {
         ));
 
         // Create a model part for each chunk render type
-        for(RenderType renderType : ChunkRenderTypeHelper.allChunkRenderTypes()){
+        for(RenderType renderType : ChunkRenderTypeHelper.all()){
             parts.add(new BlockModelPart() {
                 @Override
                 public List<BakedQuad> getQuads(@Nullable Direction cullDirection){

@@ -1,3 +1,6 @@
+### Fusion 1.3.10
+- Fixed model item transforms (`display` property) translations not being scaled by 1/16th
+
 ### Fusion 1.3.9
 - Fixed `dimension` block model predicate not working for chunk geometry
 

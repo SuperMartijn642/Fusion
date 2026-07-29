@@ -256,6 +256,8 @@ public class MutableQuadImpl implements MutableQuad {
     @Override
     public RenderType itemRenderType(){
         RenderType chunkRenderType = this.chunkRenderType();
+        if(chunkRenderType == null)
+            return null;
         return chunkRenderType == RenderType.translucent() ? Sheets.translucentItemSheet() : Sheets.cutoutBlockSheet();
     }
 

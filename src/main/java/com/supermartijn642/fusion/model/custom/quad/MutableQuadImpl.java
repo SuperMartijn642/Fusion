@@ -24,9 +24,10 @@ public class MutableQuadImpl implements MutableQuad {
 
     // Flags
     private static final int SHADE = 0;
-    private static final int LIGHT_EMISSION = 1;
+    private static final int LIGHT_EMISSION = 1; // 4 bits
     private static final int AMBIENT_OCCLUSION = 5;
     private static final int EMISSIVE = 6;
+    private static final int FACING = 7; // 3 bits
     // Vertices
     private static final int VERTEX_SIZE = 3 + 2;
     private static final int VERTEX_POSITION = 0;
@@ -35,7 +36,6 @@ public class MutableQuadImpl implements MutableQuad {
     private final float[] vertices = new float[4 * VERTEX_SIZE];
     private int flags;
     private int tintIndex = -1;
-    private Direction facing;
     private TextureAtlasSprite sprite;
     private ChunkSectionLayer chunkLayer;
     private RenderType itemRenderType;
@@ -50,7 +50,6 @@ public class MutableQuadImpl implements MutableQuad {
         MutableQuadImpl impl = (MutableQuadImpl)quad;
         System.arraycopy(impl.vertices, 0, this.vertices, 0, this.vertices.length);
         this.flags = impl.flags;
-        this.facing = impl.facing;
         this.sprite = impl.sprite;
         this.tintIndex = impl.tintIndex;
         this.chunkLayer = impl.chunkLayer;
@@ -71,10 +70,10 @@ public class MutableQuadImpl implements MutableQuad {
             this.vertices[offset] = BakedQuadHelper.getU(quad.vertices(), i);
             this.vertices[offset + 1] = BakedQuadHelper.getV(quad.vertices(), i);
         }
-        this.facing = quad.direction();
         this.sprite = quad.sprite();
         this.tintIndex = quad.tintIndex();
         this.flags = 0;
+        this.flags |= ((quad.direction().ordinal() + 1) << FACING);
         if(quad.shade())
             this.flags |= (1 << SHADE);
         this.flags |= (quad.lightEmission() << LIGHT_EMISSION);
@@ -96,7 +95,7 @@ public class MutableQuadImpl implements MutableQuad {
         this.vertices[offset] = x;
         this.vertices[offset + 1] = y;
         this.vertices[offset + 2] = z;
-        this.facing = null;
+        this.flags &= ~(7 << FACING);
         this.invalidateBakedQuadCache();
         return this;
     }
@@ -165,7 +164,22 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public Direction facing(){
-        return this.facing;
+        int ordinal = (this.flags >> FACING) & 7;
+        if(ordinal == 0){
+            int offsetV0 = VERTEX_POSITION;
+            int offsetV1 = VERTEX_SIZE + VERTEX_POSITION;
+            int offsetV2 = 2 * VERTEX_SIZE + VERTEX_POSITION;
+            Direction facing = BakedQuadHelper.calculateFacing(
+                this.vertices[offsetV0], this.vertices[offsetV0 + 1], this.vertices[offsetV0 + 2],
+                this.vertices[offsetV1], this.vertices[offsetV1 + 1], this.vertices[offsetV1 + 2],
+                this.vertices[offsetV2], this.vertices[offsetV2 + 1], this.vertices[offsetV2 + 2]
+            );
+            if(facing == null)
+                facing = Direction.UP;
+            this.flags |= ((facing.ordinal() + 1) << FACING);
+            return facing;
+        }
+        return Direction.values()[ordinal - 1];
     }
 
     @Override
@@ -278,18 +292,6 @@ public class MutableQuadImpl implements MutableQuad {
 
     public BakedQuad toBakedQuad(){
         if(this.bakedQuadCache == null){
-            if(this.facing == null){
-                int offsetV0 = VERTEX_POSITION;
-                int offsetV1 = VERTEX_SIZE + VERTEX_POSITION;
-                int offsetV2 = 2 * VERTEX_SIZE + VERTEX_POSITION;
-                this.facing = BakedQuadHelper.calculateFacing(
-                    this.vertices[offsetV0], this.vertices[offsetV0 + 1], this.vertices[offsetV0 + 2],
-                    this.vertices[offsetV1], this.vertices[offsetV1 + 1], this.vertices[offsetV1 + 2],
-                    this.vertices[offsetV2], this.vertices[offsetV2 + 1], this.vertices[offsetV2 + 2]
-                );
-                if(this.facing == null)
-                    this.facing = Direction.UP;
-            }
             if(this.sprite == null)
                 throw new IllegalStateException("No sprite was specified!");
             int[] vertices = BakedQuadHelper.createVertices();
@@ -304,7 +306,7 @@ public class MutableQuadImpl implements MutableQuad {
             this.bakedQuadCache = new BakedQuad(
                 vertices,
                 this.tintIndex,
-                this.facing,
+                this.facing(),
                 this.sprite,
                 !emissive && this.shade(),
                 emissive ? 15 : this.lightEmission(),

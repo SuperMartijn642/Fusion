@@ -184,9 +184,8 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
 
         // Find tiles that can be ignored
         List<TextureInstance<?>> tiles = data.getTiles();
-        BitSet ignoredTiles = new BitSet();
+        BitSet usedTiles = new BitSet();
         if(predicate.alwaysFalse() || predicate.alwaysTrue()){
-            ignoredTiles.set(0, tiles.size());
             boolean value = predicate.alwaysTrue();
             TextureConnections connections = new TextureConnections(value, value, value, value, value, value, value, value);
             EmittableQuad dummyEmitter = EmittableQuad.create(q -> {});
@@ -194,24 +193,35 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             orientation.applyVertexPermutation(dummyEmitter);
             layoutHandler.processQuad(
                 dummyEmitter,
-                (tile, emitter) -> ignoredTiles.clear(tile),
+                (tile, emitter) -> usedTiles.set(tile),
                 connections
             );
-        }
+        }else
+            usedTiles.set(0, tiles.size());
         for(int i = 0; i < tiles.size(); i++){
             if(tiles.get(i) == null)
-                ignoredTiles.set(i);
+                usedTiles.clear(i);
+        }
+
+        // Get the number of tiles that will be used and create a mapping to store them compactly
+        int usedTileCount = usedTiles.cardinality();
+        byte[] tileToStorageIndex = new byte[tiles.size()];
+        Arrays.fill(tileToStorageIndex, (byte)-1);
+        {
+            int storageIndex = 0;
+            for(int i = 0; i < tiles.size(); i++){
+                if(usedTiles.get(i))
+                    tileToStorageIndex[i] = (byte)storageIndex++;
+            }
         }
 
         // Initialize all tiles
-        QuadAccess[] subQuads = new QuadAccess[tiles.size()];
-        SpriteInstance[] subSprites = new SpriteInstance[tiles.size()];
+        QuadAccess[] subQuads = new QuadAccess[usedTileCount];
+        SpriteInstance[] subSprites = new SpriteInstance[usedTileCount];
         //noinspection unchecked
-        QuadProcessor<Object>[] subProcessors = new QuadProcessor[tiles.size()];
+        QuadProcessor<Object>[] subProcessors = new QuadProcessor[usedTileCount];
         int processorCount = 0;
-        for(int i = 0; i < tiles.size(); i++){
-            if(ignoredTiles.get(i))
-                continue;
+        for(int i = usedTiles.nextSetBit(0); i != -1; i = usedTiles.nextSetBit(i + 1)){
             TextureInstance<?> tile = tiles.get(i);
             MutableQuad subQuad = quad.createCopy();
             // Adjust the quad's uv
@@ -226,12 +236,13 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             subQuad.sprite(defaultSprite.getSprite());
             // Initialize sub quad
             QuadProcessor<?> subProcessor = tile.initializeModelQuad(subQuad, defaultSprite, properties);
+            int storageIndex = tileToStorageIndex[i];
             SpriteInstance newSprite = SpriteHelper.getSpriteInstance(subQuad.sprite());
-            subSprites[i] = newSprite == null ? defaultSprite : newSprite;
-            subQuads[i] = subQuad;
+            subSprites[storageIndex] = newSprite == null ? defaultSprite : newSprite;
+            subQuads[storageIndex] = subQuad;
             if(subProcessor != null){
                 //noinspection unchecked
-                subProcessors[i] = (QuadProcessor<Object>)subProcessor;
+                subProcessors[storageIndex] = (QuadProcessor<Object>)subProcessor;
                 processorCount++;
             }
         }
@@ -269,13 +280,14 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             @Override
             public Pair<TextureConnections,Object[]> extractState(Supplier<Random> randomSupplier, PropertyStore properties){
                 // Extract tile states
-                Object[] tileStates = new Object[tiles.size()];
+                Object[] tileStates = new Object[usedTileCount];
                 int i = -1;
                 while((i = contextlessTiles.nextSetBit(i + 1)) != -1){
-                    QuadProcessor<Object> tileProcessor = subProcessors[i];
+                    byte storageIndex = tileToStorageIndex[i];
+                    QuadProcessor<Object> tileProcessor = subProcessors[storageIndex];
                     if(tileProcessor == null)
                         continue;
-                    tileStates[i] = tileProcessor.extractState(randomSupplier, properties);
+                    tileStates[storageIndex] = tileProcessor.extractState(randomSupplier, properties);
                 }
                 return Pair.of(contextlessConnections, tileStates);
             }
@@ -283,8 +295,8 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             @Override
             public Pair<TextureConnections,Object[]> extractState(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state, Supplier<Random> randomSupplier, PropertyStore properties){
                 // Extract all tile data
-                Object[] tileStates = new Object[tiles.size()];
-                for(int i = 0; i < tiles.size(); i++){
+                Object[] tileStates = new Object[usedTileCount];
+                for(int i = 0; i < usedTileCount; i++){
                     QuadProcessor<Object> tileProcessor = subProcessors[i];
                     if(tileProcessor == null)
                         continue;
@@ -312,13 +324,14 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             @Override
             public Pair<TextureConnections,Object[]> extractState(ItemStack stack, Supplier<Random> randomSupplier, PropertyStore properties){
                 // Extract tile states
-                Object[] tileStates = new Object[tiles.size()];
+                Object[] tileStates = new Object[usedTileCount];
                 int i = -1;
                 while((i = contextlessTiles.nextSetBit(i + 1)) != -1){
-                    QuadProcessor<Object> tileProcessor = subProcessors[i];
+                    byte storageIndex = tileToStorageIndex[i];
+                    QuadProcessor<Object> tileProcessor = subProcessors[storageIndex];
                     if(tileProcessor == null)
                         continue;
-                    tileStates[i] = tileProcessor.extractState(stack, randomSupplier, properties);
+                    tileStates[storageIndex] = tileProcessor.extractState(stack, randomSupplier, properties);
                 }
                 return Pair.of(contextlessConnections, tileStates);
             }
@@ -331,17 +344,18 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
                     subKeys = new ArrayList<>(Math.min(contextlessTiles.cardinality(), finalProcessorCount));
                     int i = -1;
                     while((i = contextlessTiles.nextSetBit(i + 1)) != -1){
-                        QuadProcessor<Object> tileProcessor = subProcessors[i];
+                        byte storageIndex = tileToStorageIndex[i];
+                        QuadProcessor<Object> tileProcessor = subProcessors[storageIndex];
                         if(tileProcessor == null)
                             continue;
-                        Object subKey = tileProcessor.createGeometryKey(tileStates[i], properties);
+                        Object subKey = tileProcessor.createGeometryKey(tileStates[storageIndex], properties);
                         if(subKey == null)
                             return null;
                         subKeys.add(subKey);
                     }
                 }else{
                     subKeys = new ArrayList<>(finalProcessorCount);
-                    for(int i = 0; i < tiles.size(); i++){
+                    for(int i = 0; i < usedTileCount; i++){
                         QuadProcessor<Object> tileProcessor = subProcessors[i];
                         if(tileProcessor == null)
                             continue;
@@ -359,18 +373,19 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
                 // Create access for tiles
                 Object[] tileStates = state.right();
                 ConnectingTextureLayoutHandler.TileEmitter tileEmitter = (tile, emitter) -> {
-                    QuadAccess tileQuad = subQuads[tile];
-                    if(tileQuad == null)
+                    if(!usedTiles.get(tile))
                         return;
+                    byte storageIndex = tileToStorageIndex[tile];
+                    QuadAccess tileQuad = subQuads[storageIndex];
                     try(EmittableQuad.Popper p = emitter.pushTransform(orientation.transform)){
                         try(EmittableQuad.Popper p2 = emitter.pushTransform(q -> {
                             q.copyFrom(tileQuad);
-                            QuadProcessor<Object> tileProcessor = subProcessors[tile];
+                            QuadProcessor<Object> tileProcessor = subProcessors[storageIndex];
                             if(tileProcessor == null){
                                 q.emit();
                                 return;
                             }
-                            tileProcessor.processQuad(q, subSprites[tile], tileStates[tile], properties);
+                            tileProcessor.processQuad(q, subSprites[storageIndex], tileStates[storageIndex], properties);
                         })){
                             emitter.emit();
                         }

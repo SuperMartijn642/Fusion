@@ -1,3 +1,7 @@
+### Fusion 1.3.10
+- Fixed model item transforms (`display` property) translations not being scaled by 1/16th
+- Fixed models sometimes failing to load with ModernFix' `dynamic_resources` option
+
 ### Fusion 1.3.9
 - Fixed `dimension` block model predicate not working for chunk geometry
 

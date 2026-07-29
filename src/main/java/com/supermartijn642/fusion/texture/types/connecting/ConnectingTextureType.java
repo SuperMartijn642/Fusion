@@ -178,17 +178,37 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         // Get layout handler
         ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(data.getLayout());
 
-        // Initialize all tiles
+        // Find tiles that can be ignored
         List<TextureInstance<?>> tiles = data.getTiles();
+        BitSet ignoredTiles = new BitSet();
+        if(predicate.alwaysFalse() || predicate.alwaysTrue()){
+            ignoredTiles.set(0, tiles.size());
+            boolean value = predicate.alwaysTrue();
+            TextureConnections connections = new TextureConnections(value, value, value, value, value, value, value, value);
+            EmittableQuad dummyEmitter = EmittableQuad.create(q -> {});
+            dummyEmitter.copyFrom(quad);
+            orientation.applyVertexPermutation(dummyEmitter);
+            layoutHandler.processQuad(
+                dummyEmitter,
+                (tile, emitter) -> ignoredTiles.clear(tile),
+                connections
+            );
+        }
+        for(int i = 0; i < tiles.size(); i++){
+            if(tiles.get(i) == null)
+                ignoredTiles.set(i);
+        }
+
+        // Initialize all tiles
         QuadAccess[] subQuads = new QuadAccess[tiles.size()];
         SpriteInstance[] subSprites = new SpriteInstance[tiles.size()];
         //noinspection unchecked
         QuadProcessor<Object>[] subProcessors = new QuadProcessor[tiles.size()];
         int processorCount = 0;
         for(int i = 0; i < tiles.size(); i++){
-            TextureInstance<?> tile = tiles.get(i);
-            if(tile == null)
+            if(ignoredTiles.get(i))
                 continue;
+            TextureInstance<?> tile = tiles.get(i);
             MutableQuad subQuad = quad.createCopy();
             // Adjust the quad's uv
             SpriteInstance defaultSprite = tile.getDefaultSprite();

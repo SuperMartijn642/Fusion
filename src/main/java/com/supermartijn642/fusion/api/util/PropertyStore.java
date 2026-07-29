@@ -19,6 +19,13 @@ public interface PropertyStore extends PropertyGetter {
     }
 
     /**
+     * An immutable empty property store.
+     */
+    static PropertyStore empty(){
+        return PropertyStoreImpl.empty();
+    }
+
+    /**
      * Stores an arbitrary property.
      */
     <X, C> void setProperty(Property<X,C> property, C context, X value);

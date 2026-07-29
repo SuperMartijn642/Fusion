@@ -60,10 +60,9 @@ public class ModelBakeryMixin {
             if(fusionData == null){
                 UntypedModelInstance model = FusionBlockModelData.getModelInstance(unbakedModel);
                 fusionData = new FusionBlockModelData(location, model);
-                FusionBlockModelData.gatherBlockModelMaterials(fusionData, l -> {
-                    UnbakedModel m = self.unbakedCache.get(l);
-                    return m == null ? self.unbakedCache.get(l) : m;
-                }, new LinkedHashSet<>());
+                //noinspection DataFlowIssue
+                ModelBakery modelBakery = (ModelBakery)(Object)this;
+                FusionBlockModelData.gatherBlockModelMaterials(fusionData, modelBakery::getModel, new LinkedHashSet<>());
             }
             return fusionData.bake(self, spriteGetter, modelState, location);
         }

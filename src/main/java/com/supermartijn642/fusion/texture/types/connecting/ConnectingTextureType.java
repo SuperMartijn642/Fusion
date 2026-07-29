@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -213,7 +214,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             }
         }
 
-        // Initialize all tiles
+        // Initialize all non-vanilla tiles
         QuadAccess[] subQuads = new QuadAccess[usedTileCount];
         SpriteInstance[] subSprites = new SpriteInstance[usedTileCount];
         //noinspection unchecked
@@ -221,6 +222,8 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         int processorCount = 0;
         for(int i = usedTiles.nextSetBit(0); i != -1; i = usedTiles.nextSetBit(i + 1)){
             TextureInstance<?> tile = tiles.get(i);
+            if(tile.getTextureType() == DefaultTextureTypes.VANILLA || tile.getTextureType() == DefaultTextureTypes.BASE)
+                continue;
             MutableQuad subQuad = quad.createCopy();
             // Adjust the quad's uv
             SpriteInstance defaultSprite = tile.getDefaultSprite();
@@ -245,6 +248,35 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             }
         }
         int finalProcessorCount = processorCount;
+
+        // Initialize vanilla tiles lazily as they don't need the property store
+        QuadAccess quadCopy = quad.createCopy();
+        IntConsumer lazyQuadInitializer = tileIndex -> {
+            TextureInstance<?> tile = tiles.get(tileIndex);
+            int storageIndex = tileToStorageIndex[tileIndex];
+            synchronized(tile){
+                if(subQuads[storageIndex] != null)
+                    return;
+                MutableQuad subQuad = MutableQuad.create().copyFrom(quadCopy);
+                // Adjust the quad's uv
+                SpriteInstance defaultSprite = tile.getDefaultSprite();
+                for(int j = 0; j < 4; j++){
+                    subQuad.uv(
+                        j,
+                        defaultSprite.getU0() + (quadCopy.u(j) - sprite.getU0()) / (sprite.getU1() - sprite.getSprite().getU0()) * (defaultSprite.getU1() - defaultSprite.getU0()),
+                        defaultSprite.getV0() + (quadCopy.v(j) - sprite.getV0()) / (sprite.getV1() - sprite.getSprite().getV0()) * (defaultSprite.getV1() - defaultSprite.getV0())
+                    );
+                }
+                subQuad.sprite(defaultSprite.getSprite());
+                // Initialize sub quad
+                BlockStateQuadProcessor<?> subProcessor = tile.initializeBlockStateModelQuad(subQuad, defaultSprite, PropertyStore.empty());
+                if(subProcessor != null)
+                    throw new AssertionError();
+                SpriteInstance newSprite = SpriteHelper.getSpriteInstance(subQuad.sprite());
+                subSprites[storageIndex] = newSprite == null ? defaultSprite : newSprite;
+                subQuads[storageIndex] = subQuad;
+            }
+        };
 
         // Make sure default quad has default orientation
         orientation.applyVertexPermutation(quad);
@@ -304,6 +336,8 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
                     if(!usedTiles.get(tile))
                         return;
                     byte storageIndex = tileToStorageIndex[tile];
+                    if(subQuads[storageIndex] == null)
+                        lazyQuadInitializer.accept(tile);
                     QuadAccess tileQuad = subQuads[storageIndex];
                     try(EmittableQuad.Popper _ = emitter.pushTransform(orientation.transform)){
                         try(EmittableQuad.Popper _ = emitter.pushTransform(q -> {

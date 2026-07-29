@@ -206,7 +206,7 @@ public class MutableQuadImpl implements MutableQuad {
     public MutableQuad chunkRenderType(RenderType chunkRenderType){
         if(!ChunkRenderTypeHelper.isChunkRenderType(chunkRenderType))
             throw new IllegalArgumentException("Render type '" + chunkRenderType + "' is not a chunk render type!");
-        this.flags &= ~(31 << CHUNK_RENDER_TYPE) | (ChunkRenderTypeHelper.getId(chunkRenderType) << CHUNK_RENDER_TYPE);
+        this.flags = (this.flags & ~(31 << CHUNK_RENDER_TYPE)) | (ChunkRenderTypeHelper.getId(chunkRenderType) << CHUNK_RENDER_TYPE);
         return this;
     }
 

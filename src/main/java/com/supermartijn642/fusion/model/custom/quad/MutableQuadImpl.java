@@ -27,23 +27,27 @@ public class MutableQuadImpl implements MutableQuad {
         return new MutableQuadImpl();
     }
 
+    static{
+        if(ChunkSectionLayer.values().length > 31)
+            throw new AssertionError("More than 31 chunk render types!");
+    }
+
     // Flags
     private static final int SHADE = 0;
     private static final int LIGHT_EMISSION = 1; // 4 bits
     private static final int AMBIENT_OCCLUSION = 5;
     private static final int EMISSIVE = 6;
     private static final int FACING = 7; // 3 bits
+    private static final int CHUNK_RENDER_TYPE = 10; // 5 bits
     // Vertices
     private static final int VERTEX_SIZE = 3 + 2;
-    private static final int VERTEX_POSITION = 0;
-    private static final int VERTEX_UV = 3;
+    private static final int VERTEX_POSITION = 0; // 3 floats
+    private static final int VERTEX_UV = 3; // 2 floats
 
     private final float[] vertices = new float[4 * VERTEX_SIZE];
     private int flags;
     private int tintIndex = -1;
     private TextureAtlasSprite sprite;
-    private ChunkSectionLayer chunkLayer;
-    private RenderType itemRenderType;
 
     private BakedQuad bakedQuadCache;
 
@@ -63,8 +67,6 @@ public class MutableQuadImpl implements MutableQuad {
         this.flags = impl.flags;
         this.sprite = impl.sprite;
         this.tintIndex = impl.tintIndex;
-        this.chunkLayer = impl.chunkLayer;
-        this.itemRenderType = impl.itemRenderType;
         this.bakedQuadCache = impl.bakedQuadCache;
         // NeoForge data
         this.bakedNormalsCache = impl.bakedNormalsCache;
@@ -97,8 +99,6 @@ public class MutableQuadImpl implements MutableQuad {
         this.flags |= (quad.lightEmission() << LIGHT_EMISSION);
         if(quad.hasAmbientOcclusion())
             this.flags |= (1 << AMBIENT_OCCLUSION);
-        this.chunkLayer = null;
-        this.itemRenderType = null;
         // NeoForge data
         this.bakedNormalsCache = quad.bakedNormals();
         this.bakedColorsCache = quad.bakedColors();
@@ -220,37 +220,22 @@ public class MutableQuadImpl implements MutableQuad {
     }
 
     @Override
-    public MutableQuad renderLayers(ChunkSectionLayer chunkLayer, RenderType itemRenderType){
-        this.chunkLayer = chunkLayer;
-        this.itemRenderType = itemRenderType;
-        return this;
-    }
-
-    @Override
     public MutableQuad chunkLayer(ChunkSectionLayer chunkLayer){
-        this.chunkLayer = chunkLayer;
+        this.flags &= ~(31 << CHUNK_RENDER_TYPE) | ((chunkLayer == null ? 0 : chunkLayer.ordinal() + 1) << CHUNK_RENDER_TYPE);
         return this;
     }
 
     @Override
     public ChunkSectionLayer chunkLayer(){
-        return this.chunkLayer;
-    }
-
-    @Override
-    public MutableQuad itemRenderType(RenderType itemRenderType){
-        this.itemRenderType = itemRenderType;
-        return this;
+        int ordinal = (this.flags >> CHUNK_RENDER_TYPE) & 31;
+        return ordinal == 0 ? null : ChunkSectionLayer.values()[ordinal - 1];
     }
 
     @Override
     public RenderType itemRenderType(){
-        if(this.itemRenderType == null && this.chunkLayer != null){
-            return TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
-                this.chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockSheet() :
-                Sheets.translucentItemSheet();
-        }
-        return this.itemRenderType;
+        return TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
+            this.chunkLayer() == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockSheet() :
+            Sheets.translucentItemSheet();
     }
 
     @Override

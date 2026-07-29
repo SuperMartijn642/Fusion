@@ -1,3 +1,10 @@
+### Fusion 1.3.11
+- Significantly reduced memory used by Fusion models
+  - Facing and chunk render type of `MutableQuad`s are now stored as bit flags
+  - `connecting` textures ignore non-default tiles when predicate is always true or always false
+  - `connecting` texture sub-texture data is now stored more compactly when some tiles are empty
+  - When `connecting` texture has no sub-texture, its tiles are initialized lazily
+
 ### Fusion 1.3.10
 - Fixed translucent item models being invisible when graphics is set to 'Fabulous'
 - Fixed model item transforms (`display` property) translations not being scaled by 1/16th

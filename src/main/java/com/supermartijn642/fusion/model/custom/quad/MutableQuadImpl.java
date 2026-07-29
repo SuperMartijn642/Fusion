@@ -258,7 +258,7 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public MutableQuad chunkLayer(ChunkSectionLayer chunkLayer){
-        this.flags &= ~(31 << CHUNK_RENDER_TYPE) | ((chunkLayer == null ? 0 : chunkLayer.ordinal() + 1) << CHUNK_RENDER_TYPE);
+        this.flags = (this.flags & ~(31 << CHUNK_RENDER_TYPE)) | ((chunkLayer == null ? 0 : chunkLayer.ordinal() + 1) << CHUNK_RENDER_TYPE);
         this.invalidateMaterialInfoCache();
         return this;
     }

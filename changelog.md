@@ -1,3 +1,6 @@
+### Fusion 1.3.12
+- Fixed `MutableQuad#chunkLayer` not always overwriting flags
+
 ### Fusion 1.3.11
 - Significantly reduced memory used by Fusion models
   - Facing and chunk render type of `MutableQuad`s are now stored as bit flags

@@ -253,6 +253,8 @@ public class MutableQuadImpl implements MutableQuad {
     @Override
     public RenderType itemRenderType(){
         ChunkSectionLayer chunkLayer = this.chunkLayer();
+        if(chunkLayer == null)
+            return null;
         return chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentItemSheet() : Sheets.cutoutBlockSheet();
     }
 

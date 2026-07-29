@@ -1,3 +1,6 @@
+### Fusion 1.3.12
+- Fixed `MutableQuad#chunkLayer` not always overwriting flags
+
 ### Fusion 1.3.11a
 - Fixed error when baking faces with `null` chunk layer
 

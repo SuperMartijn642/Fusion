@@ -212,6 +212,9 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public RenderType itemRenderType(){
+        ChunkSectionLayer chunkLayer = this.chunkLayer();
+        if(chunkLayer == null)
+            return null;
         return TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
             this.chunkLayer() == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemSheet() : Sheets.cutoutBlockSheet() :
             Sheets.translucentItemSheet();

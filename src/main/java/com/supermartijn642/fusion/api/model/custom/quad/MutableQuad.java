@@ -67,8 +67,12 @@ public interface MutableQuad extends QuadAccess {
 
     /**
      * Sets chunk layer and item render type to use when rendering the quad.
+     * @deprecated item render type is always inferred from chunk render type, so use {@link #chunkRenderType(RenderType)}
      */
-    MutableQuad renderTypes(@Nullable RenderType chunkRenderType, @Nullable RenderType itemRenderType);
+    @Deprecated
+    default MutableQuad renderTypes(@Nullable RenderType chunkRenderType, @Nullable RenderType itemRenderType){
+        return this.chunkRenderType(chunkRenderType);
+    }
 
     /**
      * Sets render type to use when rendering the quad in a chunk.
@@ -77,8 +81,12 @@ public interface MutableQuad extends QuadAccess {
 
     /**
      * Sets render type to use when rendering the quad as an item.
+     * @deprecated item render type is always inferred from chunk render type, so use this method does nothing
      */
-    MutableQuad itemRenderType(@Nullable RenderType itemRenderType);
+    @Deprecated
+    default MutableQuad itemRenderType(@Nullable RenderType itemRenderType){
+        return this;
+    }
 
     /**
      * Sets the tint index to use for tinting the quad.

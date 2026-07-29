@@ -24,8 +24,9 @@ public class MutableQuadImpl implements MutableQuad {
 
     // Flags
     private static final int SHADE = 0;
-    private static final int LIGHT_EMISSION = 1;
+    private static final int LIGHT_EMISSION = 1; // 4 bits
     private static final int EMISSIVE = 5;
+    private static final int FACING = 6; // 3 bits
     // Vertices
     private static final int VERTEX_SIZE = 3 + 2;
     private static final int VERTEX_POSITION = 0;
@@ -48,7 +49,6 @@ public class MutableQuadImpl implements MutableQuad {
         MutableQuadImpl impl = (MutableQuadImpl)quad;
         System.arraycopy(impl.vertices, 0, this.vertices, 0, this.vertices.length);
         this.flags = impl.flags;
-        this.facing = impl.facing;
         this.sprite = impl.sprite;
         this.tintIndex = impl.tintIndex;
         this.renderLayer = impl.renderLayer;
@@ -69,10 +69,10 @@ public class MutableQuadImpl implements MutableQuad {
             this.vertices[offset] = BakedQuadHelper.getU(format, quad.getVertexData(), i);
             this.vertices[offset + 1] = BakedQuadHelper.getV(format, quad.getVertexData(), i);
         }
-        this.facing = quad.getFace();
         this.sprite = quad.getSprite();
         this.tintIndex = quad.getTintIndex();
         this.flags = 0;
+        this.flags |= ((quad.getFace().ordinal() + 1) << FACING);
         if(quad.shouldApplyDiffuseLighting())
             this.flags |= (1 << SHADE);
         int lightEmission = 0;
@@ -101,7 +101,7 @@ public class MutableQuadImpl implements MutableQuad {
         this.vertices[offset] = x;
         this.vertices[offset + 1] = y;
         this.vertices[offset + 2] = z;
-        this.facing = null;
+        this.flags &= ~(7 << FACING);
         this.invalidateBakedQuadCache();
         return this;
     }
@@ -170,7 +170,22 @@ public class MutableQuadImpl implements MutableQuad {
 
     @Override
     public EnumFacing facing(){
-        return this.facing;
+        int ordinal = (this.flags >> FACING) & 7;
+        if(ordinal == 0){
+            int offsetV0 = VERTEX_POSITION;
+            int offsetV1 = VERTEX_SIZE + VERTEX_POSITION;
+            int offsetV2 = 2 * VERTEX_SIZE + VERTEX_POSITION;
+            EnumFacing facing = BakedQuadHelper.calculateFacing(
+                this.vertices[offsetV0], this.vertices[offsetV0 + 1], this.vertices[offsetV0 + 2],
+                this.vertices[offsetV1], this.vertices[offsetV1 + 1], this.vertices[offsetV1 + 2],
+                this.vertices[offsetV2], this.vertices[offsetV2 + 1], this.vertices[offsetV2 + 2]
+            );
+            if(facing == null)
+                facing = EnumFacing.UP;
+            this.flags |= ((facing.ordinal() + 1) << FACING);
+            return facing;
+        }
+        return EnumFacing.values()[ordinal - 1];
     }
 
     @Override
@@ -251,18 +266,6 @@ public class MutableQuadImpl implements MutableQuad {
 
     public BakedQuad toBakedQuad(){
         if(this.bakedQuadCache == null){
-            if(this.facing == null){
-                int offsetV0 = VERTEX_POSITION;
-                int offsetV1 = VERTEX_SIZE + VERTEX_POSITION;
-                int offsetV2 = 2 * VERTEX_SIZE + VERTEX_POSITION;
-                this.facing = BakedQuadHelper.calculateFacing(
-                    this.vertices[offsetV0], this.vertices[offsetV0 + 1], this.vertices[offsetV0 + 2],
-                    this.vertices[offsetV1], this.vertices[offsetV1 + 1], this.vertices[offsetV1 + 2],
-                    this.vertices[offsetV2], this.vertices[offsetV2 + 1], this.vertices[offsetV2 + 2]
-                );
-                if(this.facing == null)
-                    this.facing = EnumFacing.UP;
-            }
             if(this.sprite == null)
                 throw new IllegalStateException("No sprite was specified!");
             VertexFormat format = BakedQuadHelper.getCombinedVertexFormat();
@@ -285,7 +288,7 @@ public class MutableQuadImpl implements MutableQuad {
             this.bakedQuadCache = new BakedQuad(
                 vertices,
                 this.tintIndex,
-                this.facing,
+                this.facing(),
                 this.sprite,
                 !emissive && this.shade(),
                 format

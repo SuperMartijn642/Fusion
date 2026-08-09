@@ -77,6 +77,11 @@ processResources {
     rename "^icon.png\$", "${mod_id}.png"
 }
 
+// Enable jar-in-jar
+jarJar.enable()
+tasks.named("jarJar") { archiveClassifier = "" }
+tasks.named("assemble") { dependsOn(tasks.jarJar) }
+
 minecraft {
     mappings channel: "official", version: minecraft_version
 
@@ -164,7 +169,7 @@ tasks.configureEach {
 }
 
 publishMods {
-    file = jar.archiveFile
+    file = tasks.jarJar.archiveFile
     displayName = "${mod_name} ${mod_version} for Forge ${minecraft_suffix.substring(2)}"
     version = project.version
     //noinspection UnnecessaryQualifiedReference

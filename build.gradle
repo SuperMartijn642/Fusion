@@ -77,15 +77,9 @@ processResources {
     rename "^icon.png\$", "${mod_id}.png"
 }
 
-// Embed the dependencies declared in the 'jarJar' configuration, i.e. MixinExtras.
-// Without this, the jarJar(...) dependency declaration above has no effect and the
-// published jar contains no META-INF/jarjar entries.
+// Enable jar-in-jar
 jarJar.enable()
-
-// The jarJar task is the one that carries the embedded dependencies, so make it the
-// primary artifact and keep the published file name unchanged.
 tasks.named("jarJar") { archiveClassifier = "" }
-tasks.named("jar") { archiveClassifier = "slim" }
 tasks.named("assemble") { dependsOn(tasks.jarJar) }
 
 minecraft {

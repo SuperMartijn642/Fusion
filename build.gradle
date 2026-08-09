@@ -77,6 +77,17 @@ processResources {
     rename "^icon.png\$", "${mod_id}.png"
 }
 
+// Embed the dependencies declared in the 'jarJar' configuration, i.e. MixinExtras.
+// Without this, the jarJar(...) dependency declaration above has no effect and the
+// published jar contains no META-INF/jarjar entries.
+jarJar.enable()
+
+// The jarJar task is the one that carries the embedded dependencies, so make it the
+// primary artifact and keep the published file name unchanged.
+tasks.named("jarJar") { archiveClassifier = "" }
+tasks.named("jar") { archiveClassifier = "slim" }
+tasks.named("assemble") { dependsOn(tasks.jarJar) }
+
 minecraft {
     mappings channel: "official", version: minecraft_version
 
@@ -164,7 +175,7 @@ tasks.configureEach {
 }
 
 publishMods {
-    file = jar.archiveFile
+    file = tasks.jarJar.archiveFile
     displayName = "${mod_name} ${mod_version} for Forge ${minecraft_suffix.substring(2)}"
     version = project.version
     //noinspection UnnecessaryQualifiedReference

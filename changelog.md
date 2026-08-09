@@ -1,3 +1,6 @@
+### Fusion 1.3.12a
+- Fixed crashes from broken mixins
+
 ### Fusion 1.3.12
 - Fixed `MutableQuad#chunkLayer` not always overwriting flags
 

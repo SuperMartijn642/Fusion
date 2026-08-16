@@ -3,11 +3,13 @@ package com.supermartijn642.fusion.api.texture.custom;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.util.PropertyStore;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Instance of a texture whose sprites have been stitched.
@@ -42,6 +44,16 @@ public interface TextureInstance<X> {
      * @see TextureOutput#setCustomData(Object)
      */
     X getCustomData();
+
+    /**
+     * Gets the render types that may result from initializing or processing a quad with the given sprite.
+     * The default render type for the block does not have to be included.
+     * @param sprite sprite of the quad
+     * @return the smallest set that contains all render types that may result from initializing or processing a quad with the given sprite
+     */
+    default Set<ChunkSectionLayer> getBlockStateRenderTypes(SpriteInstance sprite){
+        return this.getTextureType().getBlockStateRenderTypes(sprite, this.getCustomData());
+    }
 
     /**
      * Configures the given quad in a block state model.

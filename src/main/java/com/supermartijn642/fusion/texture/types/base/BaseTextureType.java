@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Created 07/09/2024 by SuperMartijn642
@@ -30,6 +31,11 @@ public class BaseTextureType implements TextureType<BaseTextureData,BaseTextureD
     }
 
     @Override
+    public Set<RenderType> getBlockStateRenderTypes(SpriteInstance sprite, BaseTextureData data){
+        return getChunkLayers(data);
+    }
+
+    @Override
     public @Nullable BlockStateQuadProcessor<?> initializeBlockStateModelQuad(MutableQuad quad, SpriteInstance sprite, BaseTextureData data, PropertyStore properties){
         applyProperties(quad, data);
         return null;
@@ -39,6 +45,10 @@ public class BaseTextureType implements TextureType<BaseTextureData,BaseTextureD
     public @Nullable ItemQuadProcessor<?> initializeItemModelQuad(MutableQuad quad, SpriteInstance sprite, BaseTextureData data, PropertyStore properties){
         applyProperties(quad, data);
         return null;
+    }
+
+    public static Set<RenderType> getChunkLayers(BaseTextureData data){
+        return data.getRenderType() == null ? Set.of() : Set.of(getChunkLayer(data.getRenderType()));
     }
 
     public static void applyProperties(MutableQuad quad, BaseTextureData data){

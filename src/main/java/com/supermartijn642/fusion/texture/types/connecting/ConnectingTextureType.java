@@ -29,6 +29,7 @@ import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
 import com.supermartijn642.fusion.util.Triple;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -148,6 +149,11 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
 
         // Set custom texture data
         output.setCustomData(new StitchedConnectingTextureData(data, tiles));
+    }
+
+    @Override
+    public Set<RenderType> getBlockStateRenderTypes(SpriteInstance sprite, StitchedConnectingTextureData data){
+        return BaseTextureType.getChunkLayers(data);
     }
 
     @Override

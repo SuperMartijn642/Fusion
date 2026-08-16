@@ -21,6 +21,7 @@ import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.util.SeedHelper;
 import com.supermartijn642.fusion.util.Triple;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -30,10 +31,7 @@ import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.function.Supplier;
 
 /**
@@ -128,6 +126,11 @@ public class RandomTextureType implements TextureType<RandomTextureData,Stitched
             data.getSeed(),
             tiles
         ));
+    }
+
+    @Override
+    public Set<RenderType> getBlockStateRenderTypes(SpriteInstance sprite, StitchedRandomTextureData data){
+        return BaseTextureType.getChunkLayers(data);
     }
 
     @Override

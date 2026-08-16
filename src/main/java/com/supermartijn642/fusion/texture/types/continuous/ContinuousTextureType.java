@@ -14,6 +14,7 @@ import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.util.Triple;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
 import net.minecraft.client.resources.metadata.animation.AnimationFrame;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
 import net.minecraft.core.BlockPos;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -108,6 +110,11 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
 
         // Set custom texture data
         output.setCustomData(data);
+    }
+
+    @Override
+    public Set<ChunkSectionLayer> getBlockStateRenderTypes(SpriteInstance sprite, ContinuousTextureData data){
+        return BaseTextureType.getChunkLayers(data);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.supermartijn642.fusion.texture.custom;
 import com.supermartijn642.fusion.api.texture.TextureType;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
+import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.minecraft.resources.Identifier;
 
 import java.util.List;
@@ -52,5 +53,10 @@ public class TextureInstanceImpl<X> implements TextureInstance<X> {
     @Override
     public X getCustomData(){
         return this.customData;
+    }
+
+    @Override
+    public String toString(){
+        return "'" + this.identifier + "'@'" + TextureTypeRegistryImpl.getIdentifier(this.textureType) + "'";
     }
 }

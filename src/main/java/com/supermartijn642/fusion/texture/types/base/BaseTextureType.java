@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.texture.types.base;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.custom.quad.MutableQuad;
@@ -16,7 +17,9 @@ import net.minecraft.client.renderer.RenderType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Created 07/09/2024 by SuperMartijn642
@@ -33,9 +36,18 @@ public class BaseTextureType implements TextureType<BaseTextureData,BaseTextureD
     }
 
     @Override
+    public Set<RenderType> getBlockStateRenderTypes(SpriteInstance sprite, BaseTextureData data){
+        return getChunkLayers(data);
+    }
+
+    @Override
     public @Nullable QuadProcessor<?> initializeModelQuad(MutableQuad quad, SpriteInstance sprite, BaseTextureData data, PropertyStore properties){
         applyProperties(quad, data);
         return null;
+    }
+
+    public static Set<RenderType> getChunkLayers(BaseTextureData data){
+        return data.getRenderType() == null ? Collections.emptySet() : ImmutableSet.of(getChunkLayer(data.getRenderType()));
     }
 
     public static void applyProperties(MutableQuad quad, BaseTextureData data){

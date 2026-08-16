@@ -36,6 +36,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -403,14 +404,14 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         Direction facing = quad.facing();
         BlockState air = Blocks.AIR.defaultBlockState();
         TextureConnections connections = new TextureConnections(
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.TOP),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.TOP_RIGHT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.RIGHT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.BOTTOM_RIGHT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.BOTTOM),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.BOTTOM_LEFT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.LEFT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.TOP_LEFT)
+            predicate.shouldConnect(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.TOP),
+            predicate.shouldConnect(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.TOP_RIGHT),
+            predicate.shouldConnect(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.RIGHT),
+            predicate.shouldConnect(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.BOTTOM_RIGHT),
+            predicate.shouldConnect(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.BOTTOM),
+            predicate.shouldConnect(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.BOTTOM_LEFT),
+            predicate.shouldConnect(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.LEFT),
+            predicate.shouldConnect(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.TOP_LEFT)
         );
 
         // Get layout handler

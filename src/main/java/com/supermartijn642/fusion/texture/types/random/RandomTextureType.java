@@ -23,6 +23,7 @@ import com.supermartijn642.fusion.util.Triple;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -120,6 +121,11 @@ public class RandomTextureType implements TextureType<RandomTextureData,Stitched
             data.getSeed(),
             tiles
         ));
+    }
+
+    @Override
+    public Set<BlockRenderLayer> getBlockStateRenderTypes(SpriteInstance sprite, StitchedRandomTextureData data){
+        return BaseTextureType.getChunkLayers(data);
     }
 
     @Override

@@ -10,12 +10,10 @@ import com.supermartijn642.fusion.api.texture.types.scrolling.ScrollingTextureDa
 import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.api.util.UserErrorException;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
+import net.minecraft.util.BlockRenderLayer;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * Created 28/04/2023 by SuperMartijn642
@@ -76,6 +74,11 @@ public class ScrollingTextureType implements TextureType<ScrollingTextureData,Ba
 
         // Set custom texture data
         output.setCustomData(data);
+    }
+
+    @Override
+    public Set<BlockRenderLayer> getBlockStateRenderTypes(SpriteInstance sprite, BaseTextureData data){
+        return BaseTextureType.getChunkLayers(data);
     }
 
     @Override

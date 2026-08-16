@@ -32,6 +32,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -143,6 +144,11 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
 
         // Set custom texture data
         output.setCustomData(new StitchedConnectingTextureData(data, tiles));
+    }
+
+    @Override
+    public Set<BlockRenderLayer> getBlockStateRenderTypes(SpriteInstance sprite, StitchedConnectingTextureData data){
+        return BaseTextureType.getChunkLayers(data);
     }
 
     @Override

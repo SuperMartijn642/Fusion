@@ -8,7 +8,11 @@ import com.supermartijn642.fusion.api.texture.custom.TextureOutput;
 import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.api.util.Serializer;
 import com.supermartijn642.fusion.api.util.UserErrorException;
+import net.minecraft.util.BlockRenderLayer;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * Created 26/04/2023 by SuperMartijn642
@@ -25,6 +29,17 @@ public interface TextureType<T, X> extends Serializer<T> {
      * @throws UserErrorException when there's a user error in the resource pack, for example an invalid configuration
      */
     void createTexture(TextureOutput<X> output, TextureCreationContext context, T data) throws UserErrorException;
+
+    /**
+     * Gets the render types that may result from initializing or processing a quad with the given sprite.
+     * The default render type for the block does not have to be included.
+     * @param sprite sprite of the quad
+     * @param data   custom texture data
+     * @return the smallest set that contains all render types that may result from initializing or processing a quad with the given sprite
+     */
+    default Set<BlockRenderLayer> getBlockStateRenderTypes(SpriteInstance sprite, X data){
+        return Collections.emptySet();
+    }
 
     /**
      * Configures the given quad in a baked model.

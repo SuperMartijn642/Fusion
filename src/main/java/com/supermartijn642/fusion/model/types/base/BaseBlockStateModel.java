@@ -34,12 +34,24 @@ public class BaseBlockStateModel implements BlockStateModel {
     private final ModelPredicate conditions;
     private final TextureAtlasSprite particleSprite;
     private final PropertyStore propertyStore;
+    private final int renderTypes;
 
     public BaseBlockStateModel(Quads quads, ModelPredicate conditions, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
         this.quads = quads;
         this.conditions = conditions;
         this.particleSprite = particleSprite;
         this.propertyStore = propertyStore;
+
+        // Get all render types that quads may use
+        int renderTypes = 0;
+        for(Direction cullDirection : CullingHelper.cullDirections()){
+            for(Quad quad : quads.get(cullDirection)){
+                SpriteInstance sprite = quad.sprite;
+                for(ChunkSectionLayer renderType : sprite.getTexture().getBlockStateRenderTypes(sprite))
+                    renderTypes |= 1 << renderType.ordinal();
+            }
+        }
+        this.renderTypes = renderTypes;
     }
 
     @Override
@@ -82,6 +94,8 @@ public class BaseBlockStateModel implements BlockStateModel {
 
         // Create a model part for each chunk render type
         for(ChunkSectionLayer renderType : ChunkSectionLayer.values()){
+            if(renderType != defaultRenderType && (this.renderTypes & (1 << renderType.ordinal())) == 0)
+                continue;
             parts.add(new BlockModelPart() {
                 @Override
                 public List<BakedQuad> getQuads(@Nullable Direction cullDirection){

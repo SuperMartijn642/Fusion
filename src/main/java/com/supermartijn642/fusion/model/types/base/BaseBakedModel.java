@@ -48,6 +48,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
     private final boolean isGui3d;
     private final ItemCameraTransforms transforms;
     private final ItemOverrideList itemOverrides;
+    private final int renderTypes;
 
     public BaseBakedModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, TextureAtlasSprite particleSprite, boolean ambientOcclusion, boolean isGui3d, ItemCameraTransforms transforms, ItemOverrideList itemOverrides){
         this.quads = quads;
@@ -58,6 +59,19 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         this.isGui3d = isGui3d;
         this.transforms = transforms;
         this.itemOverrides = itemOverrides;
+
+        // Get all render types that quads may use
+        int renderTypes = 0;
+        for(EnumFacing cullDirection : CullingHelper.cullDirections()){
+            for(Quad quad : quads.get(cullDirection)){
+                SpriteInstance sprite = quad.sprite;
+                if(sprite == null)
+                    continue;
+                for(BlockRenderLayer renderType : sprite.getTexture().getBlockStateRenderTypes(sprite))
+                    renderTypes |= 1 << renderType.ordinal();
+            }
+        }
+        this.renderTypes = renderTypes;
     }
 
     private RenderData getRenderData(@Nullable IBlockAccess level, @Nullable BlockPos pos, @Nullable IBlockState state){
@@ -119,18 +133,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         PropertyStore propertyStore = renderData.propertyStore;
 
         // Get whether the giving render type is the default render type
-        BlockRenderLayer defaultRenderType;
-        if(state != null){
-            if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, BlockRenderLayer.TRANSLUCENT))
-                defaultRenderType = BlockRenderLayer.TRANSLUCENT;
-            else if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, BlockRenderLayer.CUTOUT))
-                defaultRenderType = BlockRenderLayer.CUTOUT;
-            else if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, BlockRenderLayer.CUTOUT_MIPPED))
-                defaultRenderType = BlockRenderLayer.CUTOUT_MIPPED;
-            else
-                defaultRenderType = BlockRenderLayer.SOLID;
-        }else
-            defaultRenderType = BlockRenderLayer.SOLID;
+        BlockRenderLayer defaultRenderType = getDefaultRenderType(state);
 
         // Get texture states
         List<Object>[] extractStates = renderData.combinedTextureStates;
@@ -147,6 +150,18 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         // Get baked quads
         BlockRenderLayer renderType = MinecraftForgeClient.getRenderLayer();
         return lazyQuadProcessor.get(cullDirection, renderType);
+    }
+
+    private static BlockRenderLayer getDefaultRenderType(@Nullable IBlockState state){
+        if(state == null)
+            return BlockRenderLayer.SOLID;
+        if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, BlockRenderLayer.TRANSLUCENT))
+            return BlockRenderLayer.TRANSLUCENT;
+        if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, BlockRenderLayer.CUTOUT))
+            return BlockRenderLayer.CUTOUT;
+        if(ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, BlockRenderLayer.CUTOUT_MIPPED))
+            return BlockRenderLayer.CUTOUT_MIPPED;
+        return BlockRenderLayer.SOLID;
     }
 
     private static Map<BlockRenderLayer,List<BakedQuad>> processQuads(List<Quad> quads, List<Object> states, PropertyStore propertyStore, BlockRenderLayer defaultRenderType){
@@ -184,7 +199,7 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     @Override
     public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer){
-        return true;
+        return (this.renderTypes & (1 << layer.ordinal())) != 0;
     }
 
     private List<BakedQuad> getItemQuads(ItemStack stack){

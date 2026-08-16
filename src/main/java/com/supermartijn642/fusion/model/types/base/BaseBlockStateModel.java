@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.model.predicates.ModelPredicate;
 import com.supermartijn642.fusion.api.texture.custom.BlockStateQuadProcessor;
 import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
+import com.supermartijn642.fusion.util.ChunkRenderTypeHelper;
 import com.supermartijn642.fusion.util.ChunkRenderTypeMap;
 import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.FallbackPropertyStore;
@@ -50,6 +51,7 @@ public class BaseBlockStateModel implements BakedModel {
     private final UnbakedModel.GuiLight guiLight;
     private final TextureAtlasSprite particleSprite;
     private final ItemTransforms itemTransforms;
+    private final ChunkRenderTypeSet renderTypes;
 
     public BaseBlockStateModel(Quads quads, ModelPredicate conditions, PropertyStore propertyStore, UnbakedModel.GuiLight guiLight, TextureAtlasSprite particleSprite, ItemTransforms itemTransforms){
         this.quads = quads;
@@ -58,6 +60,22 @@ public class BaseBlockStateModel implements BakedModel {
         this.guiLight = guiLight;
         this.particleSprite = particleSprite;
         this.itemTransforms = itemTransforms;
+
+        // Get all render types that quads may use
+        ChunkRenderTypeSet renderTypes = ChunkRenderTypeSet.none();
+        for(Direction cullDirection : CullingHelper.cullDirections()){
+            for(Quad quad : quads.get(cullDirection)){
+                SpriteInstance sprite = quad.sprite;
+                if(sprite == null)
+                    continue;
+                for(RenderType renderType : sprite.getTexture().getBlockStateRenderTypes(sprite)){
+                    if(!ChunkRenderTypeHelper.isChunkRenderType(renderType))
+                        throw new IllegalStateException("Texture " + sprite.getTexture() + " returned non-chunk render type " + renderType + " from #getBlockStateRenderTypes!");
+                    renderTypes = ChunkRenderTypeSet.union(renderTypes, ChunkRenderTypeSet.of(renderType));
+                }
+            }
+        }
+        this.renderTypes = renderTypes;
     }
 
     private RenderData getRenderData(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
@@ -116,21 +134,7 @@ public class BaseBlockStateModel implements BakedModel {
         PropertyStore propertyStore = renderData.propertyStore;
 
         // Get whether the giving render type is the default render type
-        RenderType defaultRenderType;
-        if(state != null){
-            ChunkRenderTypeSet renderLayers = ItemBlockRenderTypes.getRenderLayers(state);
-            if(renderLayers.contains(RenderType.translucent()))
-                defaultRenderType = RenderType.translucent();
-            else if(renderLayers.contains(RenderType.cutout()))
-                defaultRenderType = RenderType.cutout();
-            else if(renderLayers.contains(RenderType.cutoutMipped()))
-                defaultRenderType = RenderType.cutoutMipped();
-            else if(!renderLayers.isEmpty())
-                defaultRenderType = renderLayers.iterator().next();
-            else
-                defaultRenderType = RenderType.solid();
-        }else
-            defaultRenderType = RenderType.solid();
+        RenderType defaultRenderType = getDefaultRenderType(state);
 
         // Get texture states
         List<Object>[] extractStates = renderData.combinedTextureStates;
@@ -149,6 +153,22 @@ public class BaseBlockStateModel implements BakedModel {
 
         // Get baked quads
         return lazyQuadProcessor.get(cullDirection, renderType);
+    }
+
+    private static RenderType getDefaultRenderType(@Nullable BlockState state){
+        if(state == null)
+            return RenderType.solid();
+        ChunkRenderTypeSet renderLayers = ItemBlockRenderTypes.getRenderLayers(state);
+        if(renderLayers.contains(RenderType.translucent()))
+            return RenderType.translucent();
+        else if(renderLayers.contains(RenderType.cutout()))
+            return RenderType.cutout();
+        else if(renderLayers.contains(RenderType.cutoutMipped()))
+            return RenderType.cutoutMipped();
+        else if(!renderLayers.isEmpty())
+            return renderLayers.iterator().next();
+        else
+            return RenderType.solid();
     }
 
     private static Map<RenderType,List<BakedQuad>> processQuads(List<Quad> quads, List<Object> states, PropertyStore propertyStore, RenderType defaultRenderType){
@@ -191,7 +211,10 @@ public class BaseBlockStateModel implements BakedModel {
 
     @Override
     public ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
-        return ChunkRenderTypeSet.all();
+        RenderType defaultRenderType = getDefaultRenderType(state);
+        return this.renderTypes.contains(defaultRenderType) ?
+            this.renderTypes :
+            ChunkRenderTypeSet.union(this.renderTypes, ChunkRenderTypeSet.of(defaultRenderType));
     }
 
     @Override

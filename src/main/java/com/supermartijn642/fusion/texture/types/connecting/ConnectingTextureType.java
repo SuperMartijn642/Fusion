@@ -27,6 +27,7 @@ import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
+import com.supermartijn642.fusion.util.EmptyBlockDisplayReader;
 import com.supermartijn642.fusion.util.Triple;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -289,14 +290,14 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         // Evaluate predicate for 'empty' world
         BlockState air = Blocks.AIR.defaultBlockState();
         TextureConnections contextlessConnections = new TextureConnections(
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.TOP),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.TOP_RIGHT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.RIGHT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.BOTTOM_RIGHT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.BOTTOM),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.BOTTOM_LEFT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.LEFT),
-            predicate.shouldConnect(facing, null, air, air, ConnectionDirection.TOP_LEFT)
+            predicate.shouldConnect(EmptyBlockDisplayReader.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.TOP),
+            predicate.shouldConnect(EmptyBlockDisplayReader.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.TOP_RIGHT),
+            predicate.shouldConnect(EmptyBlockDisplayReader.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.RIGHT),
+            predicate.shouldConnect(EmptyBlockDisplayReader.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.BOTTOM_RIGHT),
+            predicate.shouldConnect(EmptyBlockDisplayReader.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.BOTTOM),
+            predicate.shouldConnect(EmptyBlockDisplayReader.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.BOTTOM_LEFT),
+            predicate.shouldConnect(EmptyBlockDisplayReader.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.LEFT),
+            predicate.shouldConnect(EmptyBlockDisplayReader.INSTANCE, BlockPos.ZERO, facing, null, air, air, ConnectionDirection.TOP_LEFT)
         );
 
         // Find which tiles get used when there's no context

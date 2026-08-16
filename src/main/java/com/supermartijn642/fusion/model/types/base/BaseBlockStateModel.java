@@ -43,12 +43,25 @@ public class BaseBlockStateModel implements BlockStateModel {
     private final ModelPredicate conditions;
     private final TextureAtlasSprite particleSprite;
     private final PropertyStore propertyStore;
+    private final List<ChunkSectionLayer> renderTypes;
 
     public BaseBlockStateModel(Quads quads, ModelPredicate conditions, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
         this.quads = quads;
         this.conditions = conditions;
         this.particleSprite = particleSprite;
         this.propertyStore = propertyStore;
+
+        // Get all render types that quads may use
+        Set<ChunkSectionLayer> renderTypes = new HashSet<>();
+        for(Direction cullDirection : CullingHelper.cullDirections()){
+            for(Quad quad : quads.get(cullDirection)){
+                SpriteInstance sprite = quad.sprite;
+                if(sprite == null)
+                    continue;
+                renderTypes.addAll(sprite.getTexture().getBlockStateRenderTypes(sprite));
+            }
+        }
+        this.renderTypes = renderTypes.stream().sorted(Comparator.comparingInt(ChunkSectionLayer::ordinal)).toList();
     }
 
     private RenderData getRenderData(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state){
@@ -196,7 +209,7 @@ public class BaseBlockStateModel implements BlockStateModel {
 
     @Override
     public Collection<ChunkSectionLayer> getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
-        return ALL_CHUNK_RENDER_TYPES;
+        return this.renderTypes;
     }
 
     @Override

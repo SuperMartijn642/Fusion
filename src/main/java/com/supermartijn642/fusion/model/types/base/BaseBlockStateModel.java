@@ -47,6 +47,8 @@ public class BaseBlockStateModel implements BlockStateModel {
         for(Direction cullDirection : CullingHelper.cullDirections()){
             for(Quad quad : quads.get(cullDirection)){
                 SpriteInstance sprite = quad.sprite;
+                if(sprite == null)
+                    continue;
                 for(ChunkSectionLayer renderType : sprite.getTexture().getBlockStateRenderTypes(sprite))
                     renderTypes |= 1 << renderType.ordinal();
             }

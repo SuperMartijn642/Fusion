@@ -30,6 +30,7 @@ import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTex
 import com.supermartijn642.fusion.util.Triple;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.NativeImage;
 import net.minecraft.client.resources.data.AnimationMetadataSection;
 import net.minecraft.item.ItemStack;
@@ -147,6 +148,11 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
 
         // Set custom texture data
         output.setCustomData(new StitchedConnectingTextureData(data, tiles));
+    }
+
+    @Override
+    public Set<RenderType> getBlockStateRenderTypes(SpriteInstance sprite, StitchedConnectingTextureData data){
+        return BaseTextureType.getChunkLayers(data);
     }
 
     @Override

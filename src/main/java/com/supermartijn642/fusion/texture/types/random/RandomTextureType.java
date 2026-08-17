@@ -206,7 +206,7 @@ public class RandomTextureType implements TextureType<RandomTextureData,Stitched
                 if(subProcessor == null)
                     quad.emit();
                 else
-                    subProcessor.processQuad(quad, subSprites[state.left()], state, properties);
+                    subProcessor.processQuad(quad, subSprites[state.left()], state.right(), properties);
             }
         };
     }

@@ -16,6 +16,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.client.model.data.ModelProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
 
     private static final ModelProperty<Pair<BlockState,BlockState>> NEIGHBOR_PROPERTY = new ModelProperty<>();
     private static final ModelProperty<BlockState> STATE_PROPERTY = new ModelProperty<>();
+    private static final ModelProperty<ModelData> SUB_MODEL_DATA = new ModelProperty<>();
     private static final BooleanProperty[] SIDE_PROPERTIES = {
         null,
         null,
@@ -37,6 +39,11 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         BlockStateProperties.EAST
     };
 
+    private static ModelData getSubModelData(ModelData modelData){
+        modelData = modelData.get(SUB_MODEL_DATA);
+        return modelData == null ? ModelData.EMPTY : modelData;
+    }
+
     private final ThreadLocal<MutableQuad> helperMutableQuad = ThreadLocal.withInitial(MutableQuad::create);
 
     public PaneCullingBakedModel(BlockStateModel original){
@@ -45,21 +52,22 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
 
     @Override
     public void collectParts(RandomSource random, List<BlockStateModelPart> parts, ModelData data){
+        ModelData subModelData = getSubModelData(data);
         BlockState state = data.get(STATE_PROPERTY);
         if(state == null){
-            super.collectParts(random, parts, data);
+            super.collectParts(random, parts, subModelData);
             return;
         }
         // If state has no side properties, then there's nothing to be culled
         if(!state.hasProperty(BlockStateProperties.NORTH) && !state.hasProperty(BlockStateProperties.SOUTH) && !state.hasProperty(BlockStateProperties.WEST) && !state.hasProperty(BlockStateProperties.EAST)){
-            super.collectParts(random, parts, data);
+            super.collectParts(random, parts, subModelData);
             return;
         }
 
         // Gather the states above and below
         Pair<BlockState,BlockState> neighbors = data.get(NEIGHBOR_PROPERTY);
         if(neighbors == null){
-            super.collectParts(random, parts, data);
+            super.collectParts(random, parts, subModelData);
             return;
         }
         BlockState above = neighbors.left();
@@ -69,14 +77,14 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         if(below.getBlock() != state.getBlock())
             below = null;
         if(above == null && below == null){
-            super.collectParts(random, parts, data);
+            super.collectParts(random, parts, subModelData);
             return;
         }
         neighbors = Pair.of(above, below);
 
         // Wrap the parts with a quad filter
         List<BlockStateModelPart> originalParts = new ArrayList<>();
-        super.collectParts(random, originalParts, data);
+        super.collectParts(random, originalParts, subModelData);
         for(BlockStateModelPart part : originalParts)
             parts.add(new FilteringModelPart(part, neighbors));
     }
@@ -88,7 +96,9 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
 
     @Override
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos, BlockState state, ModelData data){
-        return super.getModelData(level, pos, state, data).derive()
+        ModelData subModelData = super.getModelData(level, pos, state, data);
+        return ModelData.builder()
+            .with(SUB_MODEL_DATA, subModelData)
             .with(NEIGHBOR_PROPERTY, Pair.of(
                 level.getBlockState(pos.above()).getAppearance(level, pos.above(), Direction.DOWN, state, pos),
                 level.getBlockState(pos.below()).getAppearance(level, pos.below(), Direction.UP, state, pos)
@@ -130,6 +140,11 @@ public class PaneCullingBakedModel extends WrappedBakedModel {
         return quadDirection == Direction.UP ?
             stateAbove == null || !stateAbove.getValue(SIDE_PROPERTIES[partSide.ordinal()]) :
             stateBelow == null || !stateBelow.getValue(SIDE_PROPERTIES[partSide.ordinal()]);
+    }
+
+    @Override
+    public Material.Baked particleMaterial(@NotNull ModelData data){
+        return super.particleMaterial(getSubModelData(data));
     }
 
     private class FilteringModelPart implements BlockStateModelPart {

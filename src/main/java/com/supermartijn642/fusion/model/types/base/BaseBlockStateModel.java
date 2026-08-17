@@ -248,7 +248,7 @@ public class BaseBlockStateModel implements BakedModel {
         }
     }
 
-    public record Quad(QuadAccess quad, SpriteInstance sprite, BlockStateQuadProcessor<Object> processor) {
+    public record Quad(QuadAccess quad, @Nullable SpriteInstance sprite, @Nullable BlockStateQuadProcessor<Object> processor) {
     }
 
     private record RenderData(boolean conditions, List<Object>[] combinedTextureStates, PropertyStore propertyStore) {

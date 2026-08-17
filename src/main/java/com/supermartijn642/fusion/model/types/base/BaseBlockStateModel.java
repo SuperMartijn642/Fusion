@@ -184,6 +184,6 @@ public class BaseBlockStateModel implements BlockStateModel {
         }
     }
 
-    public record Quad(QuadAccess quad, SpriteInstance sprite, BlockStateQuadProcessor<Object> processor) {
+    public record Quad(QuadAccess quad, @Nullable SpriteInstance sprite, @Nullable BlockStateQuadProcessor<Object> processor) {
     }
 }

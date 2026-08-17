@@ -207,6 +207,6 @@ public class BaseBakedModel implements BakedModel, FabricBakedModel {
         }
     }
 
-    public record Quad(QuadAccess quad, SpriteInstance sprite, QuadProcessor<Object> processor) {
+    public record Quad(QuadAccess quad, @Nullable SpriteInstance sprite, @Nullable QuadProcessor<Object> processor) {
     }
 }

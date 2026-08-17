@@ -360,7 +360,7 @@ public class BaseBakedModel implements BakedModel, CustomRenderTypeBakedModel {
         }
     }
 
-    public record Quad(QuadAccess quad, SpriteInstance sprite, QuadProcessor<Object> processor) {
+    public record Quad(QuadAccess quad, @Nullable SpriteInstance sprite, @Nullable QuadProcessor<Object> processor) {
     }
 
     private record RenderData(boolean conditions, List<Object>[] combinedTextureStates, PropertyStore propertyStore) {

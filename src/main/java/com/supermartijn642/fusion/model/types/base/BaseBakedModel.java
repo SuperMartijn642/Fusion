@@ -318,10 +318,10 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     public static final class Quad {
         private final QuadAccess quad;
-        private final SpriteInstance sprite;
-        private final QuadProcessor<Object> processor;
+        private final @Nullable SpriteInstance sprite;
+        private final @Nullable QuadProcessor<Object> processor;
 
-        public Quad(QuadAccess quad, SpriteInstance sprite, QuadProcessor<Object> processor){
+        public Quad(QuadAccess quad, @Nullable SpriteInstance sprite, @Nullable QuadProcessor<Object> processor){
             this.quad = quad;
             this.sprite = sprite;
             this.processor = processor;

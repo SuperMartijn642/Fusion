@@ -48,7 +48,7 @@ public class ModelTransformImpl implements ModelTransform {
         return new ModelTransformImpl(matrix, uvLock);
     }
 
-    private static final float PRECISION = 1e-7f;
+    private static final float PRECISION = 1e-3f;
 
     private final Matrix4fc matrix;
     private final boolean uvLock;
@@ -141,15 +141,22 @@ public class ModelTransformImpl implements ModelTransform {
         if(this.modelState == null){
             // Check whether this transform's rotations are all at multiples of 90 degrees
             boolean isAxisAlignedPreserving = true;
+            float pi = Math.PI_f, halfPi = Math.PI_OVER_2_f;
+            // Check left rotation
             Vector3f eulerRotation = this.leftRotation().getEulerAnglesXYZ(new Vector3f());
-            if(!(Math.abs(eulerRotation.x) < PRECISION || Math.abs(eulerRotation.x - Math.PI_OVER_2_f) < PRECISION || Math.abs(eulerRotation.x - Math.PI_f) < PRECISION || Math.abs(eulerRotation.x - Math.PI_f - Math.PI_OVER_2_f) < PRECISION)
-                || !(Math.abs(eulerRotation.y) < PRECISION || Math.abs(eulerRotation.y - Math.PI_OVER_2_f) < PRECISION || Math.abs(eulerRotation.y - Math.PI_f) < PRECISION || Math.abs(eulerRotation.y - Math.PI_f - Math.PI_OVER_2_f) < PRECISION)
-                || !(Math.abs(eulerRotation.z) < PRECISION || Math.abs(eulerRotation.z - Math.PI_OVER_2_f) < PRECISION || Math.abs(eulerRotation.z - Math.PI_f) < PRECISION || Math.abs(eulerRotation.z - Math.PI_f - Math.PI_OVER_2_f) < PRECISION))
+            float xRemainder = (eulerRotation.x + pi) % halfPi, yRemainder = (eulerRotation.y + pi) % halfPi, zRemainder = (eulerRotation.z + pi) % halfPi;
+            if(!(xRemainder < PRECISION || halfPi - xRemainder < PRECISION)
+                || !(yRemainder < PRECISION || halfPi - yRemainder < PRECISION)
+                || !(zRemainder % halfPi < PRECISION || halfPi - zRemainder < PRECISION))
                 isAxisAlignedPreserving = false;
+            // Check right rotation
             this.rightRotation.getEulerAnglesXYZ(eulerRotation);
-            if(!(Math.abs(eulerRotation.x) < PRECISION || Math.abs(eulerRotation.x - Math.PI_OVER_2_f) < PRECISION || Math.abs(eulerRotation.x - Math.PI_f) < PRECISION || Math.abs(eulerRotation.x - Math.PI_f - Math.PI_OVER_2_f) < PRECISION)
-                || !(Math.abs(eulerRotation.y) < PRECISION || Math.abs(eulerRotation.y - Math.PI_OVER_2_f) < PRECISION || Math.abs(eulerRotation.y - Math.PI_f) < PRECISION || Math.abs(eulerRotation.y - Math.PI_f - Math.PI_OVER_2_f) < PRECISION)
-                || !(Math.abs(eulerRotation.z) < PRECISION || Math.abs(eulerRotation.z - Math.PI_OVER_2_f) < PRECISION || Math.abs(eulerRotation.z - Math.PI_f) < PRECISION || Math.abs(eulerRotation.z - Math.PI_f - Math.PI_OVER_2_f) < PRECISION))
+            xRemainder = (eulerRotation.x + pi) % halfPi;
+            yRemainder = (eulerRotation.y + pi) % halfPi;
+            zRemainder = (eulerRotation.z + pi) % halfPi;
+            if(!(xRemainder < PRECISION || halfPi - xRemainder < PRECISION)
+                || !(yRemainder < PRECISION || halfPi - yRemainder < PRECISION)
+                || !(zRemainder % halfPi < PRECISION || halfPi - zRemainder < PRECISION))
                 isAxisAlignedPreserving = false;
             boolean finalIsAxisAlignedPreserving = isAxisAlignedPreserving;
             // Create the model state
@@ -162,7 +169,7 @@ public class ModelTransformImpl implements ModelTransform {
 
                     @Override
                     public boolean mayApplyArbitraryRotation(){
-                        return finalIsAxisAlignedPreserving;
+                        return !finalIsAxisAlignedPreserving;
                     }
                 };
             }else{
@@ -210,7 +217,7 @@ public class ModelTransformImpl implements ModelTransform {
 
                     @Override
                     public boolean mayApplyArbitraryRotation(){
-                        return finalIsAxisAlignedPreserving;
+                        return !finalIsAxisAlignedPreserving;
                     }
                 };
             }

@@ -5,6 +5,7 @@ import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.texture.custom.TextureInstance;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import net.minecraft.util.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -16,13 +17,20 @@ public class TextureInstanceImpl<X> implements TextureInstance<X> {
     private final TextureType<?,X> textureType;
     private final ResourceLocation identifier;
     private final X customData;
+    private final List<TextureInstance<?>> subTextures;
+    private TextureInstance<?> parent;
     private List<SpriteInstance> sprites;
     private SpriteInstance defaultSprite;
 
-    public TextureInstanceImpl(TextureType<?,X> textureType, ResourceLocation identifier, X customData){
+    public TextureInstanceImpl(TextureType<?,X> textureType, ResourceLocation identifier, X customData, List<TextureInstance<?>> subTextures){
         this.textureType = textureType;
         this.identifier = identifier;
         this.customData = customData;
+        this.subTextures = subTextures;
+    }
+
+    public void setParent(TextureInstance<?> parent){
+        this.parent = parent;
     }
 
     public void setSprites(List<SpriteInstance> sprites, SpriteInstance defaultSprite){
@@ -53,6 +61,15 @@ public class TextureInstanceImpl<X> implements TextureInstance<X> {
     @Override
     public X getCustomData(){
         return this.customData;
+    }
+
+    @Nullable
+    public TextureInstance<?> getParent(){
+        return this.parent;
+    }
+
+    public List<TextureInstance<?>> getSubTextures(){
+        return this.subTextures;
     }
 
     @Override

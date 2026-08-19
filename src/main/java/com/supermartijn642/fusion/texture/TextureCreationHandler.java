@@ -139,9 +139,11 @@ public class TextureCreationHandler {
     private static TextureInstance<?> createTextureInstance(DummyTextureSpriteContents contents, TextureAtlas textureAtlas, int atlasWidth, int atlasHeight, int mipmapLevels, Consumer<TextureAtlasSprite> spriteOutput){
         // Create sub-textures
         TextureInstance<?> defaultSubTexture = null;
+        List<TextureInstance<?>> subTextures = new ArrayList<>(contents.getSubTextures().size());
         for(DummyTextureSpriteContents subTexture : contents.getSubTextures()){
             try{
                 TextureInstance<?> textureInstance = createTextureInstance(subTexture, textureAtlas, atlasWidth, atlasHeight, mipmapLevels, spriteOutput);
+                subTextures.add(textureInstance);
                 if(subTexture.getTextureOutput().isMarkedDefault())
                     defaultSubTexture = textureInstance;
             }catch(Exception e){
@@ -155,8 +157,11 @@ public class TextureCreationHandler {
         TextureInstanceImpl<?> textureInstance = new TextureInstanceImpl(
             textureOutput.getTextureType(),
             textureOutput.getIdentifier(),
-            textureOutput.getCustomData()
+            textureOutput.getCustomData(),
+            subTextures
         );
+        for(TextureInstance<?> subTexture : subTextures)
+            ((TextureInstanceImpl<?>)subTexture).setParent(textureInstance);
 
         // Create the custom sprites
         SpriteInstance defaultSprite = null;

@@ -34,10 +34,10 @@ dependencies {
     // ModernFix
 //    runtimeOnly "curse.maven:modernfix-790626:6171686"
     // Sodium
-    compileOnly "maven.modrinth:sodium:mc1.21.6-0.6.13-neoforge"
+    compileOnly "maven.modrinth:sodium:mc1.21.8-0.7.3-neoforge"
     compileOnly "org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:3.4.0+acb05a3919"
     // Iris
-//    runtimeOnly "maven.modrinth:iris:1.9.1+1.21.7-neoforge"
+    compileOnly "maven.modrinth:iris:1.9.6+1.21.8-neoforge"
 
     // Just Enough Items
 //    runtimeOnly "curse.maven:jei-238222:${just_enough_items_file}"

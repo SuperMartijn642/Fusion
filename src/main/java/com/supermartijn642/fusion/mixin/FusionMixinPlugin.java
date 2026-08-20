@@ -15,10 +15,12 @@ import java.util.Set;
 public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isSodiumLoaded;
+    private boolean isIrisLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
         this.isSodiumLoaded = isClassAvailable("net.caffeinemc.mods.sodium.client.SodiumClientMod");
+        this.isIrisLoaded = isClassAvailable("net.irisshaders.iris.Iris");
     }
 
     private static boolean isClassAvailable(String className){
@@ -55,6 +57,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             mixins.add("sodium.ExtendedItemFeatureRendererMixinSodium");
             mixins.add("sodium.LevelSliceMixin");
         }
+        if(this.isIrisLoaded)
+            mixins.add("iris.AtlasPBRLoaderMixinIris");
         return mixins;
     }
 

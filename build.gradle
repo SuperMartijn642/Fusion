@@ -39,9 +39,9 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 
     // Sodium
-    modCompileOnly "maven.modrinth:sodium:mc1.21.3-0.6.5-fabric"
+    modCompileOnly "maven.modrinth:sodium:mc1.21.3-0.6.13-fabric"
     // Iris
-//    runtimeOnly "maven.modrinth:iris:1.8.1+1.21.3-fabric"
+    modCompileOnly "maven.modrinth:iris:1.8.1+1.21.3-fabric"
 
     // Just Enough Items
 //    modRuntimeOnly "curse.maven:jei-238222:${just_enough_items_file}"

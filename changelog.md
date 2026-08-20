@@ -1,3 +1,10 @@
+### Fusion 1.3.13
+- Added integration with Iris to intercept normal and specular maps for Fusion textures and handle them as Fusion textures
+- Fixed models without geometry being baked as missing model
+- Fixed sub-textures for `random` texture type receiving wrong texture data leading to a crash
+- Fixed crash when using `is_face_visible` connection predicate in an item model
+- Fixed model lighting sometimes being incorrect with Sodium installed due to precision errors when checking whether model transform is limited to rotations of 90 degrees
+
 ### Fusion 1.3.12
 - Fixed `MutableQuad#chunkLayer` not always overwriting flags
 

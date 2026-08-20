@@ -16,11 +16,13 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isSodiumLoaded;
     private boolean isIndiumLoaded;
+    private boolean isIrisLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
         this.isSodiumLoaded = isClassAvailable("me.jellysquid.mods.sodium.client.SodiumClientMod");
         this.isIndiumLoaded = isClassAvailable("link.infra.indium.Indium");
+        this.isIrisLoaded = isClassAvailable("net.irisshaders.iris.Iris");
     }
 
     private static boolean isClassAvailable(String className){
@@ -62,6 +64,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             mixins.add("indium.NonTerrainBlockRenderContextMixinIndium");
             mixins.add("indium.TerrainRenderContextMixinIndium");
         }
+        if(this.isIrisLoaded)
+            mixins.add("iris.AtlasPBRLoaderMixinIris");
         return mixins;
     }
 

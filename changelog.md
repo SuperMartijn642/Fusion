@@ -1,3 +1,11 @@
+### Fusion 1.3.13
+- Added `TextureType#getBlockStateRenderTypes` which returns the render types that may be used by a texture
+- Added integration with Iris to intercept normal and specular maps for Fusion textures and handle them as Fusion textures
+- Fixed models without geometry being baked as missing model
+- Fixed sub-textures for `random` texture type receiving wrong texture data leading to a crash
+- Fixed crash when using `is_face_visible` connection predicate in an item model
+- Added a workaround for minimap mods not checking geometry for different render types
+
 ### Fusion 1.3.12
 - Fixed `MutableQuad#chunkLayer` not always overwriting flags
 

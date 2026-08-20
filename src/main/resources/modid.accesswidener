@@ -151,11 +151,13 @@ accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite contents Lnet/minecraft/client/renderer/texture/SpriteContents;
 accessible method net/minecraft/client/renderer/texture/TextureAtlasSprite <init> (Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/renderer/texture/SpriteContents;IIII)V
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite contents Lnet/minecraft/client/renderer/texture/SpriteContents;
 # TransferableSelectionList
 accessible field net/minecraft/client/gui/screens/packs/TransferableSelectionList screen Lnet/minecraft/client/gui/screens/packs/PackSelectionScreen;
 # Transformation

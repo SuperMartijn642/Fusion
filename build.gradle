@@ -40,9 +40,9 @@ dependencies {
     // ModernFix
 //    modRuntimeOnly "curse.maven:modernfix-790626:6025591"
     // Sodium
-    modCompileOnly "maven.modrinth:sodium:mc1.21.1-0.6.5-fabric"
+    modCompileOnly "maven.modrinth:sodium:mc1.21.1-0.8.13-beta.2-fabric"
     // Iris
-//    runtimeOnly "maven.modrinth:iris:1.8.1+1.21.1-fabric"
+    modCompileOnly "maven.modrinth:iris:1.8.14-beta.1+1.21.1-fabric"
 
     // Just Enough Items
 //    modRuntimeOnly "curse.maven:jei-238222:${just_enough_items_file}"

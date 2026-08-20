@@ -1,3 +1,11 @@
+### Fusion 1.3.13
+- Added `TextureType#getBlockStateRenderTypes` which returns the render types that may be used by a texture
+- Fixed models without geometry being baked as missing model
+- Fixed sub-textures for `random` texture type receiving wrong texture data leading to a crash
+- Fixed crash when using `is_face_visible` connection predicate in an item model
+- Added a workaround for minimap mods not checking geometry for different render types
+- Fixed `pane_culling_fix` option making submodels not receive world context
+
 ### Fusion 1.3.12a
 - Fixed crash when no other mod provides MixinExtras
 

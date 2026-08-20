@@ -110,8 +110,17 @@ public class FusionBlockModelData extends BlockModel {
             else
                 throw new RuntimeException("Encountered an exception while baking untyped block model for '" + identifier + "'!", e);
         }
-        if(bakedModel == null)
-            bakedModel = context.getMissingBakedModel();
+        if(bakedModel == null){
+            // Get particle texture
+            TextureAtlasSprite particleSprite = ModelGeometry.MaterialKeyResolver.fromKeyLookup(
+                key -> ModelStack.empty().push(modelInstance, identifier).findMaterialIncludingParents(key, context),
+                context::getMaterial,
+                s -> {},
+                s -> {}
+            ).get("particle", false);
+            // Create empty model
+            bakedModel = new EmptyBakedModel(particleSprite);
+        }
         // Log warnings
         if(!warnings.isEmpty())
             LoggingHelper.logUserWarnings(warnings, "Warnings for block model '%s':", identifier);
@@ -141,7 +150,7 @@ public class FusionBlockModelData extends BlockModel {
                 throw new RuntimeException("Encountered an exception while baking untyped item model for '" + this.identifier + "'!", e);
         }
         if(model == null)
-            model = context.getMissingItemModel();
+            model = EmptyItemModel.INSTANCE;
         // Log warnings
         if(!warnings.isEmpty())
             LoggingHelper.logUserWarnings(warnings, "Warnings for item model '%s':", this.identifier);

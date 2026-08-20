@@ -37,7 +37,7 @@ dependencies {
     compileOnly "net.caffeinemc:sodium-neoforge-mod:0.8.13+mc1.21.11"
 //    runtimeOnly "net.caffeinemc:sodium-neoforge:0.8.13+mc1.21.11"
     // Iris
-//    runtimeOnly "maven.modrinth:iris:1.10.3+1.21.11-neoforge"
+    compileOnly "maven.modrinth:iris:1.10.7+1.21.11-neoforge"
 
     // Just Enough Items
 //    runtimeOnly "curse.maven:jei-238222:${just_enough_items_file}"

@@ -46,7 +46,7 @@ dependencies {
     // Embeddium
     compileOnly fg.deobf("curse.maven:embeddium-908741:5681725")
     // Oculus
-//    runtimeOnly fg.deobf("curse.maven:oculus-581495:6020952")
+    compileOnly fg.deobf("curse.maven:oculus-581495:6020952")
     // Rubidium
 //    runtimeOnly fg.deobf("curse.maven:rubidium-574856:4952685")
 

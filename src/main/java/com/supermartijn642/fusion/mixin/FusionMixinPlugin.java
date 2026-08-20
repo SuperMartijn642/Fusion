@@ -16,11 +16,13 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isEmbeddiumLoaded;
     private boolean isRubidiumLoaded;
+    private boolean isOculusLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
         this.isEmbeddiumLoaded = isClassAvailable("org.embeddedt.embeddium.api.eventbus.EmbeddiumEvent");
         this.isRubidiumLoaded = !this.isEmbeddiumLoaded && isClassAvailable("me.jellysquid.mods.sodium.client.SodiumClientMod");
+        this.isOculusLoaded = isClassAvailable("net.irisshaders.iris.mixin.OculusMixinPlugin");
     }
 
     private static boolean isClassAvailable(String className){
@@ -63,6 +65,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             mixins.add("rubidium.SpriteContentsInterpolationDataMixinRubidium");
             mixins.add("rubidium.WorldSliceMixinRubidium");
         }
+        if(this.isOculusLoaded)
+            mixins.add("oculus.AtlasPBRLoaderMixinOculus");
         return mixins;
     }
 

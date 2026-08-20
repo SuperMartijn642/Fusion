@@ -40,7 +40,7 @@ dependencies {
     compileOnly "net.caffeinemc:sodium-neoforge-mod:0.8.12-beta.2+mc1.21.1"
     compileOnly "org.sinytra.forgified-fabric-api:fabric-renderer-api-v1:3.4.1+9125b6dc19"
     // Iris
-//    runtimeOnly "maven.modrinth:iris:1.8.1+1.21.1-neoforge"
+    compileOnly "maven.modrinth:iris:1.8.14-beta.1+1.21.1-neoforge"
 
     // FramedBlocks
     compileOnly "curse.maven:framedblocks-441647:${framedblocks_file}"

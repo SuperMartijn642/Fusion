@@ -16,11 +16,13 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
 
     private boolean isEmbeddiumLoaded;
     private boolean isSodiumLoaded;
+    private boolean isIrisLoaded;
 
     @Override
     public void onLoad(String mixinPackage){
         this.isEmbeddiumLoaded = isClassAvailable("org.embeddedt.embeddium.api.eventbus.EmbeddiumEvent");
         this.isSodiumLoaded = isClassAvailable("net.caffeinemc.mods.sodium.client.SodiumClientMod");
+        this.isIrisLoaded = isClassAvailable("net.irisshaders.iris.Iris");
     }
 
     private static boolean isClassAvailable(String className){
@@ -59,6 +61,8 @@ public class FusionMixinPlugin implements IMixinConfigPlugin {
             mixins.add("sodium.SpriteContentsInterpolationDataMixinSodium");
             mixins.add("sodium.LevelSliceMixinSodium");
         }
+        if(this.isIrisLoaded)
+            mixins.add("iris.AtlasPBRLoaderMixinIris");
         return mixins;
     }
 

@@ -47,7 +47,7 @@ dependencies {
     // Indium
     modCompileOnly "curse.maven:indium-459496:6237037"
     // Iris
-//    runtimeOnly "maven.modrinth:iris:1.7.5+1.20.1"
+    modCompileOnly "maven.modrinth:iris:1.7.6+1.20.1"
 
     // Just Enough Items
 //    modRuntimeOnly "curse.maven:jei-238222:${just_enough_items_file}"

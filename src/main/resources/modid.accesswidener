@@ -115,11 +115,13 @@ accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
+accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite contents Lnet/minecraft/client/renderer/texture/SpriteContents;
 accessible field net/minecraft/client/renderer/texture/TextureAtlasSprite padding I
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite u1 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v0 F
 mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite v1 F
+mutable field net/minecraft/client/renderer/texture/TextureAtlasSprite contents Lnet/minecraft/client/renderer/texture/SpriteContents;
 # TextureSlots
 accessible field net/minecraft/client/resources/model/sprite/TextureSlots resolvedValues Ljava/util/Map;
 accessible method net/minecraft/client/resources/model/sprite/TextureSlots <init> (Ljava/util/Map;)V

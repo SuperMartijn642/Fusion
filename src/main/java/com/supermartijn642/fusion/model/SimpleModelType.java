@@ -118,29 +118,7 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             if(guiLight == null)
                 guiLight = BlockModel.GuiLight.SIDE;
             // Resolve item transforms
-            BiFunction<ItemTransforms.TransformType,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) -> {
-                ItemTransform transform = modelStack.findItemTransformIncludingParents(type, context);
-                return transform == null ? fallback : transform;
-            };
-            ImmutableMap.Builder<ItemTransforms.TransformType,ItemTransform> moddedTransforms = ImmutableMap.builder();
-            for(ItemTransforms.TransformType type : ItemTransforms.TransformType.values()){
-                if(type.isModded()){
-                    ItemTransform transform = itemTransformResolver.apply(type, null);
-                    if(transform != null)
-                        moddedTransforms.put(type, transform);
-                }
-            }
-            ItemTransforms itemTransforms = new ItemTransforms(
-                itemTransformResolver.apply(ItemTransforms.TransformType.THIRD_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.THIRD_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.HEAD, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.GUI, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.GROUND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemTransforms.TransformType.FIXED, ItemTransform.NO_TRANSFORM),
-                moddedTransforms.build()
-            );
+            ItemTransforms itemTransforms = resolveItemTransforms(context, modelStack);
             // Bake item overrides
             ItemOverrides itemOverrides = new NotStupidItemOverrides(
                 this.getItemOverrides(data),
@@ -180,5 +158,31 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                                 ModelTransform transform, ModelGeometry.MaterialKeyResolver materialResolver,
                                 ModelGeometry.QuadConsumer quadConsumer){
         this.getGeometry(data).bake(quadConsumer, transform, materialResolver);
+    }
+
+    public static ItemTransforms resolveItemTransforms(ModelBakingContext context, ModelStack modelStack){
+        BiFunction<ItemTransforms.TransformType,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) -> {
+            ItemTransform transform = modelStack.findItemTransformIncludingParents(type, context);
+            return transform == null ? fallback : transform;
+        };
+        ImmutableMap.Builder<ItemTransforms.TransformType,ItemTransform> moddedTransforms = ImmutableMap.builder();
+        for(ItemTransforms.TransformType type : ItemTransforms.TransformType.values()){
+            if(type.isModded()){
+                ItemTransform transform = itemTransformResolver.apply(type, null);
+                if(transform != null)
+                    moddedTransforms.put(type, transform);
+            }
+        }
+        return new ItemTransforms(
+            itemTransformResolver.apply(ItemTransforms.TransformType.THIRD_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemTransforms.TransformType.THIRD_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemTransforms.TransformType.FIRST_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemTransforms.TransformType.FIRST_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemTransforms.TransformType.HEAD, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemTransforms.TransformType.GUI, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemTransforms.TransformType.GROUND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemTransforms.TransformType.FIXED, ItemTransform.NO_TRANSFORM),
+            moddedTransforms.build()
+        );
     }
 }

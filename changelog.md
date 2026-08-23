@@ -1,3 +1,6 @@
+### Fusion 1.3.14
+- Fixed `DefaultModelTypes#ITEM_MODEL_GENERATOR` not being registered
+
 ### Fusion 1.3.13
 - Added `TextureType#getBlockStateRenderTypes` which returns the render types that may be used by a texture
 - Fixed models without geometry being baked as missing model

@@ -199,7 +199,8 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
 
     @Override
     public boolean canRenderInLayer(IBlockState state, BlockRenderLayer layer){
-        return (this.renderTypes & (1 << layer.ordinal())) != 0;
+        return (this.renderTypes & (1 << layer.ordinal())) != 0
+            || ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
     }
 
     private List<BakedQuad> getItemQuads(ItemStack stack){

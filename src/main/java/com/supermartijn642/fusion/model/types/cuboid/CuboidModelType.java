@@ -81,6 +81,8 @@ public class CuboidModelType extends SimpleModelType<ModelBlock> {
 
     @Override
     public ModelGeometry getGeometry(ModelBlock data){
+        if(data.getRootModel() == ModelBakery.MODEL_ENTITY)
+            return null;
         return data.elements.isEmpty() ? null : CuboidModelGeometry.of(data);
     }
 

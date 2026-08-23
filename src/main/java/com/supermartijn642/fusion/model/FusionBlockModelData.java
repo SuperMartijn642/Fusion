@@ -407,6 +407,8 @@ public class FusionBlockModelData extends ModelBlock implements IModel {
             return ((FusionBlockModelData)model).model;
         if(model == ModelBakery.MODEL_GENERATED)
             return ModelInstance.of(DefaultModelTypes.ITEM_MODEL_GENERATOR, null);
+        if(model == ModelBakery.MODEL_ENTITY)
+            return ModelInstance.of(DefaultModelTypes.BLOCK_ENTITY_MARKER, null);
         ModelInstance<?> modelInstance = ((BlockModelExtension)model).getFusionModel();
         if(modelInstance == null){
             modelInstance = new ModelInstanceImpl<>(DefaultModelTypes.CUBOID, model);

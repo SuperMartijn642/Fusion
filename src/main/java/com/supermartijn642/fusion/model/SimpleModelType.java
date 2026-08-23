@@ -110,20 +110,7 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             if(isGui3d == null)
                 isGui3d = true;
             // Resolve item transforms
-            BiFunction<ItemCameraTransforms.TransformType,ItemTransformVec3f,ItemTransformVec3f> itemTransformResolver = (type, fallback) -> {
-                ItemTransformVec3f transform = modelStack.findItemTransformIncludingParents(type, context);
-                return transform == null ? fallback : transform;
-            };
-            ItemCameraTransforms itemTransforms = new ItemCameraTransforms(
-                itemTransformResolver.apply(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND, ItemTransformVec3f.DEFAULT),
-                itemTransformResolver.apply(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND, ItemTransformVec3f.DEFAULT),
-                itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIRST_PERSON_LEFT_HAND, ItemTransformVec3f.DEFAULT),
-                itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND, ItemTransformVec3f.DEFAULT),
-                itemTransformResolver.apply(ItemCameraTransforms.TransformType.HEAD, ItemTransformVec3f.DEFAULT),
-                itemTransformResolver.apply(ItemCameraTransforms.TransformType.GUI, ItemTransformVec3f.DEFAULT),
-                itemTransformResolver.apply(ItemCameraTransforms.TransformType.GROUND, ItemTransformVec3f.DEFAULT),
-                itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIXED, ItemTransformVec3f.DEFAULT)
-            );
+            ItemCameraTransforms itemTransforms = resolveItemTransforms(context, modelStack);
             // Create item overrides list
             ItemOverrideList itemOverrides = new ItemOverrideList(this.getItemOverrides(data));
             // Create the model
@@ -157,5 +144,22 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                                 ModelTransform transform, ModelGeometry.MaterialKeyResolver materialResolver,
                                 ModelGeometry.QuadConsumer quadConsumer){
         this.getGeometry(data).bake(quadConsumer, transform, materialResolver);
+    }
+
+    public static ItemCameraTransforms resolveItemTransforms(ModelBakingContext context, ModelStack modelStack){
+        BiFunction<ItemCameraTransforms.TransformType,ItemTransformVec3f,ItemTransformVec3f> itemTransformResolver = (type, fallback) -> {
+            ItemTransformVec3f transform = modelStack.findItemTransformIncludingParents(type, context);
+            return transform == null ? fallback : transform;
+        };
+        return new ItemCameraTransforms(
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.THIRD_PERSON_LEFT_HAND, ItemTransformVec3f.DEFAULT),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.THIRD_PERSON_RIGHT_HAND, ItemTransformVec3f.DEFAULT),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIRST_PERSON_LEFT_HAND, ItemTransformVec3f.DEFAULT),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIRST_PERSON_RIGHT_HAND, ItemTransformVec3f.DEFAULT),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.HEAD, ItemTransformVec3f.DEFAULT),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.GUI, ItemTransformVec3f.DEFAULT),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.GROUND, ItemTransformVec3f.DEFAULT),
+            itemTransformResolver.apply(ItemCameraTransforms.TransformType.FIXED, ItemTransformVec3f.DEFAULT)
+        );
     }
 }

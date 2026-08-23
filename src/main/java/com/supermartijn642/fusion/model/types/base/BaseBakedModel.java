@@ -223,7 +223,8 @@ public class BaseBakedModel implements BakedModel, CustomRenderTypeBakedModel {
 
     @Override
     public boolean canRenderInLayer(BlockState state, RenderType layer){
-        return (this.renderTypes & (1 << ChunkRenderTypeHelper.getId(layer))) != 0;
+        return (this.renderTypes & (1 << ChunkRenderTypeHelper.getId(layer))) != 0
+            || ModelRenderTypeHelper.couldBlockRenderInLayerOriginally(state, layer);
     }
 
     @Override

@@ -46,6 +46,7 @@ public class FusionClient {
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("unknown"), DefaultModelTypes.UNKNOWN);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("cuboid"), DefaultModelTypes.CUBOID);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("item_model_generator"), DefaultModelTypes.ITEM_MODEL_GENERATOR);
+        FusionModelTypeRegistry.registerModelType(Fusion.identifier("block_entity_marker"), DefaultModelTypes.BLOCK_ENTITY_MARKER);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("base"), DefaultModelTypes.BASE);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("connecting"), DefaultModelTypes.CONNECTING);
         FusionModelTypeRegistry.registerModelType(Fusion.identifier("composite"), DefaultModelTypes.COMPOSITE);

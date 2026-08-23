@@ -1,3 +1,9 @@
+### Fusion 1.3.14
+- Added `DefaultModelTypes#BLOCK_ENTITY_MARKER`
+- Fixed Fusion models with parent `minecraft:builtin/entity` not being marked as custom item renderer
+- Fixed `DefaultModelTypes#ITEM_MODEL_GENERATOR` not being registered
+- Fixed crash when Iris PBR texture has empty tiles resulting in a different number of sprites compared to regular texture
+
 ### Fusion 1.3.13
 - Added `TextureType#getBlockStateRenderTypes` which returns the render types that may be used by a texture
 - Added integration with Iris to intercept normal and specular maps for Fusion textures and handle them as Fusion textures

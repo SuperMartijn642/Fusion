@@ -1,3 +1,6 @@
+### Fusion 1.3.14
+- Fixed `DefaultModelTypes#ITEM_MODEL_GENERATOR` not being registered
+
 ### Fusion 1.3.13
 - Fixed models without geometry being baked as missing model
 - Fixed sub-textures for `random` texture type receiving wrong texture data leading to a crash

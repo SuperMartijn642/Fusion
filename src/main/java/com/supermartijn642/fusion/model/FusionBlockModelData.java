@@ -380,6 +380,10 @@ public class FusionBlockModelData extends BlockModel {
     public static UntypedModelInstance getModelInstance(UnbakedModel model){
         if(model instanceof FusionBlockModelData)
             return ((FusionBlockModelData)model).model;
+        if(model == SpecialModels.GENERATED_MARKER)
+            return ModelInstance.of(DefaultModelTypes.ITEM_MODEL_GENERATOR, null);
+        if(model == SpecialModels.BLOCK_ENTITY_MARKER)
+            return ModelInstance.of(DefaultModelTypes.BLOCK_ENTITY_MARKER, null);
         if(model instanceof BlockModel){
             ModelInstance<?> modelInstance = ((BlockModelExtension)model).getFusionModel();
             if(modelInstance == null){
@@ -388,8 +392,6 @@ public class FusionBlockModelData extends BlockModel {
             }
             return modelInstance;
         }
-        if(model == SpecialModels.GENERATED_MARKER)
-            return ModelInstance.of(DefaultModelTypes.ITEM_MODEL_GENERATOR, null);
         return new ModelInstanceImpl<>(DefaultModelTypes.UNKNOWN, model);
     }
 }

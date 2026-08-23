@@ -119,29 +119,7 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             if(guiLight == null)
                 guiLight = BlockModel.GuiLight.SIDE;
             // Resolve item transforms
-            BiFunction<ItemDisplayContext,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) -> {
-                ItemTransform transform = modelStack.findItemTransformIncludingParents(type, context);
-                return transform == null ? fallback : transform;
-            };
-            ImmutableMap.Builder<ItemDisplayContext,ItemTransform> moddedTransforms = ImmutableMap.builder();
-            for(ItemDisplayContext type : ItemDisplayContext.values()){
-                if(type.isModded()){
-                    ItemTransform transform = itemTransformResolver.apply(type, null);
-                    if(transform != null)
-                        moddedTransforms.put(type, transform);
-                }
-            }
-            ItemTransforms itemTransforms = new ItemTransforms(
-                itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.FIRST_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.HEAD, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.GUI, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.GROUND, ItemTransform.NO_TRANSFORM),
-                itemTransformResolver.apply(ItemDisplayContext.FIXED, ItemTransform.NO_TRANSFORM),
-                moddedTransforms.build()
-            );
+            ItemTransforms itemTransforms = resolveItemTransforms(context, modelStack);
             // Bake item overrides
             BakedOverrides itemOverrides = new NotStupidItemOverrides(
                 this.getItemOverrides(data),
@@ -181,5 +159,31 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                                 ModelTransform transform, ModelGeometry.MaterialKeyResolver materialResolver,
                                 ModelGeometry.QuadConsumer quadConsumer){
         this.getGeometry(data).bake(quadConsumer, transform, materialResolver);
+    }
+
+    public static ItemTransforms resolveItemTransforms(ModelBakingContext context, ModelStack modelStack){
+        BiFunction<ItemDisplayContext,ItemTransform,ItemTransform> itemTransformResolver = (type, fallback) -> {
+            ItemTransform transform = modelStack.findItemTransformIncludingParents(type, context);
+            return transform == null ? fallback : transform;
+        };
+        ImmutableMap.Builder<ItemDisplayContext,ItemTransform> moddedTransforms = ImmutableMap.builder();
+        for(ItemDisplayContext type : ItemDisplayContext.values()){
+            if(type.isModded()){
+                ItemTransform transform = itemTransformResolver.apply(type, null);
+                if(transform != null)
+                    moddedTransforms.put(type, transform);
+            }
+        }
+        return new ItemTransforms(
+            itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemDisplayContext.FIRST_PERSON_LEFT_HAND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemDisplayContext.FIRST_PERSON_RIGHT_HAND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemDisplayContext.HEAD, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemDisplayContext.GUI, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemDisplayContext.GROUND, ItemTransform.NO_TRANSFORM),
+            itemTransformResolver.apply(ItemDisplayContext.FIXED, ItemTransform.NO_TRANSFORM),
+            moddedTransforms.build()
+        );
     }
 }

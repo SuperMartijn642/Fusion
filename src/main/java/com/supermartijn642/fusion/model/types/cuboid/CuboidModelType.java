@@ -15,6 +15,7 @@ import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +80,8 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
 
     @Override
     public ModelGeometry getGeometry(BlockModel data){
+        if(data.getRootModel() == ModelBakery.BLOCK_ENTITY_MARKER)
+            return null;
         List<BlockElement> elements = data.elements;
         return elements == null || elements.isEmpty() ? null : CuboidModelGeometry.of(data);
     }

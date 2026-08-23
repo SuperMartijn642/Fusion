@@ -175,9 +175,7 @@ public class IrisPBRTextureCreationHandler {
 
     private static void createPBRSprites(TextureOutputImpl<?> textureOutput, TextureInstance<?> regularTexture, int atlasWidth, int atlasHeight, int mipLevel, PBRType pbrType, Consumer<AtlasPBRLoader.PBRTextureAtlasSprite> spriteConsumer) throws UserErrorException{
         // Create sub-texture instances
-        if(textureOutput.getSubTextures().size() != ((TextureInstanceImpl<?>)regularTexture).getSubTextures().size())
-            throw new AssertionError("Regular texture and Iris PBR texture have different number of sub textures!");
-        for(int i = 0; i < textureOutput.getSubTextures().size(); i++){
+        for(int i = 0; i < textureOutput.getSubTextures().size() && i < ((TextureInstanceImpl<?>)regularTexture).getSubTextures().size(); i++){
             TextureOutputImpl<?> subTextureOutput = textureOutput.getSubTextures().get(i);
             TextureInstance<?> regularSubTexture = ((TextureInstanceImpl<?>)regularTexture).getSubTextures().get(i);
             try{
@@ -209,6 +207,8 @@ public class IrisPBRTextureCreationHandler {
             SpriteInstance regularSprite = spriteBuilder.isMarkedDefault() ?
                 regularTexture.getDefaultSprite() :
                 regularSprites.get(identifier.getPath().substring(textureOutput.getIdentifier().getPath().length()));
+            if(regularSprite == null)
+                continue;
             if(spriteBuilder.getWidth() != regularSprite.getSprite().contents().width() || spriteBuilder.getHeight() != regularSprite.getSprite().contents().height())
                 throw new UserErrorException("PBR sprites must have same dimensions as the regular texture!");
             // Create custom sprite

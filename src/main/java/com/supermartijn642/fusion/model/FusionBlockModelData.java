@@ -399,6 +399,8 @@ public class FusionBlockModelData extends BlockModel {
             return ((FusionBlockModelData)model).model;
         if(model == ModelBakery.GENERATION_MARKER)
             return ModelInstance.of(DefaultModelTypes.ITEM_MODEL_GENERATOR, null);
+        if(model == ModelBakery.BLOCK_ENTITY_MARKER)
+            return ModelInstance.of(DefaultModelTypes.BLOCK_ENTITY_MARKER, null);
         if(model instanceof BlockModel){
             ModelInstance<?> modelInstance = ((BlockModelExtension)model).getFusionModel();
             if(modelInstance == null){

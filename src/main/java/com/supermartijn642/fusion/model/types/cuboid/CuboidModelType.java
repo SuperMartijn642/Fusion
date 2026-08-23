@@ -74,6 +74,8 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
 
     @Override
     public ModelGeometry getGeometry(BlockModel data){
+        if(data.getRootModel() == ModelBakery.BLOCK_ENTITY_MARKER)
+            return null;
         List<BlockPart> elements = data.elements;
         return elements == null || elements.isEmpty() ? null : CuboidModelGeometry.of(data);
     }

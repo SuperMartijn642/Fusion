@@ -13,6 +13,7 @@ import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.SimpleModelType;
 import net.minecraft.client.renderer.block.model.*;
 import net.minecraft.client.resources.model.Material;
+import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.NamedRenderTypeManager;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +80,8 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
 
     @Override
     public ModelGeometry getGeometry(BlockModel data){
+        if(data.getRootModel() == ModelBakery.BLOCK_ENTITY_MARKER)
+            return null;
         List<BlockElement> elements = data.elements;
         return elements == null || elements.isEmpty() ? null : CuboidModelGeometry.of(data);
     }

@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.model.types.connecting.ConnectingModelData
 import com.supermartijn642.fusion.api.texture.DefaultTextureTypes;
 import com.supermartijn642.fusion.model.types.UnknownModelType;
 import com.supermartijn642.fusion.model.types.base.BaseModelType;
+import com.supermartijn642.fusion.model.types.blockentitymarker.BlockEntityMarkerModelType;
 import com.supermartijn642.fusion.model.types.composite.CompositeModelType;
 import com.supermartijn642.fusion.model.types.connecting.ConnectingModelType;
 import com.supermartijn642.fusion.model.types.cuboid.CuboidModelType;
@@ -36,6 +37,10 @@ public final class DefaultModelTypes {
      * These models generate 3d geometry from 2d item textures.
      */
     public static final ModelType<Void> ITEM_MODEL_GENERATOR = new ItemModelGeneratorModelType();
+    /**
+     * Model type used for vanilla items that have a custom renderer.
+     */
+    public static final ModelType<Void> BLOCK_ENTITY_MARKER = new BlockEntityMarkerModelType();
 
     /**
      * Model type which extends the vanilla model with some common properties and also allows for processing base texture properties.

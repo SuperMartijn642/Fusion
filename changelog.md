@@ -1,3 +1,7 @@
+### Fusion 1.3.14a
+- Fixed Forge model `render_type` property making models invisible if there is no other custom render type used
+- Fixed modded models using Forge's custom geometry being baked as regular models
+
 ### Fusion 1.3.14
 - Added integration with Oculus to intercept normal and specular maps for Fusion textures and handle them as Fusion textures
 - Added `DefaultModelTypes#BLOCK_ENTITY_MARKER`

@@ -64,6 +64,8 @@ public class BaseBakedModel implements IBakedModel, CustomRenderTypeBakedModel {
         int renderTypes = 0;
         for(EnumFacing cullDirection : CullingHelper.cullDirections()){
             for(Quad quad : quads.get(cullDirection)){
+                if(quad.quad.renderLayer() != null)
+                    renderTypes |= 1 << quad.quad.renderLayer().ordinal();
                 SpriteInstance sprite = quad.sprite;
                 if(sprite == null)
                     continue;

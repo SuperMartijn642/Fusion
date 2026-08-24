@@ -1,3 +1,7 @@
+### Fusion 1.3.14a
+- Fixed Forge model `render_type` property making models invisible if there is no other custom render type used
+- Fixed modded models using Forge's custom geometry being baked as regular models
+
 ### Fusion 1.3.14
 - Fixed `DefaultModelTypes#ITEM_MODEL_GENERATOR` not being registered
 

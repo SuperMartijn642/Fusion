@@ -1,3 +1,7 @@
+### Fusion 1.3.14a
+- Fixed NeoForge model `render_type` property making models invisible if there is no other custom render type used
+- Fixed modded models using NeoForge's custom geometry being baked as regular models
+
 ### Fusion 1.3.14
 - Added `DefaultModelTypes#BLOCK_ENTITY_MARKER`
 - Fixed Fusion models with parent `minecraft:builtin/entity` not being marked as custom item renderer

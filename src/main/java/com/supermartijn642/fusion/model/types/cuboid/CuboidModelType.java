@@ -4,24 +4,29 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.DefaultModelTypes;
+import com.supermartijn642.fusion.api.model.ModelInstance;
 import com.supermartijn642.fusion.api.model.custom.*;
 import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.model.custom.geometry.ModelGeometry;
 import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
+import com.supermartijn642.fusion.model.ModelBakingContextImpl;
 import com.supermartijn642.fusion.model.SimpleModelType;
+import com.supermartijn642.fusion.util.NotStupidItemOverrides;
 import net.minecraft.client.renderer.block.model.*;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.client.resources.model.ModelBakery;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.client.NamedRenderTypeManager;
+import net.minecraftforge.client.model.geometry.IUnbakedGeometry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -82,6 +87,9 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
     public ModelGeometry getGeometry(BlockModel data){
         if(data.getRootModel() == ModelBakery.BLOCK_ENTITY_MARKER)
             return null;
+        IUnbakedGeometry<?> customGeometry = data.customData.getCustomGeometry();
+        if(customGeometry != null)
+            return CuboidModelGeometry.of(List.of());
         List<BlockElement> elements = data.elements;
         return elements == null || elements.isEmpty() ? null : CuboidModelGeometry.of(data);
     }
@@ -111,6 +119,62 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
     @Override
     protected @Nullable ResourceLocation getParent(BlockModel data){
         return data.getParentLocation();
+    }
+
+    @Override
+    public @Nullable BakedModel bakeModel(ModelBakingContext context, ModelStack modelStack, BlockModel data){
+        // Handle Forge custom geometry
+        IUnbakedGeometry<?> customGeometry = data.customData.getCustomGeometry();
+        if(customGeometry != null){
+            // Create dummy model baker
+            Function<Material,TextureAtlasSprite> spriteGetter = material -> context.getMaterial(ModelMaterial.of(material));
+            ModelBaker modelBaker = new ModelBaker() {
+                @Override
+                public UnbakedModel getModel(ResourceLocation identifier){
+                    return ((ModelBakingContextImpl)context).getModelBaker().getModel(identifier);
+                }
+
+                @Override
+                public BakedModel bake(ResourceLocation identifier, ModelState modelState){
+                    ModelInstance<?> model = context.getModel(identifier);
+                    if(model == null)
+                        return context.getMissingBakedModel();
+                    BakedModel bakedModel = model.bakeModel(context, ModelStack.empty().push(model, identifier));
+                    return bakedModel == null ? context.getMissingBakedModel() : bakedModel;
+                }
+
+                @Override
+                public BakedModel bake(ResourceLocation identifier, ModelState modelState, Function<Material,TextureAtlasSprite> spriteGetter){
+                    return this.bake(identifier, modelState);
+                }
+
+                @Override
+                public Function<Material,TextureAtlasSprite> getModelTextureGetter(){
+                    return spriteGetter;
+                }
+            };
+            // Compose transformations
+            ModelTransform transforms = modelStack.composeTransforms();
+            transforms = ModelTransform.compose(context.getTransformation(), transforms);
+            // Resolve item overrides
+            ItemOverrides itemOverrides = new NotStupidItemOverrides(
+                this.getItemOverrides(data),
+                location -> {
+                    UntypedModelInstance model = context.getModelOrMissing(location);
+                    return model.bakeModel(context, ModelStack.empty().push(model, location));
+                }
+            );
+            // Bake custom geometry
+            return customGeometry.bake(
+                data.customData,
+                modelBaker,
+                spriteGetter,
+                transforms.toModelState(),
+                itemOverrides,
+                context.getModelIdentifier()
+            );
+        }
+        return super.bakeModel(context, modelStack, data);
     }
 
     @Override

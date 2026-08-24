@@ -10,20 +10,23 @@ import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.SimpleModelType;
+import com.supermartijn642.fusion.model.custom.geometry.ModelGeometryImpl;
 import net.minecraft.client.renderer.block.model.BlockElement;
 import net.minecraft.client.renderer.block.model.BlockModel;
 import net.minecraft.client.renderer.block.model.ItemTransform;
 import net.minecraft.client.renderer.block.model.TextureSlots;
-import net.minecraft.client.resources.model.UnbakedModel;
+import net.minecraft.client.renderer.item.BlockModelWrapper;
+import net.minecraft.client.renderer.item.ItemModel;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraftforge.client.NamedRenderTypeManager;
+import net.minecraftforge.client.model.geometry.IUnbakedGeometry;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created 29/04/2023 by SuperMartijn642
@@ -54,6 +57,9 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
 
     @Override
     public ModelGeometry getGeometry(BlockModel data){
+        IUnbakedGeometry<?> customGeometry = data.customData.getCustomGeometry();
+        if(customGeometry != null)
+            return CuboidModelGeometry.of(List.of());
         List<BlockElement> elements = data.getElements();
         return elements == null || elements.isEmpty() ? null : CuboidModelGeometry.of(data);
     }
@@ -93,6 +99,73 @@ public class CuboidModelType extends SimpleModelType<BlockModel> {
     @Override
     protected @Nullable ResourceLocation getParent(BlockModel data){
         return data.getParentLocation();
+    }
+
+    @Override
+    public @Nullable BakedModel bakeBlockStateModel(BlockStateModelBakingContext context, ModelStack modelStack, BlockModel data){
+        // Handle Forge custom geometry
+        IUnbakedGeometry<?> customGeometry = data.customData.getCustomGeometry();
+        if(customGeometry != null){
+            // Resolve materials
+            Set<String> missingKeys = new HashSet<>();
+            ModelGeometry.MaterialKeyResolver materialResolver = ModelGeometry.MaterialKeyResolver.fromKeyLookup(
+                key -> modelStack.findMaterialIncludingParents(key, context),
+                context::getMaterial,
+                missingKeys::add,
+                keys -> context.pushWarning("Found circular material chain (" + keys.stream().map(k -> "'#" + k + "'").collect(Collectors.joining(" -> ")) + ") for model stack (" + modelStack + ")!")
+            );
+            TextureSlots textureSlots = ModelGeometryImpl.createTextureSlots(materialResolver);
+            // Create dummy model baker
+            SpriteGetter spriteGetter = new SpriteGetter() {
+                @Override
+                public TextureAtlasSprite get(Material material){
+                    return context.getMaterial(ModelMaterial.of(material));
+                }
+
+                @Override
+                public TextureAtlasSprite reportMissingReference(String reference){
+                    return materialResolver.get(reference);
+                }
+            };
+            ModelBaker modelBaker = new ModelBaker() {
+                @Override
+                public BakedModel bake(ResourceLocation location, ModelState modelState){
+                    return context.getModelBaker().bake(location, modelState);
+                }
+
+                @Override
+                public SpriteGetter sprites(){
+                    return spriteGetter;
+                }
+
+                @Override
+                public ModelDebugName rootName(){
+                    return null;
+                }
+            };
+            // Compose transformations
+            ModelTransform transforms = modelStack.composeTransforms();
+            transforms = ModelTransform.compose(context.getTransformation(), transforms);
+            // Bake custom geometry
+            return customGeometry.bake(
+                data.customData,
+                modelBaker,
+                textureSlots,
+                transforms.toModelState()
+            );
+        }
+        return super.bakeBlockStateModel(context, modelStack, data);
+    }
+
+    @Override
+    public @Nullable ItemModel bakeItemModel(ItemModelBakingContext context, ModelStack modelStack, BlockModel data){
+        // Handle Forge custom geometry
+        IUnbakedGeometry<?> customGeometry = data.customData.getCustomGeometry();
+        if(customGeometry != null){
+            BakedModel bakedModel = this.bakeBlockStateModel(context, modelStack, data);
+            return bakedModel == null ? null : new BlockModelWrapper(bakedModel, context.getTintSources());
+        }
+        return super.bakeItemModel(context, modelStack, data);
     }
 
     @Override

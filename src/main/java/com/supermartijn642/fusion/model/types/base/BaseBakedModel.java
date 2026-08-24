@@ -75,6 +75,8 @@ public class BaseBakedModel implements BakedModel {
         ChunkRenderTypeSet renderTypes = ChunkRenderTypeSet.none();
         for(Direction cullDirection : CullingHelper.cullDirections()){
             for(Quad quad : quads.get(cullDirection)){
+                if(quad.quad.chunkRenderType() != null)
+                    renderTypes = ChunkRenderTypeSet.union(renderTypes, ChunkRenderTypeSet.of(quad.quad.chunkRenderType()));
                 SpriteInstance sprite = quad.sprite;
                 if(sprite == null)
                     continue;

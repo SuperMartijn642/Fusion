@@ -55,6 +55,8 @@ public class BaseBlockStateModel implements BlockStateModel {
         Set<ChunkSectionLayer> renderTypes = new HashSet<>();
         for(Direction cullDirection : CullingHelper.cullDirections()){
             for(Quad quad : quads.get(cullDirection)){
+                if(quad.quad.chunkLayer() != null)
+                    renderTypes.add(quad.quad.chunkLayer());
                 SpriteInstance sprite = quad.sprite;
                 if(sprite == null)
                     continue;

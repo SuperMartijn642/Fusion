@@ -1,3 +1,6 @@
+### Fusion 1.3.14a
+- Fixed NeoForge model `render_type` property making models invisible if there is no other custom render type used
+
 ### Fusion 1.3.14
 - Fixed `DefaultModelTypes#ITEM_MODEL_GENERATOR` not being registered
 - Fixed crash when Iris PBR texture has empty tiles resulting in a different number of sprites compared to regular texture

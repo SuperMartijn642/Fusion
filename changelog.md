@@ -1,3 +1,6 @@
+### Fusion 1.3.14a
+- Fixed Forge model `render_type` property making models invisible if there is no other custom render type used
+
 ### Fusion 1.3.14
 - Added `DefaultModelTypes#BLOCK_ENTITY_MARKER`
 - Fixed Fusion models with parent `minecraft:builtin/entity` not being marked as custom item renderer

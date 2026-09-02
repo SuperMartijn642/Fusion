@@ -25,6 +25,7 @@
     "IntermediaryFormatMixin",
     "ItemRendererMixin",
     "LevelMixin",
+    "LevelReaderMixin",
     "MinecraftMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",

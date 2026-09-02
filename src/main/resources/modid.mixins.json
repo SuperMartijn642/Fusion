@@ -8,6 +8,7 @@
   "client": [
     "fabric.AbstractBlockRenderContextMixin",
     "fabric.BlockRenderContextMixin",
+    "fabric.FabricBlockViewMixin",
     "fabric.FabricDataGenHelperMixin",
     "fabric.ItemRenderContextMixin",
     "fabric.ModNioResourcePackMixin",

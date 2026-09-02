@@ -1,9 +1,12 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.util.BiomeGetter;
 import com.supermartijn642.fusion.util.Dimensional;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.chunk.RenderSectionRegion;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -12,7 +15,7 @@ import org.spongepowered.asm.mixin.Shadow;
  * Created 21/07/2026 by SuperMartijn642
  */
 @Mixin(RenderSectionRegion.class)
-public class RenderSectionRegionMixin implements Dimensional {
+public class RenderSectionRegionMixin implements Dimensional, BiomeGetter {
 
     @Final
     @Shadow
@@ -21,5 +24,10 @@ public class RenderSectionRegionMixin implements Dimensional {
     @Override
     public Identifier fusionGetDimension(){
         return this.level.dimension().identifier();
+    }
+
+    @Override
+    public @Nullable Identifier fusionGetBiome(BlockPos pos){
+        return ((BiomeGetter)this.level).fusionGetBiome(pos);
     }
 }

@@ -23,6 +23,7 @@
     "IntermediaryFormatMixin",
     "ItemFeatureRendererMixin",
     "LevelMixin",
+    "LevelReaderMixin",
     "LevelRendererMixin",
     "LevelExtractorMixin",
     "MinecraftMixin",

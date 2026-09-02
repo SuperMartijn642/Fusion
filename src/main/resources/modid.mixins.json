@@ -9,6 +9,7 @@
     "fabric.AltModelBlockRendererImplMixin",
     "fabric.ExtendedBlockModelFeatureRendererMixin",
     "fabric.ExtendedItemFeatureRendererMixin",
+    "fabric.FabricBlockGetterMixin",
     "fabric.FabricDataGenHelperMixin",
     "fabric.ModNioPackResourcesMixin",
     "AgeableMobMixin",

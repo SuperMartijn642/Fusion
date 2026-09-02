@@ -22,6 +22,7 @@
     "ItemModelGeneratorMixin",
     "ItemModelMesherMixin",
     "ItemRendererMixin",
+    "IWorldReaderMixin",
     "LegacyResourcePackWrapperMixin",
     "LegacyResourcePackWrapperV4Mixin",
     "LevelMixin",

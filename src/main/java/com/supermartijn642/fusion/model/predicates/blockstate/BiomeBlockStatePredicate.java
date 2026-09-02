@@ -8,14 +8,13 @@ import com.google.gson.JsonParseException;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.BlockStateModelPredicate;
 import com.supermartijn642.fusion.api.model.predicates.blockstate.DefaultBlockStateModelPredicates;
 import com.supermartijn642.fusion.api.util.Serializer;
+import com.supermartijn642.fusion.util.BiomeGetter;
 import com.supermartijn642.fusion.util.IdentifierUtil;
 import net.minecraft.block.BlockState;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.WorldGenRegistries;
 import net.minecraft.world.IBlockDisplayReader;
-import net.minecraft.world.IWorldReader;
 import net.minecraft.world.biome.Biome;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,10 +96,10 @@ public class BiomeBlockStatePredicate implements BlockStateModelPredicate {
 
     @Override
     public boolean test(@Nullable IBlockDisplayReader level, @Nullable BlockPos pos, @Nullable BlockState state){
-        if(pos == null || !(level instanceof IWorldReader))
+        if(pos == null || !(level instanceof BiomeGetter))
             return false;
-        Biome biome = ((IWorldReader)level).getBiome(pos);
-        return this.biomes.contains(WorldGenRegistries.BIOME.getKey(biome));
+        ResourceLocation biome = ((BiomeGetter)level).fusionGetBiome(pos);
+        return biome != null && this.biomes.contains(biome);
     }
 
     @Override

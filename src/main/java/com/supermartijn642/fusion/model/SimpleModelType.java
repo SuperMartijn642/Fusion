@@ -77,6 +77,13 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             ModelGeometry.QuadConsumer quadConsumer = (quad, cullDirection, geometryProperties) -> {
                 // Get the sprite instance
                 SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                // Apply model properties // TODO this should not be here, those properties should always be applied after processing from the texture
+                if(ambientOcclusion != null)
+                    quad.ambientOcclusion(ambientOcclusion);
+                if(shade != null)
+                    quad.shade(shade);
+                if(emissive != null)
+                    quad.emissive(emissive);
                 // NeoForge render type
                 if(!neoRenderType.isEmpty())
                     quad.renderTypes(neoRenderType.block(), neoRenderType.entity());

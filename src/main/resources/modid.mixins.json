@@ -8,6 +8,7 @@
   "client": [
     "fabric.AltItemRendererMixin",
     "fabric.AltModelBlockRendererImplMixin",
+    "fabric.FabricBlockGetterMixin",
     "fabric.FabricDataGenHelperMixin",
     "fabric.ModNioPackResourcesMixin",
     "fabric.QuadConsumersBlockModelMixin",

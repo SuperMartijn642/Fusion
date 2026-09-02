@@ -7,6 +7,7 @@
   "mixins": [],
   "client": [
     "fabric.AbstractTerrainRenderContextMixin",
+    "fabric.FabricBlockViewMixin",
     "fabric.FabricDataGenHelperMixin",
     "fabric.ItemRenderContextMixin",
     "fabric.ModNioPackResourcesMixin",

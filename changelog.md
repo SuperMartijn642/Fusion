@@ -1,3 +1,7 @@
+### Fusion 1.3.15
+- Fixed `ambientocclusion`, `shade`, and `emissive` model properties not always applying to texture types that have subtextures like `connecting` and `random`
+- Fixed `is_biome` predicate always evaluating to `false` for chunk geometry 
+
 ### Fusion 1.3.14
 - Added `DefaultModelTypes#BLOCK_ENTITY_MARKER`
 - Fixed Fusion models with parent `minecraft:builtin/entity` not being marked as custom item renderer

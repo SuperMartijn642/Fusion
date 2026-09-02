@@ -1,3 +1,7 @@
+### Fusion 1.3.15
+- Fixed `ambientocclusion`, `shade`, and `emissive` model properties not always applying to texture types that have subtextures like `connecting` and `random`
+- Fixed `is_biome` predicate always evaluating to `false` for chunk geometry 
+
 ### Fusion 1.3.14
 - Fixed `DefaultModelTypes#ITEM_MODEL_GENERATOR` not being registered
 - Fixed crash when Iris PBR texture has empty tiles resulting in a different number of sprites compared to regular texture

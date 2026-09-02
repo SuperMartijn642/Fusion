@@ -28,6 +28,7 @@
     "ItemRendererMixin",
     "LegacyPackResourcesAdapterMixin",
     "LevelMixin",
+    "LevelReaderMixin",
     "MinecraftMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",

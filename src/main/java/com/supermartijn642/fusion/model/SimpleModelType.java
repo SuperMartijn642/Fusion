@@ -72,6 +72,11 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
             ModelGeometry.QuadConsumer quadConsumer = (quad, cullDirection, geometryProperties) -> {
                 // Get the sprite instance
                 SpriteInstance sprite = SpriteHelper.getSpriteInstance(quad.sprite());
+                // Apply model properties // TODO this should not be here, those properties should always be applied after processing from the texture
+                if(shade != null)
+                    quad.shade(shade);
+                if(emissive != null)
+                    quad.emissive(emissive);
                 // Initialize the quad
                 QuadProcessor<?> processor = null;
                 if(sprite != null){

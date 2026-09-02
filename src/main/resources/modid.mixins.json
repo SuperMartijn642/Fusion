@@ -24,6 +24,7 @@
     "IntermediaryFormatMixin",
     "ItemFeatureRendererMixin",
     "LevelMixin",
+    "LevelReaderMixin",
     "LevelRendererMixin",
     "LevelExtractorMixin",
     "ModelBakeryMixin",

@@ -29,6 +29,7 @@
     "ItemRendererMixin",
     "LegacyPackResourcesAdapterMixin",
     "LevelMixin",
+    "LevelReaderMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",
     "ModelManagerMixin",

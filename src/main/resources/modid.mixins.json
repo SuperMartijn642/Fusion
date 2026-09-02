@@ -22,6 +22,7 @@
     "EntityRenderersMixin",
     "ItemRendererMixin",
     "LevelMixin",
+    "LevelReaderMixin",
     "MinecraftMixin",
     "ModelBakeryMixin",
     "ModelBlockRendererMixin",

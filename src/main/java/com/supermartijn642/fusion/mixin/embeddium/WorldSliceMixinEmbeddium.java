@@ -1,9 +1,12 @@
 package com.supermartijn642.fusion.mixin.embeddium;
 
+import com.supermartijn642.fusion.util.BiomeGetter;
 import com.supermartijn642.fusion.util.Dimensional;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import org.embeddedt.embeddium.impl.world.WorldSlice;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -12,7 +15,7 @@ import org.spongepowered.asm.mixin.Shadow;
  * Created 21/07/2026 by SuperMartijn642
  */
 @Mixin(WorldSlice.class)
-public class WorldSliceMixinEmbeddium implements Dimensional {
+public class WorldSliceMixinEmbeddium implements Dimensional, BiomeGetter {
 
     @Final
     @Shadow
@@ -21,5 +24,10 @@ public class WorldSliceMixinEmbeddium implements Dimensional {
     @Override
     public ResourceLocation fusionGetDimension(){
         return this.world.dimension().location();
+    }
+
+    @Override
+    public @Nullable ResourceLocation fusionGetBiome(BlockPos pos){
+        return ((BiomeGetter)this.world).fusionGetBiome(pos);
     }
 }

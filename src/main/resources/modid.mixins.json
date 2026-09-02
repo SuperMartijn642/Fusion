@@ -27,6 +27,7 @@
     "ItemModelShaperMixin",
     "ItemRendererMixin",
     "LevelMixin",
+    "LevelReaderMixin",
     "ModelBakeryMixin",
     "ModelBakeryModelBakerImplMixin",
     "ModelBlockRendererMixin",

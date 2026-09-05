@@ -2,6 +2,7 @@ package com.supermartijn642.fusion.api.model.custom.quad;
 
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableQuadView;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
@@ -92,14 +93,25 @@ public interface QuadAccess {
     RenderType itemRenderType();
 
     /**
+     * Render type that should be used when rendering the quad as an item with {@link ItemStackRenderState.FoilType#STANDARD} glint.
+     */
+    RenderType glintItemRenderType();
+
+    /**
+     * Render type that should be used when rendering the quad as an item with {@link ItemStackRenderState.FoilType#SPECIAL} glint.
+     */
+    RenderType specialGlintItemRenderType();
+
+    /**
      * Tint index to use for tinting the quad.
      */
     int tintIndex();
 
     /**
-     * Whether the quad should be shaded.
+     * The direction used for shade for the quad.
      */
-    boolean shade();
+    @Nullable
+    Direction shadeDirectionOverride();
 
     /**
      * Base light-level of the quad.

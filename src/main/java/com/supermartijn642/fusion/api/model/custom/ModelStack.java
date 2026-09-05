@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.custom.ModelStackImpl;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.ApiStatus;
@@ -161,18 +162,18 @@ public interface ModelStack extends Iterable<UntypedModelInstance> {
     ModelGeometry findGeometryIncludingParents(ModelResolver modelResolver);
 
     /**
-     * Finds the first model in the stack that returns a non-null value for {@link ModelInstance#getShade()} and returns its value.
+     * Finds the first model in the stack that returns a non-null value for {@link ModelInstance#getShadeDirectionOverride()} and returns its value.
      * If no such model is present, the result is {@code null}.
      */
     @Nullable
-    Boolean findShade();
+    Direction findShadeDirectionOverride();
 
     /**
-     * Finds the first model in the stack and the model tree of the last model that returns a non-null value for {@link ModelInstance#getShade()} and returns its value.
+     * Finds the first model in the stack and the model tree of the last model that returns a non-null value for {@link ModelInstance#getShadeDirectionOverride()} and returns its value.
      * If no such model is present, the result is {@code null}.
      */
     @Nullable
-    Boolean findShadeIncludingParents(ModelResolver modelResolver);
+    Direction findShadeDirectionOverrideIncludingParents(ModelResolver modelResolver);
 
     /**
      * Finds the first model in the stack that returns a non-null value for {@link ModelInstance#getEmissive()} and returns its value.

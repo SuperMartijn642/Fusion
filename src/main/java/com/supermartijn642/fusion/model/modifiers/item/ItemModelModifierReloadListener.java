@@ -4,11 +4,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import com.mojang.datafixers.util.Pair;
-import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.DynamicOps;
-import com.mojang.serialization.JsonOps;
 import com.supermartijn642.fusion.FusionClient;
 import com.supermartijn642.fusion.api.model.predicates.item.DefaultItemModelPredicates;
 import com.supermartijn642.fusion.api.model.predicates.item.FusionItemModelPredicateRegistry;
@@ -22,13 +17,16 @@ import net.minecraft.client.resources.model.ResolvableModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.StrictJsonParser;
 import net.minecraft.world.item.Item;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 
+import java.io.IOException;
+import java.io.Reader;
 import java.util.*;
 import java.util.function.Function;
 
@@ -153,17 +151,15 @@ public class ItemModelModifierReloadListener {
 
         // Find all item model modifier files
         Map<Identifier,JsonElement> resources = new HashMap<>();
-        SimpleJsonResourceReloadListener.scanDirectory(resourceManager, ID_CONVERTER, JsonOps.INSTANCE, new Codec<>() {
-            @Override
-            public <T> DataResult<Pair<JsonElement,T>> decode(DynamicOps<T> ops, T input){
-                return DataResult.success(com.mojang.datafixers.util.Pair.of(ops.convertTo(JsonOps.INSTANCE, input), input));
+        for(Map.Entry<Identifier,Resource> entry : ID_CONVERTER.listMatchingResources(resourceManager).entrySet()){
+            Identifier location = entry.getKey();
+            Identifier id = ID_CONVERTER.fileToId(location);
+            try(Reader reader = entry.getValue().openAsReader()){
+                resources.put(id, StrictJsonParser.parse(reader));
+            }catch(IOException | JsonParseException e){
+                FusionClient.LOGGER.error("Failed to read item model modifier json '{}' from '{}'", id, location, e);
             }
-
-            @Override
-            public <T> DataResult<T> encode(JsonElement input, DynamicOps<T> ops, T prefix){
-                return DataResult.success(JsonOps.INSTANCE.convertTo(ops, input));
-            }
-        }, resources);
+        }
 
         // Parse all the item model modifier files
         for(Map.Entry<Identifier,JsonElement> entry : resources.entrySet()){

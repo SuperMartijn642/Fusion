@@ -4,8 +4,8 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.modifiers.block.ModelsByRandomOffset;
+import com.supermartijn642.fusion.util.Triple;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -44,18 +44,18 @@ public class LevelRendererMixin {
         )
     )
     private void submitBlockDestroyAnimation(PoseStack poseStack, SubmitNodeCollector output, LevelRenderState levelState, CallbackInfo ci, @Local BlockBreakingRenderState breakingState, @Local LocalRef<BlockStateModel> model) {
-        List<Pair<Vector3fc,Mesh>> meshes = breakingState.getData(ModelsByRandomOffset.BREAKING_STATE_MESHES);
+        List<Triple<Vector3fc,Mesh,Boolean>> meshes = breakingState.getData(ModelsByRandomOffset.BREAKING_STATE_MESHES);
         if(meshes == null || meshes.isEmpty())
             return;
         // Undo normal offset
         Vec3 normalOffset = breakingState.blockState().getOffset(breakingState.blockPos());
         poseStack.translate(-normalOffset.x(), -normalOffset.y(), -normalOffset.z());
         // Submit meshes
-        for(Pair<Vector3fc,Mesh> entry : meshes){
+        for(Triple<Vector3fc,Mesh,Boolean> entry : meshes){
             poseStack.pushPose();
             Vector3fc offset = entry.left();
             poseStack.translate(offset.x(), offset.y(), offset.z());
-            output.submitBreakingBlockModel(poseStack, List.of(), entry.right(), breakingState.progress());
+            output.submitBreakingBlockModel(poseStack, List.of(), entry.middle(), breakingState.progress(), entry.right());
             poseStack.popPose();
         }
         model.set(this.modelManager.getBlockStateModelSet().get(Blocks.AIR.defaultBlockState()));

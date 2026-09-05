@@ -1,7 +1,7 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.CombinedBlockStateModel;
+import com.supermartijn642.fusion.util.Triple;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.client.rendering.v1.RenderStateDataKey;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
@@ -19,7 +19,7 @@ import java.util.function.Consumer;
  */
 public class ModelsByRandomOffset {
 
-    public static final RenderStateDataKey<List<Pair<Vector3fc,Mesh>>> BREAKING_STATE_MESHES = RenderStateDataKey.create(() -> "fusion_breaking_meshes");
+    public static final RenderStateDataKey<List<Triple<Vector3fc,Mesh,Boolean>>> BREAKING_STATE_MESHES = RenderStateDataKey.create(() -> "fusion_breaking_meshes");
 
     private final List<Entry> entries = new ArrayList<>();
     private int entryIndex = -1;

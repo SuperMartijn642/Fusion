@@ -33,6 +33,13 @@ accessible field net/minecraft/client/resources/model/cuboid/ItemTransform$Deser
 accessible class net/minecraft/client/resources/model/cuboid/ItemTransform$Deserializer
 # LayerDefinition
 accessible method net/minecraft/client/model/geom/builders/LayerDefinition <init> (Lnet/minecraft/client/model/geom/builders/MeshDefinition;Lnet/minecraft/client/model/geom/builders/MaterialDefinition;)V
+# MaterialBaker
+accessible field net/minecraft/client/resources/model/sprite/MaterialBaker missingSprite Lnet/minecraft/client/resources/model/sprite/Material$Baked;
+mutable field net/minecraft/client/resources/model/sprite/MaterialBaker missingSprite Lnet/minecraft/client/resources/model/sprite/Material$Baked;
+accessible field net/minecraft/client/resources/model/sprite/MaterialBaker missingSpriteForceTranslucent Lnet/minecraft/client/resources/model/sprite/Material$Baked;
+mutable field net/minecraft/client/resources/model/sprite/MaterialBaker missingSpriteForceTranslucent Lnet/minecraft/client/resources/model/sprite/Material$Baked;
+extendable method net/minecraft/client/resources/model/sprite/MaterialBaker bake (Lnet/minecraft/client/resources/model/sprite/Material;)Lnet/minecraft/client/resources/model/sprite/Material$Baked;
+extendable method net/minecraft/client/resources/model/sprite/MaterialBaker replacementForMissingMaterial (Lnet/minecraft/client/resources/model/sprite/Material;)Lnet/minecraft/client/resources/model/sprite/Material$Baked;
 # Minecraft
 accessible field net/minecraft/client/Minecraft resourcePackRepository Lnet/minecraft/server/packs/repository/PackRepository;
 # ModelBakery$ModelBakerImpl
@@ -105,7 +112,7 @@ accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTe
 accessible method net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Ljava/util/List;IZ)V
 accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
 # SpriteContents$AnimationState
-accessible method net/minecraft/client/renderer/texture/SpriteContents$AnimationState <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;[Lcom/mojang/blaze3d/buffers/GpuBufferSlice;)V
+accessible method net/minecraft/client/renderer/texture/SpriteContents$AnimationState <init> (Lnet/minecraft/client/renderer/texture/SpriteContents;Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;Lit/unimi/dsi/fastutil/ints/Int2ObjectMap;[Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;)V
 # SpriteContents$FrameInfo
 accessible class net/minecraft/client/renderer/texture/SpriteContents$FrameInfo
 # Stitcher

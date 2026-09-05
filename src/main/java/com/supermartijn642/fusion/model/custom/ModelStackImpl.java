@@ -10,6 +10,7 @@ import com.supermartijn642.fusion.api.util.Property;
 import com.supermartijn642.fusion.model.ModelTypeRegistryImpl;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.NotNull;
@@ -254,9 +255,9 @@ public class ModelStackImpl implements ModelStack {
     }
 
     @Override
-    public @Nullable Boolean findShade(){
+    public @Nullable Direction findShadeDirectionOverride(){
         for(ModelStackImpl entry : this.stack){
-            Boolean value = entry.model.getShade();
+            Direction value = entry.model.getShadeDirectionOverride();
             if(value != null)
                 return value;
         }
@@ -264,11 +265,11 @@ public class ModelStackImpl implements ModelStack {
     }
 
     @Override
-    public @Nullable Boolean findShadeIncludingParents(ModelResolver modelResolver){
+    public @Nullable Direction findShadeDirectionOverrideIncludingParents(ModelResolver modelResolver){
         return this.walkStackAndParents(
             modelResolver,
             (modelInstance, stack) -> {
-                var v = modelInstance.getShade();
+                var v = modelInstance.getShadeDirectionOverride();
                 return v == null ? ModelWalker.Result.proceed() : ModelWalker.Result.stop(v);
             }
         ).orElse(null);

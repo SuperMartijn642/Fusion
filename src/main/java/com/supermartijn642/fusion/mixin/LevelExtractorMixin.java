@@ -4,9 +4,9 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierBakedModel;
 import com.supermartijn642.fusion.model.modifiers.block.ModelsByRandomOffset;
+import com.supermartijn642.fusion.util.Triple;
 import net.fabricmc.fabric.api.client.renderer.v1.Renderer;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.Mesh;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.MutableMesh;
@@ -15,6 +15,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.extract.LevelExtractor;
 import net.minecraft.client.renderer.state.level.BlockBreakingRenderState;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
@@ -58,7 +59,7 @@ public class LevelExtractorMixin {
         if(!(model instanceof BlockModelModifierBakedModel))
             return breakingState;
         BlockPos pos = breakingState.blockPos();
-        List<Pair<Vector3fc,Mesh>> meshes = new ArrayList<>();
+        List<Triple<Vector3fc,Mesh,Boolean>> meshes = new ArrayList<>();
         FusionClient.IS_RENDERING_BREAKING_OVERLAY.set(true);
         MutableMesh mesh = mutableMesh.get();
         if(mesh == null)
@@ -72,7 +73,9 @@ public class LevelExtractorMixin {
                 entry -> {
                     this.randomSource.setSeed(seed);
                     entry.emitQuads(finalMesh.emitter(), this.level, pos, blockState, this.randomSource, _ -> false);
-                    meshes.add(Pair.of(entry.getOffset(), finalMesh.immutableCopy()));
+                    this.randomSource.setSeed(seed);
+                    boolean translucent = entry.hasMaterialFlag(this.level, pos, blockState, this.randomSource, BakedQuad.FLAG_TRANSLUCENT);
+                    meshes.add(Triple.of(entry.getOffset(), finalMesh.immutableCopy(), translucent));
                     finalMesh.clear();
                 }
             );

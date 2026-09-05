@@ -139,10 +139,10 @@ public interface CuboidModelGeometry extends ModelGeometry {
         Face face(Direction side);
 
         /**
-         * Whether the element should be shaded.
+         * The direction used for shade.
          */
         @Nullable
-        Boolean shade();
+        Direction shadeDirectionOverride();
 
         /**
          * Base light-level of the element.
@@ -185,9 +185,9 @@ public interface CuboidModelGeometry extends ModelGeometry {
             Builder face(@Nullable Direction side, Face face);
 
             /**
-             * Sets whether the element should be shaded.
+             * Sets the direction used for shade.
              */
-            Builder shade(@Nullable Boolean shade);
+            Builder shadeDirectionOverride(@Nullable Direction direction);
 
             /**
              * Sets the base light-level for the element.
@@ -285,10 +285,10 @@ public interface CuboidModelGeometry extends ModelGeometry {
         Integer tintIndex();
 
         /**
-         * Whether the face should be shaded.
+         * The direction used for shade.
          */
         @Nullable
-        Boolean shade();
+        Direction shadeDirectionOverride();
 
         /**
          * Base light-level of the face.
@@ -346,9 +346,9 @@ public interface CuboidModelGeometry extends ModelGeometry {
             Builder tintIndex(@Nullable Integer tintIndex);
 
             /**
-             * Sets whether the face should be shaded.
+             * Sets the direction used for shade.
              */
-            Builder shade(@Nullable Boolean shade);
+            Builder shadeDirectionOverride(@Nullable Direction direction);
 
             /**
              * Sets the base light-level of the face.

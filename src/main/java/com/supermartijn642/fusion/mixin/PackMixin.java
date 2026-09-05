@@ -6,7 +6,7 @@ import com.supermartijn642.fusion.extensions.PackExtension;
 import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
 import net.minecraft.server.packs.PackLocationInfo;
-import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackMetadataResources;
 import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.repository.Pack;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ public class PackMixin implements PackExtension {
         at = @At("RETURN")
     )
     private void init(PackLocationInfo locationInfo, Pack.ResourcesSupplier resourcesSupplier, Pack.Metadata metadata, PackSelectionConfig config, CallbackInfo ci){
-        try(PackResources resources = resourcesSupplier.openPrimary(locationInfo)){
+        try(PackMetadataResources resources = resourcesSupplier.openMetadata(locationInfo)){
             this.metadata = resources.getMetadataSection(FusionPackMetadataSection.TYPE);
         }catch(Exception e){
             FusionClient.LOGGER.error("Encountered an exception whilst reading fusion metadata for pack '" + locationInfo.id() + "':", e);
@@ -54,10 +54,10 @@ public class PackMixin implements PackExtension {
         ),
         index = 3
     )
-    private static List<String> addFusionOverrideOverlay(List<String> overlays, @Local PackResources resources, @Local(argsOnly = true) PackLocationInfo locationInfo) {
+    private static List<String> addFusionOverrideOverlay(List<String> overlays, @Local PackMetadataResources resources, @Local(argsOnly = true) PackLocationInfo locationInfo){
         try{
             FusionPackMetadata metadataSection = resources.getMetadataSection(FusionPackMetadataSection.TYPE);
-            if (metadataSection != null && metadataSection.hasOverridesFolder()) {
+            if(metadataSection != null && metadataSection.hasOverridesFolder()){
                 overlays = new LinkedList<>(overlays);
                 String overridesFolder = metadataSection.getOverridesFolder();
                 // trim trailing slash

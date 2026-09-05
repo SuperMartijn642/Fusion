@@ -82,8 +82,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
     }
 
     @Override
-    public @Nullable Boolean getShade(T data){
-        return data.getShade();
+    public @Nullable Direction getShadeDirectionOverride(T data){
+        return data.getShadeDirectionOverride();
     }
 
     @Override
@@ -145,10 +145,15 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             builder.ambientOcclusion(json.get("ambient_occlusion").getAsBoolean());
         }
         // Shade
-        if(json.has("shade")){
-            if(!json.get("shade").isJsonPrimitive() || !json.getAsJsonPrimitive("shade").isBoolean())
-                throw new JsonParseException("Property 'shade' must be a boolean!");
-            builder.shade(json.get("shade").getAsBoolean());
+        if(json.has("shade_direction_override")){
+            if(!json.get("shade_direction_override").isJsonPrimitive() || !json.getAsJsonPrimitive("shade_direction_override").isString())
+                throw new JsonParseException("Property 'shade_direction_override' must be a string!");
+            Direction shadeDirectionOverride = Direction.byName(json.get("shade_direction_override").getAsString().toLowerCase(Locale.ROOT));
+            if(shadeDirectionOverride == null){
+                String allowedValues = Arrays.stream(Direction.values()).map(o -> "'" + o.getSerializedName() + "'").collect(Collectors.joining(","));
+                throw new JsonParseException("Property 'shade_direction_override' must be one of " + allowedValues + ", not '" + json.get("shade_direction_override").getAsString() + "'!");
+            }
+            builder.shadeDirectionOverride(shadeDirectionOverride);
         }
         // Emissive
         if(json.has("emissive")){
@@ -210,8 +215,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             json.addProperty("gui_light", data.getGuiLight().name().toLowerCase(Locale.ROOT));
         if(data.getAmbientOcclusion() != null)
             json.addProperty("ambient_occlusion", data.getAmbientOcclusion());
-        if(data.getShade() != null)
-            json.addProperty("shade", data.getShade());
+        if(data.getShadeDirectionOverride() != null)
+            json.addProperty("shade_direction_override", data.getShadeDirectionOverride().getSerializedName());
         if(data.getEmissive() != null)
             json.addProperty("emissive", data.getEmissive());
         if(data.getGeometry() != null && !data.getGeometry().elements().isEmpty()){
@@ -298,10 +303,15 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                 throw new JsonParseException("Element 'faces' property '" + key + "' must be an object!");
             builder.face(side, this.deserializeFace(facesJson.getAsJsonObject(key)).build());
         }
-        if(json.has("shade")){
-            if(!json.get("shade").isJsonPrimitive() || !json.getAsJsonPrimitive("shade").isBoolean())
-                throw new JsonParseException("Element property 'shade' must be a boolean!");
-            builder.shade(json.get("shade").getAsBoolean());
+        if(json.has("shade_direction_override")){
+            if(!json.get("shade_direction_override").isJsonPrimitive() || !json.getAsJsonPrimitive("shade_direction_override").isBoolean())
+                throw new JsonParseException("Element property 'shade_direction_override' must be a boolean!");
+            Direction shadeDirectionOverride = Direction.byName(json.get("shade_direction_override").getAsString().toLowerCase(Locale.ROOT));
+            if(shadeDirectionOverride == null){
+                String allowedValues = Arrays.stream(Direction.values()).map(o -> "'" + o.getSerializedName() + "'").collect(Collectors.joining(","));
+                throw new JsonParseException("Element property 'shade_direction_override' must be one of " + allowedValues + ", not '" + json.get("shade_direction_override").getAsString() + "'!");
+            }
+            builder.shadeDirectionOverride(shadeDirectionOverride);
         }
         if(json.has("light_emission")){
             if(!json.get("light_emission").isJsonPrimitive() || !json.getAsJsonPrimitive("light_emission").isNumber())
@@ -339,8 +349,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
                 facesJson.add(side.getSerializedName(), this.serializeFace(face));
         }
         elementJson.add("faces", facesJson);
-        if(element.shade() != null)
-            elementJson.addProperty("shade", element.shade());
+        if(element.shadeDirectionOverride() != null)
+            elementJson.addProperty("shade_direction_override", element.shadeDirectionOverride().getSerializedName());
         if(element.lightEmission() != null)
             elementJson.addProperty("light_emission", element.lightEmission());
         // Fusion properties
@@ -467,10 +477,15 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
             builder.tintIndex(json.get("tintindex").getAsInt());
         }
         // Fusion properties
-        if(json.has("shade")){
-            if(!json.get("shade").isJsonPrimitive() || !json.getAsJsonPrimitive("shade").isBoolean())
-                throw new JsonParseException("Element face property 'shade' must be a boolean!");
-            builder.shade(json.get("shade").getAsBoolean());
+        if(json.has("shade_direction_override")){
+            if(!json.get("shade_direction_override").isJsonPrimitive() || !json.getAsJsonPrimitive("shade_direction_override").isBoolean())
+                throw new JsonParseException("Element face property 'shade_direction_override' must be a boolean!");
+            Direction shadeDirectionOverride = Direction.byName(json.get("shade_direction_override").getAsString().toLowerCase(Locale.ROOT));
+            if(shadeDirectionOverride == null){
+                String allowedValues = Arrays.stream(Direction.values()).map(o -> "'" + o.getSerializedName() + "'").collect(Collectors.joining(","));
+                throw new JsonParseException("Element face property 'shade_direction_override' must be one of " + allowedValues + ", not '" + json.get("shade_direction_override").getAsString() + "'!");
+            }
+            builder.shadeDirectionOverride(shadeDirectionOverride);
         }
         if(json.has("light_emission")){
             if(!json.get("light_emission").isJsonPrimitive() || !json.getAsJsonPrimitive("light_emission").isNumber())
@@ -515,8 +530,8 @@ public abstract class BaseModelType<T extends BaseModelData, BUILDER extends Bas
         if(face.tintIndex() != null)
             faceJson.addProperty("tintindex", face.tintIndex());
         // Fusion properties
-        if(face.shade() != null)
-            faceJson.addProperty("shade", face.shade());
+        if(face.shadeDirectionOverride() != null)
+            faceJson.addProperty("shade_direction_override", face.shadeDirectionOverride().getSerializedName());
         if(face.lightEmission() != null)
             faceJson.addProperty("light_emission", face.lightEmission());
         if(face.ambientOcclusion() != null)

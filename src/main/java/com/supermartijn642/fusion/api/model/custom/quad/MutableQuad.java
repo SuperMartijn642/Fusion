@@ -5,11 +5,14 @@ import com.supermartijn642.fusion.api.model.custom.ModelMaterial;
 import com.supermartijn642.fusion.model.custom.quad.MutableQuadImpl;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadView;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.core.Direction;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3fc;
 
 /**
@@ -110,14 +113,24 @@ public interface MutableQuad extends QuadAccess {
     MutableQuad itemRenderType(RenderType itemRenderType);
 
     /**
+     * Sets render type to use when rendering the quad as an item with {@link ItemStackRenderState.FoilType#STANDARD} glint.
+     */
+    MutableQuad glintItemRenderType(RenderType itemRenderType);
+
+    /**
+     * Sets render type to use when rendering the quad as an item with {@link ItemStackRenderState.FoilType#SPECIAL} glint.
+     */
+    MutableQuad specialGlintItemRenderType(RenderType itemRenderType);
+
+    /**
      * Sets the tint index to use for tinting the quad.
      */
     MutableQuad tintIndex(int tintIndex);
 
     /**
-     * Sets whether the quad should be shaded.
+     * Sets the direction used for shade for the quad.
      */
-    MutableQuad shade(boolean shade);
+    MutableQuad shadeDirectionOverride(@Nullable Direction direction);
 
     /**
      * Sets the base light-level for the quad.

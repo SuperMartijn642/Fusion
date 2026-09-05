@@ -11,6 +11,7 @@ import com.supermartijn642.fusion.api.util.PropertyGetter;
 import com.supermartijn642.fusion.model.FusionBlockModelData;
 import com.supermartijn642.fusion.util.CullingHelper;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelDebugName;
 import net.minecraft.client.resources.model.ResolvedModel;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3fc;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -92,7 +94,7 @@ public class ModelGeometryImpl implements ModelGeometry {
                     return previouslyResolved;
                 }
             }
-            ModelMaterial.Resolved missing = materialResolver.apply(ModelMaterial.missing());
+            ModelMaterial.Resolved missing = materialResolver.apply(ModelMaterial.missing(false));
             for(String encounteredKey : encounteredKeys)
                 resolvedMaterials.put(encounteredKey, missing);
             return missing;
@@ -122,11 +124,15 @@ public class ModelGeometryImpl implements ModelGeometry {
         // Create dummy texture slots instance
         TextureSlots textureSlots = createTextureSlots(materialResolver);
         // Create dummy model baker
-        MaterialBaker materialBaker = new MaterialBaker(materialResolver.get("-", false).sprite()) {
+        ModelMaterial.Resolved missingSprite = materialResolver.get("-", false);
+        MaterialBaker materialBaker = new MaterialBaker(
+            new SpriteLoader.Preparations(0, 0, 0, missingSprite.sprite(), Map.of(), CompletableFuture.completedFuture(null)),
+            new SpriteLoader.Preparations(0, 0, 0, missingSprite.sprite(), Map.of(), CompletableFuture.completedFuture(null))
+        ) {
             @Override
             protected Material.@Nullable Baked bake(Material material){
                 ModelMaterial.Resolved resolved = materialResolver.get(material.sprite().toString());
-                return resolved.isMissing() || resolved.forceTranslucent() == material.forceTranslucent() ?
+                return resolved.forceTranslucent() == material.forceTranslucent() ?
                     resolved.toBakedMaterial() :
                     new Material.Baked(resolved.sprite(), material.forceTranslucent());
             }

@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
@@ -67,10 +68,10 @@ public interface ModelType<T> extends Serializer<T> {
     ModelGeometry getGeometry(T data);
 
     /**
-     * Gets whether the model should be shaded.
+     * Gets the direction to use for shade for the model.
      */
     @Nullable
-    Boolean getShade(T data);
+    Direction getShadeDirectionOverride(T data);
 
     /**
      * Gets whether the model is emissive.

@@ -17,16 +17,22 @@ public class ModelMaterialImpl implements ModelMaterial {
             return true;
         }
     };
+    public static final ModelMaterial MISSING_TRANSLUCENT = new ModelMaterialImpl(MissingTextureAtlasSprite.getLocation(), true) {
+        @Override
+        public boolean isMissing(){
+            return true;
+        }
+    };
 
     public static ModelMaterial of(Identifier texture, boolean forceTranslucent){
         if(texture.equals(MISSING.texture()))
-            return MISSING;
+            return forceTranslucent ? MISSING_TRANSLUCENT : MISSING;
         return new ModelMaterialImpl(texture, forceTranslucent);
     }
 
     public static ModelMaterial of(Material material){
         if(material.sprite().equals(MISSING.texture()))
-            return MISSING;
+            return material.forceTranslucent() ? MISSING_TRANSLUCENT : MISSING;
         return new ModelMaterialImpl(material);
     }
 

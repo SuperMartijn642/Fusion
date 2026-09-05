@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
@@ -100,7 +101,7 @@ public class ModelEntryModelInstance implements UntypedModelInstance {
     }
 
     @Override
-    public @Nullable Boolean getShade(){
+    public @Nullable Direction getShadeDirectionOverride(){
         return null;
     }
 

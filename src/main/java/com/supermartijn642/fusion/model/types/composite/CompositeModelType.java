@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
@@ -98,8 +99,8 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
     }
 
     @Override
-    public @Nullable Boolean getShade(CompositeModelData data){
-        return data.getShade();
+    public @Nullable Direction getShadeDirectionOverride(CompositeModelData data){
+        return data.getShadeDirectionOverride();
     }
 
     @Override
@@ -185,7 +186,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
         BaseModelData baseModelData = DefaultModelTypes.BASE.deserialize(json);
         builder.guiLight(baseModelData.getGuiLight())
             .ambientOcclusion(baseModelData.getAmbientOcclusion())
-            .shade(baseModelData.getShade())
+            .shadeDirectionOverride(baseModelData.getShadeDirectionOverride())
             .emissive(baseModelData.getEmissive());
         baseModelData.getMaterials().forEach(builder::material);
         for(ItemDisplayContext type : ItemDisplayContext.values())
@@ -219,7 +220,7 @@ public class CompositeModelType implements ModelType<CompositeModelData> {
         BaseModelData.Builder<?,BaseModelData> baseModelData = BaseModelData.builder();
         baseModelData.guiLight(data.getGuiLight())
             .ambientOcclusion(data.getAmbientOcclusion())
-            .shade(data.getShade())
+            .shadeDirectionOverride(data.getShadeDirectionOverride())
             .emissive(data.getEmissive());
         data.getMaterials().forEach(baseModelData::material);
         for(ItemDisplayContext type : ItemDisplayContext.values())

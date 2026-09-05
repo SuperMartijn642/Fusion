@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
@@ -69,10 +70,10 @@ public interface UntypedModelInstance extends PropertyGetter {
     ModelGeometry getGeometry();
 
     /**
-     * Gets whether the model should be shaded.
+     * Gets the direction to use for shade for the model.
      */
     @Nullable
-    Boolean getShade();
+    Direction getShadeDirectionOverride();
 
     /**
      * Gets whether the model is emissive.

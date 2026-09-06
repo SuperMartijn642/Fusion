@@ -88,8 +88,7 @@ public class FusionTextureAtlasSprite extends TextureAtlasSprite {
             } : null;
         return new AnimatedTexture(this.frameInfos, 0, interpolationData) {
             @Override
-            protected void uploadFrame(int frame){
-                int uniqueFrame = FusionTextureAtlasSprite.this.frameInfos.get(frame).index;
+            protected void uploadFrame(int uniqueFrame){
                 FusionTextureAtlasSprite.this.uploadUniqueFrame(uniqueFrame);
             }
         };

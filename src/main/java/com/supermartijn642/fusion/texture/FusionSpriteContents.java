@@ -77,8 +77,7 @@ public class FusionSpriteContents extends SpriteContents {
     protected @Nullable AnimatedTexture createAnimatedTexture(FrameSize frameSize, int imageWidth, int imageHeight, AnimationMetadataSection animationMetadataSection){
         return new AnimatedTexture(this.frameInfos, 0, this.imageSource.shouldInterpolateFrames()) {
             @Override
-            protected void uploadFrame(int destinationX, int destinationY, int frame){
-                int uniqueFrame = this.frames.get(frame).index();
+            protected void uploadFrame(int destinationX, int destinationY, int uniqueFrame){
                 FusionSpriteContents.this.uploadUniqueFrame(destinationX, destinationY, uniqueFrame);
             }
 

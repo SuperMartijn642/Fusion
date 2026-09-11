@@ -19,7 +19,7 @@ displayName = "${mod_name}" #mandatory
 # A URL for the "homepage" for this mod, displayed in the mod UI
 displayURL = "${mod_page}" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
-logoFile = "${mod_id}.png" #optional
+iconFile = "${mod_id}.png" #optional
 # A text field displayed in the mod UI
 #credits="" #optional
 # A text field displayed in the mod UI

@@ -70,6 +70,8 @@ public class MutableQuadImpl implements MutableQuad {
         this.sprite = impl.sprite;
         this.tintIndex = impl.tintIndex;
         this.itemRenderType = impl.itemRenderType;
+        this.glintItemRenderType = impl.glintItemRenderType;
+        this.specialGlintItemRenderType = impl.specialGlintItemRenderType;
         this.bakedQuadCache = impl.bakedQuadCache;
         this.materialInfoCache = impl.materialInfoCache;
         return this;
@@ -94,12 +96,15 @@ public class MutableQuadImpl implements MutableQuad {
         this.sprite = materialInfo.sprite();
         this.tintIndex = materialInfo.tintIndex();
         this.flags = 0;
+        this.flags |= ((quad.direction().ordinal() + 1) << FACING);
         if(materialInfo.shadeDirectionOverride() != null)
             this.flags |= ((materialInfo.shadeDirectionOverride().ordinal() + 1) << SHADE_DIRECTION_OVERRIDE);
         this.flags |= (materialInfo.lightEmission() << LIGHT_EMISSION);
         this.flags |= (1 << AMBIENT_OCCLUSION);
         this.flags |= ((materialInfo.layer().ordinal() + 1) << CHUNK_RENDER_TYPE);
         this.itemRenderType = materialInfo.itemRenderType();
+        this.glintItemRenderType = materialInfo.itemGlintRenderType();
+        this.specialGlintItemRenderType = materialInfo.itemGlintSpecialRenderType();
         return this;
     }
 
@@ -140,6 +145,8 @@ public class MutableQuadImpl implements MutableQuad {
             this.flags |= (1 << EMISSIVE);
         this.flags |= ((quad.chunkLayer().ordinal() + 1) << CHUNK_RENDER_TYPE);
         this.itemRenderType = quad.itemRenderType();
+        this.glintItemRenderType = quad.itemGlintRenderType();
+        this.specialGlintItemRenderType = quad.itemGlintSpecialRenderType();
         return this;
     }
 
@@ -246,6 +253,8 @@ public class MutableQuadImpl implements MutableQuad {
         this.sprite = materialInfo.sprite();
         this.chunkLayer(materialInfo.layer());
         this.itemRenderType = materialInfo.itemRenderType();
+        this.glintItemRenderType = materialInfo.itemGlintRenderType();
+        this.specialGlintItemRenderType = materialInfo.itemGlintSpecialRenderType();
         this.tintIndex = materialInfo.tintIndex();
         this.shadeDirectionOverride(materialInfo.shadeDirectionOverride());
         this.lightEmission(materialInfo.lightEmission());

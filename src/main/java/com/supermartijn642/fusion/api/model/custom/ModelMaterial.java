@@ -33,8 +33,8 @@ public interface ModelMaterial {
     /**
      * The material for the missing texture atlas sprite.
      */
-    static ModelMaterial missing(){
-        return ModelMaterialImpl.MISSING;
+    static ModelMaterial missing(boolean forceTranslucent){
+        return forceTranslucent ? ModelMaterialImpl.MISSING_TRANSLUCENT : ModelMaterialImpl.MISSING;
     }
 
     /**
@@ -58,7 +58,7 @@ public interface ModelMaterial {
      * Whether this material uses the missing texture atlas sprite.
      */
     default boolean isMissing(){
-        return this.equals(missing());
+        return this.equals(missing(this.forceTranslucent()));
     }
 
     /**

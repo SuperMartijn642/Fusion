@@ -21,21 +21,21 @@ public class EntityRenderTypeHelper {
     static{
         ImmutableMap.Builder<String,Function<Identifier,RenderType>> renderTypes = ImmutableMap.builder();
         renderTypes.put("armor_cutout_no_cull", RenderTypes::armorCutoutNoCull);
-        renderTypes.put("armor_translucent", RenderTypes::armorTranslucent);
+        renderTypes.put("wolf_armor_cracks", RenderTypes::wolfArmorCracks);
         renderTypes.put("entity_solid", RenderTypes::entitySolid);
         renderTypes.put("entity_solid_z_offset_forward", RenderTypes::entitySolidZOffsetForward);
         renderTypes.put("entity_cutout_cull", RenderTypes::entityCutoutCull);
         renderTypes.put("entity_cutout", RenderTypes::entityCutout);
         renderTypes.put("entity_cutout_z_offset", RenderTypes::entityCutoutZOffset);
-        renderTypes.put("entity_translucent_cull_item_target", RenderTypes::entityTranslucentCullItemTarget);
+        renderTypes.put("entity_translucent_cull", RenderTypes::entityTranslucentCull);
         renderTypes.put("item_cutout", RenderTypes::itemCutout);
         renderTypes.put("item_translucent", RenderTypes::itemTranslucent);
+        renderTypes.put("entity_translucent_emissive", RenderTypes::entityTranslucentEmissive);
         renderTypes.put("entity_shadow", RenderTypes::entityShadow);
         renderTypes.put("eyes", RenderTypes::eyes);
         RENDER_TYPES_BY_NAME = renderTypes.build();
         ImmutableMap.Builder<String,BiFunction<Identifier,Boolean,RenderType>> outlineRenderTypes = ImmutableMap.builder();
         outlineRenderTypes.put("entity_translucent", RenderTypes::entityTranslucent);
-        outlineRenderTypes.put("entity_translucent_emissive", RenderTypes::entityTranslucentEmissive);
         VAR_OUTLINE_RENDER_TYPES_BY_NAME = outlineRenderTypes.build();
     }
 

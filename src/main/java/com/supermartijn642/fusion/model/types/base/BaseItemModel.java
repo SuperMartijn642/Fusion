@@ -19,12 +19,14 @@ import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransforms;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.client.resources.model.geometry.ItemQuads;
 import net.minecraft.world.entity.ItemOwner;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3fc;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -127,7 +129,7 @@ public class BaseItemModel implements ItemModel {
         layer.setItemTransform(this.transforms.getTransform(displayContext));
 
         // Process all quads
-        List<BakedQuad> bakedQuads = layer.prepareQuadList();
+        List<BakedQuad> bakedQuads = new ArrayList<>();
         EmittableQuad mutableQuad = null;
         for(Quad quad : this.quads){
             // Simply add quads that don't need further processing
@@ -150,6 +152,7 @@ public class BaseItemModel implements ItemModel {
             // Process quad
             quad.processor().processQuad(mutableQuad, quad.sprite(), state, propertyStore);
         }
+        layer.setQuads(ItemQuads.split(bakedQuads));
     }
 
     public record Quad(QuadAccess quad, SpriteInstance sprite, ItemQuadProcessor<Object> processor) {

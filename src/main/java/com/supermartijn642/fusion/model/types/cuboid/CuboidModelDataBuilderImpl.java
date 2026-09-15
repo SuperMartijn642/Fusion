@@ -66,7 +66,7 @@ public class CuboidModelDataBuilderImpl extends AbstractCuboidModelDataBuilder<C
                 element.from(), element.to(),
                 faces,
                 element.rotation(),
-                element.shade() == null || element.shade(),
+                element.shadeDirectionOverride(),
                 element.lightEmission() == null ? 0 : element.lightEmission(),
                 new ExtraFaceData(
                     -1, 0,

@@ -4,8 +4,8 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.BlockBreakingStateExtension;
+import com.supermartijn642.fusion.util.Triple;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
@@ -45,18 +45,18 @@ public class LevelRendererMixin {
     )
     private void submitBlockDestroyAnimation(PoseStack poseStack, SubmitNodeCollector output, LevelRenderState levelState, CallbackInfo ci, @Local BlockBreakingRenderState breakingState, @Local LocalRef<BlockStateModel> model){
         //noinspection DataFlowIssue
-        List<Pair<Vector3fc,List<BlockStateModelPart>>> parts = ((BlockBreakingStateExtension)(Object)breakingState).getFusionParts();
+        List<Triple<Vector3fc,List<BlockStateModelPart>,Boolean>> parts = ((BlockBreakingStateExtension)(Object)breakingState).getFusionParts();
         if(parts == null)
             return;
         // Undo normal offset
         Vec3 normalOffset = breakingState.blockState().getOffset(breakingState.blockPos());
         poseStack.translate(-normalOffset.x(), -normalOffset.y(), -normalOffset.z());
         // Submit models
-        for(Pair<Vector3fc,List<BlockStateModelPart>> entry : parts){
+        for(Triple<Vector3fc,List<BlockStateModelPart>,Boolean> entry : parts){
             poseStack.pushPose();
             Vector3fc offset = entry.left();
             poseStack.translate(offset.x(), offset.y(), offset.z());
-            output.submitBreakingBlockModel(poseStack, entry.right(), breakingState.progress());
+            output.submitBreakingBlockModel(poseStack, entry.middle(), breakingState.progress(), entry.right());
             poseStack.popPose();
         }
         model.set(this.modelManager.getBlockStateModelSet().get(Blocks.AIR.defaultBlockState()));

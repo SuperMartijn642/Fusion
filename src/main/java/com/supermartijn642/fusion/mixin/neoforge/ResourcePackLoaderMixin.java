@@ -3,7 +3,7 @@ package com.supermartijn642.fusion.mixin.neoforge;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.supermartijn642.fusion.resources.FusionPackMetadata;
 import com.supermartijn642.fusion.resources.FusionPackMetadataSection;
-import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackMetadataResources;
 import net.neoforged.neoforge.resource.ResourcePackLoader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,7 +27,7 @@ public class ResourcePackLoaderMixin {
         ),
         index = 0
     )
-    private static Collection<String> addFusionOverrideOverlay(Collection<String> overlays, @Local PackResources resources){
+    private static Collection<String> addFusionOverrideOverlay(Collection<String> overlays, @Local PackMetadataResources resources){
         try{
             FusionPackMetadata metadataSection = resources.getMetadataSection(FusionPackMetadataSection.TYPE);
             if(metadataSection != null && metadataSection.hasOverridesFolder()){

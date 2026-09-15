@@ -13,6 +13,7 @@ import com.supermartijn642.fusion.model.types.composite.CompositeModelDataImpl;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
 import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.ApiStatus;
@@ -63,10 +64,10 @@ public interface CompositeModelData {
     ItemTransform getItemTransform(ItemDisplayContext type);
 
     /**
-     * Whether the model should be shaded.
+     * The direction to use for shade for the model.
      */
     @Nullable
-    Boolean getShade();
+    Direction getShadeDirectionOverride();
 
     /**
      * Whether the model is emissive.
@@ -195,9 +196,9 @@ public interface CompositeModelData {
         Builder itemTransforms(ItemTransforms itemTransforms);
 
         /**
-         * Sets whether the model should be shaded.
+         * Sets the direction to use for shade for the model.
          */
-        Builder shade(@Nullable Boolean shade);
+        Builder shadeDirectionOverride(@Nullable Direction direction);
 
         /**
          * Sets whether the model is emissive.

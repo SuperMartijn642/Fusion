@@ -36,12 +36,12 @@ public class MutableQuadImpl implements MutableQuad {
     }
 
     // Flags
-    private static final int SHADE = 0;
-    private static final int LIGHT_EMISSION = 1; // 4 bits
-    private static final int AMBIENT_OCCLUSION = 5;
-    private static final int EMISSIVE = 6;
-    private static final int FACING = 7; // 3 bits
-    private static final int CHUNK_RENDER_TYPE = 10; // 5 bits
+    private static final int SHADE_DIRECTION_OVERRIDE = 0; // 3 bits
+    private static final int LIGHT_EMISSION = 3; // 4 bits
+    private static final int AMBIENT_OCCLUSION = 7;
+    private static final int EMISSIVE = 8;
+    private static final int FACING = 9; // 3 bits
+    private static final int CHUNK_RENDER_TYPE = 12; // 5 bits
     // Vertices
     private static final int VERTEX_SIZE = 3 + 2;
     private static final int VERTEX_POSITION = 0; // 3 floats
@@ -51,7 +51,7 @@ public class MutableQuadImpl implements MutableQuad {
     private int flags;
     private int tintIndex = -1;
     private TextureAtlasSprite sprite;
-    private RenderType itemRenderType;
+    private RenderType itemRenderType, glintItemRenderType, specialGlintItemRenderType;
 
     private BakedQuad bakedQuadCache;
     private BakedQuad.MaterialInfo materialInfoCache;
@@ -73,6 +73,8 @@ public class MutableQuadImpl implements MutableQuad {
         this.sprite = impl.sprite;
         this.tintIndex = impl.tintIndex;
         this.itemRenderType = impl.itemRenderType;
+        this.glintItemRenderType = impl.glintItemRenderType;
+        this.specialGlintItemRenderType = impl.specialGlintItemRenderType;
         this.bakedQuadCache = impl.bakedQuadCache;
         this.materialInfoCache = impl.materialInfoCache;
         // NeoForge data
@@ -103,13 +105,15 @@ public class MutableQuadImpl implements MutableQuad {
         this.tintIndex = materialInfo.tintIndex();
         this.flags = 0;
         this.flags |= ((quad.direction().ordinal() + 1) << FACING);
-        if(materialInfo.shade())
-            this.flags |= (1 << SHADE);
+        if(materialInfo.shadeDirectionOverride() != null)
+            this.flags |= ((materialInfo.shadeDirectionOverride().ordinal() + 1) << SHADE_DIRECTION_OVERRIDE);
         this.flags |= (materialInfo.lightEmission() << LIGHT_EMISSION);
         if(materialInfo.ambientOcclusion())
             this.flags |= (1 << AMBIENT_OCCLUSION);
         this.flags |= ((materialInfo.layer().ordinal() + 1) << CHUNK_RENDER_TYPE);
         this.itemRenderType = materialInfo.itemRenderType();
+        this.glintItemRenderType = materialInfo.itemGlintRenderType();
+        this.specialGlintItemRenderType = materialInfo.itemGlintSpecialRenderType();
         // NeoForge data
         this.bakedNormalsCache = quad.bakedNormals();
         this.bakedColorsCache = quad.bakedColors();
@@ -223,8 +227,10 @@ public class MutableQuadImpl implements MutableQuad {
         this.sprite = materialInfo.sprite();
         this.chunkLayer(materialInfo.layer());
         this.itemRenderType = materialInfo.itemRenderType();
+        this.glintItemRenderType = materialInfo.itemGlintRenderType();
+        this.specialGlintItemRenderType = materialInfo.itemGlintSpecialRenderType();
         this.tintIndex = materialInfo.tintIndex();
-        this.shade(materialInfo.shade());
+        this.shadeDirectionOverride(materialInfo.shadeDirectionOverride());
         this.lightEmission(materialInfo.lightEmission());
         this.ambientOcclusion(materialInfo.ambientOcclusion());
         this.materialInfoCache = materialInfo;
@@ -310,6 +316,42 @@ public class MutableQuadImpl implements MutableQuad {
     }
 
     @Override
+    public MutableQuad glintItemRenderType(RenderType itemRenderType){
+        this.glintItemRenderType = itemRenderType;
+        this.invalidateMaterialInfoCache();
+        return this;
+    }
+
+    @Override
+    public RenderType glintItemRenderType(){
+        if(this.glintItemRenderType == null){
+            ChunkSectionLayer chunkLayer = this.chunkLayer();
+            return TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
+                chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemGlintSheet() : Sheets.cutoutBlockItemGlintSheet() :
+                chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentItemGlintSheet() : Sheets.cutoutItemGlintSheet();
+        }
+        return this.glintItemRenderType;
+    }
+
+    @Override
+    public MutableQuad specialGlintItemRenderType(RenderType itemRenderType){
+        this.specialGlintItemRenderType = itemRenderType;
+        this.invalidateMaterialInfoCache();
+        return this;
+    }
+
+    @Override
+    public RenderType specialGlintItemRenderType(){
+        if(this.specialGlintItemRenderType == null){
+            ChunkSectionLayer chunkLayer = this.chunkLayer();
+            return TextureAtlas.LOCATION_BLOCKS.equals(this.sprite.atlasLocation()) ?
+                chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentBlockItemGlintSpecialSheet() : Sheets.cutoutBlockItemGlintSpecialSheet() :
+                chunkLayer == ChunkSectionLayer.TRANSLUCENT ? Sheets.translucentItemGlintSpecialSheet() : Sheets.cutoutItemGlintSpecialSheet();
+        }
+        return this.specialGlintItemRenderType;
+    }
+
+    @Override
     public MutableQuad tintIndex(int tintIndex){
         this.tintIndex = tintIndex;
         this.invalidateMaterialInfoCache();
@@ -322,15 +364,19 @@ public class MutableQuadImpl implements MutableQuad {
     }
 
     @Override
-    public MutableQuad shade(boolean shade){
-        this.flags = shade ? this.flags | (1 << SHADE) : this.flags & ~(1 << SHADE);
+    public MutableQuad shadeDirectionOverride(Direction direction){
+        if(direction == null)
+            this.flags &= ~(7 << SHADE_DIRECTION_OVERRIDE);
+        else
+            this.flags = (this.flags & ~(7 << SHADE_DIRECTION_OVERRIDE)) | ((direction.ordinal() + 1) << SHADE_DIRECTION_OVERRIDE);
         this.invalidateMaterialInfoCache();
         return this;
     }
 
     @Override
-    public boolean shade(){
-        return (this.flags & (1 << SHADE)) != 0;
+    public Direction shadeDirectionOverride(){
+        int ordinal = (this.flags >> SHADE_DIRECTION_OVERRIDE) & 7;
+        return ordinal == 0 ? null : Direction.values()[ordinal - 1];
     }
 
     @Override
@@ -523,11 +569,14 @@ public class MutableQuadImpl implements MutableQuad {
                 if(this.sprite == null)
                     throw new IllegalStateException("No sprite was specified!");
                 boolean emissive = this.emissive();
+                Direction shadeDirectionOverride = this.shadeDirectionOverride();
+                if(shadeDirectionOverride == null && emissive)
+                    shadeDirectionOverride = Direction.UP;
                 this.materialInfoCache = new BakedQuad.MaterialInfo(
                     this.sprite,
-                    this.chunkLayer(), this.itemRenderType(),
+                    this.chunkLayer(), this.itemRenderType(), this.glintItemRenderType(), this.specialGlintItemRenderType(),
                     this.tintIndex,
-                    !emissive && this.shade(),
+                    shadeDirectionOverride,
                     emissive ? 15 : this.lightEmission(),
                     !emissive && this.ambientOcclusion()
                 );

@@ -2,7 +2,7 @@ plugins {
     id "eclipse"
     id "idea"
     id "java-library"
-    id "net.neoforged.moddev" version "2.0.142"
+    id "net.neoforged.moddev" version "2.0.147"
     id "me.modmuss50.mod-publish-plugin" version "2.0.0"
 }
 
@@ -19,6 +19,7 @@ compileJava.options.compilerArgs.add '-parameters'
 
 repositories {
     flatDir { dirs "libs" }
+    mavenLocal()
     maven { url "https://www.cursemaven.com" }
     exclusiveContent {
         forRepository {

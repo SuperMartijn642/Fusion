@@ -13,6 +13,7 @@ import com.supermartijn642.fusion.model.SimpleModelType;
 import com.supermartijn642.fusion.model.custom.geometry.ModelGeometryImpl;
 import com.supermartijn642.fusion.util.CullingHelper;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
+import net.minecraft.client.renderer.texture.SpriteLoader;
 import net.minecraft.client.resources.model.ModelBaker;
 import net.minecraft.client.resources.model.ModelDebugName;
 import net.minecraft.client.resources.model.ResolvedModel;
@@ -34,6 +35,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Created 30/04/2023 by SuperMartijn642
@@ -98,7 +100,7 @@ public class UnknownModelType<T extends UnbakedModel> extends SimpleModelType<T>
     }
 
     @Override
-    public @Nullable Boolean getShade(T data){
+    public @Nullable Direction getShadeDirectionOverride(T data){
         return null;
     }
 
@@ -122,7 +124,11 @@ public class UnknownModelType<T extends UnbakedModel> extends SimpleModelType<T>
         // Create dummy texture slots instance
         TextureSlots textureSlots = ModelGeometryImpl.createTextureSlots(materialResolver);
         // Create dummy model baker
-        MaterialBaker materialBaker = new MaterialBaker(context.getMaterial(ModelMaterial.missing()).sprite()) {
+        ModelMaterial.Resolved missingSprite = context.getMaterial(ModelMaterial.missing(false));
+        MaterialBaker materialBaker = new MaterialBaker(
+            new SpriteLoader.Preparations(0, 0, 0, missingSprite.sprite(), Map.of(), CompletableFuture.completedFuture(null)),
+            new SpriteLoader.Preparations(0, 0, 0, missingSprite.sprite(), Map.of(), CompletableFuture.completedFuture(null))
+        ) {
             @Override
             public @Nullable Material.Baked bake(Material material){
                 return context.getMaterial(ModelMaterial.of(material)).toBakedMaterial();

@@ -6,6 +6,7 @@ import com.supermartijn642.fusion.api.model.types.base.BaseModelData;
 import com.supermartijn642.fusion.api.util.Either;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
@@ -19,16 +20,17 @@ public class BaseModelDataImpl implements BaseModelData {
 
     protected final Identifier parent;
     protected final Map<String,Either<String,ModelMaterial>> materials;
-    protected final Boolean ambientOcclusion, shade, emissive;
+    protected final Boolean ambientOcclusion, emissive;
+    protected final Direction shadeDirectionOverride;
     protected final UnbakedModel.GuiLight guiLight;
     protected final CuboidModelGeometry geometry;
     protected final Map<ItemDisplayContext,ItemTransform> itemTransforms;
 
-    public BaseModelDataImpl(Identifier parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, UnbakedModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemDisplayContext,ItemTransform> itemTransforms){
+    public BaseModelDataImpl(Identifier parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Direction shadeDirectionOverride, Boolean emissive, UnbakedModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemDisplayContext,ItemTransform> itemTransforms){
         this.parent = parent;
         this.materials = Map.copyOf(materials);
         this.ambientOcclusion = ambientOcclusion;
-        this.shade = shade;
+        this.shadeDirectionOverride = shadeDirectionOverride;
         this.emissive = emissive;
         this.guiLight = guiLight;
         this.geometry = geometry;
@@ -66,8 +68,8 @@ public class BaseModelDataImpl implements BaseModelData {
     }
 
     @Override
-    public @Nullable Boolean getShade(){
-        return this.shade;
+    public @Nullable Direction getShadeDirectionOverride(){
+        return this.shadeDirectionOverride;
     }
 
     @Override

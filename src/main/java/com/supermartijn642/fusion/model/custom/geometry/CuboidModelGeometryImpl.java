@@ -39,8 +39,6 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
         return of(elements);
     }
 
-    private static final BakedQuad.MaterialInfo DUMMY_MATERIAL_INFO = new BakedQuad.MaterialInfo(null, null, null, -1, true, 0, true);
-
     public static CullableQuads bakeElement(Element element, ModelTransform transformation, MaterialKeyResolver materialResolver){
         CullableQuads.Builder quads = CullableQuads.builder();
         bakeElement((q, d, p) -> quads.add(d, q), element, transformation, materialResolver);
@@ -98,7 +96,7 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
             element.from(), element.to(),
             uv,
             face.rotation() == null ? Quadrant.R0 : face.rotation(),
-            new BakedQuad.MaterialInfo(sprite.sprite(), ChunkSectionLayer.SOLID, Sheets.cutoutBlockItemSheet(), -1, true, 0, true),
+            new BakedQuad.MaterialInfo(sprite.sprite(), ChunkSectionLayer.SOLID, Sheets.cutoutBlockItemSheet(), Sheets.cutoutBlockItemGlintSheet(), Sheets.cutoutBlockItemGlintSpecialSheet(), -1, null, 0),
             side,
             transformation.toModelState(),
             element.rotation()
@@ -109,8 +107,8 @@ public class CuboidModelGeometryImpl implements CuboidModelGeometry {
         quad.material(sprite);
         if(face.tintIndex() != null)
             quad.tintIndex(face.tintIndex());
-        if(face.shade() != null || element.shade() != null)
-            quad.shade(face.shade() == null ? element.shade() : face.shade());
+        if(face.shadeDirectionOverride() != null || element.shadeDirectionOverride() != null)
+            quad.shadeDirectionOverride(face.shadeDirectionOverride() == null ? element.shadeDirectionOverride() : face.shadeDirectionOverride());
         if(face.lightEmission() != null || element.lightEmission() != null)
             quad.lightEmission(face.lightEmission() == null ? element.lightEmission() : face.lightEmission());
         if(face.ambientOcclusion() != null || element.ambientOcclusion() != null)

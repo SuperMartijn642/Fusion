@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.model.custom.geometry.CuboidModelGeometry;
 import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.resources.model.cuboid.CuboidFace;
 import net.minecraft.core.Direction;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -42,19 +43,19 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
     private final Quadrant rotation;
     private final Direction cullDirection;
     private final Integer tintIndex;
-    private final Boolean shade;
+    private final Direction shadeDirectionOverride;
     private final Integer lightEmission;
     private final Boolean ambientOcclusion;
     private final Boolean emissive;
     private final Map<Property<?,?>,Function<?,?>> properties;
 
-    public CuboidGeometryFaceImpl(String material, CuboidFace.UVs uv, Quadrant rotation, Direction cullDirection, Integer tintIndex, Boolean shade, Integer lightEmission, Boolean ambientOcclusion, Boolean emissive, Map<Property<?,?>,Function<?,?>> properties){
+    public CuboidGeometryFaceImpl(String material, CuboidFace.UVs uv, Quadrant rotation, Direction cullDirection, Integer tintIndex, Direction shadeDirectionOverride, Integer lightEmission, Boolean ambientOcclusion, Boolean emissive, Map<Property<?,?>,Function<?,?>> properties){
         this.material = material;
         this.uv = uv;
         this.rotation = rotation;
         this.cullDirection = cullDirection;
         this.tintIndex = tintIndex;
-        this.shade = shade;
+        this.shadeDirectionOverride = shadeDirectionOverride;
         this.lightEmission = lightEmission;
         this.ambientOcclusion = ambientOcclusion;
         this.emissive = emissive;
@@ -87,8 +88,8 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
     }
 
     @Override
-    public Boolean shade(){
-        return this.shade;
+    public Direction shadeDirectionOverride(){
+        return this.shadeDirectionOverride;
     }
 
     @Override
@@ -124,7 +125,7 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
         private Quadrant rotation;
         private Direction cullDirection;
         private Integer tintIndex;
-        private Boolean shade;
+        private Direction shadeDirectionOverride;
         private Integer lightEmission;
         private Boolean ambientOcclusion;
         private Boolean emissive;
@@ -163,8 +164,8 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
         }
 
         @Override
-        public Builder shade(Boolean shade){
-            this.shade = shade;
+        public Builder shadeDirectionOverride(@Nullable Direction direction){
+            this.shadeDirectionOverride = direction;
             return this;
         }
 
@@ -216,7 +217,7 @@ public class CuboidGeometryFaceImpl implements CuboidModelGeometry.Face {
                 this.rotation,
                 this.cullDirection,
                 this.tintIndex,
-                this.shade,
+                this.shadeDirectionOverride,
                 this.lightEmission,
                 this.ambientOcclusion,
                 this.emissive,

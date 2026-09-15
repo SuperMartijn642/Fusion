@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.util.Property;
 import net.minecraft.client.resources.model.cuboid.CuboidModelElement;
 import net.minecraft.client.resources.model.cuboid.CuboidRotation;
 import net.minecraft.core.Direction;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3fc;
 
 import java.util.EnumMap;
@@ -28,7 +29,7 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
         CuboidModelGeometry.Element.Builder builder = builder()
             .fromTo(element.from(), element.to())
             .rotation(element.rotation())
-            .shade(element.shade() ? null : false)
+            .shadeDirectionOverride(element.shadeDirectionOverride())
             .lightEmission(element.lightEmission() == 0 ? null : element.lightEmission())
             .ambientOcclusion(element.faceData().ambientOcclusion() ? null : false)
             .property(DefaultModelProperties.NEO_GEOMETRY_COLOR, element.faceData().color())
@@ -53,18 +54,18 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
     private final Vector3fc from, to;
     private final CuboidRotation rotation;
     private final Map<Direction,CuboidModelGeometry.Face> faces;
-    private final Boolean shade;
+    private final Direction shadeDirectionOverride;
     private final Integer lightEmission;
     private final Boolean ambientOcclusion;
     private final Boolean emissive;
     private final Map<Property<?,?>,Function<?,?>> properties;
 
-    private CuboidGeometryElementImpl(Vector3fc from, Vector3fc to, CuboidRotation rotation, Map<Direction,CuboidModelGeometry.Face> faces, Boolean shade, Integer lightEmission, Boolean ambientOcclusion, Boolean emissive, Map<Property<?,?>,Function<?,?>> properties){
+    private CuboidGeometryElementImpl(Vector3fc from, Vector3fc to, CuboidRotation rotation, Map<Direction,CuboidModelGeometry.Face> faces, Direction shadeDirectionOverride, Integer lightEmission, Boolean ambientOcclusion, Boolean emissive, Map<Property<?,?>,Function<?,?>> properties){
         this.from = from;
         this.to = to;
         this.rotation = rotation;
         this.faces = faces;
-        this.shade = shade;
+        this.shadeDirectionOverride = shadeDirectionOverride;
         this.lightEmission = lightEmission;
         this.ambientOcclusion = ambientOcclusion;
         this.emissive = emissive;
@@ -92,8 +93,8 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
     }
 
     @Override
-    public Boolean shade(){
-        return this.shade;
+    public Direction shadeDirectionOverride(){
+        return this.shadeDirectionOverride;
     }
 
     @Override
@@ -125,7 +126,7 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
         private Vector3fc from, to;
         private CuboidRotation rotation;
         private final Map<Direction,CuboidModelGeometry.Face> faces = new EnumMap<>(Direction.class);
-        private Boolean shade;
+        private Direction shadeDirectionOverride;
         private Integer lightEmission;
         private Boolean ambientOcclusion;
         private Boolean emissive;
@@ -154,8 +155,8 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
         }
 
         @Override
-        public Builder shade(Boolean shade){
-            this.shade = shade;
+        public Builder shadeDirectionOverride(@Nullable Direction direction){
+            this.shadeDirectionOverride = direction;
             return this;
         }
 
@@ -207,7 +208,7 @@ public class CuboidGeometryElementImpl implements CuboidModelGeometry.Element {
                 this.from, this.to,
                 this.rotation,
                 this.faces,
-                this.shade,
+                this.shadeDirectionOverride,
                 this.lightEmission,
                 this.ambientOcclusion,
                 this.emissive,

@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataBuilderImpl;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.ApiStatus;
@@ -66,10 +67,10 @@ public interface BaseModelData {
     ItemTransform getItemTransform(ItemDisplayContext type);
 
     /**
-     * Whether the model should be shaded.
+     * The direction to use for shade for the model.
      */
     @Nullable
-    Boolean getShade();
+    Direction getShadeDirectionOverride();
 
     /**
      * Whether the model is emissive.
@@ -81,9 +82,9 @@ public interface BaseModelData {
     interface Builder<T extends Builder<T,S>, S> extends CuboidModelDataBuilder<T,S> {
 
         /**
-         * Sets whether the model should be shaded.
+         * Sets the direction to use for shade for the model.
          */
-        T shade(@Nullable Boolean shade);
+        T shadeDirectionOverride(@Nullable Direction direction);
 
         /**
          * Sets whether the model is emissive.

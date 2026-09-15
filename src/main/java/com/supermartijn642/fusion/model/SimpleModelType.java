@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.item.ItemModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
 import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +59,7 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 conditions = conditions.simplify();
             // Get model properties for the quads
             Boolean ambientOcclusion = modelStack.findAmbientOcclusionIncludingParents(context);
-            Boolean shade = modelStack.findShadeIncludingParents(context);
+            Direction shadeDirectionOverride = modelStack.findShadeDirectionOverrideIncludingParents(context);
             Boolean emissive = modelStack.findEmissiveIncludingParents(context);
             PropertyGetter modelProperties = new PropertyGetter() {
                 @Override
@@ -77,8 +78,8 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 // Apply model properties // TODO this should not be here, those properties should always be applied after processing from the texture
                 if(ambientOcclusion != null)
                     quad.ambientOcclusion(ambientOcclusion);
-                if(shade != null)
-                    quad.shade(shade);
+                if(shadeDirectionOverride != null)
+                    quad.shadeDirectionOverride(shadeDirectionOverride);
                 if(emissive != null)
                     quad.emissive(emissive);
                 // Initialize the quad
@@ -93,8 +94,8 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 // Apply model properties
                 if(ambientOcclusion != null)
                     quad.ambientOcclusion(ambientOcclusion);
-                if(shade != null)
-                    quad.shade(shade);
+                if(shadeDirectionOverride != null)
+                    quad.shadeDirectionOverride(shadeDirectionOverride);
                 if(emissive != null)
                     quad.emissive(emissive);
                 // Add the quad
@@ -158,7 +159,7 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 conditions = conditions.simplify();
             // Get model properties for the quads
             Boolean ambientOcclusion = modelStack.findAmbientOcclusionIncludingParents(context);
-            Boolean shade = modelStack.findShadeIncludingParents(context);
+            Direction shadeDirectionOverride = modelStack.findShadeDirectionOverrideIncludingParents(context);
             Boolean emissive = modelStack.findEmissiveIncludingParents(context);
             PropertyGetter modelProperties = new PropertyGetter() {
                 @Override
@@ -174,8 +175,8 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 // Apply model properties // TODO this should not be here, those properties should always be applied after processing from the texture
                 if(ambientOcclusion != null)
                     quad.ambientOcclusion(ambientOcclusion);
-                if(shade != null)
-                    quad.shade(shade);
+                if(shadeDirectionOverride != null)
+                    quad.shadeDirectionOverride(shadeDirectionOverride);
                 if(emissive != null)
                     quad.emissive(emissive);
                 // Initialize the quad
@@ -190,8 +191,8 @@ public abstract class SimpleModelType<T> implements ModelType<T> {
                 // Apply model properties
                 if(ambientOcclusion != null)
                     quad.ambientOcclusion(ambientOcclusion);
-                if(shade != null)
-                    quad.shade(shade);
+                if(shadeDirectionOverride != null)
+                    quad.shadeDirectionOverride(shadeDirectionOverride);
                 if(emissive != null)
                     quad.emissive(emissive);
                 // Add the quad

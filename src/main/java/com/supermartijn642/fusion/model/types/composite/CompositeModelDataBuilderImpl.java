@@ -7,6 +7,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
 import net.minecraft.client.resources.model.cuboid.ItemTransforms;
+import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,8 +80,8 @@ public class CompositeModelDataBuilderImpl implements CompositeModelData.Builder
     }
 
     @Override
-    public CompositeModelData.Builder shade(@Nullable Boolean shade){
-        this.baseModelData.shade(shade);
+    public CompositeModelData.Builder shadeDirectionOverride(@Nullable Direction direction){
+        this.baseModelData.shadeDirectionOverride(direction);
         return this;
     }
 

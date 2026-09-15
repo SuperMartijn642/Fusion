@@ -4,16 +4,17 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.supermartijn642.fusion.FusionClient;
-import com.supermartijn642.fusion.api.util.Pair;
 import com.supermartijn642.fusion.extensions.BlockBreakingStateExtension;
 import com.supermartijn642.fusion.model.modifiers.block.BlockModelModifierBakedModel;
 import com.supermartijn642.fusion.model.modifiers.block.ModelsByRandomOffset;
+import com.supermartijn642.fusion.util.Triple;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.extract.LevelExtractor;
 import net.minecraft.client.renderer.state.level.BlockBreakingRenderState;
+import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
@@ -57,7 +58,7 @@ public class LevelExtractorMixin {
         if(!(model instanceof BlockModelModifierBakedModel))
             return breakingState;
         BlockPos pos = breakingState.blockPos();
-        List<Pair<Vector3fc,List<BlockStateModelPart>>> parts = new ArrayList<>();
+        List<Triple<Vector3fc,List<BlockStateModelPart>,Boolean>> parts = new ArrayList<>();
         FusionClient.IS_RENDERING_BREAKING_OVERLAY.set(true);
         List<BlockStateModelPart> partsList = dummyPartsList.get();
         if(partsList == null)
@@ -71,7 +72,8 @@ public class LevelExtractorMixin {
                 entry -> {
                     this.randomSource.setSeed(seed);
                     entry.collectParts(this.level, pos, blockState, this.randomSource, finalPartsList);
-                    parts.add(Pair.of(entry.getOffset(), List.copyOf(finalPartsList)));
+                    boolean translucent = entry.hasMaterialFlag(this.level, pos, blockState, BakedQuad.FLAG_TRANSLUCENT);
+                    parts.add(Triple.of(entry.getOffset(), List.copyOf(finalPartsList), translucent));
                     finalPartsList.clear();
                 }
             );

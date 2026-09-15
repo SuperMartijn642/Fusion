@@ -21,7 +21,7 @@ public class BaseModelDataBuilderImpl extends AbstractBaseModelDataBuilder<BaseM
             this.parent,
             this.materials,
             this.ambientOcclusion,
-            this.shade,
+            this.shadeDirectionOverride,
             this.emissive,
             this.guiLight,
             this.elements == null ? null : CuboidModelGeometry.of(this.elements),

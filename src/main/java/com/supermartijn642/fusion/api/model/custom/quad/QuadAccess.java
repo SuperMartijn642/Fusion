@@ -88,14 +88,25 @@ public interface QuadAccess {
     RenderType itemRenderType();
 
     /**
+     * Render type that should be used when rendering the quad as an item with {@link ItemStackRenderState.FoilType#STANDARD} glint.
+     */
+    RenderType glintItemRenderType();
+
+    /**
+     * Render type that should be used when rendering the quad as an item with {@link ItemStackRenderState.FoilType#SPECIAL} glint.
+     */
+    RenderType specialGlintItemRenderType();
+
+    /**
      * Tint index to use for tinting the quad.
      */
     int tintIndex();
 
     /**
-     * Whether the quad should be shaded.
+     * The direction used for shade for the quad.
      */
-    boolean shade();
+    @Nullable
+    Direction shadeDirectionOverride();
 
     /**
      * Base light-level of the quad.

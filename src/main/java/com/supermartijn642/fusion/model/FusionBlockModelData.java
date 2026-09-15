@@ -176,11 +176,11 @@ public class FusionBlockModelData {
                         if(material == null){
                             if(required)
                                 modelBaker.materials().reportMissingReference(key, name);
-                            return ModelMaterial.Resolved.of(modelBaker.materials().get(ModelMaterial.missing().toMaterial(), () -> {throw new AssertionError("Failed to bake missing sprite!");}));
+                            return ModelMaterial.Resolved.of(modelBaker.materials().get(ModelMaterial.missing(false).toMaterial(), () -> {throw new AssertionError("Failed to bake missing sprite!");}));
                         }
                         Material.Baked baked = modelBaker.materials().get(material, name);
                         if(baked == null)
-                            return ModelMaterial.Resolved.of(modelBaker.materials().get(ModelMaterial.missing().toMaterial(), () -> {throw new AssertionError("Failed to bake missing sprite!");}));
+                            return ModelMaterial.Resolved.of(modelBaker.materials().get(ModelMaterial.missing(material.forceTranslucent()).toMaterial(), () -> {throw new AssertionError("Failed to bake missing sprite!");}));
                         return ModelMaterial.Resolved.of(baked);
                     }).toQuadCollection();
                 };

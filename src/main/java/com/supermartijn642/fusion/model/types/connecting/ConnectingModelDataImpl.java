@@ -8,6 +8,7 @@ import com.supermartijn642.fusion.api.util.Either;
 import com.supermartijn642.fusion.model.types.base.BaseModelDataImpl;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemDisplayContext;
 
@@ -20,8 +21,8 @@ public class ConnectingModelDataImpl extends BaseModelDataImpl implements Connec
 
     private final Map<String,Either<String,ConnectionPredicate>> connections;
 
-    public ConnectingModelDataImpl(Identifier parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Boolean shade, Boolean emissive, UnbakedModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemDisplayContext,ItemTransform> itemTransforms, Map<String,Either<String,ConnectionPredicate>> connections){
-        super(parent, materials, ambientOcclusion, shade, emissive, guiLight, geometry, itemTransforms);
+    public ConnectingModelDataImpl(Identifier parent, Map<String,Either<String,ModelMaterial>> materials, Boolean ambientOcclusion, Direction shadeDirectionOverride, Boolean emissive, UnbakedModel.GuiLight guiLight, CuboidModelGeometry geometry, Map<ItemDisplayContext,ItemTransform> itemTransforms, Map<String,Either<String,ConnectionPredicate>> connections){
+        super(parent, materials, ambientOcclusion, shadeDirectionOverride, emissive, guiLight, geometry, itemTransforms);
         this.connections = Map.copyOf(connections);
     }
 

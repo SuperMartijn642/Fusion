@@ -1,3 +1,6 @@
+### Fusion 1.3.15b
+- Fixed flag tracking breaking overlay rendering not being cleared, sometimes resulting in missing model parts
+
 ### Fusion 1.3.15a
 - Added icon and banner images for new NeoForge 26.2.0.50-beta mod list
 

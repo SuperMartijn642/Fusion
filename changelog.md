@@ -1,3 +1,6 @@
+### Fusion 1.3.15a
+- Fixed flag tracking breaking overlay rendering not being cleared, sometimes resulting in missing model parts
+
 ### Fusion 1.3.15
 - Fixed `ambientocclusion`, `shade`, and `emissive` model properties not always applying to texture types that have subtextures like `connecting` and `random`
 - Fixed `is_biome` predicate always evaluating to `false` for chunk geometry 

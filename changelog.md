@@ -1,3 +1,6 @@
+### Fusion 1.3.15a
+- Fixed flag tracking breaking overlay rendering not being cleared, sometimes resulting in missing model parts
+
 ## Update to Minecraft 26.3
 
 ### Fusion 1.3.15

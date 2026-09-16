@@ -72,7 +72,7 @@ public class LevelRendererMixin {
 
     @Inject(
         method = "submitBlockDestroyAnimation",
-        at = @At("HEAD")
+        at = @At("RETURN")
     )
     private void submitBlockDestroyAnimationTail(CallbackInfo ci){
         FusionClient.IS_RENDERING_BREAKING_OVERLAY.remove();

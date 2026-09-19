@@ -35,7 +35,6 @@ import java.util.function.Supplier;
  */
 public class BaseBlockStateModel implements BlockStateModel {
 
-    private static final Collection<ChunkSectionLayer> ALL_CHUNK_RENDER_TYPES = EnumSet.allOf(ChunkSectionLayer.class);
     private static final ModelProperty<RenderData> RENDER_DATA = new ModelProperty<>();
     private static final ModelProperty<LazyQuadProcessor> QUAD_PROCESSORS = new ModelProperty<>();
 
@@ -43,7 +42,7 @@ public class BaseBlockStateModel implements BlockStateModel {
     private final ModelPredicate conditions;
     private final TextureAtlasSprite particleSprite;
     private final PropertyStore propertyStore;
-    private final List<ChunkSectionLayer> renderTypes;
+    private final List<ChunkSectionLayer> renderTypes; // This must be sorted by enum ordinal
 
     public BaseBlockStateModel(Quads quads, ModelPredicate conditions, TextureAtlasSprite particleSprite, PropertyStore propertyStore){
         this.quads = quads;
@@ -122,20 +121,7 @@ public class BaseBlockStateModel implements BlockStateModel {
         PropertyStore propertyStore = renderData.propertyStore;
 
         // Get the default render type
-        ChunkSectionLayer defaultRenderType;
-        if(renderData.state != null){
-            //noinspection deprecation
-            Collection<ChunkSectionLayer> renderLayers = ItemBlockRenderTypes.getRenderLayers(renderData.state);
-            if(renderLayers.contains(ChunkSectionLayer.TRANSLUCENT))
-                defaultRenderType = ChunkSectionLayer.TRANSLUCENT;
-            else if(renderLayers.contains(ChunkSectionLayer.CUTOUT))
-                defaultRenderType = ChunkSectionLayer.CUTOUT;
-            else if(!renderLayers.isEmpty())
-                defaultRenderType = renderLayers.iterator().next();
-            else
-                defaultRenderType = ChunkSectionLayer.SOLID;
-        }else
-            defaultRenderType = ChunkSectionLayer.SOLID;
+        ChunkSectionLayer defaultRenderType = getDefaultRenderType(renderData.state);
 
         // Get texture states
         List<Object>[] extractStates = renderData.combinedTextureStates;
@@ -169,6 +155,20 @@ public class BaseBlockStateModel implements BlockStateModel {
                 return BaseBlockStateModel.this.particleSprite;
             }
         });
+    }
+
+    private static ChunkSectionLayer getDefaultRenderType(@Nullable BlockState state){
+        if(state == null)
+            return ChunkSectionLayer.SOLID;
+        //noinspection deprecation
+        Collection<ChunkSectionLayer> renderLayers = ItemBlockRenderTypes.getRenderLayers(state);
+        if(renderLayers.contains(ChunkSectionLayer.TRANSLUCENT))
+            return ChunkSectionLayer.TRANSLUCENT;
+        else if(renderLayers.contains(ChunkSectionLayer.CUTOUT))
+            return ChunkSectionLayer.CUTOUT;
+        else if(!renderLayers.isEmpty())
+            return renderLayers.iterator().next();
+        return ChunkSectionLayer.SOLID;
     }
 
     private static Map<ChunkSectionLayer,List<BakedQuad>> processQuads(List<Quad> quads, List<Object> states, PropertyStore propertyStore, ChunkSectionLayer defaultRenderType){
@@ -211,7 +211,22 @@ public class BaseBlockStateModel implements BlockStateModel {
 
     @Override
     public Collection<ChunkSectionLayer> getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data){
-        return this.renderTypes;
+        ChunkSectionLayer defaultRenderType = getDefaultRenderType(state);
+        int i = 0;
+        while(i < this.renderTypes.size()){
+            ChunkSectionLayer renderType = this.renderTypes.get(i++);
+            if(renderType == defaultRenderType)
+                return this.renderTypes;
+            if(renderType.ordinal() > defaultRenderType.ordinal())
+                break;
+        }
+        ChunkSectionLayer[] renderTypes = new ChunkSectionLayer[this.renderTypes.size() + 1];
+        for(int j = 0; j < i; j++)
+            renderTypes[j] = this.renderTypes.get(j);
+        renderTypes[i] = defaultRenderType;
+        for(int j = i; j < this.renderTypes.size(); j++)
+            renderTypes[j + 1] = this.renderTypes.get(j);
+        return Arrays.asList(renderTypes);
     }
 
     @Override

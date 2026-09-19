@@ -1,3 +1,6 @@
+### Fusion 1.3.15b
+- Fixed default block render type not being included in model render types, resulting in missing quads for models without custom render types
+
 ### Fusion 1.3.15a
 - Fixed animated textures using incorrect frame index when frames are not in sequential order
 

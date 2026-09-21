@@ -1,3 +1,6 @@
+### Fusion 1.3.15b
+- Fixed error when a connecting texture is rendered without world context and an empty tile is picked
+
 ### Fusion 1.3.15a
 - Fixed animated textures using incorrect frame index when frames are not in sequential order
 

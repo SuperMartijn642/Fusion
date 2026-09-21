@@ -310,6 +310,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             (tile, emitter) -> contextlessTiles.set(tile),
             contextlessConnections
         );
+        contextlessTiles.and(usedTiles);
 
         // Make sure default quad has default orientation
         orientation.applyVertexPermutation(quad);

@@ -319,6 +319,15 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         // Create processor
         return new QuadProcessor<Pair<TextureConnections,Object[]>>() {
             @Override
+            public boolean canSkipHiddenFaces(){
+                for(QuadProcessor<?> processor : subProcessors){
+                    if(processor != null && !processor.canSkipHiddenFaces())
+                        return false;
+                }
+                return true;
+            }
+
+            @Override
             public Pair<TextureConnections,Object[]> extractState(Supplier<RandomSource> randomSupplier, PropertyStore properties){
                 // Extract tile states
                 Object[] tileStates = new Object[usedTileCount];

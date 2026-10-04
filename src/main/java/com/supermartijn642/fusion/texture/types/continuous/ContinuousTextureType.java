@@ -126,6 +126,11 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
         TextureInstance<?> texture = sprite.getTexture();
         return new QuadProcessor<BlockPos>() {
             @Override
+            public boolean canSkipHiddenFaces(){
+                return true;
+            }
+
+            @Override
             public BlockPos extractState(Supplier<RandomSource> randomSupplier, PropertyStore properties){
                 return null;
             }

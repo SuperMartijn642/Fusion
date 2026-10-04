@@ -36,7 +36,7 @@ public abstract class CombinedBakedModel implements BakedModel {
         };
     }
 
-    private static final ModelProperty<ModelData[]> SUB_MODEL_DATA = new ModelProperty<>();
+    protected static final ModelProperty<ModelData[]> SUB_MODEL_DATA = new ModelProperty<>();
 
     protected abstract List<BakedModel> getModels();
 

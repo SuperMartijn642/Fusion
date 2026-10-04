@@ -1,6 +1,7 @@
 package com.supermartijn642.fusion.model.modifiers.block;
 
 import com.supermartijn642.fusion.model.CombinedBakedModel;
+import com.supermartijn642.fusion.util.HiddenFaceSkipping;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
@@ -75,6 +76,17 @@ public class ModelsByRandomOffset {
         final Vector3f offset = new Vector3f();
         final List<BakedModel> models = new ArrayList<>();
         final List<ModelData> modelData = new ArrayList<>();
+
+        public boolean canSkipHiddenFaces(ModelData modelData){
+            ModelData[] subData = modelData.get(SUB_MODEL_DATA);
+            if(this.models.isEmpty() || subData == null || subData.length != this.models.size())
+                return false;
+            for(int i = 0; i < this.models.size(); i++){
+                if(subData[i] == null || !HiddenFaceSkipping.canSkip(this.models.get(i), subData[i], true))
+                    return false;
+            }
+            return true;
+        }
 
         public Vector3fc getOffset(){
             return this.offset;

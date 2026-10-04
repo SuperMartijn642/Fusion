@@ -1,5 +1,6 @@
 package com.supermartijn642.fusion.mixin;
 
+import com.supermartijn642.fusion.util.HiddenFaceSkipping;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.WeightedBakedModel;
 import net.minecraft.core.BlockPos;
@@ -27,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Created 26/10/2023 by SuperMartijn642
  */
 @Mixin(WeightedBakedModel.class)
-public class WeightedBakedModelMixin implements IForgeBakedModel {
+public class WeightedBakedModelMixin implements IForgeBakedModel, HiddenFaceSkipping.WeightedVariants {
     @Final
     @Shadow
     private int totalWeight;
@@ -52,6 +53,15 @@ public class WeightedBakedModelMixin implements IForgeBakedModel {
                 return true;
             }
         }));
+    }
+
+    @Override
+    public boolean fusion$canSkipHiddenFaces(ModelData modelData){
+        for(WeightedEntry.Wrapper<BakedModel> entry : this.list){
+            if(entry.getData() == null || !HiddenFaceSkipping.canSkip(entry.getData(), modelData, false))
+                return false;
+        }
+        return !this.list.isEmpty();
     }
 
     @Override

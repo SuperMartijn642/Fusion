@@ -99,17 +99,45 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
         }
     };
 
+    private static final ClassValue<Boolean> IDENTITY_BLOCK = new ClassValue<>() {
+        @Override
+        protected Boolean computeValue(Class<?> type){
+            try{
+                return type.getMethod("equals", Object.class).getDeclaringClass() == Object.class
+                    && type.getMethod("hashCode").getDeclaringClass() == Object.class;
+            }catch(ReflectiveOperationException | SecurityException e){
+                return false;
+            }
+        }
+    };
+
     private final Set<Block> blocks;
+    private final Block[] blockArray;
+    private final boolean cacheHash;
+    private final int hash;
     private final boolean containsAir;
 
     private MatchBlockConnectionPredicate(Collection<Block> blocks){
         this.blocks = Set.copyOf(blocks);
+        this.blockArray = this.blocks.size() <= 16 ? this.blocks.toArray(Block[]::new) : null;
+        this.cacheHash = this.blocks.stream().allMatch(block -> IDENTITY_BLOCK.get(block.getClass()));
+        this.hash = this.cacheHash ? this.blocks.hashCode() : 0;
         this.containsAir = this.blocks.stream().anyMatch(b -> b.defaultBlockState().isAir());
     }
 
     @Override
     public boolean shouldConnect(Direction side, @Nullable BlockState ownState, BlockState otherState, BlockState blockInFront, ConnectionDirection direction){
-        return otherState.isAir() ? this.containsAir : this.blocks.contains(otherState.getBlock());
+        if(otherState.isAir())
+            return this.containsAir;
+        Block block = otherState.getBlock();
+        // Keep equals-based membership for custom block classes and larger sets.
+        if(this.blockArray == null || block == null || !IDENTITY_BLOCK.get(block.getClass()))
+            return this.blocks.contains(block);
+        for(Block candidate : this.blockArray){
+            if(candidate == block)
+                return true;
+        }
+        return false;
     }
 
     @Override
@@ -131,6 +159,6 @@ public class MatchBlockConnectionPredicate implements ConnectionPredicate {
 
     @Override
     public int hashCode(){
-        return this.blocks.hashCode();
+        return this.cacheHash ? this.hash : this.blocks.hashCode();
     }
 }

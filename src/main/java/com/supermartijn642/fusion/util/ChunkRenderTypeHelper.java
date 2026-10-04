@@ -35,6 +35,11 @@ public class ChunkRenderTypeHelper {
     }
 
     public static boolean isChunkRenderType(RenderType chunkRenderType){
+        if(chunkRenderType != null){
+            int id = chunkRenderType.getChunkLayerId() + 1;
+            if(id > 0 && id < BY_ID.length && BY_ID[id] == chunkRenderType)
+                return true;
+        }
         return RENDER_TYPES.contains(chunkRenderType);
     }
 
@@ -45,6 +50,9 @@ public class ChunkRenderTypeHelper {
     public static int getId(@Nullable RenderType renderType){
         if(renderType == null)
             return 0;
+        int layerId = renderType.getChunkLayerId() + 1;
+        if(layerId > 0 && layerId < BY_ID.length && BY_ID[layerId] == renderType)
+            return layerId;
         Integer id = TO_ID.get(renderType);
         if(id == null)
             throw new IllegalArgumentException("Key must be a chunk render type!");

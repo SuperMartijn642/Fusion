@@ -1,3 +1,6 @@
+### Fusion 1.3.16
+- Fixed calculation for rounding up size of continuous textures to power of 2 being off by 1 for items
+
 ### Fusion 1.3.15a
 - Fixed flag tracking breaking overlay rendering not being cleared, sometimes resulting in missing model parts
 

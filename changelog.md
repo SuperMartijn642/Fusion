@@ -1,3 +1,6 @@
+### Fusion 1.3.16
+- Fixed calculation for rounding up size of continuous textures to power of 2 being off by 1 for items
+
 ### Fusion 1.3.15a
 - Fixed error when a connecting texture is rendered without world context and an empty tile is picked
 

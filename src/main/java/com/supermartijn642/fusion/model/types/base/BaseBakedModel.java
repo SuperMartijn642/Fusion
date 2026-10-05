@@ -113,12 +113,14 @@ public class BaseBakedModel implements BakedModel {
         // Extract state for all the textures that need processing
         //noinspection unchecked
         List<Object>[] extractStates = new List[7];
+        boolean canSkipHiddenFaces = true;
         for(Direction cullDirection : CullingHelper.cullDirections()){
             int cullIndex = CullingHelper.cullIndex(cullDirection);
             for(Quad quad : this.quads.get(cullDirection)){
                 // Ignore quads that don't need processing
                 if(quad.processor() == null)
                     continue;
+                canSkipHiddenFaces &= quad.processor().canSkipHiddenFaces();
                 if(extractStates[cullIndex] == null)
                     extractStates[cullIndex] = new ArrayList<>();
                 Object s = hasBlockContext ?
@@ -127,7 +129,7 @@ public class BaseBakedModel implements BakedModel {
                 extractStates[cullIndex].add(s);
             }
         }
-        return new RenderData(true, extractStates, propertyStore);
+        return new RenderData(true, extractStates, propertyStore, this, canSkipHiddenFaces);
     }
 
     @Override
@@ -138,6 +140,11 @@ public class BaseBakedModel implements BakedModel {
             .with(QUAD_PROCESSORS, new LazyQuadProcessor())
             .with(FusionFramedBlocksIntegration.getCacheKeyProperty(), FusionFramedBlocksIntegration.lazyCacheable(() -> this.createCacheKey(renderData)))
             .build();
+    }
+
+    public boolean canSkipHiddenFaces(ModelData modelData){
+        RenderData data = modelData.get(RENDER_DATA);
+        return RenderData.canSkipHiddenFaces(data, this);
     }
 
     @Override
@@ -400,8 +407,12 @@ public class BaseBakedModel implements BakedModel {
     public record Quad(QuadAccess quad, @Nullable SpriteInstance sprite, @Nullable QuadProcessor<Object> processor) {
     }
 
-    private record RenderData(boolean conditions, List<Object>[] combinedTextureStates, PropertyStore propertyStore) {
-        static final RenderData FAILED_CONDITIONS = new RenderData(false, null, null);
+    record RenderData(boolean conditions, List<Object>[] combinedTextureStates, PropertyStore propertyStore, Object owner, boolean canSkipHiddenFaces) {
+        static final RenderData FAILED_CONDITIONS = new RenderData(false, null, null, null, false);
+
+        static boolean canSkipHiddenFaces(@Nullable RenderData data, Object model){
+            return data != null && (!data.conditions || data.owner == model && data.canSkipHiddenFaces);
+        }
     }
 
     private static class LazyQuadProcessor {

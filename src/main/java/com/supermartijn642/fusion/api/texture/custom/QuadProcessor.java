@@ -22,6 +22,16 @@ import java.util.function.Supplier;
 public interface QuadProcessor<S> {
 
     /**
+     * Whether processing a discarded face may be omitted. Opting in promises that {@link #processQuad}
+     * has no observable effects beyond its emitted quads: in particular it must not change shared
+     * properties or state used by another face. This query must be side-effect free and stable for
+     * the lifetime of the processor. State extraction still runs for every face.
+     */
+    default boolean canSkipHiddenFaces(){
+        return false;
+    }
+
+    /**
      * Extract the texture state to use when there is no additional block or item context.
      * @param randomSupplier supplier for a random source
      * @param properties property store containing model properties as well as shared properties. May be used to store data shared between multiple quads. Any stored properties are released after rendering.

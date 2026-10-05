@@ -173,6 +173,15 @@ public class RandomTextureType implements TextureType<RandomTextureData,Stitched
         // Create processor
         return new QuadProcessor<Pair<Integer,Object>>() {
             @Override
+            public boolean canSkipHiddenFaces(){
+                for(QuadProcessor<?> processor : subProcessors){
+                    if(processor != null && !processor.canSkipHiddenFaces())
+                        return false;
+                }
+                return true;
+            }
+
+            @Override
             public Pair<Integer,Object> extractState(Supplier<RandomSource> randomSupplier, PropertyStore properties){
                 QuadProcessor<Object> subProcessor = subProcessors[defaultIndex];
                 Object subState = subProcessor == null ? null : subProcessor.extractState(randomSupplier, properties);

@@ -18,6 +18,7 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.model.data.ModelData;
@@ -29,10 +30,12 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Created 02/01/2025 by SuperMartijn642
@@ -50,6 +53,45 @@ public class BlockRendererMixinEmbeddium {
     private BlockRenderContext dummyRenderContext;
     @Unique
     private final BlockPos.MutableBlockPos dummyOrigin = new BlockPos.MutableBlockPos();
+
+    @Unique
+    private BlockRenderContext fusion$visibleContext;
+    @Unique
+    private Direction fusion$visibleFace;
+
+    @Shadow(remap = false)
+    private List<BakedQuad> getGeometry(BlockRenderContext context, Direction face){
+        throw new AssertionError();
+    }
+
+    @Shadow(remap = false)
+    private boolean isFaceVisible(BlockRenderContext context, Direction face){
+        throw new AssertionError();
+    }
+
+    @Redirect(method = "renderModel", remap = false, at = @At(value = "INVOKE", ordinal = 0,
+        target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;getGeometry(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lnet/minecraft/core/Direction;)Ljava/util/List;"))
+    private List<BakedQuad> getVisibleGeometry(BlockRenderer renderer, BlockRenderContext context, Direction face){
+        this.fusion$visibleContext = null;
+        if(face != null && context.model().getClass() == ModelsByRandomOffset.Entry.class
+            && ((ModelsByRandomOffset.Entry)context.model()).canSkipHiddenFaces(context.modelData())){
+            if(!this.isFaceVisible(context, face))
+                return List.of();
+            this.fusion$visibleContext = context;
+            this.fusion$visibleFace = face;
+        }
+        return this.getGeometry(context, face);
+    }
+
+    @Redirect(method = "renderModel", remap = false, at = @At(value = "INVOKE",
+        target = "Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderer;isFaceVisible(Lme/jellysquid/mods/sodium/client/render/chunk/compile/pipeline/BlockRenderContext;Lnet/minecraft/core/Direction;)Z"))
+    private boolean reuseFaceVisibility(BlockRenderer renderer, BlockRenderContext context, Direction face){
+        if(this.fusion$visibleContext == context && this.fusion$visibleFace == face){
+            this.fusion$visibleContext = null;
+            return true;
+        }
+        return this.isFaceVisible(context, face);
+    }
 
     private BlockRendererMixinEmbeddium(){
     }

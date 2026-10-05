@@ -1,3 +1,6 @@
+### Fusion 1.3.16
+- Fixed calculation for rounding up size of continuous textures to power of 2 being off by 1 for items
+
 ### Fusion 1.3.15
 - Fixed `ambientocclusion`, `shade`, and `emissive` model properties not always applying to texture types that have subtextures like `connecting` and `random`
 - Fixed `is_biome` predicate always evaluating to `false` for chunk geometry 

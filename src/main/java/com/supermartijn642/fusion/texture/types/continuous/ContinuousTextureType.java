@@ -73,9 +73,9 @@ public class ContinuousTextureType implements TextureType<ContinuousTextureData,
         int tileWidth = frameWidth / data.getColumns();
         int tileHeight = frameHeight / data.getRows();
         if(tileWidth != 0)
-            tileWidth = Math.min(1 << 31 - Integer.numberOfLeadingZeros(tileWidth - 1), frameWidth);
+            tileWidth = Math.min(1 << 32 - Integer.numberOfLeadingZeros(tileWidth - 1), frameWidth);
         if(tileHeight != 0)
-            tileHeight = Math.min(1 << 31 - Integer.numberOfLeadingZeros(tileHeight - 1), frameHeight);
+            tileHeight = Math.min(1 << 32 - Integer.numberOfLeadingZeros(tileHeight - 1), frameHeight);
         BufferedImage defaultTileImage = ImageHelper.createCropFramed(context.getImage(), 0, 0, tileWidth, tileHeight, frameWidth, frameHeight);
         SpriteImageSource defaultTileImageSource;
         if(animationMetadata == null)

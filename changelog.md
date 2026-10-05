@@ -1,3 +1,6 @@
+### Fusion 1.3.16
+- Fixed calculation for rounding up size of continuous textures to power of 2 being off by 1 for items
+
 ### Fusion 1.3.15b
 - Fixed crash with NeoForge 26.3.0.36-beta and newer
 

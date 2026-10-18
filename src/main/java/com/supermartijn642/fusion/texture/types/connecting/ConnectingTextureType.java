@@ -28,6 +28,7 @@ import com.supermartijn642.fusion.texture.DummyTextureSpriteContents;
 import com.supermartijn642.fusion.texture.TextureTypeRegistryImpl;
 import com.supermartijn642.fusion.texture.types.base.BaseTextureType;
 import com.supermartijn642.fusion.texture.types.connecting.layouts.ConnectingTextureLayoutHandler;
+import com.supermartijn642.fusion.util.ReusablePropertyStore;
 import com.supermartijn642.fusion.util.Triple;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.resources.metadata.animation.AnimationMetadataSection;
@@ -41,6 +42,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntConsumer;
@@ -249,6 +251,8 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             }
         }
         int finalProcessorCount = processorCount;
+        // Tile states are only ever written for tiles with a processor, so without any the all-null array can be shared
+        Object[] noTileStates = processorCount == 0 ? new Object[usedTileCount] : null;
 
         // Initialize vanilla tiles lazily as they don't need the property store
         QuadAccess quadCopy = quad.createCopy();
@@ -282,17 +286,52 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         // Make sure default quad has default orientation
         orientation.applyVertexPermutation(quad);
 
+        // Without tile processors the tile emitter doesn't depend on any per-quad state, so it and the per-tile
+        // transforms can be shared instead of being allocated for every quad during chunk meshing
+        EmittableQuad.Transform[] sharedTileTransforms = new EmittableQuad.Transform[usedTileCount];
+        BiFunction<Object[],PropertyStore,ConnectingTextureLayoutHandler.TileEmitter> tileEmitterFactory = (quadTileStates, quadProperties) -> (tile, emitter) -> {
+            if(!usedTiles.get(tile))
+                return;
+            byte storageIndex = tileToStorageIndex[tile];
+            if(subQuads[storageIndex] == null)
+                lazyQuadInitializer.accept(tile);
+            QuadAccess tileQuad = subQuads[storageIndex];
+            try(EmittableQuad.Popper _ = emitter.pushTransform(orientation.transform)){
+                EmittableQuad.Transform tileTransform = quadTileStates == null ? sharedTileTransforms[storageIndex] : null;
+                if(tileTransform == null){
+                    tileTransform = q -> {
+                        q.copyFrom(tileQuad);
+                        BlockStateQuadProcessor<Object> tileProcessor = subProcessors[storageIndex];
+                        if(tileProcessor == null){
+                            q.emit();
+                            return;
+                        }
+                        tileProcessor.processQuad(q, subSprites[storageIndex], quadTileStates[storageIndex], quadProperties);
+                    };
+                    if(quadTileStates == null)
+                        sharedTileTransforms[storageIndex] = tileTransform;
+                }
+                try(EmittableQuad.Popper _ = emitter.pushTransform(tileTransform)){
+                    emitter.emit();
+                }
+            }
+        };
+        ConnectingTextureLayoutHandler.TileEmitter sharedTileEmitter = processorCount == 0 ? tileEmitterFactory.apply(null, null) : null;
+
         // Create processor
         return new BlockStateQuadProcessor<Pair<TextureConnections,Object[]>>() {
             @Override
             public Pair<TextureConnections,Object[]> extractState(@Nullable BlockAndTintGetter level, @Nullable BlockPos pos, @Nullable BlockState state, Supplier<RandomSource> randomSupplier, PropertyStore properties){
                 // Extract all tile data
-                Object[] tileStates = new Object[usedTileCount];
-                for(int i = 0; i < usedTileCount; i++){
-                    BlockStateQuadProcessor<Object> tileProcessor = subProcessors[i];
-                    if(tileProcessor == null)
-                        continue;
-                    tileStates[i] = tileProcessor.extractState(level, pos, state, randomSupplier, properties);
+                Object[] tileStates = noTileStates;
+                if(tileStates == null){
+                    tileStates = new Object[usedTileCount];
+                    for(int i = 0; i < usedTileCount; i++){
+                        BlockStateQuadProcessor<Object> tileProcessor = subProcessors[i];
+                        if(tileProcessor == null)
+                            continue;
+                        tileStates[i] = tileProcessor.extractState(level, pos, state, randomSupplier, properties);
+                    }
                 }
 
                 // Check whether the predicate has already been evaluated
@@ -301,11 +340,16 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
                     return Pair.of(evaluation.get(), tileStates);
 
                 // Get surrounding blocks
-                SurroundingBlockCache surroundingBlocks = properties.getOrCompute(SURROUNDING_BLOCKS, () -> {
-                    return level == null || pos == null ?
-                        SurroundingBlockCache.EMPTY :
-                        new SurroundingBlockCache(level, pos, state);
-                });
+                SurroundingBlockCache surroundingBlocks = properties.getProperty(SURROUNDING_BLOCKS).orElse(null);
+                if(surroundingBlocks == null){
+                    if(level == null || pos == null)
+                        surroundingBlocks = SurroundingBlockCache.EMPTY;
+                    else if(properties instanceof ReusablePropertyStore reusable) // Reuse the cache object along with the store
+                        surroundingBlocks = reusable.scratch(SURROUNDING_BLOCKS, SurroundingBlockCache::new).reset(level, pos, state);
+                    else
+                        surroundingBlocks = new SurroundingBlockCache(level, pos, state);
+                    properties.setProperty(SURROUNDING_BLOCKS, surroundingBlocks);
+                }
 
                 // Evaluate predicate
                 TextureConnections connections = computeConnections(predicatesKey, surroundingBlocks);
@@ -332,28 +376,9 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
             @Override
             public void processQuad(EmittableQuad quad, SpriteInstance sprite, Pair<TextureConnections,Object[]> state, PropertyStore properties){
                 // Create access for tiles
-                Object[] tileStates = state.right();
-                ConnectingTextureLayoutHandler.TileEmitter tileEmitter = (tile, emitter) -> {
-                    if(!usedTiles.get(tile))
-                        return;
-                    byte storageIndex = tileToStorageIndex[tile];
-                    if(subQuads[storageIndex] == null)
-                        lazyQuadInitializer.accept(tile);
-                    QuadAccess tileQuad = subQuads[storageIndex];
-                    try(EmittableQuad.Popper _ = emitter.pushTransform(orientation.transform)){
-                        try(EmittableQuad.Popper _ = emitter.pushTransform(q -> {
-                            q.copyFrom(tileQuad);
-                            BlockStateQuadProcessor<Object> tileProcessor = subProcessors[storageIndex];
-                            if(tileProcessor == null){
-                                q.emit();
-                                return;
-                            }
-                            tileProcessor.processQuad(q, subSprites[storageIndex], tileStates[storageIndex], properties);
-                        })){
-                            emitter.emit();
-                        }
-                    }
-                };
+                ConnectingTextureLayoutHandler.TileEmitter tileEmitter = sharedTileEmitter != null ?
+                    sharedTileEmitter :
+                    tileEmitterFactory.apply(state.right(), properties);
 
                 // Process quad
                 ConnectingTextureLayoutHandler layoutHandler = ConnectingTextureLayoutHandler.get(data.getLayout());
@@ -581,7 +606,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         int[] up = orientation.transformWorldUpVector(face);
         int[] right = orientation.transformWorldRightVector(face);
 
-        BlockPos.MutableBlockPos mutablePos = new BlockPos.MutableBlockPos();
+        BlockPos.MutableBlockPos mutablePos = blocks.neighborPos();
         boolean connectTop = shouldConnect(predicate, blocks, face, orientation.worldToTexture[0], up[0], up[1], up[2], mutablePos);
         boolean connectTopRight = shouldConnect(predicate, blocks, face, orientation.worldToTexture[1], up[0] + right[0], up[1] + right[1], up[2] + right[2], mutablePos);
         boolean connectRight = shouldConnect(predicate, blocks, face, orientation.worldToTexture[2], right[0], right[1], right[2], mutablePos);
@@ -590,7 +615,7 @@ public class ConnectingTextureType implements TextureType<ConnectingTextureData,
         boolean connectBottomLeft = shouldConnect(predicate, blocks, face, orientation.worldToTexture[5], -up[0] - right[0], -up[1] - right[1], -up[2] - right[2], mutablePos);
         boolean connectLeft = shouldConnect(predicate, blocks, face, orientation.worldToTexture[6], -right[0], -right[1], -right[2], mutablePos);
         boolean connectTopLeft = shouldConnect(predicate, blocks, face, orientation.worldToTexture[7], up[0] - right[0], up[1] - right[1], up[2] - right[2], mutablePos);
-        return new TextureConnections(connectTop, connectTopRight, connectRight, connectBottomRight, connectBottom, connectBottomLeft, connectLeft, connectTopLeft);
+        return TextureConnections.of(connectTop, connectTopRight, connectRight, connectBottomRight, connectBottom, connectBottomLeft, connectLeft, connectTopLeft);
     }
 
     private static boolean shouldConnect(ConnectionPredicate predicate, SurroundingBlockCache blocks, Direction face, ConnectionDirection direction, int neighborX, int neighborY, int neighborZ, BlockPos.MutableBlockPos mutablePos){

@@ -9,6 +9,18 @@ import java.util.Iterator;
  */
 public final class TextureConnections {
 
+    // Only 256 combinations exist, so share instances instead of allocating one per quad during chunk meshing
+    private static final TextureConnections[] INSTANCES = new TextureConnections[256];
+
+    static{
+        for(int i = 0; i < 256; i++)
+            INSTANCES[i] = new TextureConnections((i & 1) != 0, (i & 2) != 0, (i & 4) != 0, (i & 8) != 0, (i & 16) != 0, (i & 32) != 0, (i & 64) != 0, (i & 128) != 0);
+    }
+
+    public static TextureConnections of(boolean top, boolean topRight, boolean right, boolean bottomRight, boolean bottom, boolean bottomLeft, boolean left, boolean topLeft){
+        return INSTANCES[(top ? 1 : 0) | (topRight ? 2 : 0) | (right ? 4 : 0) | (bottomRight ? 8 : 0) | (bottom ? 16 : 0) | (bottomLeft ? 32 : 0) | (left ? 64 : 0) | (topLeft ? 128 : 0)];
+    }
+
     public static Iterable<TextureConnections> iterateAll(){
         return new Iterable<>() {
             @NotNull

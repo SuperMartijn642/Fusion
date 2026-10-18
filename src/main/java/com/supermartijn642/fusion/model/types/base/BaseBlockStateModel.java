@@ -9,6 +9,7 @@ import com.supermartijn642.fusion.api.texture.custom.SpriteInstance;
 import com.supermartijn642.fusion.api.util.PropertyStore;
 import com.supermartijn642.fusion.util.CullingHelper;
 import com.supermartijn642.fusion.util.FallbackPropertyStore;
+import com.supermartijn642.fusion.util.ReusablePropertyStore;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.client.renderer.v1.mesh.ShadeMode;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
@@ -25,11 +26,33 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Created 06/09/2024 by SuperMartijn642
  */
 public class BaseBlockStateModel implements BlockStateModel {
+
+    private static final ThreadLocal<EmitContext> EMIT_CONTEXT = ThreadLocal.withInitial(EmitContext::new);
+
+    private static final class EmitContext {
+        final ReusablePropertyStore properties = new ReusablePropertyStore();
+        final Supplier<RandomSource> randomSupplier = () -> this.random;
+        QuadEmitter emitter;
+        Direction cullDirection;
+        RandomSource random;
+        EmittableQuad quad = this.createQuad();
+        boolean inUse;
+
+        EmittableQuad createQuad(){
+            return EmittableQuad.create(q -> {
+                this.emitter.cullFace(this.cullDirection);
+                this.emitter.shadeMode(ShadeMode.VANILLA);
+                q.toFrapiQuad(this.emitter);
+                this.emitter.emit();
+            });
+        }
+    }
 
     private final Quads quads;
     private final ModelPredicate conditions;
@@ -62,34 +85,48 @@ public class BaseBlockStateModel implements BlockStateModel {
         if(this.conditions != null && !this.conditions.testForBlockState(level, pos, state))
             return;
 
-        PropertyStore propertyStore = FallbackPropertyStore.create(this.propertyStore);
+        // This runs for every block during chunk meshing, so reuse a per-thread quad and property store
+        EmitContext context = EMIT_CONTEXT.get();
+        if(context.inUse) // Re-entrant call on the same thread
+            context = new EmitContext();
+        context.inUse = true;
+        context.emitter = emitter;
+        context.random = random;
+        ReusablePropertyStore propertyStore = context.properties;
+        propertyStore.reset(this.propertyStore);
+        EmittableQuad mutableQuad = context.quad;
 
-        // Emit quads for all cull directions
-        for(Direction cullDirection : CullingHelper.cullDirections()){
-            // Skip direction if it doesn't pass the cull test
-            if(cullTest.test(cullDirection))
-                continue;
-
-            EmittableQuad mutableQuad = EmittableQuad.create(q -> {
-                emitter.cullFace(cullDirection);
-                emitter.shadeMode(ShadeMode.VANILLA);
-                q.toFrapiQuad(emitter);
-                emitter.emit();
-            });
-            for(Quad quad : this.quads.get(cullDirection)){
-                // Copy quad properties
-                mutableQuad.copyFrom(quad.quad());
-
-                // Simply add quads that don't need further processing
-                if(quad.processor() == null){
-                    mutableQuad.emit();
+        try{
+            // Emit quads for all cull directions
+            for(Direction cullDirection : CullingHelper.cullDirections()){
+                // Skip direction if it doesn't pass the cull test
+                if(cullTest.test(cullDirection))
                     continue;
-                }
 
-                // Process special texture type quads
-                Object s = quad.processor().extractState(level, pos, state, () -> random, propertyStore);
-                quad.processor().processQuad(mutableQuad, quad.sprite(), s, propertyStore);
+                context.cullDirection = cullDirection;
+                for(Quad quad : this.quads.get(cullDirection)){
+                    // Copy quad properties
+                    mutableQuad.copyFrom(quad.quad());
+
+                    // Simply add quads that don't need further processing
+                    if(quad.processor() == null){
+                        mutableQuad.emit();
+                        continue;
+                    }
+
+                    // Process special texture type quads
+                    Object s = quad.processor().extractState(level, pos, state, context.randomSupplier, propertyStore);
+                    quad.processor().processQuad(mutableQuad, quad.sprite(), s, propertyStore);
+                }
             }
+        }catch(Throwable e){
+            // Don't reuse a quad that may have been left with pending transforms
+            context.quad = context.createQuad();
+            throw e;
+        }finally{
+            context.inUse = false;
+            context.emitter = null;
+            context.random = null;
         }
     }
 

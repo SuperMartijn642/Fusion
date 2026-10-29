@@ -1,3 +1,7 @@
+### Fusion 1.3.16a
+- Fixed infinite loading screen when there are dependency loops for vanilla models
+- Improved handling of dependency loops for Fusion models
+
 ### Fusion 1.3.16
 - Fixed calculation for rounding up size of continuous textures to power of 2 being off by 1 for items
 

@@ -89,7 +89,9 @@ public class FusionBlockModelData extends BlockModel {
 
         // Recursively gather materials and resolve Fusion model properties
         Set<Material> materials = new HashSet<>();
-        resolveAndGatherMaterials(topModel, modelGetter, missingMaterials, materials, new LinkedHashSet<>());
+        try{
+            resolveAndGatherMaterials(topModel, modelGetter, missingMaterials, materials, new LinkedHashSet<>());
+        }catch(DependencyLoopException ignore){}
 
         // Resolve particle material
         ModelGeometry.MaterialKeyResolver.fromKeyLookup(
@@ -117,18 +119,21 @@ public class FusionBlockModelData extends BlockModel {
                                                                                  Function<ResourceLocation,IUnbakedModel> modelGetter,
                                                                                  @Nullable Set<com.mojang.datafixers.util.Pair<String,String>> missingMaterials,
                                                                                  @Nullable Set<Material> materials,
-                                                                                 Set<IUnbakedModel> modelStack){
+                                                                                 Set<IUnbakedModel> modelStack) throws DependencyLoopException{
         // Check for loops
-        if(!modelStack.add(model))
+        if(!modelStack.add(model)){
             FusionClient.LOGGER.error(
                 "Found circular dependency chain while resolving model '{}': {} -> '{}'",
                 ((BlockModel)modelStack.stream().findFirst().orElseThrow(AssertionError::new)).name,
                 modelStack.stream().map(m -> m instanceof BlockModel ? "'" + ((BlockModel)m).name + "'" : "'unknown'").collect(Collectors.joining(" -> ")),
-                model instanceof BlockModel ? "'" + ((BlockModel)model).name + "'" : "'unknown'"
+                model instanceof BlockModel ? ((BlockModel)model).name : "unknown"
             );
+            throw DependencyLoopException.INSTANCE;
+        }
 
         Map<ResourceLocation,IUnbakedModel> dependencies = new HashMap<>();
         Set<String> requiredMaterialKeys = null;
+        boolean hasDependencyLoopError = false;
 
         // Handle unknown models
         if(!(model instanceof BlockModel)){
@@ -185,17 +190,21 @@ public class FusionBlockModelData extends BlockModel {
                     if(parent == null){
                         BlockModel.LOGGER.warn("No parent '{}' while loading model '{}'", ((BlockModel)model).parentLocation, model);
                         parent = modelGetter.apply(ModelBakery.MISSING_MODEL_LOCATION);
-                        dependencies.put(((BlockModel)model).parentLocation, parent);
                         ((BlockModel)model).parentLocation = ModelBakery.MISSING_MODEL_LOCATION;
                     }
                     if(!(parent instanceof BlockModel))
                         throw new IllegalStateException("BlockModel parent has to be a block model.");
                     ((BlockModel)model).parent = (BlockModel)parent;
                 }
-                if(hasGeometry)
-                    dependencies.putAll(resolveAndGatherMaterials(((BlockModel)model).parent, modelGetter, null, null, modelStack));
-                else
-                    dependencies.putAll(resolveAndGatherMaterials(((BlockModel)model).parent, modelGetter, missingMaterials, materials, modelStack));
+                try{
+                    if(hasGeometry)
+                        dependencies.putAll(resolveAndGatherMaterials(((BlockModel)model).parent, modelGetter, null, null, modelStack));
+                    else
+                        dependencies.putAll(resolveAndGatherMaterials(((BlockModel)model).parent, modelGetter, missingMaterials, materials, modelStack));
+                }catch(DependencyLoopException ignore){
+                    ((BlockModel)model).parent = (BlockModel)modelGetter.apply(ModelBakery.MISSING_MODEL_LOCATION);
+                    hasDependencyLoopError = true;
+                }
                 dependencies.put(((BlockModel)model).parentLocation, ((BlockModel)model).parent);
             }
         }else{ // Handle Fusion models
@@ -221,17 +230,34 @@ public class FusionBlockModelData extends BlockModel {
                     FusionClient.LOGGER.error("Missing dependency model '{}' for model '{}'!", dependency, ((FusionBlockModelData)model).identifier);
                     dependencyModel = modelGetter.apply(ModelBakery.MISSING_MODEL_LOCATION);
                 }
+                try{
+                    dependencies.putAll(resolveAndGatherMaterials(dependencyModel, modelGetter, null, null, modelStack));
+                }catch(DependencyLoopException ignore){
+                    dependencyModel = modelGetter.apply(ModelBakery.MISSING_MODEL_LOCATION);
+                    hasDependencyLoopError = true;
+                }
                 dependencies.put(dependency, dependencyModel);
-                dependencies.putAll(resolveAndGatherMaterials(dependencyModel, modelGetter, null, null, modelStack));
             }
-            for(IUnbakedModel parent : ((FusionBlockModelData)model).parents){
-                if(geometry == null)
-                    dependencies.putAll(resolveAndGatherMaterials(parent, modelGetter, missingMaterials, materials, modelStack));
-                else
-                    dependencies.putAll(resolveAndGatherMaterials(parent, modelGetter, null, null, modelStack));
+            for(IUnbakedModel parent : ImmutableList.copyOf(((FusionBlockModelData)model).parents)){
+                try{
+                    if(geometry == null)
+                        dependencies.putAll(resolveAndGatherMaterials(parent, modelGetter, missingMaterials, materials, modelStack));
+                    else
+                        dependencies.putAll(resolveAndGatherMaterials(parent, modelGetter, null, null, modelStack));
+                }catch(DependencyLoopException ignore){
+                    ((FusionBlockModelData)model).parents.remove(parent);
+                    if(((FusionBlockModelData)model).parent == parent)
+                        ((FusionBlockModelData)model).parent = (BlockModel)modelGetter.apply(ModelBakery.MISSING_MODEL_LOCATION);
+                    hasDependencyLoopError = true;
+                }
             }
             // Set model dependencies
             ((FusionBlockModelData)model).setDependencies(dependencies);
+        }
+
+        if(hasDependencyLoopError){
+            modelStack.remove(model);
+            throw DependencyLoopException.INSTANCE;
         }
 
         // Resolve material keys
@@ -298,7 +324,7 @@ public class FusionBlockModelData extends BlockModel {
                 parentModel = new FusionBlockModelData(IdentifierUtil.withSuffix(this.identifier, "_parent"), parent.right());
             this.parents.add(parentModel);
         }
-        this.parents = ImmutableList.copyOf(this.parents);
+        this.parents = new ArrayList<>(this.parents);
 
         // Fill vanilla block model properties
         this.parentLocation = parents.isEmpty() ? null : parents.get(0).leftOrNull();
@@ -577,5 +603,9 @@ public class FusionBlockModelData extends BlockModel {
             return modelInstance;
         }
         return new ModelInstanceImpl<>(DefaultModelTypes.UNKNOWN, model);
+    }
+
+    private static class DependencyLoopException extends Throwable {
+        private static final DependencyLoopException INSTANCE = new DependencyLoopException();
     }
 }

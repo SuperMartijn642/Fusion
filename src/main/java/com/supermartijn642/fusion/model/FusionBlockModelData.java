@@ -77,7 +77,10 @@ public class FusionBlockModelData extends BlockModel {
                                                                        Set<com.mojang.datafixers.util.Pair<String,String>> missingMaterials){
         BlockModel topModel = model;
         // Check whether any model in the parent chain is a fusion model
+        Set<ResourceLocation> parents = new LinkedHashSet<>();
         while(model != null && !(model instanceof FusionBlockModelData) && model.parentLocation != null){
+            if(!parents.add(model.parentLocation))
+                return null;
             IUnbakedModel parent = modelGetter.apply(model.parentLocation);
             model = parent instanceof BlockModel ? (BlockModel)parent : null;
         }
